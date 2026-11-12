@@ -43,14 +43,40 @@
    "id": "gw.read.pos",
    "model": "goldworm-v6",
    "title": "Part of speech, readable",
-   "kind": "accuracy of a linear probe for the part of speech (10 classes) on words not seen in fitting",
+   "kind": "accuracy of a linear probe for the part of speech (10 classes) on all test words",
    "unit": "accuracy",
    "domain": [
     0,
     1
    ],
-   "null": "the same probe on shuffled labels, 95th percentile",
+   "null": "the same probe on shuffled labels, 95th percentile (the same quantity)",
    "question": "Where can a reader find the category?"
+  },
+  {
+   "id": "gw.read.beyond",
+   "model": "goldworm-v6",
+   "title": "Readable beyond the surface bytes",
+   "kind": "probe accuracy on words not seen in fitting, minus the accuracy of a probe that sees only the word's bytes",
+   "unit": "accuracy difference",
+   "domain": [
+    -0.3,
+    0.3
+   ],
+   "null": "zero; the interval is beside each value",
+   "question": "Does the state hold the category, or only the spelling a reader could use?"
+  },
+  {
+   "id": "gw.category.early",
+   "model": "goldworm-v6",
+   "title": "The category, written early",
+   "kind": "lift of adjectives over nouns when the layer is pushed along a direction that is neither the probe's nor a next-byte forecast, by the word's first letter, on unseen text",
+   "unit": "nats",
+   "domain": [
+    -0.3,
+    0.3
+   ],
+   "null": "zero; the interval is beside each value",
+   "question": "Is the category itself written, apart from what a reader finds and from the next byte?"
   },
   {
    "id": "gw.parallax",
@@ -59,8 +85,8 @@
    "kind": "angle between the direction a probe reads adjective-or-noun from and the direction the model writes it with",
    "unit": "degrees",
    "domain": [
-    0,
-    90
+    60,
+    100
    ],
    "null": "two random directions in 192 dimensions: 81.9 to 98.1 degrees (95 %)",
    "question": "Is what a reader finds what the model uses?"
@@ -69,7 +95,7 @@
    "id": "gw.push.write",
    "model": "goldworm-v6",
    "title": "Pushed along the writing direction",
-   "kind": "change in log-odds of an adjective after a determiner when the layer's state is pushed along the WRITING direction at half the write's norm",
+   "kind": "change in the log-probability of the adjective WORD after a determiner (summed over the word's bytes) when the layer's state is pushed along the WRITING direction at half the write's norm",
    "unit": "nats",
    "domain": [
     -0.6,
@@ -94,8 +120,8 @@
   {
    "id": "gw.knock",
    "model": "goldworm-v6",
-   "title": "Does attribution predict a knock-out?",
-   "kind": "correlation, over positions, between a write's direct (linear) attribution to the answer and the realised change when that write is knocked out",
+   "title": "Does direct attribution predict a knock-out?",
+   "kind": "correlation, over 2,000 positions, between a write's DIRECT attribution (final norm frozen, through the head) and the realised change in the true next byte's log-probability when that write is zeroed",
    "unit": "correlation",
    "domain": [
     -1,
@@ -170,9 +196,14 @@
    "question": "Which block pushes the answer toward or away from the right name?"
   }
  ],
+ "fits": {
+  "converged": "the fit behind the value reached its stopping rule",
+  "unconverged": "the fit stopped at its iteration cap; the value is not a verdict",
+  "n/a": "no iterative fit, or the file does not say"
+ },
  "standings": {
   "preregistered": "measured under a preregistration, with an interval or a null beside it",
-  "exploratory": "measured while exploring, or provisional by the series' own label; a lead, not a finding",
+  "exploratory": "formed by looking: descriptive or found while exploring; a lead, not a finding",
   "void": "a number exists but its instrument does not hold here (the frame does not close, or the stake's plant failed); drawn as void, never as a value"
  },
  "rows": [
@@ -199,7 +230,9 @@
     "key": "M1.wte",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gw.identity",
@@ -224,7 +257,9 @@
     "key": "M1.attn0",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gw.identity",
@@ -249,7 +284,9 @@
     "key": "M1.mlp0",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gw.identity",
@@ -274,7 +311,9 @@
     "key": "M1.attn1",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gw.identity",
@@ -299,7 +338,9 @@
     "key": "M1.mlp1",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gw.read.pos",
@@ -308,23 +349,52 @@
     "component": "embed",
     "position": "last"
    },
-   "value": 0.3148148148148148,
+   "value": 0.4604999677023448,
    "interval": null,
    "n": null,
    "null": {
     "kind": "shuffled labels, 95th percentile",
     "value": 0.1937245655965377
    },
-   "standing": "exploratory",
+   "standing": "preregistered",
    "stake": null,
    "category": null,
    "source": {
-    "experiment": "VOCAB-1",
+    "experiment": "VOCAB-1 (V1)",
     "file": "vocab1_result.json",
-    "key": "cells.last/embed",
+    "key": "cells.last/embed.acc_all",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; majority class 0.190",
+   "fit": "unconverged",
+   "bare": null
+  },
+  {
+   "layer": "gw.read.beyond",
+   "site": {
+    "layer": 0,
+    "component": "embed",
+    "position": "last"
+   },
+   "value": -0.26719576719576715,
+   "interval": [
+    -0.3368816124280166,
+    -0.19341101502343766
+   ],
+   "n": null,
+   "null": null,
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1 (V3)",
+    "file": "vocab1_result.json",
+    "key": "cells.last/embed.V3.diff_novel",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; all three checks (above the shuffled null, above control tasks, above the byte baseline) pass: no",
+   "fit": "unconverged",
+   "bare": null
   },
   {
    "layer": "gw.read.pos",
@@ -333,23 +403,52 @@
     "component": "attn",
     "position": "last"
    },
-   "value": 0.6507936507936508,
+   "value": 0.8154511982430076,
    "interval": null,
    "n": null,
    "null": {
     "kind": "shuffled labels, 95th percentile",
     "value": 0.19670886893611525
    },
-   "standing": "exploratory",
+   "standing": "preregistered",
    "stake": null,
    "category": null,
    "source": {
-    "experiment": "VOCAB-1",
+    "experiment": "VOCAB-1 (V1)",
     "file": "vocab1_result.json",
-    "key": "cells.last/attn0",
+    "key": "cells.last/attn0.acc_all",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; majority class 0.190",
+   "fit": "unconverged",
+   "bare": null
+  },
+  {
+   "layer": "gw.read.beyond",
+   "site": {
+    "layer": 0,
+    "component": "attn",
+    "position": "last"
+   },
+   "value": 0.06878306878306883,
+   "interval": [
+    0.01346568255840072,
+    0.13110620442544632
+   ],
+   "n": null,
+   "null": null,
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1 (V3)",
+    "file": "vocab1_result.json",
+    "key": "cells.last/attn0.V3.diff_novel",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; all three checks (above the shuffled null, above control tasks, above the byte baseline) pass: yes",
+   "fit": "unconverged",
+   "bare": null
   },
   {
    "layer": "gw.read.pos",
@@ -358,23 +457,52 @@
     "component": "mlp",
     "position": "last"
    },
-   "value": 0.6111111111111112,
+   "value": 0.8846973709708675,
    "interval": null,
    "n": null,
    "null": {
     "kind": "shuffled labels, 95th percentile",
     "value": 0.19631483754279438
    },
-   "standing": "exploratory",
+   "standing": "preregistered",
    "stake": null,
    "category": null,
    "source": {
-    "experiment": "VOCAB-1",
+    "experiment": "VOCAB-1 (V1)",
     "file": "vocab1_result.json",
-    "key": "cells.last/mlp0",
+    "key": "cells.last/mlp0.acc_all",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; majority class 0.190",
+   "fit": "unconverged",
+   "bare": null
+  },
+  {
+   "layer": "gw.read.beyond",
+   "site": {
+    "layer": 0,
+    "component": "mlp",
+    "position": "last"
+   },
+   "value": 0.029100529100529182,
+   "interval": [
+    -0.038981707947225185,
+    0.09315242628279545
+   ],
+   "n": null,
+   "null": null,
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1 (V3)",
+    "file": "vocab1_result.json",
+    "key": "cells.last/mlp0.V3.diff_novel",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; all three checks (above the shuffled null, above control tasks, above the byte baseline) pass: no",
+   "fit": "unconverged",
+   "bare": null
   },
   {
    "layer": "gw.read.pos",
@@ -383,23 +511,52 @@
     "component": "attn",
     "position": "last"
    },
-   "value": 0.6693121693121693,
+   "value": 0.9106000904334345,
    "interval": null,
    "n": null,
    "null": {
     "kind": "shuffled labels, 95th percentile",
     "value": 0.19584975130805501
    },
-   "standing": "exploratory",
+   "standing": "preregistered",
    "stake": null,
    "category": null,
    "source": {
-    "experiment": "VOCAB-1",
+    "experiment": "VOCAB-1 (V1)",
     "file": "vocab1_result.json",
-    "key": "cells.last/attn1",
+    "key": "cells.last/attn1.acc_all",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; majority class 0.190",
+   "fit": "unconverged",
+   "bare": null
+  },
+  {
+   "layer": "gw.read.beyond",
+   "site": {
+    "layer": 1,
+    "component": "attn",
+    "position": "last"
+   },
+   "value": 0.08730158730158732,
+   "interval": [
+    0.03052856812398797,
+    0.14442223576652802
+   ],
+   "n": null,
+   "null": null,
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1 (V3)",
+    "file": "vocab1_result.json",
+    "key": "cells.last/attn1.V3.diff_novel",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; all three checks (above the shuffled null, above control tasks, above the byte baseline) pass: yes",
+   "fit": "unconverged",
+   "bare": null
   },
   {
    "layer": "gw.read.pos",
@@ -408,23 +565,52 @@
     "component": "mlp",
     "position": "last"
    },
-   "value": 0.6904761904761905,
+   "value": 0.9147341902977844,
    "interval": null,
    "n": null,
    "null": {
     "kind": "shuffled labels, 95th percentile",
     "value": 0.19674439635682447
    },
-   "standing": "exploratory",
+   "standing": "preregistered",
    "stake": null,
    "category": null,
    "source": {
-    "experiment": "VOCAB-1",
+    "experiment": "VOCAB-1 (V1)",
     "file": "vocab1_result.json",
-    "key": "cells.last/mlp1",
+    "key": "cells.last/mlp1.acc_all",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; majority class 0.190",
+   "fit": "unconverged",
+   "bare": null
+  },
+  {
+   "layer": "gw.read.beyond",
+   "site": {
+    "layer": 1,
+    "component": "mlp",
+    "position": "last"
+   },
+   "value": 0.10846560846560849,
+   "interval": [
+    0.04310181143605413,
+    0.1741749554859704
+   ],
+   "n": null,
+   "null": null,
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1 (V3)",
+    "file": "vocab1_result.json",
+    "key": "cells.last/mlp1.V3.diff_novel",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; all three checks (above the shuffled null, above control tasks, above the byte baseline) pass: yes",
+   "fit": "unconverged",
+   "bare": null
   },
   {
    "layer": "gw.read.pos",
@@ -433,23 +619,52 @@
     "component": "attn",
     "position": "last"
    },
-   "value": 0.7354497354497355,
+   "value": 0.9373425489309476,
    "interval": null,
    "n": null,
    "null": {
     "kind": "shuffled labels, 95th percentile",
     "value": 0.19754214844002324
    },
-   "standing": "exploratory",
+   "standing": "preregistered",
    "stake": null,
    "category": null,
    "source": {
-    "experiment": "VOCAB-1",
+    "experiment": "VOCAB-1 (V1)",
     "file": "vocab1_result.json",
-    "key": "cells.last/attn2",
+    "key": "cells.last/attn2.acc_all",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; majority class 0.190",
+   "fit": "unconverged",
+   "bare": null
+  },
+  {
+   "layer": "gw.read.beyond",
+   "site": {
+    "layer": 2,
+    "component": "attn",
+    "position": "last"
+   },
+   "value": 0.1534391534391535,
+   "interval": [
+    0.08682423375927084,
+    0.2126751797897842
+   ],
+   "n": null,
+   "null": null,
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1 (V3)",
+    "file": "vocab1_result.json",
+    "key": "cells.last/attn2.V3.diff_novel",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; all three checks (above the shuffled null, above control tasks, above the byte baseline) pass: yes",
+   "fit": "unconverged",
+   "bare": null
   },
   {
    "layer": "gw.read.pos",
@@ -458,23 +673,52 @@
     "component": "mlp",
     "position": "last"
    },
-   "value": 0.7380952380952381,
+   "value": 0.9511013500419869,
    "interval": null,
    "n": null,
    "null": {
     "kind": "shuffled labels, 95th percentile",
     "value": 0.19470318454880176
    },
-   "standing": "exploratory",
+   "standing": "preregistered",
    "stake": null,
    "category": null,
    "source": {
-    "experiment": "VOCAB-1",
+    "experiment": "VOCAB-1 (V1)",
     "file": "vocab1_result.json",
-    "key": "cells.last/mlp2",
+    "key": "cells.last/mlp2.acc_all",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; majority class 0.190",
+   "fit": "unconverged",
+   "bare": null
+  },
+  {
+   "layer": "gw.read.beyond",
+   "site": {
+    "layer": 2,
+    "component": "mlp",
+    "position": "last"
+   },
+   "value": 0.15608465608465616,
+   "interval": [
+    0.08268627074123903,
+    0.2319706046252438
+   ],
+   "n": null,
+   "null": null,
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1 (V3)",
+    "file": "vocab1_result.json",
+    "key": "cells.last/mlp2.V3.diff_novel",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; all three checks (above the shuffled null, above control tasks, above the byte baseline) pass: yes",
+   "fit": "unconverged",
+   "bare": null
   },
   {
    "layer": "gw.read.pos",
@@ -483,23 +727,52 @@
     "component": "attn",
     "position": "last"
    },
-   "value": 0.7857142857142857,
+   "value": 0.9646017699115044,
    "interval": null,
    "n": null,
    "null": {
     "kind": "shuffled labels, 95th percentile",
     "value": 0.19702861572249855
    },
-   "standing": "exploratory",
+   "standing": "preregistered",
    "stake": null,
    "category": null,
    "source": {
-    "experiment": "VOCAB-1",
+    "experiment": "VOCAB-1 (V1)",
     "file": "vocab1_result.json",
-    "key": "cells.last/attn3",
+    "key": "cells.last/attn3.acc_all",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; majority class 0.190",
+   "fit": "unconverged",
+   "bare": null
+  },
+  {
+   "layer": "gw.read.beyond",
+   "site": {
+    "layer": 3,
+    "component": "attn",
+    "position": "last"
+   },
+   "value": 0.20370370370370372,
+   "interval": [
+    0.130639485693775,
+    0.27493760606968154
+   ],
+   "n": null,
+   "null": null,
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1 (V3)",
+    "file": "vocab1_result.json",
+    "key": "cells.last/attn3.V3.diff_novel",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; all three checks (above the shuffled null, above control tasks, above the byte baseline) pass: yes",
+   "fit": "unconverged",
+   "bare": null
   },
   {
    "layer": "gw.read.pos",
@@ -508,23 +781,52 @@
     "component": "mlp",
     "position": "last"
    },
-   "value": 0.798941798941799,
+   "value": 0.9700277759834636,
    "interval": null,
    "n": null,
    "null": {
     "kind": "shuffled labels, 95th percentile",
     "value": 0.19673147729474838
    },
-   "standing": "exploratory",
+   "standing": "preregistered",
    "stake": null,
    "category": null,
    "source": {
-    "experiment": "VOCAB-1",
+    "experiment": "VOCAB-1 (V1)",
     "file": "vocab1_result.json",
-    "key": "cells.last/mlp3",
+    "key": "cells.last/mlp3.acc_all",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; majority class 0.190",
+   "fit": "unconverged",
+   "bare": null
+  },
+  {
+   "layer": "gw.read.beyond",
+   "site": {
+    "layer": 3,
+    "component": "mlp",
+    "position": "last"
+   },
+   "value": 0.21693121693121697,
+   "interval": [
+    0.14983690229488067,
+    0.29340052620389073
+   ],
+   "n": null,
+   "null": null,
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1 (V3)",
+    "file": "vocab1_result.json",
+    "key": "cells.last/mlp3.V3.diff_novel",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; all three checks (above the shuffled null, above control tasks, above the byte baseline) pass: yes",
+   "fit": "unconverged",
+   "bare": null
   },
   {
    "layer": "gw.read.pos",
@@ -533,23 +835,52 @@
     "component": "attn",
     "position": "last"
    },
-   "value": 0.8227513227513228,
+   "value": 0.9750016148827595,
    "interval": null,
    "n": null,
    "null": {
     "kind": "shuffled labels, 95th percentile",
     "value": 0.20000645953103804
    },
-   "standing": "exploratory",
+   "standing": "preregistered",
    "stake": null,
    "category": null,
    "source": {
-    "experiment": "VOCAB-1",
+    "experiment": "VOCAB-1 (V1)",
     "file": "vocab1_result.json",
-    "key": "cells.last/attn4",
+    "key": "cells.last/attn4.acc_all",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; majority class 0.190",
+   "fit": "unconverged",
+   "bare": null
+  },
+  {
+   "layer": "gw.read.beyond",
+   "site": {
+    "layer": 4,
+    "component": "attn",
+    "position": "last"
+   },
+   "value": 0.2407407407407408,
+   "interval": [
+    0.17090331570584438,
+    0.3130062012590435
+   ],
+   "n": null,
+   "null": null,
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1 (V3)",
+    "file": "vocab1_result.json",
+    "key": "cells.last/attn4.V3.diff_novel",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; all three checks (above the shuffled null, above control tasks, above the byte baseline) pass: yes",
+   "fit": "unconverged",
+   "bare": null
   },
   {
    "layer": "gw.read.pos",
@@ -558,23 +889,52 @@
     "component": "mlp",
     "position": "last"
    },
-   "value": 0.828042328042328,
+   "value": 0.9753245914346619,
    "interval": null,
    "n": null,
    "null": {
     "kind": "shuffled labels, 95th percentile",
     "value": 0.2000710548414185
    },
-   "standing": "exploratory",
+   "standing": "preregistered",
    "stake": null,
    "category": null,
    "source": {
-    "experiment": "VOCAB-1",
+    "experiment": "VOCAB-1 (V1)",
     "file": "vocab1_result.json",
-    "key": "cells.last/mlp4",
+    "key": "cells.last/mlp4.acc_all",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; majority class 0.190",
+   "fit": "unconverged",
+   "bare": null
+  },
+  {
+   "layer": "gw.read.beyond",
+   "site": {
+    "layer": 4,
+    "component": "mlp",
+    "position": "last"
+   },
+   "value": 0.24603174603174605,
+   "interval": [
+    0.17149812679485124,
+    0.3160985023574004
+   ],
+   "n": null,
+   "null": null,
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1 (V3)",
+    "file": "vocab1_result.json",
+    "key": "cells.last/mlp4.V3.diff_novel",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; all three checks (above the shuffled null, above control tasks, above the byte baseline) pass: yes",
+   "fit": "unconverged",
+   "bare": null
   },
   {
    "layer": "gw.read.pos",
@@ -583,23 +943,52 @@
     "component": "attn",
     "position": "last"
    },
-   "value": 0.8306878306878307,
+   "value": 0.9731929461921065,
    "interval": null,
    "n": null,
    "null": {
     "kind": "shuffled labels, 95th percentile",
     "value": 0.20047800529681542
    },
-   "standing": "exploratory",
+   "standing": "preregistered",
    "stake": null,
    "category": null,
    "source": {
-    "experiment": "VOCAB-1",
+    "experiment": "VOCAB-1 (V1)",
     "file": "vocab1_result.json",
-    "key": "cells.last/attn5",
+    "key": "cells.last/attn5.acc_all",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; majority class 0.190",
+   "fit": "unconverged",
+   "bare": null
+  },
+  {
+   "layer": "gw.read.beyond",
+   "site": {
+    "layer": 5,
+    "component": "attn",
+    "position": "last"
+   },
+   "value": 0.24867724867724872,
+   "interval": [
+    0.18386867917651117,
+    0.32448377581120946
+   ],
+   "n": null,
+   "null": null,
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1 (V3)",
+    "file": "vocab1_result.json",
+    "key": "cells.last/attn5.V3.diff_novel",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; all three checks (above the shuffled null, above control tasks, above the byte baseline) pass: yes",
+   "fit": "unconverged",
+   "bare": null
   },
   {
    "layer": "gw.read.pos",
@@ -608,23 +997,52 @@
     "component": "mlp",
     "position": "last"
    },
-   "value": 0.843915343915344,
+   "value": 0.9711258962599315,
    "interval": null,
    "n": null,
    "null": {
     "kind": "shuffled labels, 95th percentile",
     "value": 0.19774885343324075
    },
-   "standing": "exploratory",
+   "standing": "preregistered",
    "stake": null,
    "category": null,
    "source": {
-    "experiment": "VOCAB-1",
+    "experiment": "VOCAB-1 (V1)",
     "file": "vocab1_result.json",
-    "key": "cells.last/mlp5",
+    "key": "cells.last/mlp5.acc_all",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; majority class 0.190",
+   "fit": "unconverged",
+   "bare": null
+  },
+  {
+   "layer": "gw.read.beyond",
+   "site": {
+    "layer": 5,
+    "component": "mlp",
+    "position": "last"
+   },
+   "value": 0.261904761904762,
+   "interval": [
+    0.19012183235867447,
+    0.33144631145950565
+   ],
+   "n": null,
+   "null": null,
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1 (V3)",
+    "file": "vocab1_result.json",
+    "key": "cells.last/mlp5.V3.diff_novel",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; all three checks (above the shuffled null, above control tasks, above the byte baseline) pass: yes",
+   "fit": "unconverged",
+   "bare": null
   },
   {
    "layer": "gw.read.pos",
@@ -633,23 +1051,52 @@
     "component": "embed",
     "position": "first"
    },
-   "value": 0.42063492063492064,
+   "value": 0.5409211291260254,
    "interval": null,
    "n": null,
    "null": {
     "kind": "shuffled labels, 95th percentile",
     "value": 0.19230023900264842
    },
-   "standing": "exploratory",
+   "standing": "preregistered",
    "stake": null,
    "category": null,
    "source": {
-    "experiment": "VOCAB-1",
+    "experiment": "VOCAB-1 (V1)",
     "file": "vocab1_result.json",
-    "key": "cells.first/embed",
+    "key": "cells.first/embed.acc_all",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; majority class 0.190",
+   "fit": "unconverged",
+   "bare": null
+  },
+  {
+   "layer": "gw.read.beyond",
+   "site": {
+    "layer": 0,
+    "component": "embed",
+    "position": "first"
+   },
+   "value": -0.15079365079365076,
+   "interval": [
+    -0.20649984742142202,
+    -0.0944053827528404
+   ],
+   "n": null,
+   "null": null,
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1 (V3)",
+    "file": "vocab1_result.json",
+    "key": "cells.first/embed.V3.diff_novel",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; all three checks (above the shuffled null, above control tasks, above the byte baseline) pass: no",
+   "fit": "unconverged",
+   "bare": null
   },
   {
    "layer": "gw.read.pos",
@@ -658,23 +1105,52 @@
     "component": "attn",
     "position": "first"
    },
-   "value": 0.5132275132275133,
+   "value": 0.6506039661520574,
    "interval": null,
    "n": null,
    "null": {
     "kind": "shuffled labels, 95th percentile",
     "value": 0.19559782959757122
    },
-   "standing": "exploratory",
+   "standing": "preregistered",
    "stake": null,
    "category": null,
    "source": {
-    "experiment": "VOCAB-1",
+    "experiment": "VOCAB-1 (V1)",
     "file": "vocab1_result.json",
-    "key": "cells.first/attn0",
+    "key": "cells.first/attn0.acc_all",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; majority class 0.190",
+   "fit": "unconverged",
+   "bare": null
+  },
+  {
+   "layer": "gw.read.beyond",
+   "site": {
+    "layer": 0,
+    "component": "attn",
+    "position": "first"
+   },
+   "value": -0.05820105820105814,
+   "interval": [
+    -0.10180243069505825,
+    -0.013366324345026173
+   ],
+   "n": null,
+   "null": null,
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1 (V3)",
+    "file": "vocab1_result.json",
+    "key": "cells.first/attn0.V3.diff_novel",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; all three checks (above the shuffled null, above control tasks, above the byte baseline) pass: no",
+   "fit": "unconverged",
+   "bare": null
   },
   {
    "layer": "gw.read.pos",
@@ -683,23 +1159,52 @@
     "component": "mlp",
     "position": "first"
    },
-   "value": 0.544973544973545,
+   "value": 0.683935146308378,
    "interval": null,
    "n": null,
    "null": {
     "kind": "shuffled labels, 95th percentile",
     "value": 0.19818164201278987
    },
-   "standing": "exploratory",
+   "standing": "preregistered",
    "stake": null,
    "category": null,
    "source": {
-    "experiment": "VOCAB-1",
+    "experiment": "VOCAB-1 (V1)",
     "file": "vocab1_result.json",
-    "key": "cells.first/mlp0",
+    "key": "cells.first/mlp0.acc_all",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; majority class 0.190",
+   "fit": "unconverged",
+   "bare": null
+  },
+  {
+   "layer": "gw.read.beyond",
+   "site": {
+    "layer": 0,
+    "component": "mlp",
+    "position": "first"
+   },
+   "value": -0.026455026455026398,
+   "interval": [
+    -0.07448949986184028,
+    0.01934378723865236
+   ],
+   "n": null,
+   "null": null,
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1 (V3)",
+    "file": "vocab1_result.json",
+    "key": "cells.first/mlp0.V3.diff_novel",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; all three checks (above the shuffled null, above control tasks, above the byte baseline) pass: no",
+   "fit": "unconverged",
+   "bare": null
   },
   {
    "layer": "gw.read.pos",
@@ -708,23 +1213,52 @@
     "component": "attn",
     "position": "first"
    },
-   "value": 0.5952380952380952,
+   "value": 0.7159098249467089,
    "interval": null,
    "n": null,
    "null": {
     "kind": "shuffled labels, 95th percentile",
     "value": 0.2003197467863833
    },
-   "standing": "exploratory",
+   "standing": "preregistered",
    "stake": null,
    "category": null,
    "source": {
-    "experiment": "VOCAB-1",
+    "experiment": "VOCAB-1 (V1)",
     "file": "vocab1_result.json",
-    "key": "cells.first/attn1",
+    "key": "cells.first/attn1.acc_all",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; majority class 0.190",
+   "fit": "unconverged",
+   "bare": null
+  },
+  {
+   "layer": "gw.read.beyond",
+   "site": {
+    "layer": 1,
+    "component": "attn",
+    "position": "first"
+   },
+   "value": 0.023809523809523836,
+   "interval": [
+    -0.018044751640112464,
+    0.06881219672670447
+   ],
+   "n": null,
+   "null": null,
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1 (V3)",
+    "file": "vocab1_result.json",
+    "key": "cells.first/attn1.V3.diff_novel",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; all three checks (above the shuffled null, above control tasks, above the byte baseline) pass: no",
+   "fit": "unconverged",
+   "bare": null
   },
   {
    "layer": "gw.read.pos",
@@ -733,23 +1267,52 @@
     "component": "mlp",
     "position": "first"
    },
-   "value": 0.6031746031746031,
+   "value": 0.7266972417802467,
    "interval": null,
    "n": null,
    "null": {
     "kind": "shuffled labels, 95th percentile",
     "value": 0.1987016342613526
    },
-   "standing": "exploratory",
+   "standing": "preregistered",
    "stake": null,
    "category": null,
    "source": {
-    "experiment": "VOCAB-1",
+    "experiment": "VOCAB-1 (V1)",
     "file": "vocab1_result.json",
-    "key": "cells.first/mlp1",
+    "key": "cells.first/mlp1.acc_all",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; majority class 0.190",
+   "fit": "unconverged",
+   "bare": null
+  },
+  {
+   "layer": "gw.read.beyond",
+   "site": {
+    "layer": 1,
+    "component": "mlp",
+    "position": "first"
+   },
+   "value": 0.031746031746031744,
+   "interval": [
+    -0.01205948795180723,
+    0.07492975504322766
+   ],
+   "n": null,
+   "null": null,
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1 (V3)",
+    "file": "vocab1_result.json",
+    "key": "cells.first/mlp1.V3.diff_novel",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; all three checks (above the shuffled null, above control tasks, above the byte baseline) pass: no",
+   "fit": "unconverged",
+   "bare": null
   },
   {
    "layer": "gw.read.pos",
@@ -758,23 +1321,52 @@
     "component": "attn",
     "position": "first"
    },
-   "value": 0.6084656084656085,
+   "value": 0.7447839286867773,
    "interval": null,
    "n": null,
    "null": {
     "kind": "shuffled labels, 95th percentile",
     "value": 0.2017311543181965
    },
-   "standing": "exploratory",
+   "standing": "preregistered",
    "stake": null,
    "category": null,
    "source": {
-    "experiment": "VOCAB-1",
+    "experiment": "VOCAB-1 (V1)",
     "file": "vocab1_result.json",
-    "key": "cells.first/attn2",
+    "key": "cells.first/attn2.acc_all",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; majority class 0.190",
+   "fit": "unconverged",
+   "bare": null
+  },
+  {
+   "layer": "gw.read.beyond",
+   "site": {
+    "layer": 2,
+    "component": "attn",
+    "position": "first"
+   },
+   "value": 0.03703703703703709,
+   "interval": [
+    -0.008220880950578975,
+    0.08291927086958337
+   ],
+   "n": null,
+   "null": null,
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1 (V3)",
+    "file": "vocab1_result.json",
+    "key": "cells.first/attn2.V3.diff_novel",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; all three checks (above the shuffled null, above control tasks, above the byte baseline) pass: no",
+   "fit": "unconverged",
+   "bare": null
   },
   {
    "layer": "gw.read.pos",
@@ -783,23 +1375,52 @@
     "component": "mlp",
     "position": "first"
    },
-   "value": 0.6084656084656085,
+   "value": 0.7479490988954202,
    "interval": null,
    "n": null,
    "null": {
     "kind": "shuffled labels, 95th percentile",
     "value": 0.1995704411859699
    },
-   "standing": "exploratory",
+   "standing": "preregistered",
    "stake": null,
    "category": null,
    "source": {
-    "experiment": "VOCAB-1",
+    "experiment": "VOCAB-1 (V1)",
     "file": "vocab1_result.json",
-    "key": "cells.first/mlp2",
+    "key": "cells.first/mlp2.acc_all",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; majority class 0.190",
+   "fit": "unconverged",
+   "bare": null
+  },
+  {
+   "layer": "gw.read.beyond",
+   "site": {
+    "layer": 2,
+    "component": "mlp",
+    "position": "first"
+   },
+   "value": 0.03703703703703709,
+   "interval": [
+    -0.012167386551485096,
+    0.08924001687289089
+   ],
+   "n": null,
+   "null": null,
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1 (V3)",
+    "file": "vocab1_result.json",
+    "key": "cells.first/mlp2.V3.diff_novel",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; all three checks (above the shuffled null, above control tasks, above the byte baseline) pass: no",
+   "fit": "unconverged",
+   "bare": null
   },
   {
    "layer": "gw.read.pos",
@@ -808,23 +1429,52 @@
     "component": "attn",
     "position": "first"
    },
-   "value": 0.6851851851851852,
+   "value": 0.7891609069181578,
    "interval": null,
    "n": null,
    "null": {
     "kind": "shuffled labels, 95th percentile",
     "value": 0.20433434532652928
    },
-   "standing": "exploratory",
+   "standing": "preregistered",
    "stake": null,
    "category": null,
    "source": {
-    "experiment": "VOCAB-1",
+    "experiment": "VOCAB-1 (V1)",
     "file": "vocab1_result.json",
-    "key": "cells.first/attn3",
+    "key": "cells.first/attn3.acc_all",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; majority class 0.190",
+   "fit": "unconverged",
+   "bare": null
+  },
+  {
+   "layer": "gw.read.beyond",
+   "site": {
+    "layer": 3,
+    "component": "attn",
+    "position": "first"
+   },
+   "value": 0.11375661375661383,
+   "interval": [
+    0.07220679012345678,
+    0.16195960968379444
+   ],
+   "n": null,
+   "null": null,
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1 (V3)",
+    "file": "vocab1_result.json",
+    "key": "cells.first/attn3.V3.diff_novel",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; all three checks (above the shuffled null, above control tasks, above the byte baseline) pass: yes",
+   "fit": "unconverged",
+   "bare": null
   },
   {
    "layer": "gw.read.pos",
@@ -833,23 +1483,52 @@
     "component": "mlp",
     "position": "first"
    },
-   "value": 0.6904761904761905,
+   "value": 0.7987210128544667,
    "interval": null,
    "n": null,
    "null": {
     "kind": "shuffled labels, 95th percentile",
     "value": 0.19935404689619535
    },
-   "standing": "exploratory",
+   "standing": "preregistered",
    "stake": null,
    "category": null,
    "source": {
-    "experiment": "VOCAB-1",
+    "experiment": "VOCAB-1 (V1)",
     "file": "vocab1_result.json",
-    "key": "cells.first/mlp3",
+    "key": "cells.first/mlp3.acc_all",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; majority class 0.190",
+   "fit": "unconverged",
+   "bare": null
+  },
+  {
+   "layer": "gw.read.beyond",
+   "site": {
+    "layer": 3,
+    "component": "mlp",
+    "position": "first"
+   },
+   "value": 0.11904761904761907,
+   "interval": [
+    0.08050373868555687,
+    0.1675800590506473
+   ],
+   "n": null,
+   "null": null,
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1 (V3)",
+    "file": "vocab1_result.json",
+    "key": "cells.first/mlp3.V3.diff_novel",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; all three checks (above the shuffled null, above control tasks, above the byte baseline) pass: yes",
+   "fit": "unconverged",
+   "bare": null
   },
   {
    "layer": "gw.read.pos",
@@ -858,23 +1537,52 @@
     "component": "attn",
     "position": "first"
    },
-   "value": 0.708994708994709,
+   "value": 0.8236548026613267,
    "interval": null,
    "n": null,
    "null": {
     "kind": "shuffled labels, 95th percentile",
     "value": 0.20231897164265872
    },
-   "standing": "exploratory",
+   "standing": "preregistered",
    "stake": null,
    "category": null,
    "source": {
-    "experiment": "VOCAB-1",
+    "experiment": "VOCAB-1 (V1)",
     "file": "vocab1_result.json",
-    "key": "cells.first/attn4",
+    "key": "cells.first/attn4.acc_all",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; majority class 0.190",
+   "fit": "unconverged",
+   "bare": null
+  },
+  {
+   "layer": "gw.read.beyond",
+   "site": {
+    "layer": 4,
+    "component": "attn",
+    "position": "first"
+   },
+   "value": 0.13756613756613756,
+   "interval": [
+    0.09401251117068811,
+    0.19240815509966536
+   ],
+   "n": null,
+   "null": null,
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1 (V3)",
+    "file": "vocab1_result.json",
+    "key": "cells.first/attn4.V3.diff_novel",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; all three checks (above the shuffled null, above control tasks, above the byte baseline) pass: yes",
+   "fit": "unconverged",
+   "bare": null
   },
   {
    "layer": "gw.read.pos",
@@ -883,23 +1591,52 @@
     "component": "mlp",
     "position": "first"
    },
-   "value": 0.6931216931216931,
+   "value": 0.8313416445966023,
    "interval": null,
    "n": null,
    "null": {
     "kind": "shuffled labels, 95th percentile",
     "value": 0.2027162328014986
    },
-   "standing": "exploratory",
+   "standing": "preregistered",
    "stake": null,
    "category": null,
    "source": {
-    "experiment": "VOCAB-1",
+    "experiment": "VOCAB-1 (V1)",
     "file": "vocab1_result.json",
-    "key": "cells.first/mlp4",
+    "key": "cells.first/mlp4.acc_all",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; majority class 0.190",
+   "fit": "unconverged",
+   "bare": null
+  },
+  {
+   "layer": "gw.read.beyond",
+   "site": {
+    "layer": 4,
+    "component": "mlp",
+    "position": "first"
+   },
+   "value": 0.12169312169312174,
+   "interval": [
+    0.07103394862527429,
+    0.16883675064190823
+   ],
+   "n": null,
+   "null": null,
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1 (V3)",
+    "file": "vocab1_result.json",
+    "key": "cells.first/mlp4.V3.diff_novel",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; all three checks (above the shuffled null, above control tasks, above the byte baseline) pass: yes",
+   "fit": "unconverged",
+   "bare": null
   },
   {
    "layer": "gw.read.pos",
@@ -908,23 +1645,52 @@
     "component": "attn",
     "position": "first"
    },
-   "value": 0.7142857142857143,
+   "value": 0.8378657709450293,
    "interval": null,
    "n": null,
    "null": {
     "kind": "shuffled labels, 95th percentile",
     "value": 0.2007234674762612
    },
-   "standing": "exploratory",
+   "standing": "preregistered",
    "stake": null,
    "category": null,
    "source": {
-    "experiment": "VOCAB-1",
+    "experiment": "VOCAB-1 (V1)",
     "file": "vocab1_result.json",
-    "key": "cells.first/attn5",
+    "key": "cells.first/attn5.acc_all",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; majority class 0.190",
+   "fit": "unconverged",
+   "bare": null
+  },
+  {
+   "layer": "gw.read.beyond",
+   "site": {
+    "layer": 5,
+    "component": "attn",
+    "position": "first"
+   },
+   "value": 0.1428571428571429,
+   "interval": [
+    0.09762651821862348,
+    0.18974934036939312
+   ],
+   "n": null,
+   "null": null,
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1 (V3)",
+    "file": "vocab1_result.json",
+    "key": "cells.first/attn5.V3.diff_novel",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; all three checks (above the shuffled null, above control tasks, above the byte baseline) pass: yes",
+   "fit": "unconverged",
+   "bare": null
   },
   {
    "layer": "gw.read.pos",
@@ -933,23 +1699,52 @@
     "component": "mlp",
     "position": "first"
    },
-   "value": 0.7222222222222222,
+   "value": 0.8387055099799755,
    "interval": null,
    "n": null,
    "null": {
     "kind": "shuffled labels, 95th percentile",
     "value": 0.20108197144887277
    },
-   "standing": "exploratory",
+   "standing": "preregistered",
    "stake": null,
    "category": null,
    "source": {
-    "experiment": "VOCAB-1",
+    "experiment": "VOCAB-1 (V1)",
     "file": "vocab1_result.json",
-    "key": "cells.first/mlp5",
+    "key": "cells.first/mlp5.acc_all",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; majority class 0.190",
+   "fit": "unconverged",
+   "bare": null
+  },
+  {
+   "layer": "gw.read.beyond",
+   "site": {
+    "layer": 5,
+    "component": "mlp",
+    "position": "first"
+   },
+   "value": 0.1507936507936508,
+   "interval": [
+    0.10024424881162927,
+    0.19677617521367521
+   ],
+   "n": null,
+   "null": null,
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1 (V3)",
+    "file": "vocab1_result.json",
+    "key": "cells.first/mlp5.V3.diff_novel",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; all three checks (above the shuffled null, above control tasks, above the byte baseline) pass: yes",
+   "fit": "unconverged",
+   "bare": null
   },
   {
    "layer": "gw.read.pos",
@@ -958,23 +1753,52 @@
     "component": "embed",
     "position": "pre"
    },
-   "value": 0.3888888888888889,
+   "value": 0.2616756023512693,
    "interval": null,
    "n": null,
    "null": {
     "kind": "shuffled labels, 95th percentile",
     "value": 0.18968412893223952
    },
-   "standing": "exploratory",
+   "standing": "preregistered",
    "stake": null,
    "category": null,
    "source": {
-    "experiment": "VOCAB-1",
+    "experiment": "VOCAB-1 (V1)",
     "file": "vocab1_result.json",
-    "key": "cells.pre/embed",
+    "key": "cells.pre/embed.acc_all",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; majority class 0.190",
+   "fit": "unconverged",
+   "bare": null
+  },
+  {
+   "layer": "gw.read.beyond",
+   "site": {
+    "layer": 0,
+    "component": "embed",
+    "position": "pre"
+   },
+   "value": -0.02910052910052907,
+   "interval": [
+    -0.09017612501741513,
+    0.03665646714279793
+   ],
+   "n": null,
+   "null": null,
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1 (V3)",
+    "file": "vocab1_result.json",
+    "key": "cells.pre/embed.V3.diff_novel",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; all three checks (above the shuffled null, above control tasks, above the byte baseline) pass: no",
+   "fit": "unconverged",
+   "bare": null
   },
   {
    "layer": "gw.read.pos",
@@ -983,23 +1807,52 @@
     "component": "attn",
     "position": "pre"
    },
-   "value": 0.4365079365079365,
+   "value": 0.4862089012337704,
    "interval": null,
    "n": null,
    "null": {
     "kind": "shuffled labels, 95th percentile",
     "value": 0.19669594987403916
    },
-   "standing": "exploratory",
+   "standing": "preregistered",
    "stake": null,
    "category": null,
    "source": {
-    "experiment": "VOCAB-1",
+    "experiment": "VOCAB-1 (V1)",
     "file": "vocab1_result.json",
-    "key": "cells.pre/attn0",
+    "key": "cells.pre/attn0.acc_all",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; majority class 0.190",
+   "fit": "unconverged",
+   "bare": null
+  },
+  {
+   "layer": "gw.read.beyond",
+   "site": {
+    "layer": 0,
+    "component": "attn",
+    "position": "pre"
+   },
+   "value": 0.018518518518518545,
+   "interval": [
+    -0.024735634477254586,
+    0.062348036159600995
+   ],
+   "n": null,
+   "null": null,
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1 (V3)",
+    "file": "vocab1_result.json",
+    "key": "cells.pre/attn0.V3.diff_novel",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; all three checks (above the shuffled null, above control tasks, above the byte baseline) pass: no",
+   "fit": "unconverged",
+   "bare": null
   },
   {
    "layer": "gw.read.pos",
@@ -1008,23 +1861,52 @@
     "component": "mlp",
     "position": "pre"
    },
-   "value": 0.5105820105820106,
+   "value": 0.5674698016923971,
    "interval": null,
    "n": null,
    "null": {
     "kind": "shuffled labels, 95th percentile",
     "value": 0.2027162328014986
    },
-   "standing": "exploratory",
+   "standing": "preregistered",
    "stake": null,
    "category": null,
    "source": {
-    "experiment": "VOCAB-1",
+    "experiment": "VOCAB-1 (V1)",
     "file": "vocab1_result.json",
-    "key": "cells.pre/mlp0",
+    "key": "cells.pre/mlp0.acc_all",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; majority class 0.190",
+   "fit": "unconverged",
+   "bare": null
+  },
+  {
+   "layer": "gw.read.beyond",
+   "site": {
+    "layer": 0,
+    "component": "mlp",
+    "position": "pre"
+   },
+   "value": 0.09259259259259262,
+   "interval": [
+    0.05522608973578473,
+    0.13384519392172453
+   ],
+   "n": null,
+   "null": null,
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1 (V3)",
+    "file": "vocab1_result.json",
+    "key": "cells.pre/mlp0.V3.diff_novel",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; all three checks (above the shuffled null, above control tasks, above the byte baseline) pass: yes",
+   "fit": "unconverged",
+   "bare": null
   },
   {
    "layer": "gw.read.pos",
@@ -1033,23 +1915,52 @@
     "component": "attn",
     "position": "pre"
    },
-   "value": 0.5291005291005291,
+   "value": 0.5810348168722951,
    "interval": null,
    "n": null,
    "null": {
     "kind": "shuffled labels, 95th percentile",
     "value": 0.2012176216006718
    },
-   "standing": "exploratory",
+   "standing": "preregistered",
    "stake": null,
    "category": null,
    "source": {
-    "experiment": "VOCAB-1",
+    "experiment": "VOCAB-1 (V1)",
     "file": "vocab1_result.json",
-    "key": "cells.pre/attn1",
+    "key": "cells.pre/attn1.acc_all",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; majority class 0.190",
+   "fit": "unconverged",
+   "bare": null
+  },
+  {
+   "layer": "gw.read.beyond",
+   "site": {
+    "layer": 1,
+    "component": "attn",
+    "position": "pre"
+   },
+   "value": 0.1111111111111111,
+   "interval": [
+    0.0649666286115746,
+    0.15632771063385792
+   ],
+   "n": null,
+   "null": null,
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1 (V3)",
+    "file": "vocab1_result.json",
+    "key": "cells.pre/attn1.V3.diff_novel",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; all three checks (above the shuffled null, above control tasks, above the byte baseline) pass: yes",
+   "fit": "unconverged",
+   "bare": null
   },
   {
    "layer": "gw.read.pos",
@@ -1058,23 +1969,52 @@
     "component": "mlp",
     "position": "pre"
    },
-   "value": 0.5211640211640212,
+   "value": 0.5894322072217557,
    "interval": null,
    "n": null,
    "null": {
     "kind": "shuffled labels, 95th percentile",
     "value": 0.19835604935081713
    },
-   "standing": "exploratory",
+   "standing": "preregistered",
    "stake": null,
    "category": null,
    "source": {
-    "experiment": "VOCAB-1",
+    "experiment": "VOCAB-1 (V1)",
     "file": "vocab1_result.json",
-    "key": "cells.pre/mlp1",
+    "key": "cells.pre/mlp1.acc_all",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; majority class 0.190",
+   "fit": "unconverged",
+   "bare": null
+  },
+  {
+   "layer": "gw.read.beyond",
+   "site": {
+    "layer": 1,
+    "component": "mlp",
+    "position": "pre"
+   },
+   "value": 0.1031746031746032,
+   "interval": [
+    0.05539531777416617,
+    0.15000894988066824
+   ],
+   "n": null,
+   "null": null,
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1 (V3)",
+    "file": "vocab1_result.json",
+    "key": "cells.pre/mlp1.V3.diff_novel",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; all three checks (above the shuffled null, above control tasks, above the byte baseline) pass: yes",
+   "fit": "unconverged",
+   "bare": null
   },
   {
    "layer": "gw.read.pos",
@@ -1083,23 +2023,52 @@
     "component": "attn",
     "position": "pre"
    },
-   "value": 0.5264550264550265,
+   "value": 0.6062915832310575,
    "interval": null,
    "n": null,
    "null": {
     "kind": "shuffled labels, 95th percentile",
     "value": 0.1996253471997933
    },
-   "standing": "exploratory",
+   "standing": "preregistered",
    "stake": null,
    "category": null,
    "source": {
-    "experiment": "VOCAB-1",
+    "experiment": "VOCAB-1 (V1)",
     "file": "vocab1_result.json",
-    "key": "cells.pre/attn2",
+    "key": "cells.pre/attn2.acc_all",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; majority class 0.190",
+   "fit": "unconverged",
+   "bare": null
+  },
+  {
+   "layer": "gw.read.beyond",
+   "site": {
+    "layer": 2,
+    "component": "attn",
+    "position": "pre"
+   },
+   "value": 0.10846560846560854,
+   "interval": [
+    0.0671659258304881,
+    0.15039632958746446
+   ],
+   "n": null,
+   "null": null,
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1 (V3)",
+    "file": "vocab1_result.json",
+    "key": "cells.pre/attn2.V3.diff_novel",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; all three checks (above the shuffled null, above control tasks, above the byte baseline) pass: yes",
+   "fit": "unconverged",
+   "bare": null
   },
   {
    "layer": "gw.read.pos",
@@ -1108,23 +2077,52 @@
     "component": "mlp",
     "position": "pre"
    },
-   "value": 0.5634920634920635,
+   "value": 0.6265099153801434,
    "interval": null,
    "n": null,
    "null": {
     "kind": "shuffled labels, 95th percentile",
     "value": 0.20097215942122598
    },
-   "standing": "exploratory",
+   "standing": "preregistered",
    "stake": null,
    "category": null,
    "source": {
-    "experiment": "VOCAB-1",
+    "experiment": "VOCAB-1 (V1)",
     "file": "vocab1_result.json",
-    "key": "cells.pre/mlp2",
+    "key": "cells.pre/mlp2.acc_all",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; majority class 0.190",
+   "fit": "unconverged",
+   "bare": null
+  },
+  {
+   "layer": "gw.read.beyond",
+   "site": {
+    "layer": 2,
+    "component": "mlp",
+    "position": "pre"
+   },
+   "value": 0.14550264550264552,
+   "interval": [
+    0.10097997097796617,
+    0.19221028971028972
+   ],
+   "n": null,
+   "null": null,
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1 (V3)",
+    "file": "vocab1_result.json",
+    "key": "cells.pre/mlp2.V3.diff_novel",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; all three checks (above the shuffled null, above control tasks, above the byte baseline) pass: yes",
+   "fit": "unconverged",
+   "bare": null
   },
   {
    "layer": "gw.read.pos",
@@ -1133,23 +2131,52 @@
     "component": "attn",
     "position": "pre"
    },
-   "value": 0.58994708994709,
+   "value": 0.6359408306956915,
    "interval": null,
    "n": null,
    "null": {
     "kind": "shuffled labels, 95th percentile",
     "value": 0.20167947806989212
    },
-   "standing": "exploratory",
+   "standing": "preregistered",
    "stake": null,
    "category": null,
    "source": {
-    "experiment": "VOCAB-1",
+    "experiment": "VOCAB-1 (V1)",
     "file": "vocab1_result.json",
-    "key": "cells.pre/attn3",
+    "key": "cells.pre/attn3.acc_all",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; majority class 0.190",
+   "fit": "unconverged",
+   "bare": null
+  },
+  {
+   "layer": "gw.read.beyond",
+   "site": {
+    "layer": 3,
+    "component": "attn",
+    "position": "pre"
+   },
+   "value": 0.17195767195767203,
+   "interval": [
+    0.12021590805018774,
+    0.21946231211317416
+   ],
+   "n": null,
+   "null": null,
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1 (V3)",
+    "file": "vocab1_result.json",
+    "key": "cells.pre/attn3.V3.diff_novel",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; all three checks (above the shuffled null, above control tasks, above the byte baseline) pass: yes",
+   "fit": "unconverged",
+   "bare": null
   },
   {
    "layer": "gw.read.pos",
@@ -1158,23 +2185,52 @@
     "component": "mlp",
     "position": "pre"
    },
-   "value": 0.5925925925925926,
+   "value": 0.6478909631160777,
    "interval": null,
    "n": null,
    "null": {
     "kind": "shuffled labels, 95th percentile",
     "value": 0.20250952780828113
    },
-   "standing": "exploratory",
+   "standing": "preregistered",
    "stake": null,
    "category": null,
    "source": {
-    "experiment": "VOCAB-1",
+    "experiment": "VOCAB-1 (V1)",
     "file": "vocab1_result.json",
-    "key": "cells.pre/mlp3",
+    "key": "cells.pre/mlp3.acc_all",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; majority class 0.190",
+   "fit": "unconverged",
+   "bare": null
+  },
+  {
+   "layer": "gw.read.beyond",
+   "site": {
+    "layer": 3,
+    "component": "mlp",
+    "position": "pre"
+   },
+   "value": 0.1746031746031746,
+   "interval": [
+    0.12127515415574346,
+    0.22513552919345217
+   ],
+   "n": null,
+   "null": null,
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1 (V3)",
+    "file": "vocab1_result.json",
+    "key": "cells.pre/mlp3.V3.diff_novel",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; all three checks (above the shuffled null, above control tasks, above the byte baseline) pass: yes",
+   "fit": "unconverged",
+   "bare": null
   },
   {
    "layer": "gw.read.pos",
@@ -1183,23 +2239,52 @@
     "component": "attn",
     "position": "pre"
    },
-   "value": 0.6137566137566137,
+   "value": 0.6726309669917964,
    "interval": null,
    "n": null,
    "null": {
     "kind": "shuffled labels, 95th percentile",
     "value": 0.20381758284348556
    },
-   "standing": "exploratory",
+   "standing": "preregistered",
    "stake": null,
    "category": null,
    "source": {
-    "experiment": "VOCAB-1",
+    "experiment": "VOCAB-1 (V1)",
     "file": "vocab1_result.json",
-    "key": "cells.pre/attn4",
+    "key": "cells.pre/attn4.acc_all",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; majority class 0.190",
+   "fit": "unconverged",
+   "bare": null
+  },
+  {
+   "layer": "gw.read.beyond",
+   "site": {
+    "layer": 4,
+    "component": "attn",
+    "position": "pre"
+   },
+   "value": 0.19576719576719576,
+   "interval": [
+    0.14433919171705747,
+    0.2458352879298335
+   ],
+   "n": null,
+   "null": null,
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1 (V3)",
+    "file": "vocab1_result.json",
+    "key": "cells.pre/attn4.V3.diff_novel",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; all three checks (above the shuffled null, above control tasks, above the byte baseline) pass: yes",
+   "fit": "unconverged",
+   "bare": null
   },
   {
    "layer": "gw.read.pos",
@@ -1208,23 +2293,52 @@
     "component": "mlp",
     "position": "pre"
    },
-   "value": 0.6243386243386243,
+   "value": 0.6845165041018022,
    "interval": null,
    "n": null,
    "null": {
     "kind": "shuffled labels, 95th percentile",
     "value": 0.2030941153672243
    },
-   "standing": "exploratory",
+   "standing": "preregistered",
    "stake": null,
    "category": null,
    "source": {
-    "experiment": "VOCAB-1",
+    "experiment": "VOCAB-1 (V1)",
     "file": "vocab1_result.json",
-    "key": "cells.pre/mlp4",
+    "key": "cells.pre/mlp4.acc_all",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; majority class 0.190",
+   "fit": "unconverged",
+   "bare": null
+  },
+  {
+   "layer": "gw.read.beyond",
+   "site": {
+    "layer": 4,
+    "component": "mlp",
+    "position": "pre"
+   },
+   "value": 0.20634920634920634,
+   "interval": [
+    0.14591846721373183,
+    0.2628591400548827
+   ],
+   "n": null,
+   "null": null,
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1 (V3)",
+    "file": "vocab1_result.json",
+    "key": "cells.pre/mlp4.V3.diff_novel",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; all three checks (above the shuffled null, above control tasks, above the byte baseline) pass: yes",
+   "fit": "unconverged",
+   "bare": null
   },
   {
    "layer": "gw.read.pos",
@@ -1233,23 +2347,52 @@
     "component": "attn",
     "position": "pre"
    },
-   "value": 0.6190476190476191,
+   "value": 0.6933660616239261,
    "interval": null,
    "n": null,
    "null": {
     "kind": "shuffled labels, 95th percentile",
     "value": 0.20167947806989212
    },
-   "standing": "exploratory",
+   "standing": "preregistered",
    "stake": null,
    "category": null,
    "source": {
-    "experiment": "VOCAB-1",
+    "experiment": "VOCAB-1 (V1)",
     "file": "vocab1_result.json",
-    "key": "cells.pre/attn5",
+    "key": "cells.pre/attn5.acc_all",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; majority class 0.190",
+   "fit": "unconverged",
+   "bare": null
+  },
+  {
+   "layer": "gw.read.beyond",
+   "site": {
+    "layer": 5,
+    "component": "attn",
+    "position": "pre"
+   },
+   "value": 0.2010582010582011,
+   "interval": [
+    0.1450709957813075,
+    0.2530001746318179
+   ],
+   "n": null,
+   "null": null,
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1 (V3)",
+    "file": "vocab1_result.json",
+    "key": "cells.pre/attn5.V3.diff_novel",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; all three checks (above the shuffled null, above control tasks, above the byte baseline) pass: yes",
+   "fit": "unconverged",
+   "bare": null
   },
   {
    "layer": "gw.read.pos",
@@ -1258,23 +2401,52 @@
     "component": "mlp",
     "position": "pre"
    },
-   "value": 0.6190476190476191,
+   "value": 0.6956268974872424,
    "interval": null,
    "n": null,
    "null": {
     "kind": "shuffled labels, 95th percentile",
     "value": 0.20239971578063432
    },
-   "standing": "exploratory",
+   "standing": "preregistered",
    "stake": null,
    "category": null,
    "source": {
-    "experiment": "VOCAB-1",
+    "experiment": "VOCAB-1 (V1)",
     "file": "vocab1_result.json",
-    "key": "cells.pre/mlp5",
+    "key": "cells.pre/mlp5.acc_all",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; majority class 0.190",
+   "fit": "unconverged",
+   "bare": null
+  },
+  {
+   "layer": "gw.read.beyond",
+   "site": {
+    "layer": 5,
+    "component": "mlp",
+    "position": "pre"
+   },
+   "value": 0.2010582010582011,
+   "interval": [
+    0.13926412682380235,
+    0.2577508007859815
+   ],
+   "n": null,
+   "null": null,
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1 (V3)",
+    "file": "vocab1_result.json",
+    "key": "cells.pre/mlp5.V3.diff_novel",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict; all three checks (above the shuffled null, above control tasks, above the byte baseline) pass: yes",
+   "fit": "unconverged",
+   "bare": null
   },
   {
    "layer": "gw.parallax",
@@ -1302,7 +2474,9 @@
     "key": "parallax_deg.0",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": "descriptive; the random band is from the series' notes, not this file"
+   "note": "descriptive; the random band is from the series' notes, not this file",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gw.parallax",
@@ -1330,7 +2504,9 @@
     "key": "parallax_deg.1",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": "descriptive; the random band is from the series' notes, not this file"
+   "note": "descriptive; the random band is from the series' notes, not this file",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gw.parallax",
@@ -1358,7 +2534,9 @@
     "key": "parallax_deg.2",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": "descriptive; the random band is from the series' notes, not this file"
+   "note": "descriptive; the random band is from the series' notes, not this file",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gw.parallax",
@@ -1386,7 +2564,9 @@
     "key": "parallax_deg.3",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": "descriptive; the random band is from the series' notes, not this file"
+   "note": "descriptive; the random band is from the series' notes, not this file",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gw.parallax",
@@ -1414,7 +2594,9 @@
     "key": "parallax_deg.4",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": "descriptive; the random band is from the series' notes, not this file"
+   "note": "descriptive; the random band is from the series' notes, not this file",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gw.parallax",
@@ -1442,7 +2624,9 @@
     "key": "parallax_deg.5",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": "descriptive; the random band is from the series' notes, not this file"
+   "note": "descriptive; the random band is from the series' notes, not this file",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gw.push.read",
@@ -1467,7 +2651,9 @@
     "key": "edits.0/read/0.5.T_adj",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gw.push.write",
@@ -1492,7 +2678,9 @@
     "key": "edits.0/write/0.5.T_adj",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": "the stake (writing beats reading at every layer) failed; the measurement stands"
+   "note": "the stake (writing beats reading at every layer) failed; the measurement stands",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gw.push.read",
@@ -1517,7 +2705,9 @@
     "key": "edits.1/read/0.5.T_adj",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gw.push.write",
@@ -1542,7 +2732,9 @@
     "key": "edits.1/write/0.5.T_adj",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": "the stake (writing beats reading at every layer) failed; the measurement stands"
+   "note": "the stake (writing beats reading at every layer) failed; the measurement stands",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gw.push.read",
@@ -1567,7 +2759,9 @@
     "key": "edits.2/read/0.5.T_adj",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gw.push.write",
@@ -1592,7 +2786,9 @@
     "key": "edits.2/write/0.5.T_adj",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": "the stake (writing beats reading at every layer) failed; the measurement stands"
+   "note": "the stake (writing beats reading at every layer) failed; the measurement stands",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gw.push.read",
@@ -1617,7 +2813,9 @@
     "key": "edits.3/read/0.5.T_adj",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gw.push.write",
@@ -1642,7 +2840,9 @@
     "key": "edits.3/write/0.5.T_adj",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": "the stake (writing beats reading at every layer) failed; the measurement stands"
+   "note": "the stake (writing beats reading at every layer) failed; the measurement stands",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gw.push.read",
@@ -1667,7 +2867,9 @@
     "key": "edits.4/read/0.5.T_adj",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gw.push.write",
@@ -1692,7 +2894,9 @@
     "key": "edits.4/write/0.5.T_adj",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": "the stake (writing beats reading at every layer) failed; the measurement stands"
+   "note": "the stake (writing beats reading at every layer) failed; the measurement stands",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gw.push.read",
@@ -1717,7 +2921,9 @@
     "key": "edits.5/read/0.5.T_adj",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gw.push.write",
@@ -1742,7 +2948,9 @@
     "key": "edits.5/write/0.5.T_adj",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": "the stake (writing beats reading at every layer) failed; the measurement stands"
+   "note": "the stake (writing beats reading at every layer) failed; the measurement stands",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gw.knock",
@@ -1755,16 +2963,18 @@
    "interval": null,
    "n": null,
    "null": null,
-   "standing": "exploratory",
+   "standing": "preregistered",
    "stake": null,
    "category": null,
    "source": {
-    "experiment": "CAL-1",
+    "experiment": "CAL-1 (R1)",
     "file": "cal1_result_tanh.json",
     "key": "R1.attn0",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": "measured, not gated; mean realised change 2.21 nats against 0.031 predicted"
+   "note": "mean realised change 2.21 nats against 0.031 predicted directly",
+   "fit": "n/a",
+   "bare": "a reading the calibration recorded and did not gate; no interval is stored"
   },
   {
    "layer": "gw.knock",
@@ -1777,16 +2987,18 @@
    "interval": null,
    "n": null,
    "null": null,
-   "standing": "exploratory",
+   "standing": "preregistered",
    "stake": null,
    "category": null,
    "source": {
-    "experiment": "CAL-1",
+    "experiment": "CAL-1 (R1)",
     "file": "cal1_result_tanh.json",
     "key": "R1.mlp0",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": "measured, not gated; mean realised change 4.12 nats against 0.076 predicted"
+   "note": "mean realised change 4.12 nats against 0.076 predicted directly",
+   "fit": "n/a",
+   "bare": "a reading the calibration recorded and did not gate; no interval is stored"
   },
   {
    "layer": "gw.knock",
@@ -1799,16 +3011,18 @@
    "interval": null,
    "n": null,
    "null": null,
-   "standing": "exploratory",
+   "standing": "preregistered",
    "stake": null,
    "category": null,
    "source": {
-    "experiment": "CAL-1",
+    "experiment": "CAL-1 (R1)",
     "file": "cal1_result_tanh.json",
     "key": "R1.attn1",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": "measured, not gated; mean realised change 0.10 nats against 0.024 predicted"
+   "note": "mean realised change 0.10 nats against 0.024 predicted directly",
+   "fit": "n/a",
+   "bare": "a reading the calibration recorded and did not gate; no interval is stored"
   },
   {
    "layer": "gw.knock",
@@ -1821,16 +3035,18 @@
    "interval": null,
    "n": null,
    "null": null,
-   "standing": "exploratory",
+   "standing": "preregistered",
    "stake": null,
    "category": null,
    "source": {
-    "experiment": "CAL-1",
+    "experiment": "CAL-1 (R1)",
     "file": "cal1_result_tanh.json",
     "key": "R1.mlp1",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": "measured, not gated; mean realised change 0.14 nats against 0.038 predicted"
+   "note": "mean realised change 0.14 nats against 0.038 predicted directly",
+   "fit": "n/a",
+   "bare": "a reading the calibration recorded and did not gate; no interval is stored"
   },
   {
    "layer": "gw.knock",
@@ -1843,16 +3059,18 @@
    "interval": null,
    "n": null,
    "null": null,
-   "standing": "exploratory",
+   "standing": "preregistered",
    "stake": null,
    "category": null,
    "source": {
-    "experiment": "CAL-1",
+    "experiment": "CAL-1 (R1)",
     "file": "cal1_result_tanh.json",
     "key": "R1.attn2",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": "measured, not gated; mean realised change 0.17 nats against 0.045 predicted"
+   "note": "mean realised change 0.17 nats against 0.045 predicted directly",
+   "fit": "n/a",
+   "bare": "a reading the calibration recorded and did not gate; no interval is stored"
   },
   {
    "layer": "gw.knock",
@@ -1865,16 +3083,18 @@
    "interval": null,
    "n": null,
    "null": null,
-   "standing": "exploratory",
+   "standing": "preregistered",
    "stake": null,
    "category": null,
    "source": {
-    "experiment": "CAL-1",
+    "experiment": "CAL-1 (R1)",
     "file": "cal1_result_tanh.json",
     "key": "R1.mlp2",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": "measured, not gated; mean realised change 0.20 nats against 0.062 predicted"
+   "note": "mean realised change 0.20 nats against 0.062 predicted directly",
+   "fit": "n/a",
+   "bare": "a reading the calibration recorded and did not gate; no interval is stored"
   },
   {
    "layer": "gw.knock",
@@ -1887,16 +3107,18 @@
    "interval": null,
    "n": null,
    "null": null,
-   "standing": "exploratory",
+   "standing": "preregistered",
    "stake": null,
    "category": null,
    "source": {
-    "experiment": "CAL-1",
+    "experiment": "CAL-1 (R1)",
     "file": "cal1_result_tanh.json",
     "key": "R1.attn3",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": "measured, not gated; mean realised change 0.20 nats against 0.052 predicted"
+   "note": "mean realised change 0.20 nats against 0.052 predicted directly",
+   "fit": "n/a",
+   "bare": "a reading the calibration recorded and did not gate; no interval is stored"
   },
   {
    "layer": "gw.knock",
@@ -1909,16 +3131,18 @@
    "interval": null,
    "n": null,
    "null": null,
-   "standing": "exploratory",
+   "standing": "preregistered",
    "stake": null,
    "category": null,
    "source": {
-    "experiment": "CAL-1",
+    "experiment": "CAL-1 (R1)",
     "file": "cal1_result_tanh.json",
     "key": "R1.mlp3",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": "measured, not gated; mean realised change 0.27 nats against 0.083 predicted"
+   "note": "mean realised change 0.27 nats against 0.083 predicted directly",
+   "fit": "n/a",
+   "bare": "a reading the calibration recorded and did not gate; no interval is stored"
   },
   {
    "layer": "gw.knock",
@@ -1931,16 +3155,18 @@
    "interval": null,
    "n": null,
    "null": null,
-   "standing": "exploratory",
+   "standing": "preregistered",
    "stake": null,
    "category": null,
    "source": {
-    "experiment": "CAL-1",
+    "experiment": "CAL-1 (R1)",
     "file": "cal1_result_tanh.json",
     "key": "R1.attn4",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": "measured, not gated; mean realised change 0.27 nats against 0.076 predicted"
+   "note": "mean realised change 0.27 nats against 0.076 predicted directly",
+   "fit": "n/a",
+   "bare": "a reading the calibration recorded and did not gate; no interval is stored"
   },
   {
    "layer": "gw.knock",
@@ -1953,16 +3179,18 @@
    "interval": null,
    "n": null,
    "null": null,
-   "standing": "exploratory",
+   "standing": "preregistered",
    "stake": null,
    "category": null,
    "source": {
-    "experiment": "CAL-1",
+    "experiment": "CAL-1 (R1)",
     "file": "cal1_result_tanh.json",
     "key": "R1.mlp4",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": "measured, not gated; mean realised change 0.32 nats against 0.170 predicted"
+   "note": "mean realised change 0.32 nats against 0.170 predicted directly",
+   "fit": "n/a",
+   "bare": "a reading the calibration recorded and did not gate; no interval is stored"
   },
   {
    "layer": "gw.knock",
@@ -1975,16 +3203,18 @@
    "interval": null,
    "n": null,
    "null": null,
-   "standing": "exploratory",
+   "standing": "preregistered",
    "stake": null,
    "category": null,
    "source": {
-    "experiment": "CAL-1",
+    "experiment": "CAL-1 (R1)",
     "file": "cal1_result_tanh.json",
     "key": "R1.attn5",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": "measured, not gated; mean realised change 0.32 nats against 0.172 predicted"
+   "note": "mean realised change 0.32 nats against 0.172 predicted directly",
+   "fit": "n/a",
+   "bare": "a reading the calibration recorded and did not gate; no interval is stored"
   },
   {
    "layer": "gw.knock",
@@ -1997,16 +3227,288 @@
    "interval": null,
    "n": null,
    "null": null,
-   "standing": "exploratory",
+   "standing": "preregistered",
    "stake": null,
    "category": null,
    "source": {
-    "experiment": "CAL-1",
+    "experiment": "CAL-1 (R1)",
     "file": "cal1_result_tanh.json",
     "key": "R1.mlp5",
     "provenance": "CIRISAI/RATCHET at deef52d43645"
    },
-   "note": "measured, not gated; mean realised change 0.48 nats against 0.580 predicted"
+   "note": "mean realised change 0.48 nats against 0.580 predicted directly",
+   "fit": "n/a",
+   "bare": "a reading the calibration recorded and did not gate; no interval is stored"
+  },
+  {
+   "layer": "gw.category.early",
+   "site": {
+    "layer": 0,
+    "component": "mlp",
+    "position": null
+   },
+   "value": 0.24481123546570066,
+   "interval": [
+    0.22858861496363406,
+    0.25994582467689475
+   ],
+   "n": [
+    1538,
+    1349
+   ],
+   "null": null,
+   "standing": "preregistered",
+   "stake": "held",
+   "category": "first letter b",
+   "source": {
+    "experiment": "PARALLAX-2 (P1)",
+    "file": "parallax2_result.json",
+    "key": "P1.0.cells.b",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": null,
+   "fit": "n/a",
+   "bare": null
+  },
+  {
+   "layer": "gw.category.early",
+   "site": {
+    "layer": 0,
+    "component": "mlp",
+    "position": null
+   },
+   "value": 0.28898542661329585,
+   "interval": [
+    0.2498198402749164,
+    0.32778481535813325
+   ],
+   "n": [
+    1957,
+    402
+   ],
+   "null": null,
+   "standing": "preregistered",
+   "stake": "held",
+   "category": "first letter l",
+   "source": {
+    "experiment": "PARALLAX-2 (P1)",
+    "file": "parallax2_result.json",
+    "key": "P1.0.cells.l",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": null,
+   "fit": "n/a",
+   "bare": null
+  },
+  {
+   "layer": "gw.category.early",
+   "site": {
+    "layer": 0,
+    "component": "mlp",
+    "position": null
+   },
+   "value": 0.1093814677072966,
+   "interval": [
+    0.09751193428703206,
+    0.12117080468635402
+   ],
+   "n": [
+    2934,
+    12322
+   ],
+   "null": null,
+   "standing": "preregistered",
+   "stake": "held",
+   "category": "first letter other",
+   "source": {
+    "experiment": "PARALLAX-2 (P1)",
+    "file": "parallax2_result.json",
+    "key": "P1.0.cells.other",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": null,
+   "fit": "n/a",
+   "bare": null
+  },
+  {
+   "layer": "gw.category.early",
+   "site": {
+    "layer": 1,
+    "component": "mlp",
+    "position": null
+   },
+   "value": 0.21449506201387097,
+   "interval": [
+    0.20116299590263784,
+    0.2280874009598102
+   ],
+   "n": [
+    1538,
+    1349
+   ],
+   "null": null,
+   "standing": "preregistered",
+   "stake": "held",
+   "category": "first letter b",
+   "source": {
+    "experiment": "PARALLAX-2 (P1)",
+    "file": "parallax2_result.json",
+    "key": "P1.1.cells.b",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": null,
+   "fit": "n/a",
+   "bare": null
+  },
+  {
+   "layer": "gw.category.early",
+   "site": {
+    "layer": 1,
+    "component": "mlp",
+    "position": null
+   },
+   "value": 0.17340362274632865,
+   "interval": [
+    0.14171748301936427,
+    0.20730151174767633
+   ],
+   "n": [
+    1957,
+    402
+   ],
+   "null": null,
+   "standing": "preregistered",
+   "stake": "held",
+   "category": "first letter l",
+   "source": {
+    "experiment": "PARALLAX-2 (P1)",
+    "file": "parallax2_result.json",
+    "key": "P1.1.cells.l",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": null,
+   "fit": "n/a",
+   "bare": null
+  },
+  {
+   "layer": "gw.category.early",
+   "site": {
+    "layer": 1,
+    "component": "mlp",
+    "position": null
+   },
+   "value": 0.11173733257564078,
+   "interval": [
+    0.10022928606925557,
+    0.12284173662420145
+   ],
+   "n": [
+    2934,
+    12322
+   ],
+   "null": null,
+   "standing": "preregistered",
+   "stake": "held",
+   "category": "first letter other",
+   "source": {
+    "experiment": "PARALLAX-2 (P1)",
+    "file": "parallax2_result.json",
+    "key": "P1.1.cells.other",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": null,
+   "fit": "n/a",
+   "bare": null
+  },
+  {
+   "layer": "gw.category.early",
+   "site": {
+    "layer": 2,
+    "component": "mlp",
+    "position": null
+   },
+   "value": 0.2756556611628007,
+   "interval": [
+    0.2597723540752503,
+    0.29280318251819315
+   ],
+   "n": [
+    1538,
+    1349
+   ],
+   "null": null,
+   "standing": "preregistered",
+   "stake": "held",
+   "category": "first letter b",
+   "source": {
+    "experiment": "PARALLAX-2 (P1)",
+    "file": "parallax2_result.json",
+    "key": "P1.2.cells.b",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": null,
+   "fit": "n/a",
+   "bare": null
+  },
+  {
+   "layer": "gw.category.early",
+   "site": {
+    "layer": 2,
+    "component": "mlp",
+    "position": null
+   },
+   "value": 0.2263385335597066,
+   "interval": [
+    0.1900542078593813,
+    0.2644941824989448
+   ],
+   "n": [
+    1957,
+    402
+   ],
+   "null": null,
+   "standing": "preregistered",
+   "stake": "held",
+   "category": "first letter l",
+   "source": {
+    "experiment": "PARALLAX-2 (P1)",
+    "file": "parallax2_result.json",
+    "key": "P1.2.cells.l",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": null,
+   "fit": "n/a",
+   "bare": null
+  },
+  {
+   "layer": "gw.category.early",
+   "site": {
+    "layer": 2,
+    "component": "mlp",
+    "position": null
+   },
+   "value": 0.17287395137748798,
+   "interval": [
+    0.15841820329112127,
+    0.18725880773819598
+   ],
+   "n": [
+    2934,
+    12322
+   ],
+   "null": null,
+   "standing": "preregistered",
+   "stake": "held",
+   "category": "first letter other",
+   "source": {
+    "experiment": "PARALLAX-2 (P1)",
+    "file": "parallax2_result.json",
+    "key": "P1.2.cells.other",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.read.kind",
@@ -2031,7 +3533,9 @@
     "key": "[0].probe",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.lens.kind",
@@ -2056,7 +3560,9 @@
     "key": "[0].lens",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.read.kind",
@@ -2081,7 +3587,9 @@
     "key": "[1].probe",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.lens.kind",
@@ -2106,7 +3614,9 @@
     "key": "[1].lens",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.read.kind",
@@ -2131,7 +3641,9 @@
     "key": "[2].probe",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.lens.kind",
@@ -2156,7 +3668,9 @@
     "key": "[2].lens",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.read.kind",
@@ -2181,7 +3695,9 @@
     "key": "[3].probe",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.lens.kind",
@@ -2206,7 +3722,9 @@
     "key": "[3].lens",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.read.kind",
@@ -2231,7 +3749,9 @@
     "key": "[4].probe",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.lens.kind",
@@ -2256,7 +3776,9 @@
     "key": "[4].lens",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.read.kind",
@@ -2281,7 +3803,9 @@
     "key": "[5].probe",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.lens.kind",
@@ -2306,7 +3830,9 @@
     "key": "[5].lens",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.read.kind",
@@ -2331,7 +3857,9 @@
     "key": "[6].probe",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.lens.kind",
@@ -2356,7 +3884,9 @@
     "key": "[6].lens",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.read.kind",
@@ -2381,7 +3911,9 @@
     "key": "[7].probe",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.lens.kind",
@@ -2406,7 +3938,9 @@
     "key": "[7].lens",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.read.kind",
@@ -2431,7 +3965,9 @@
     "key": "[8].probe",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.lens.kind",
@@ -2456,7 +3992,9 @@
     "key": "[8].lens",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.read.kind",
@@ -2481,7 +4019,9 @@
     "key": "[9].probe",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.lens.kind",
@@ -2506,7 +4046,9 @@
     "key": "[9].lens",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.read.kind",
@@ -2531,7 +4073,9 @@
     "key": "[10].probe",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.lens.kind",
@@ -2556,7 +4100,9 @@
     "key": "[10].lens",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.read.kind",
@@ -2581,7 +4127,9 @@
     "key": "[11].probe",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.lens.kind",
@@ -2606,7 +4154,9 @@
     "key": "[11].lens",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.read.kind",
@@ -2631,7 +4181,9 @@
     "key": "[12].probe",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.lens.kind",
@@ -2656,7 +4208,9 @@
     "key": "[12].lens",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.read.kind",
@@ -2681,7 +4235,9 @@
     "key": "[13].probe",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.lens.kind",
@@ -2706,7 +4262,9 @@
     "key": "[13].lens",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.read.kind",
@@ -2731,7 +4289,9 @@
     "key": "[14].probe",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.lens.kind",
@@ -2756,7 +4316,9 @@
     "key": "[14].lens",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.read.kind",
@@ -2781,7 +4343,9 @@
     "key": "[15].probe",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.lens.kind",
@@ -2806,7 +4370,9 @@
     "key": "[15].lens",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.read.kind",
@@ -2831,7 +4397,9 @@
     "key": "[16].probe",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.lens.kind",
@@ -2856,7 +4424,9 @@
     "key": "[16].lens",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.read.kind",
@@ -2881,7 +4451,9 @@
     "key": "[17].probe",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.lens.kind",
@@ -2906,7 +4478,9 @@
     "key": "[17].lens",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.read.kind",
@@ -2931,7 +4505,9 @@
     "key": "[18].probe",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.lens.kind",
@@ -2956,7 +4532,9 @@
     "key": "[18].lens",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.read.kind",
@@ -2981,7 +4559,9 @@
     "key": "[19].probe",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.lens.kind",
@@ -3006,7 +4586,9 @@
     "key": "[19].lens",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.read.kind",
@@ -3031,7 +4613,9 @@
     "key": "[20].probe",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.lens.kind",
@@ -3056,7 +4640,9 @@
     "key": "[20].lens",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.read.kind",
@@ -3081,7 +4667,9 @@
     "key": "[21].probe",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.lens.kind",
@@ -3106,7 +4694,9 @@
     "key": "[21].lens",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.read.kind",
@@ -3131,7 +4721,9 @@
     "key": "[22].probe",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.lens.kind",
@@ -3156,7 +4748,9 @@
     "key": "[22].lens",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.read.kind",
@@ -3181,7 +4775,9 @@
     "key": "[23].probe",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.lens.kind",
@@ -3206,7 +4802,9 @@
     "key": "[23].lens",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.read.kind",
@@ -3231,7 +4829,9 @@
     "key": "[24].probe",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.lens.kind",
@@ -3256,7 +4856,9 @@
     "key": "[24].lens",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.read.kind",
@@ -3281,7 +4883,9 @@
     "key": "[25].probe",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.lens.kind",
@@ -3306,7 +4910,9 @@
     "key": "[25].lens",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.read.kind",
@@ -3331,7 +4937,9 @@
     "key": "[26].probe",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.lens.kind",
@@ -3356,7 +4964,9 @@
     "key": "[26].lens",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.read.kind",
@@ -3381,7 +4991,9 @@
     "key": "[27].probe",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.lens.kind",
@@ -3406,7 +5018,9 @@
     "key": "[27].lens",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.read.kind",
@@ -3431,7 +5045,9 @@
     "key": "[28].probe",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.lens.kind",
@@ -3456,7 +5072,9 @@
     "key": "[28].lens",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.read.kind",
@@ -3481,7 +5099,9 @@
     "key": "[29].probe",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.lens.kind",
@@ -3506,7 +5126,9 @@
     "key": "[29].lens",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.read.kind",
@@ -3531,7 +5153,9 @@
     "key": "[30].probe",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.lens.kind",
@@ -3556,7 +5180,9 @@
     "key": "[30].lens",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.read.kind",
@@ -3581,7 +5207,9 @@
     "key": "[31].probe",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.lens.kind",
@@ -3606,7 +5234,9 @@
     "key": "[31].lens",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.read.kind",
@@ -3631,7 +5261,9 @@
     "key": "[32].probe",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.lens.kind",
@@ -3656,7 +5288,9 @@
     "key": "[32].lens",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.read.kind",
@@ -3681,7 +5315,9 @@
     "key": "[33].probe",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.lens.kind",
@@ -3706,7 +5342,9 @@
     "key": "[33].lens",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.read.kind",
@@ -3731,7 +5369,9 @@
     "key": "[34].probe",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.lens.kind",
@@ -3756,7 +5396,9 @@
     "key": "[34].lens",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": null
+   "note": null,
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.closure",
@@ -3781,7 +5423,9 @@
     "key": "asked.P2[0].inc",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "the view predicts its own write no better than a shuffled one (0.72 against 0.69)"
+   "note": "the view predicts its own write no better than a shuffled one (0.72 against 0.69)",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.closure",
@@ -3806,7 +5450,9 @@
     "key": "asked.P2[1].inc",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "the view predicts its own write no better than a shuffled one (0.87 against 0.88)"
+   "note": "the view predicts its own write no better than a shuffled one (0.87 against 0.88)",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.closure",
@@ -3831,7 +5477,9 @@
     "key": "asked.P2[2].inc",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "the view predicts its own write no better than a shuffled one (0.91 against 0.90)"
+   "note": "the view predicts its own write no better than a shuffled one (0.91 against 0.90)",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.closure",
@@ -3856,7 +5504,9 @@
     "key": "asked.P2[3].inc",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "the view predicts its own write no better than a shuffled one (0.64 against 0.72)"
+   "note": "the view predicts its own write no better than a shuffled one (0.64 against 0.72)",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.closure",
@@ -3881,7 +5531,9 @@
     "key": "asked.P2[4].inc",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "the view predicts its own write no better than a shuffled one (0.59 against 0.69)"
+   "note": "the view predicts its own write no better than a shuffled one (0.59 against 0.69)",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.closure",
@@ -3906,7 +5558,9 @@
     "key": "asked.P2[5].inc",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "the view predicts its own write no better than a shuffled one (0.67 against 0.71)"
+   "note": "the view predicts its own write no better than a shuffled one (0.67 against 0.71)",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.closure",
@@ -3931,7 +5585,9 @@
     "key": "asked.P2[6].inc",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "the view predicts its own write no better than a shuffled one (0.76 against 0.83)"
+   "note": "the view predicts its own write no better than a shuffled one (0.76 against 0.83)",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.closure",
@@ -3956,7 +5612,9 @@
     "key": "asked.P2[7].inc",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "the view predicts its own write no better than a shuffled one (0.75 against 0.79)"
+   "note": "the view predicts its own write no better than a shuffled one (0.75 against 0.79)",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.closure",
@@ -3981,7 +5639,9 @@
     "key": "asked.P2[8].inc",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "the view predicts its own write no better than a shuffled one (0.74 against 0.76)"
+   "note": "the view predicts its own write no better than a shuffled one (0.74 against 0.76)",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.closure",
@@ -4006,7 +5666,9 @@
     "key": "asked.P2[9].inc",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "the view predicts its own write no better than a shuffled one (0.77 against 0.82)"
+   "note": "the view predicts its own write no better than a shuffled one (0.77 against 0.82)",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.closure",
@@ -4031,7 +5693,9 @@
     "key": "asked.P2[10].inc",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "the view predicts its own write no better than a shuffled one (0.81 against 0.85)"
+   "note": "the view predicts its own write no better than a shuffled one (0.81 against 0.85)",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.closure",
@@ -4056,7 +5720,9 @@
     "key": "asked.P2[11].inc",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "the view predicts its own write no better than a shuffled one (0.78 against 0.82)"
+   "note": "the view predicts its own write no better than a shuffled one (0.78 against 0.82)",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.closure",
@@ -4081,7 +5747,9 @@
     "key": "asked.P2[12].inc",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "the view predicts its own write no better than a shuffled one (0.90 against 0.93)"
+   "note": "the view predicts its own write no better than a shuffled one (0.90 against 0.93)",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.closure",
@@ -4106,7 +5774,9 @@
     "key": "asked.P2[13].inc",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "the view predicts its own write no better than a shuffled one (0.69 against 0.74)"
+   "note": "the view predicts its own write no better than a shuffled one (0.69 against 0.74)",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.closure",
@@ -4131,7 +5801,9 @@
     "key": "asked.P2[14].inc",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "the view predicts its own write no better than a shuffled one (0.71 against 0.71)"
+   "note": "the view predicts its own write no better than a shuffled one (0.71 against 0.71)",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.closure",
@@ -4156,7 +5828,9 @@
     "key": "asked.P2[15].inc",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "the view predicts its own write no better than a shuffled one (0.81 against 0.76)"
+   "note": "the view predicts its own write no better than a shuffled one (0.81 against 0.76)",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.closure",
@@ -4181,7 +5855,9 @@
     "key": "asked.P2[16].inc",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "the view predicts its own write no better than a shuffled one (0.87 against 0.81)"
+   "note": "the view predicts its own write no better than a shuffled one (0.87 against 0.81)",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.closure",
@@ -4206,7 +5882,9 @@
     "key": "asked.P2[17].inc",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "the view predicts its own write no better than a shuffled one (0.84 against 0.79)"
+   "note": "the view predicts its own write no better than a shuffled one (0.84 against 0.79)",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.closure",
@@ -4231,7 +5909,9 @@
     "key": "asked.P2[18].inc",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "the view predicts its own write no better than a shuffled one (0.82 against 0.78)"
+   "note": "the view predicts its own write no better than a shuffled one (0.82 against 0.78)",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.closure",
@@ -4256,7 +5936,9 @@
     "key": "asked.P2[19].inc",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "the view predicts its own write no better than a shuffled one (0.69 against 0.69)"
+   "note": "the view predicts its own write no better than a shuffled one (0.69 against 0.69)",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.closure",
@@ -4281,7 +5963,9 @@
     "key": "asked.P2[20].inc",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "the view predicts its own write no better than a shuffled one (0.75 against 0.69)"
+   "note": "the view predicts its own write no better than a shuffled one (0.75 against 0.69)",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.closure",
@@ -4306,7 +5990,9 @@
     "key": "asked.P2[21].inc",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "the view predicts its own write no better than a shuffled one (0.87 against 0.87)"
+   "note": "the view predicts its own write no better than a shuffled one (0.87 against 0.87)",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.closure",
@@ -4331,7 +6017,9 @@
     "key": "asked.P2[22].inc",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "the view predicts its own write no better than a shuffled one (0.84 against 0.76)"
+   "note": "the view predicts its own write no better than a shuffled one (0.84 against 0.76)",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.closure",
@@ -4356,7 +6044,9 @@
     "key": "asked.P2[23].inc",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "the view predicts its own write no better than a shuffled one (0.82 against 0.76)"
+   "note": "the view predicts its own write no better than a shuffled one (0.82 against 0.76)",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.closure",
@@ -4381,7 +6071,9 @@
     "key": "asked.P2[24].inc",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "the view predicts its own write no better than a shuffled one (0.75 against 0.66)"
+   "note": "the view predicts its own write no better than a shuffled one (0.75 against 0.66)",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.closure",
@@ -4406,7 +6098,9 @@
     "key": "asked.P2[25].inc",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "the view predicts its own write no better than a shuffled one (0.35 against 0.34)"
+   "note": "the view predicts its own write no better than a shuffled one (0.35 against 0.34)",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.closure",
@@ -4431,7 +6125,9 @@
     "key": "asked.P2[26].inc",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "the view predicts its own write no better than a shuffled one (0.47 against 0.39)"
+   "note": "the view predicts its own write no better than a shuffled one (0.47 against 0.39)",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.closure",
@@ -4456,7 +6152,9 @@
     "key": "asked.P2[27].inc",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "the view predicts its own write no better than a shuffled one (0.74 against 0.65)"
+   "note": "the view predicts its own write no better than a shuffled one (0.74 against 0.65)",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.closure",
@@ -4481,7 +6179,9 @@
     "key": "asked.P2[28].inc",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "the view predicts its own write no better than a shuffled one (0.70 against 0.63)"
+   "note": "the view predicts its own write no better than a shuffled one (0.70 against 0.63)",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.closure",
@@ -4506,7 +6206,9 @@
     "key": "asked.P2[29].inc",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "the view predicts its own write no better than a shuffled one (0.82 against 0.76)"
+   "note": "the view predicts its own write no better than a shuffled one (0.82 against 0.76)",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.closure",
@@ -4531,7 +6233,9 @@
     "key": "asked.P2[30].inc",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "the view predicts its own write no better than a shuffled one (0.93 against 0.89)"
+   "note": "the view predicts its own write no better than a shuffled one (0.93 against 0.89)",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.closure",
@@ -4556,7 +6260,9 @@
     "key": "asked.P2[31].inc",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "the view predicts its own write no better than a shuffled one (0.73 against 0.64)"
+   "note": "the view predicts its own write no better than a shuffled one (0.73 against 0.64)",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.closure",
@@ -4581,7 +6287,9 @@
     "key": "asked.P2[32].inc",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "the view predicts its own write no better than a shuffled one (0.76 against 0.69)"
+   "note": "the view predicts its own write no better than a shuffled one (0.76 against 0.69)",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.closure",
@@ -4606,7 +6314,9 @@
     "key": "asked.P2[33].inc",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "the view predicts its own write no better than a shuffled one (0.91 against 0.85)"
+   "note": "the view predicts its own write no better than a shuffled one (0.91 against 0.85)",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.remove",
@@ -4631,7 +6341,9 @@
     "key": "asked-8.kind.probe",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "clean 0.815; control B removed 0.63 of the variance the kind subspace did"
+   "note": "clean 0.815; control B removed 0.63 of the variance the kind subspace did",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.remove",
@@ -4656,7 +6368,9 @@
     "key": "asked-12.kind.probe",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "clean 0.815; control B removed 0.74 of the variance the kind subspace did"
+   "note": "clean 0.815; control B removed 0.74 of the variance the kind subspace did",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.remove",
@@ -4681,7 +6395,9 @@
     "key": "asked-14.kind.probe",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "clean 0.823; control B removed 0.70 of the variance the kind subspace did"
+   "note": "clean 0.823; control B removed 0.70 of the variance the kind subspace did",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.remove",
@@ -4706,7 +6422,9 @@
     "key": "asked-16.kind.probe",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "clean 0.815; control B removed 0.48 of the variance the kind subspace did"
+   "note": "clean 0.815; control B removed 0.48 of the variance the kind subspace did",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.remove",
@@ -4731,7 +6449,9 @@
     "key": "asked-20.kind.probe",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "clean 0.815; control B removed 0.29 of the variance the kind subspace did"
+   "note": "clean 0.815; control B removed 0.29 of the variance the kind subspace did",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.remove",
@@ -4756,7 +6476,9 @@
     "key": "asked-24.kind.probe",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "clean 0.815; control B removed 0.26 of the variance the kind subspace did"
+   "note": "clean 0.815; control B removed 0.26 of the variance the kind subspace did",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.remove",
@@ -4781,7 +6503,9 @@
     "key": "asked-28.kind.probe",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "clean 0.815; control B removed 0.32 of the variance the kind subspace did"
+   "note": "clean 0.815; control B removed 0.32 of the variance the kind subspace did",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -4803,7 +6527,9 @@
     "key": "[layer 3 attn].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -4825,7 +6551,9 @@
     "key": "[layer 14 attn].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -4847,7 +6575,9 @@
     "key": "[layer 24 ple].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -4869,7 +6599,9 @@
     "key": "[layer 8 mlp].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -4891,7 +6623,9 @@
     "key": "[layer 12 attn].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -4913,7 +6647,9 @@
     "key": "[layer 1 mlp].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -4935,7 +6671,9 @@
     "key": "[layer 13 mlp].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -4957,7 +6695,9 @@
     "key": "[layer 5 mlp].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -4979,7 +6719,9 @@
     "key": "[layer 4 attn].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -5001,7 +6743,9 @@
     "key": "[layer 10 attn].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -5023,7 +6767,9 @@
     "key": "[layer 33 ple].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -5045,7 +6791,9 @@
     "key": "[layer 15 attn].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -5067,7 +6815,9 @@
     "key": "[layer 22 ple].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -5089,7 +6839,9 @@
     "key": "[layer 10 ple].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -5111,7 +6863,9 @@
     "key": "[layer 12 ple].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -5133,7 +6887,9 @@
     "key": "[layer 9 attn].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -5155,7 +6911,9 @@
     "key": "[layer 3 mlp].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -5177,7 +6935,9 @@
     "key": "[layer 34 attn].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -5199,7 +6959,9 @@
     "key": "[layer 17 attn].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -5221,7 +6983,9 @@
     "key": "[layer 26 attn].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -5243,7 +7007,9 @@
     "key": "[layer 30 attn].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -5265,7 +7031,9 @@
     "key": "[layer 28 ple].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -5287,7 +7055,9 @@
     "key": "[layer 33 attn].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -5309,7 +7079,9 @@
     "key": "[layer 2 mlp].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -5331,7 +7103,9 @@
     "key": "[layer 0 ple].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -5353,7 +7127,9 @@
     "key": "[layer 5 ple].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -5375,7 +7151,9 @@
     "key": "[layer 23 ple].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -5397,7 +7175,9 @@
     "key": "[layer 1 attn].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -5419,7 +7199,9 @@
     "key": "[layer 32 attn].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -5441,7 +7223,9 @@
     "key": "[layer 26 ple].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -5463,7 +7247,9 @@
     "key": "[layer 11 attn].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -5485,7 +7271,9 @@
     "key": "[layer 32 ple].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -5507,7 +7295,9 @@
     "key": "[layer 27 attn].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -5529,7 +7319,9 @@
     "key": "[layer 9 mlp].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -5551,7 +7343,9 @@
     "key": "[layer 16 attn].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -5573,7 +7367,9 @@
     "key": "[layer 18 mlp].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -5595,7 +7391,9 @@
     "key": "[layer 31 attn].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -5617,7 +7415,9 @@
     "key": "[layer 13 ple].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -5639,7 +7439,9 @@
     "key": "[layer 27 ple].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -5661,7 +7463,9 @@
     "key": "[layer 19 ple].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -5683,7 +7487,9 @@
     "key": "[layer 4 ple].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -5705,7 +7511,9 @@
     "key": "[layer 29 ple].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -5727,7 +7535,9 @@
     "key": "[layer 8 attn].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -5749,7 +7559,9 @@
     "key": "[layer 25 ple].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -5771,7 +7583,9 @@
     "key": "[layer 30 ple].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -5793,7 +7607,9 @@
     "key": "[layer 2 attn].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -5815,7 +7631,9 @@
     "key": "[layer 32 mlp].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -5837,7 +7655,9 @@
     "key": "[layer 2 ple].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -5859,7 +7679,9 @@
     "key": "[layer 3 ple].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -5881,7 +7703,9 @@
     "key": "[layer 31 ple].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -5903,7 +7727,9 @@
     "key": "[layer 30 mlp].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -5925,7 +7751,9 @@
     "key": "[layer 31 mlp].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -5947,7 +7775,9 @@
     "key": "[layer 14 mlp].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -5969,7 +7799,9 @@
     "key": "[layer 22 mlp].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -5991,7 +7823,9 @@
     "key": "[layer 27 mlp].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -6013,7 +7847,9 @@
     "key": "[layer 5 attn].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -6035,7 +7871,9 @@
     "key": "[layer 6 ple].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -6057,7 +7895,9 @@
     "key": "[layer 6 attn].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -6079,7 +7919,9 @@
     "key": "[layer 1 ple].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -6101,7 +7943,9 @@
     "key": "[layer 21 ple].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -6123,7 +7967,9 @@
     "key": "[layer 20 attn].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -6145,7 +7991,9 @@
     "key": "[layer 17 mlp].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -6167,7 +8015,9 @@
     "key": "[layer 15 mlp].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -6189,7 +8039,9 @@
     "key": "[layer 20 ple].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -6211,7 +8063,9 @@
     "key": "[layer 7 attn].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -6233,7 +8087,9 @@
     "key": "[layer 10 mlp].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -6255,7 +8111,9 @@
     "key": "[layer 9 ple].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -6277,7 +8135,9 @@
     "key": "[layer 16 mlp].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -6299,7 +8159,9 @@
     "key": "[layer 0 mlp].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -6321,7 +8183,9 @@
     "key": "[layer 33 mlp].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -6343,7 +8207,9 @@
     "key": "[layer 18 ple].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -6365,7 +8231,9 @@
     "key": "[layer 24 attn].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -6387,7 +8255,9 @@
     "key": "[layer 11 ple].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -6409,7 +8279,9 @@
     "key": "[layer 8 ple].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -6431,7 +8303,9 @@
     "key": "[layer 23 attn].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -6453,7 +8327,9 @@
     "key": "[layer 28 mlp].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -6475,7 +8351,9 @@
     "key": "[layer 13 attn].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -6497,7 +8375,9 @@
     "key": "[layer 22 attn].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -6519,7 +8399,9 @@
     "key": "[layer 34 ple].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -6541,7 +8423,9 @@
     "key": "[layer 34 mlp].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -6563,7 +8447,9 @@
     "key": "[layer 24 mlp].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -6585,7 +8471,9 @@
     "key": "[layer 12 mlp].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -6607,7 +8495,9 @@
     "key": "[layer 14 ple].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -6629,7 +8519,9 @@
     "key": "[layer 29 attn].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -6651,7 +8543,9 @@
     "key": "[layer 0 attn].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -6673,7 +8567,9 @@
     "key": "[layer 25 mlp].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -6695,7 +8591,9 @@
     "key": "[layer 19 attn].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -6717,7 +8615,9 @@
     "key": "[layer 7 mlp].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -6739,7 +8639,9 @@
     "key": "[layer 21 attn].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -6761,7 +8663,9 @@
     "key": "[layer 28 attn].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -6783,7 +8687,9 @@
     "key": "[layer 18 attn].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -6805,7 +8711,9 @@
     "key": "[layer 17 ple].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -6827,7 +8735,9 @@
     "key": "[layer 15 ple].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -6849,7 +8759,9 @@
     "key": "[layer 29 mlp].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -6871,7 +8783,9 @@
     "key": "[layer 6 mlp].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -6893,7 +8807,9 @@
     "key": "[layer 11 mlp].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -6915,7 +8831,9 @@
     "key": "[layer 20 mlp].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -6937,7 +8855,9 @@
     "key": "[layer 7 ple].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -6959,7 +8879,9 @@
     "key": "[layer 4 mlp].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -6981,7 +8903,9 @@
     "key": "[layer 16 ple].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -7003,7 +8927,9 @@
     "key": "[layer 26 mlp].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -7025,7 +8951,9 @@
     "key": "[layer 21 mlp].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -7047,7 +8975,9 @@
     "key": "[layer 19 mlp].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -7069,7 +8999,9 @@
     "key": "[layer 23 mlp].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   },
   {
    "layer": "gm.attrib",
@@ -7091,7 +9023,9 @@
     "key": "[layer 25 attn].direct",
     "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
    },
-   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+   "note": "void: the frame does not close on this file, so these do not sum to the answer",
+   "fit": "n/a",
+   "bare": null
   }
  ]
 }

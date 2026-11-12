@@ -1,16 +1,20 @@
 {
  "reference": "SCOPE-0 (what has been measured of two language models, by site)",
- "version": 1,
+ "version": 2,
+ "changes": "version 2 (2026-11-12), on the corrections of the session that owns the instrument: the part-of-speech probe was paired with a null of a different quantity (novel-word accuracy against an all-word null) and is now accuracy on all words against that null, with a second view for what is readable beyond the surface bytes; VOCAB-1 was called exploratory and is preregistered and UNCONVERGED, carried as a separate field; the push views read the log-probability of the adjective word, not log-odds; the parallax scale cut off its own null band; PARALLAX-2 added. No loop result is imported: every one so far ran on a superseded engine.",
  "table": "scope_table.json",
- "bytes": 178708,
- "sha256": "b4dfce70c697b344f4e6a0a2fcc85f5e5075679dbdf80de24a81f954930b707a",
- "rows": 290,
+ "bytes": 228466,
+ "sha256": "c6f38d6521aa0661ddbd155d9cb67dcf09e18fbb2e8dab18e7d3ee1a3c183a71",
+ "rows": 338,
  "rows_by_layer_and_standing": {
   "gw.identity": {
    "preregistered": 5
   },
   "gw.read.pos": {
-   "exploratory": 39
+   "preregistered": 39
+  },
+  "gw.read.beyond": {
+   "preregistered": 39
   },
   "gw.parallax": {
    "exploratory": 6
@@ -22,7 +26,10 @@
    "preregistered": 6
   },
   "gw.knock": {
-   "exploratory": 12
+   "preregistered": 12
+  },
+  "gw.category.early": {
+   "preregistered": 9
   },
   "gm.read.kind": {
    "preregistered": 35
@@ -50,6 +57,7 @@
    "RATCHET:experiments/kindscope/vocab1_result.json": "f65524448f02205a1114539f904018a54c56573e02eb8fea93f197aec8786b15",
    "RATCHET:experiments/kindscope/edit2_result.json": "8f0b226e0b444b7f30b046a645e7cc34b5aa983c0513efff2bd2e1fc09275e40",
    "RATCHET:experiments/kindscope/cal1_result_tanh.json": "11ff245798c63468c7119dea5fd808a1cfde1428a723012b37ca6965b7344d6c",
+   "RATCHET:experiments/kindscope/parallax2_result.json": "6957fcaf818b07f1d1e25211521a75bceab37878f68e01fa0a70a05bb37b0161",
    "handoff:f1.json": "bb4d58fb8ccfc1c8624b0207d12e020db2f69d5d4adbd0a777188f20a0df78eb",
    "handoff:holon_obs.json": "beeec366e01e9cebe47f40cf9f0801e275307a47eeb2e4872d232da6874dd21f",
    "handoff:holon_int2.json": "06e468d3397caa26a71dfb8a8e933b97caa9bc132c22b6ce1392092d45d8fc2a",
@@ -63,7 +71,7 @@
  "law": "a cell is a reading in a regime: its model, file, prompt, position and kind are part of the value. No cell is carried to a neighbouring site, to another model, or to another kind of reading.",
  "standings": {
   "preregistered": "measured under a preregistration, with an interval or a null beside it",
-  "exploratory": "measured while exploring, or provisional by the series' own label; a lead, not a finding",
+  "exploratory": "formed by looking: descriptive or found while exploring; a lead, not a finding",
   "void": "a number exists but its instrument does not hold here (the frame does not close, or the stake's plant failed); drawn as void, never as a value"
  },
  "holds_no_real_feature": "no person or place; sites are layers and blocks of two public model files, values are aggregate statistics over prompts",
@@ -72,6 +80,7 @@
   "GoldWorm rows are English children's stories at byte level; Gemma rows are 124 curated items",
   "intervals are 95 % intervals as stored; no file stores a standard error",
   "the hand-over bundle is not under version control; its files are pinned by digest alone",
-  "which experiments a layer draws on was chosen by the CIRISHolon session; the RATCHET session owns the instrument and has not yet confirmed this selection"
+  "which experiments a layer draws on was chosen by the CIRISHolon session and corrected once by the RATCHET session, which owns the instrument (2026-11-12)",
+  "not yet in the table: the loop's stakes (none live), MLP0-4, EDIT-2's withdrawal, and the gate's prices from PARALLAX-H"
  ]
 }

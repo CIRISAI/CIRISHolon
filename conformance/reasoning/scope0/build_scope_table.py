@@ -41,15 +41,19 @@ MODELS = {
 LAYERS = [
     {"id": "gw.identity", "model": "goldworm-v6", "title": "Word identity", "kind": "share of a write's variance explained by the word's form (eta squared), at a word's last byte",
      "unit": "share", "domain": [0, 1], "null": "the same with forms shuffled, 95th percentile", "question": "Where is the word written?"},
-    {"id": "gw.read.pos", "model": "goldworm-v6", "title": "Part of speech, readable", "kind": "accuracy of a linear probe for the part of speech (10 classes) on words not seen in fitting",
-     "unit": "accuracy", "domain": [0, 1], "null": "the same probe on shuffled labels, 95th percentile", "question": "Where can a reader find the category?"},
+    {"id": "gw.read.pos", "model": "goldworm-v6", "title": "Part of speech, readable", "kind": "accuracy of a linear probe for the part of speech (10 classes) on all test words",
+     "unit": "accuracy", "domain": [0, 1], "null": "the same probe on shuffled labels, 95th percentile (the same quantity)", "question": "Where can a reader find the category?"},
+    {"id": "gw.read.beyond", "model": "goldworm-v6", "title": "Readable beyond the surface bytes", "kind": "probe accuracy on words not seen in fitting, minus the accuracy of a probe that sees only the word's bytes",
+     "unit": "accuracy difference", "domain": [-0.3, 0.3], "null": "zero; the interval is beside each value", "question": "Does the state hold the category, or only the spelling a reader could use?"},
+    {"id": "gw.category.early", "model": "goldworm-v6", "title": "The category, written early", "kind": "lift of adjectives over nouns when the layer is pushed along a direction that is neither the probe's nor a next-byte forecast, by the word's first letter, on unseen text",
+     "unit": "nats", "domain": [-0.3, 0.3], "null": "zero; the interval is beside each value", "question": "Is the category itself written, apart from what a reader finds and from the next byte?"},
     {"id": "gw.parallax", "model": "goldworm-v6", "title": "Reading against writing", "kind": "angle between the direction a probe reads adjective-or-noun from and the direction the model writes it with",
-     "unit": "degrees", "domain": [0, 90], "null": "two random directions in 192 dimensions: 81.9 to 98.1 degrees (95 %)", "question": "Is what a reader finds what the model uses?"},
-    {"id": "gw.push.write", "model": "goldworm-v6", "title": "Pushed along the writing direction", "kind": "change in log-odds of an adjective after a determiner when the layer's state is pushed along the WRITING direction at half the write's norm",
+     "unit": "degrees", "domain": [60, 100], "null": "two random directions in 192 dimensions: 81.9 to 98.1 degrees (95 %)", "question": "Is what a reader finds what the model uses?"},
+    {"id": "gw.push.write", "model": "goldworm-v6", "title": "Pushed along the writing direction", "kind": "change in the log-probability of the adjective WORD after a determiner (summed over the word's bytes) when the layer's state is pushed along the WRITING direction at half the write's norm",
      "unit": "nats", "domain": [-0.6, 0.6], "null": "zero; the interval is beside each value", "question": "Does pushing where the model writes move the behaviour?"},
     {"id": "gw.push.read", "model": "goldworm-v6", "title": "Pushed along the reading direction", "kind": "the same push along the probe's READING direction at half the write's norm",
      "unit": "nats", "domain": [-0.6, 0.6], "null": "zero; the interval is beside each value", "question": "Does pushing where a reader looks move the behaviour?"},
-    {"id": "gw.knock", "model": "goldworm-v6", "title": "Does attribution predict a knock-out?", "kind": "correlation, over positions, between a write's direct (linear) attribution to the answer and the realised change when that write is knocked out",
+    {"id": "gw.knock", "model": "goldworm-v6", "title": "Does direct attribution predict a knock-out?", "kind": "correlation, over 2,000 positions, between a write's DIRECT attribution (final norm frozen, through the head) and the realised change in the true next byte's log-probability when that write is zeroed",
      "unit": "correlation", "domain": [-1, 1], "null": "none stored", "question": "Can the effect of removing a block be read off without removing it?"},
     {"id": "gm.read.kind", "model": "gemma-4-e2b-q4", "title": "The kind, readable", "kind": "accuracy of a linear probe for the twelve kinds on the layer's state, asked prompt, cross-validated",
      "unit": "accuracy", "domain": [0, 1], "null": "chance is 1/12; no shuffled probe is stored in this file", "question": "Where can a reader find the kind?"},
@@ -68,9 +72,13 @@ class Refuse(Exception):
     pass
 
 
-def row(layer, site, value, standing, source, interval=None, n=None, null=None, stake=None, category=None, note=None):
+FITS = ("converged", "unconverged", "n/a")
+
+
+def row(layer, site, value, standing, source, interval=None, n=None, null=None, stake=None, category=None, note=None, fit="n/a", bare=None):
+    """`fit`: did the fit behind the value converge. `bare`: why a preregistered value has neither interval nor null."""
     return {"layer": layer, "site": site, "value": value, "interval": interval, "n": n, "null": null, "standing": standing, "stake": stake,
-            "category": category, "source": source, "note": note}
+            "category": category, "source": source, "note": note, "fit": fit, "bare": bare}
 
 
 def site(layer, component, position=None):
@@ -96,8 +104,10 @@ def check(table):
         src = r["source"]
         if not (src.get("experiment") and src.get("file") and src.get("key")):
             raise Refuse("a row with no experiment, file or key in %s at %s" % (r["layer"], s))
-        if r["standing"] == "preregistered" and r["interval"] is None and r["null"] is None:
-            raise Refuse("a preregistered row with neither an interval nor a null in %s at %s" % (r["layer"], s))
+        if r["standing"] == "preregistered" and r["interval"] is None and r["null"] is None and not r.get("bare"):
+            raise Refuse("a preregistered row with neither an interval nor a null, and no stated reason, in %s at %s" % (r["layer"], s))
+        if r.get("fit", "n/a") not in FITS:
+            raise Refuse("a fit that is none of %s in %s at %s" % (FITS, r["layer"], s))
         if r["standing"] != "void" and m["frame"] != "closed" and l["id"].endswith("attrib"):
             raise Refuse("an attribution in a frame that does not close must be void")
         k = (r["layer"], s["layer"], s["component"], s["position"], r["category"])
@@ -124,9 +134,13 @@ def build(read_k, read_h):
     for key, c in d["cells"].items():
         pos, st = key.split("/")
         comp, li = ("embed", 0) if st == "embed" else (st[:-1], int(st[-1]))
-        rows.append(row("gw.read.pos", site(li, comp, pos), c["acc_novel"], "exploratory", src("VOCAB-1", "vocab1_result.json", "cells." + key, p),
-                        null={"kind": "shuffled labels, 95th percentile", "value": c["V1"]["null_p95"]},
-                        note="provisional: the series marks this run unconverged; majority class %.3f" % d["majority_acc_test"]))
+        why = "frozen before it ran, but every probe stopped at its iteration cap: not to be read as a verdict"
+        rows.append(row("gw.read.pos", site(li, comp, pos), c["acc_all"], "preregistered", src("VOCAB-1 (V1)", "vocab1_result.json", "cells.%s.acc_all" % key, p),
+                        null={"kind": "shuffled labels, 95th percentile", "value": c["V1"]["null_p95"]}, fit="unconverged",
+                        note=why + "; majority class %.3f" % d["majority_acc_test"]))
+        rows.append(row("gw.read.beyond", site(li, comp, pos), c["V3"]["diff_novel"], "preregistered", src("VOCAB-1 (V3)", "vocab1_result.json", "cells.%s.V3.diff_novel" % key, p),
+                        interval=c["V3"]["ci95"], fit="unconverged",
+                        note=why + "; all three checks (above the shuffled null, above control tasks, above the byte baseline) pass: %s" % ("yes" if c["carried_beyond_surface"] else "no")))
     d, p = read_k("edit2_result.json")
     for li, v in d["parallax_deg"].items():
         rows.append(row("gw.parallax", site(int(li), "mlp"), v, "exploratory", src("EDIT-2", "edit2_result.json", "parallax_deg." + li, p),
@@ -141,8 +155,14 @@ def build(read_k, read_h):
                         note="the stake (writing beats reading at every layer) failed; the measurement stands" if which == "write" else None))
     d, p = read_k("cal1_result_tanh.json")
     for name, c in d["R1"].items():
-        rows.append(row("gw.knock", site(int(name[-1]), name[:-1]), c["corr"], "exploratory", src("CAL-1", "cal1_result_tanh.json", "R1." + name, p),
-                        note="measured, not gated; mean realised change %.2f nats against %.3f predicted" % (c["mean_abs_real"], c["mean_abs_lin"])))
+        rows.append(row("gw.knock", site(int(name[-1]), name[:-1]), c["corr"], "preregistered", src("CAL-1 (R1)", "cal1_result_tanh.json", "R1." + name, p),
+                        bare="a reading the calibration recorded and did not gate; no interval is stored",
+                        note="mean realised change %.2f nats against %.3f predicted directly" % (c["mean_abs_real"], c["mean_abs_lin"])))
+    d, p = read_k("parallax2_result.json")
+    for li in ("0", "1", "2"):
+        for cell, c in d["P1"][li]["cells"].items():
+            rows.append(row("gw.category.early", site(int(li), "mlp"), c["mean"], "preregistered", src("PARALLAX-2 (P1)", "parallax2_result.json", "P1.%s.cells.%s" % (li, cell), p),
+                            interval=c["ci95"], n=c["n"], stake="held", category="first letter " + cell))
     d, p = read_h("f1.json")
     for c in d:
         rows.append(row("gm.read.kind", site(c["layer"], "state"), c["probe"], "preregistered", src("PROBE-HOLON-1 amendment 3", "f1.json", "[%d].probe" % c["layer"], p),
@@ -166,9 +186,10 @@ def build(read_k, read_h):
         rows.append(row("gm.attrib", site(c["layer"], c["comp"]), c["direct"], "void", src("scope.py attribution", "attrib_Premises.json", "[layer %d %s].direct" % (c["layer"], c["comp"]), p),
                         category="Premises", note="void: the frame does not close on this file, so these do not sum to the answer"))
     return {"what": "SCOPE-0: what has been measured of two language models, site by site, copied from result files and never computed here",
-            "models": MODELS, "layers": LAYERS, "standings": {
+            "models": MODELS, "layers": LAYERS, "fits": {"converged": "the fit behind the value reached its stopping rule", "unconverged": "the fit stopped at its iteration cap; the value is not a verdict", "n/a": "no iterative fit, or the file does not say"},
+            "standings": {
                 "preregistered": "measured under a preregistration, with an interval or a null beside it",
-                "exploratory": "measured while exploring, or provisional by the series' own label; a lead, not a finding",
+                "exploratory": "formed by looking: descriptive or found while exploring; a lead, not a finding",
                 "void": "a number exists but its instrument does not hold here (the frame does not close, or the stake's plant failed); drawn as void, never as a value"},
             "rows": rows}
 
@@ -231,7 +252,8 @@ def main():
     for r in table["rows"]:
         per.setdefault(r["layer"], {}).setdefault(r["standing"], 0)
         per[r["layer"]][r["standing"]] += 1
-    side = {"reference": "SCOPE-0 (what has been measured of two language models, by site)", "version": 1, "table": "scope_table.json", "bytes": len(body),
+    side = {"reference": "SCOPE-0 (what has been measured of two language models, by site)", "version": 2,
+            "changes": "version 2 (2026-11-12), on the corrections of the session that owns the instrument: the part-of-speech probe was paired with a null of a different quantity (novel-word accuracy against an all-word null) and is now accuracy on all words against that null, with a second view for what is readable beyond the surface bytes; VOCAB-1 was called exploratory and is preregistered and UNCONVERGED, carried as a separate field; the push views read the log-probability of the adjective word, not log-odds; the parallax scale cut off its own null band; PARALLAX-2 added. No loop result is imported: every one so far ran on a superseded engine.", "table": "scope_table.json", "bytes": len(body),
             "sha256": hashlib.sha256(body).hexdigest(), "rows": n, "rows_by_layer_and_standing": per,
             "serves": ["a model explorer: one exact kind of reading per map; a cell with no row is drawn as not measured"],
             "provenance": {"ratchet_commit": commit, "files": used},
@@ -241,7 +263,8 @@ def main():
             "holds_no_real_feature": "no person or place; sites are layers and blocks of two public model files, values are aggregate statistics over prompts",
             "limits": ["two models, one checkpoint and one quantisation each", "GoldWorm rows are English children's stories at byte level; Gemma rows are 124 curated items",
                        "intervals are 95 % intervals as stored; no file stores a standard error", "the hand-over bundle is not under version control; its files are pinned by digest alone",
-                       "which experiments a layer draws on was chosen by the CIRISHolon session; the RATCHET session owns the instrument and has not yet confirmed this selection"]}
+                       "which experiments a layer draws on was chosen by the CIRISHolon session and corrected once by the RATCHET session, which owns the instrument (2026-11-12)",
+                       "not yet in the table: the loop's stakes (none live), MLP0-4, EDIT-2's withdrawal, and the gate's prices from PARALLAX-H"]}
     json.dump(side, open(os.path.join(out, "sidecar.json"), "w"), indent=1, ensure_ascii=False)
     print(n, "rows;", json.dumps(per))
     return 0

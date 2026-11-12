@@ -1,5 +1,7 @@
 # DEVICES-0 (United States) — devices per household by kind and household size, which of them are on all day anyway, and the twin's three device censuses scored. PREREGISTRATION (DRAFT)
 
+*REVIEWED 2026-11-11 (`DEVICES0_REVIEW.md`): fixed in `DEVICES0_PREREG.md`, which replaces this text. Kept as written.*
+
 *DRAFT of 2026-11-11. NOT FROZEN; to be attacked by a second reader first. NOT APPROVED:
 the dataset below has not been approved by the lead by name. Nothing has been fetched or
 computed. Data facts are from `SCOUT_DEVICES_POWER.md` (documentation only) and are

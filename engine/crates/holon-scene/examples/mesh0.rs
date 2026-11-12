@@ -15,8 +15,8 @@ fn counts(c: &Counts) -> String {
     )
 }
 
-const SETTINGS: [(&str, HostSetting); 7] = [
-    ("NONE", HostSetting::None), ("ANY-COMPUTER", HostSetting::AnyComputer), ("DECLARED", HostSetting::Declared), ("TWIN", HostSetting::Twin { ppm: 600_000 }),
+const SETTINGS: [(&str, HostSetting); 8] = [
+    ("NONE", HostSetting::None), ("CERTIFIED-EVENT", HostSetting::CertifiedEvent), ("ANY-COMPUTER", HostSetting::AnyComputer), ("DECLARED", HostSetting::Declared), ("TWIN", HostSetting::Twin { ppm: 600_000 }),
     ("TWIN-IN-DECLARED", HostSetting::TwinInDeclared { ppm: 600_000 }), ("HOSTLESS-OLD", HostSetting::HostlessOld), ("ALL", HostSetting::All),
 ];
 
@@ -42,9 +42,10 @@ fn describe(us: &UsPopulation, label: &str) {
     let twin = hosts(us, HostSetting::Twin { ppm: 600_000 }, 77);
     let twin_on_undeclared = twin.iter().zip(d).filter(|(&t, x)| t && !(x.fixed_line || x.desktop)).count();
     println!(
-        "{{\"kind\":\"population\",\"label\":\"{label}\",\"households\":{n},\"addressees\":{},\"awake_hours\":{},\"person_hours\":{},\"closed_form_ppm\":{},\"hourly_on\":{},\"desktop\":{},\"fixed_line\":{},\"desktop_or_line\":{},\"nothing_to_host_on\":{},\"addressees_in_hostless\":{},\"twin_hosts\":{},\"twin_hosts_on_undeclared\":{},\"children_phones\":{},\"adults_without_phone\":{},\"off_runs\":{}}}",
+        "{{\"kind\":\"population\",\"label\":\"{label}\",\"households\":{n},\"addressees\":{},\"awake_hours\":{},\"person_hours\":{},\"closed_form_ppm\":{},\"hourly_on\":{},\"desktop\":{},\"fixed_line\":{},\"desktop_or_line\":{},\"nothing_to_host_on\":{},\"certified_nothing\":{},\"addressees_in_certified_nothing\":{},\"addressees_in_hostless\":{},\"twin_hosts\":{},\"twin_hosts_on_undeclared\":{},\"children_phones\":{},\"adults_without_phone\":{},\"off_runs\":{}}}",
         us.pop.persons.len(), us.awake_hours, us.person_hours, closed_form_ppm(&us.pop), arr(&hourly), c(&|x| x.desktop), c(&|x| x.fixed_line), c(&|x| x.desktop || x.fixed_line),
-        c(&|x| !(x.fixed_line || x.desktop || x.laptop)), in_hostless, twin.iter().filter(|&&x| x).count(), twin_on_undeclared,
+        c(&|x| !(x.fixed_line || x.desktop || x.laptop)), c(&|x| !(x.fixed_line || x.desktop || x.laptop || x.tablet)),
+        us.pop.persons.iter().filter(|p| { let x = &d[p.household as usize]; !(x.fixed_line || x.desktop || x.laptop || x.tablet) }).count(), in_hostless, twin.iter().filter(|&&x| x).count(), twin_on_undeclared,
         d.iter().map(|x| x.children_phones as u64).sum::<u64>(), d.iter().map(|x| x.adults_without_phone as u64).sum::<u64>(), arr(&runs)
     );
 }
@@ -82,9 +83,11 @@ fn main() {
         let s = child_seed(seed, 1000 + k);
         let us = us_population(s, per_class, 0, Join::Afresh, 0, false);
         let c = simulate(&us.pop, &hosts(&us, HostSetting::AnyComputer, 0), 237_000, 4, s);
+        let cc = simulate(&us.pop, &hosts(&us, HostSetting::CertifiedEvent, 0), 237_000, 4, s);
+        let cert = us.pop.persons.iter().filter(|p| { let x = &us.declared[p.household as usize]; !(x.fixed_line || x.desktop || x.laptop || x.tablet) }).count();
         let d = &us.declared;
         let hostless = us.pop.persons.iter().filter(|p| { let x = &d[p.household as usize]; !(x.fixed_line || x.desktop || x.laptop) }).count();
-        println!("{{\"kind\":\"seed\",\"k\":{k},\"messages\":{},\"at_once\":{},\"left\":{},\"addressees\":{},\"addressees_in_hostless\":{}}}", c.messages, c.at_once, c.left_to_someone_else, us.pop.persons.len(), hostless);
+        println!("{{\"kind\":\"seed\",\"k\":{k},\"messages\":{},\"at_once\":{},\"left\":{},\"addressees\":{},\"addressees_in_hostless\":{},\"left_certified\":{},\"addressees_in_certified_nothing\":{}}}", c.messages, c.at_once, c.left_to_someone_else, us.pop.persons.len(), hostless, cc.left_to_someone_else, cert);
     }
     println!("{{\"kind\":\"digest\",\"value\":\"{digest}\"}}");
 }

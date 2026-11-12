@@ -1,0 +1,39 @@
+{
+ "reference": "MESH-0 (who holds the message; a composition of three generators, United States)",
+ "version": 1,
+ "table": "mesh0_table.json",
+ "bytes": 25478,
+ "sha256": "2ac6d4ec7d359819342e2dc4dac5242bd0d291fd3397bb4b4830cea753e4a627",
+ "serves_registry_rows": [
+  "delivery: the share of messages taken at once, held by the sender, handed to a host at home, or left to someone else; waits; the seat's queue by hour"
+ ],
+ "generator": "holon_scene::world::delivery (engine/crates/holon-scene/src/delivery.rs); carrier examples/mesh0.rs; assembler conformance/scene/mesh0/mesh0.py",
+ "preregistration": "conformance/scene/MESH0_PREREG.md (with its CORRECTION of 2026-11-12)",
+ "results": "conformance/scene/MESH0_RESULTS.md",
+ "verdict": {
+  "all_rows": "unresolved",
+  "set_by": [
+   "household sizes (HOUSEGEN-1, United States)",
+   "desktop and laptop counts (DEVICEGEN-1)",
+   "two days of one person joined",
+   "members of a household drawn independently",
+   "whether a host is on"
+  ],
+  "reason": "a composed count takes the lowest verdict among its inputs; an input used outside what it was scored on enters as unresolved"
+ },
+ "envelope": {
+  "country": "United States",
+  "population": "100,000 generated households, 20,000 in each of five density classes with equal weight (not a country's class mix)",
+  "day": "Monday to Thursday unless a row says Saturday",
+  "persons": "adults drawn with a smartphone"
+ },
+ "law": "each share is a count on a generated population under stated settings (host, phone rule, join between days, tie share). None is a measurement of a network. The host settings run from a floor to a ceiling because nobody knows which households have a host that is on.",
+ "holds_no_real_feature": "no person, household or place; a generated population",
+ "limits": [
+  "no reading here says a mesh works: that needs a bound on hold time and a seat's capacity",
+  "household members are drawn independently and two days of a person are joined without having been scored",
+  "0.196 of generated adults are drawn with no smartphone and are not addressees; DEVICES-0 read 0.999 smartphones per adult on average; whether one adult in five has none was not checked here",
+  "senders outside the household are random adults on the same clock; no time zones, no tie between who messages whom and their hours"
+ ],
+ "digest_native_and_wasm32": "9036240698812664959"
+}

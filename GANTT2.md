@@ -1768,3 +1768,22 @@ Records cited; nothing below changes a tier's status.*
 - **Carried:** the file marks no year as estimated; 2025 exists for under half the countries.
 
 *(Placed at the end, as above.)*
+
+### 2026-11-12 — MESH-0: who holds the message; the first composition of three generators
+
+- **Published** (`conformance/scene/MESH0_RESULTS.md`, `conformance/scene/tables/mesh0/`,
+  `engine/crates/holon-scene/src/delivery.rs`): for 100,000 generated households, where a
+  message to a person goes. No data fetched. Every count unresolved, with the list of
+  what it rests on.
+- **First run stopped at its gate:** the freeze called a wider event "the certified
+  event" (a tablet is a computer there). Dated CORRECTION, committed alone; no stake had
+  been read.
+- **MET (S1):** the share taken at once (0.858) is the arithmetic of the published hourly
+  shares (0.849). **MET (S2):** two phones and nothing else deliver 0.98 within 12 hours.
+  **Neither (S3):** a host at home adds 0.005 to 0.016 within 4 hours: little speed.
+- **What decides the seat's load:** which households have a host that is on, 0.006 to
+  0.142 of messages; no reference exists. The twin's 0.60 puts 0.21 of its hosts where
+  nothing is declared.
+- **Not read:** reachability, time zones, rooms, media. Nothing here says a mesh works.
+
+*(Placed at the end, as above.)*

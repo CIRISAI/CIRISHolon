@@ -32,9 +32,9 @@ def main():
                          "C2_desktop_or_fixed_line": p0["desktop_or_line"] / p0["households"],
                          "C3_left_under_NONE_is_one_minus_at_once": 1 - share(runs[(BASE, T0, "NONE")], "at_once")}
     awake = p0["awake_hours"] / p0["person_hours"]
-    nothing = p0["nothing_to_host_on"] / p0["households"]
+    nothing = p0["certified_nothing"] / p0["households"]
     sums = all(r["at_once"] + sum(r["peer_wait"]) == r["messages"] and r["at_once"] + sum(r["host_wait"]) == r["messages"] for r in runs.values())
-    out["G0"] = {"outcomes_sum": sums, "awake_share_generated": awake, "nothing_to_host_on_generated": nothing,
+    out["G0"] = {"outcomes_sum": sums, "awake_share_generated": awake, "nothing_to_host_on_generated_as_certified": nothing, "no_fixed_line_laptop_or_desktop": p0["nothing_to_host_on"] / p0["households"],
                  "pass": bool(sums and abs(awake - 0.623) <= 0.02 and abs(nothing - 0.088) <= 0.01)}
     if not out["G0"]["pass"]:
         out["branch"] = "(e): the gate failed"
@@ -66,13 +66,15 @@ def main():
     left = {}
     for label in pops:
         for t in (237000, 290000, 520000):
-            for host in ("NONE", "ANY-COMPUTER", "DECLARED", "TWIN", "TWIN-IN-DECLARED", "HOSTLESS-OLD"):
+            for host in ("NONE", "CERTIFIED-EVENT", "ANY-COMPUTER", "DECLARED", "TWIN", "TWIN-IN-DECLARED", "HOSTLESS-OLD"):
                 left["%s | t %.3f | %s" % (label, t / 1e6, host)] = share(runs[(label, t, host)], "left")
     out["left_to_someone_else"] = left
     out["twin_hosts_on_households_with_nothing_declared"] = p0["twin_hosts_on_undeclared"] / p0["twin_hosts"]
     ratios = [(s["left"] / s["messages"]) / ((1 - s["at_once"] / s["messages"]) * s["addressees_in_hostless"] / s["addressees"]) for s in seeds]
     ho = runs[(BASE, T0, "HOSTLESS-OLD")]
+    rc = [(s["left_certified"] / s["messages"]) / ((1 - s["at_once"] / s["messages"]) * s["addressees_in_certified_nothing"] / s["addressees"]) for s in seeds]
     out["product_reading"] = {"ratio_mean_over_20_seeds": statistics.mean(ratios), "ratio_sd": statistics.pstdev(ratios), "ratios": ratios,
+                              "under_CERTIFIED_EVENT_mean": statistics.mean(rc), "under_CERTIFIED_EVENT_sd": statistics.pstdev(rc),
                               "HOSTLESS_OLD_left_over_ANY_COMPUTER_left": ho["left"] / runs[(BASE, T0, "ANY-COMPUTER")]["left"]}
 
     def quart(h):
@@ -94,11 +96,12 @@ def main():
                        "share_waiting_over_hours": {str(t): sum(r["host_wait"][t + 1:]) / held for t in (1, 4, 8, 12)},
                        "distribution": [v / held for v in r["host_wait"]]}
     out["waits_with_a_host"] = waits
-    out["seat_queue_peak_over_mean"] = {h: max(runs[(BASE, T0, h)]["held_by_hour"]) / (sum(runs[(BASE, T0, h)]["held_by_hour"]) / 24) for h in ("NONE", "ANY-COMPUTER")}
+    out["seat_queue_peak_over_mean"] = {h: max(runs[(BASE, T0, h)]["held_by_hour"]) / (sum(runs[(BASE, T0, h)]["held_by_hour"]) / 24) for h in ("NONE", "CERTIFIED-EVENT", "ANY-COMPUTER")}
     out["seat_queue_by_slot_NONE_share_of_peak"] = [v / max(r0["held_by_hour"]) for v in r0["held_by_hour"]]
     L = lambda label, t, host: share(runs[(label, t, host)], "left")
     out["swings_in_left_to_someone_else"] = {
-        "host setting (NONE to ANY-COMPUTER)": L(BASE, T0, "NONE") - L(BASE, T0, "ANY-COMPUTER"),
+        "host setting (NONE to CERTIFIED-EVENT)": L(BASE, T0, "NONE") - L(BASE, T0, "CERTIFIED-EVENT"),
+        "host setting (CERTIFIED-EVENT to ANY-COMPUTER)": L(BASE, T0, "ANY-COMPUTER") - L(BASE, T0, "CERTIFIED-EVENT"),
         "host setting (ANY-COMPUTER to DECLARED)": L(BASE, T0, "DECLARED") - L(BASE, T0, "ANY-COMPUTER"),
         "phone rule (0.15 off), under TWIN": L("Mon-Thu|afresh|off150000|independent", T0, "TWIN") - L(BASE, T0, "TWIN"),
         "tie share 0.237 to 0.52, under TWIN": L(BASE, 520000, "TWIN") - L(BASE, T0, "TWIN"),

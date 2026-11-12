@@ -183,6 +183,7 @@ pub struct Declared {
     pub fixed_line: bool,
     pub desktop: bool,
     pub laptop: bool,
+    pub tablet: bool,
     pub seniors: u8,
     /// Phones held by children, and adults with no phone: counted, not addressed.
     pub children_phones: u8,
@@ -260,7 +261,7 @@ pub fn us_population(seed: u64, households_per_class: u32, day_type: u8, join: J
                 }
                 out.pop.members.push(members);
                 out.declared.push(Declared {
-                    fixed_line: d.gateway_declared(), desktop: d.has_desktop(), laptop: d.counts[0] > 0, seniors: d.seniors,
+                    fixed_line: d.gateway_declared(), desktop: d.has_desktop(), laptop: d.counts[0] > 0, tablet: d.counts[2] > 0, seniors: d.seniors,
                     children_phones: d.phones[2], adults_without_phone: without,
                 });
             }
@@ -273,7 +274,10 @@ pub fn us_population(seed: u64, households_per_class: u32, day_type: u8, join: J
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum HostSetting {
     None,
-    /// A fixed line, or any laptop or desktop. Its complement is DEVICEGEN-1's certified event.
+    /// A fixed line, or a laptop, desktop or tablet. Its complement is the event DEVICEGEN-1
+    /// certified ("nothing to host on"); generous, since a tablet does not host.
+    CertifiedEvent,
+    /// A fixed line, or a laptop or desktop. Its complement is wider than the certified event.
     AnyComputer,
     /// A fixed line or a desktop: everything DEVICEGEN-1 declares able to host.
     Declared,
@@ -293,6 +297,7 @@ pub fn hosts(us: &UsPopulation, setting: HostSetting, seed: u64) -> Vec<bool> {
     match setting {
         HostSetting::None => vec![false; d.len()],
         HostSetting::All => vec![true; d.len()],
+        HostSetting::CertifiedEvent => d.iter().map(|x| any(x) || x.tablet).collect(),
         HostSetting::AnyComputer => d.iter().map(any).collect(),
         HostSetting::Declared => d.iter().map(dec).collect(),
         HostSetting::Twin { ppm } => (0..d.len()).map(|i| Stream::new(child_seed(seed, i as u64)).below(1_000_000) < ppm as u64).collect(),
@@ -511,6 +516,7 @@ mod tests {
         assert_eq!(n(HostSetting::None), 0);
         assert_eq!(n(HostSetting::All), 2000);
         assert!(n(HostSetting::Declared) <= n(HostSetting::AnyComputer));
+        assert!(n(HostSetting::AnyComputer) <= n(HostSetting::CertifiedEvent));
         assert_eq!(n(HostSetting::HostlessOld), n(HostSetting::AnyComputer));
         assert_eq!(n(HostSetting::TwinInDeclared { ppm: 600_000 }), 1200);
         let (t, d) = (hosts(&us, HostSetting::TwinInDeclared { ppm: 600_000 }, 9), hosts(&us, HostSetting::Declared, 9));

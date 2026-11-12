@@ -1,5 +1,7 @@
 # HOUSEGEN-2 — households per tile from the tile's exact density and its surroundings, with a tile-level effect: four generators compared on held-out tiles. PREREGISTRATION (DRAFT)
 
+*REVIEWED 2026-11-11 (`HOUSEGEN2_REVIEW.md`): fixed in `HOUSEGEN2_PREREG.md`, which replaces this text. Kept as written.*
+
 *DRAFT of 2026-11-11. NOT FROZEN; to be attacked by a second reader first. It follows
 `HOUSEGEN1_RESULTS.md`, which found the class row is the right centre and far too narrow
 (real tiles vary 2 to 12 times more than independent draws) and that for most households

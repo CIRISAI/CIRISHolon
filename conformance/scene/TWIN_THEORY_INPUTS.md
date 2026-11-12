@@ -64,3 +64,56 @@ and networks the mesh would replace, per user or per byte; (5) traffic per devic
 - So the model can reach "the locality share is X to Y given measured tie distances, for a
   stated act mix" and "the fleet draws A to B watts per household given a measured fleet
   and measured device powers". It cannot reach a single percentage saving.
+
+## The lead's correction, 2026-11-11: power savings is a DELTA from the status quo
+
+In the lead's words: "it is delta from status quo not gross total"; "people use phones
+regardless". That is right, and it names what the existing figure does wrong on both sides.
+
+- **The mesh side** should count only what the mesh ADDS: extra wake-ups, radio time and
+  relaying on devices people already own and run, plus the whole draw of any device that
+  is switched on, or kept on, only for the mesh. The scaling model's "marginal share"
+  (phone `0.05`) is a guess at the first; its always-on boxes at share `1.0` assume none
+  of them would be on anyway. A home router is on all day already; a node on that
+  hardware adds little.
+- **The baseline side** should count only what the mesh REMOVES: the data-centre and
+  network energy of the workload that moves, not the `415 TWh` of every data-centre
+  workload there is.
+- So the quantity is: added draw on existing devices + draw of devices added − avoided
+  draw upstream, per household or per user. It can be negative or positive, and its sign
+  is not known.
+
+**What that changes in the inputs wanted:**
+1. Which always-on devices a household ALREADY has (router, set-top box, network storage,
+   smart speaker, an old computer left on), not only how many phones.
+2. The added energy per event on a phone (a wake-up, a radio tail, a relayed byte), which
+   is a measurement of the software on hardware and not a scene field.
+3. Hours awake and on which network, since the protocol's fixed cadence (about 127
+   wake-ups per device-hour while awake, by the twin's count) multiplies it.
+4. The upstream energy attributable to the workload displaced, per user or per byte, with
+   its year.
+
+## The twin's corrected order of fields (its code pass, parts 3 to 6)
+
+Neither test can consume most new fields until the twin changes: the locality test reads
+only room membership against one of 181 localities, and no energy pass exists.
+
+1. **Traffic share by kind of group, with the distance band of each group's members**
+   (household, kin, work or school, neighbourhood, interest, public; bands at household,
+   street, tile, city, the twin's locality, region, world). This is the only field that
+   moves the locality headline. Its own first-order model: locality ≈ family share × 1 +
+   community share × the local share of community groups. If a share `f` of family
+   deliveries left the locality the headline falls by about `0.65 f`.
+2. **Presence by hour of week:** awake, on which network, charging. Every duty cycle is
+   flat today.
+3. **The device census by kind with always-on share**, which also has to reconcile three
+   censuses in the twin that disagree (2.25 devices per person on the page; 1 phone, 0.5
+   laptop and 0.6 home node per household in the fine tier; tier and fleet shares in the
+   scaling model).
+4. **Uplink class and NAT** (a consumer already exists).
+5. **Device power** as one sourced table per class and radio state, not a scene field.
+6. **Buildings** last: nothing reads them yet.
+
+Its three least-trusted inputs: room placement and the act mix; the device power table
+and server-tier share; the 181-locality partition itself (the largest holds 8.4 % of the
+grid's population, so "never leaves the locality" is a sub-continental statement).

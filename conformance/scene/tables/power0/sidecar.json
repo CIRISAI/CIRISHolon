@@ -1,19 +1,20 @@
 {
  "reference": "POWER-0 (a table of priors)",
- "version": 1,
+ "version": 2,
  "table": "power_table.json",
- "bytes": 10621,
- "sha256": "9decc6436915511a71460856018e776c46941adc7d267470378bfa52ae9cd7a9",
+ "bytes": 14343,
+ "sha256": "9689d96c06ec38a7a36d540d43c18f3473c7a74b8b336eaa32cc5fda27347e56",
  "serves_registry_rows": [
   "device.energy (the twin's energy delta: per class and state, with a would-be-on-anyway flag and a year)"
  ],
  "provenance": "conformance/scene/SCOUT_DEVICES_POWER.md (documentation only; each row says whether it was read on the publisher's page, is the scout's reading of the source, or is a search summary)",
  "verdict": {
   "all_rows": "unresolved",
-  "reason": "priors gathered from documents; no generator and no measurement has been scored against them; several are regulatory targets or model inputs, not measured draw"
+  "reason": "priors gathered from documents; nothing scored. Four rows are MEASURED sales-weighted averages for new US network equipment; the rest are regulatory targets or model inputs"
  },
  "law": "each row is a price in a regime: its year and basis are part of the value; none should be carried to another regime without saying so",
  "warning": "network energy is mostly baseload per line. Pricing traffic kept local at an average kWh per GB would overstate the saving by a large factor; use the baseload and traffic-dependent rows, in a short-run and a long-run regime.",
  "licences": "values are facts quoted with their sources; the EU Code of Conduct is CC BY 4.0 (European Commission, Joint Research Centre)",
- "holds_no_real_feature": "no person, household or place"
+ "holds_no_real_feature": "no person, household or place",
+ "changes": "version 2 (2026-11-11): four measured rows added from the US small-network-equipment report, read in a browser with the lead's leave after the site refused automated reading"
 }

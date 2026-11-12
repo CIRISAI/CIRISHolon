@@ -2,6 +2,54 @@
  "what": "a table of device, network and data-centre power figures gathered from documentation by a scout, for the twin's energy delta; priors, not a certificate",
  "rows": [
   {
+   "device_class": "integrated access device (modem with router and Wi-Fi: the usual home gateway)",
+   "state": "ready (on, idle, no traffic)",
+   "value": 13.77,
+   "unit": "W",
+   "would_be_on_anyway": "yes (declared)",
+   "year": 2025,
+   "source": "US Voluntary Agreement for Ongoing Improvement to the Energy Efficiency of Small Network Equipment, 2025 Annual Report (Evergreen Economics, 15 July 2026), Table 2",
+   "basis": "MEASURED: ready-state power weighted by units purchased or sold in the year by the agreement's signatories (35.7 million units in 2025; US service providers and retail vendors)",
+   "how_read": "read on the publisher's own report in a browser by this session",
+   "note": "new units of the year, not the installed stock; series 2015-2025: 13.30, 13.53, 13.65, 13.73, 14.49, 13.87, 13.51, 14.40, 14.68, 14.69, 13.77"
+  },
+  {
+   "device_class": "local network equipment (router, access point, mesh extender)",
+   "state": "ready (on, idle, no traffic)",
+   "value": 10.15,
+   "unit": "W",
+   "would_be_on_anyway": "yes (declared)",
+   "year": 2025,
+   "source": "US Voluntary Agreement for Ongoing Improvement to the Energy Efficiency of Small Network Equipment, 2025 Annual Report (Evergreen Economics, 15 July 2026), Table 2",
+   "basis": "MEASURED: ready-state power weighted by units purchased or sold in the year by the agreement's signatories (35.7 million units in 2025; US service providers and retail vendors)",
+   "how_read": "read on the publisher's own report in a browser by this session",
+   "note": "new units of the year, not the installed stock; series 2015-2025: 6.44, 5.62, 5.28, 6.79, 7.64, 7.21, 7.55, 6.36, 7.31, 8.45, 10.15"
+  },
+  {
+   "device_class": "broadband modem (no router)",
+   "state": "ready (on, idle, no traffic)",
+   "value": 9.31,
+   "unit": "W",
+   "would_be_on_anyway": "yes (declared)",
+   "year": 2025,
+   "source": "US Voluntary Agreement for Ongoing Improvement to the Energy Efficiency of Small Network Equipment, 2025 Annual Report (Evergreen Economics, 15 July 2026), Table 2",
+   "basis": "MEASURED: ready-state power weighted by units purchased or sold in the year by the agreement's signatories (35.7 million units in 2025; US service providers and retail vendors)",
+   "how_read": "read on the publisher's own report in a browser by this session",
+   "note": "new units of the year, not the installed stock; series 2015-2025: 6.67, 7.11, 8.12, 9.36, 9.65, 9.43, 9.76, 9.21, 9.41, 9.33, 9.31"
+  },
+  {
+   "device_class": "all small network equipment, weighted",
+   "state": "ready (on, idle, no traffic)",
+   "value": 11.98,
+   "unit": "W",
+   "would_be_on_anyway": "yes (declared)",
+   "year": 2025,
+   "source": "US Voluntary Agreement for Ongoing Improvement to the Energy Efficiency of Small Network Equipment, 2025 Annual Report (Evergreen Economics, 15 July 2026), Table 2",
+   "basis": "MEASURED: ready-state power weighted by units purchased or sold in the year by the agreement's signatories (35.7 million units in 2025; US service providers and retail vendors)",
+   "how_read": "read on the publisher's own report in a browser by this session",
+   "note": "new units of the year, not the installed stock; series 2015-2025: 11.36, 11.79, 11.26, 11.55, 12.59, 11.49, 11.49, 10.09, 10.62, 11.37, 11.98"
+  },
+  {
    "device_class": "home gateway, GPON, Wi-Fi 6",
    "state": "ready",
    "value": 6.2,
@@ -364,8 +412,10 @@
  ],
  "not_available": [
   "energy added per phone wake-up, radio tail or relayed byte: a measurement of the mesh software on hardware; no reference gives it",
-  "measured per-model gateway draw: exists in a US industry report the scout could not open",
   "which devices in a home are actually on: no survey measures it; the flag here is a declared class",
-  "data-centre energy attributable to messaging or social workloads alone"
- ]
+  "data-centre energy attributable to messaging or social workloads alone",
+  "the installed stock's draw (the measured rows are for new units of each year)",
+  "per-model values: the report's appendix lists 407 models and was not transcribed"
+ ],
+ "finding": "Measured home gateways draw about twice the EU target: 13.8 W for a new US integrated gateway in 2025 against 6 to 8 W in the EU Code of Conduct, and the weighted average has stayed between 10 and 12.6 W for eleven years while speeds rose elevenfold. Routers and access points rose 20 % in one year (8.45 to 10.15 W) with Wi-Fi 7."
 }

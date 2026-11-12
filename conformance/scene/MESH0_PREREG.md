@@ -163,3 +163,33 @@ witness: none (S1–S3 are measured on generated populations)
 - M-BAR-FROM-THE-READ: bars are stated here. Known: PRESENCE-0's hourly shares, DEVICES-0's shares, TIES-1's shares, the twin's 0.60 and 0.15. Not known: any count of this composition.
 - M-BASE-RATE-OMITTED: the arithmetic is printed first; host settings, phone rules, joins and tie shares are reported together.
 - M-VACUOUS-SUCCESS: §"Arithmetic, printed first and not staked" and §"What would make this vacuous".
+
+## CORRECTION 2026-11-12, after the first run stopped at its gate (branch (e)), before any stake was read
+
+**What failed.** G0: the generated share of households with nothing to host on read
+`0.1069` against the certified `0.088` (budget `0.01`). The awake share passed (`0.632`
+against `0.623`), outcomes summed, and native and wasm32 output were the same bytes. The
+assembler stops at a failed gate, so S1, S2 and S3 and the printed readings were not
+computed; the carrier's lines for them exist in scratch and were not read.
+
+**Why.** The freeze says ANY-COMPUTER is "a fixed line, or any laptop or desktop" and that
+"its complement is the event DEVICEGEN-1 certified". That is wrong. DEVICEGEN-1's
+certified event is no fixed line and no computer, where a computer is a laptop, a desktop
+OR A TABLET (`DEVICEGEN1_PREREG.md`, P-CONSISTENT). The gate compared a wider event with
+the certified number. The fault is this text's, written on the reviewer's third finding
+without reading the definition; the generator is as certified.
+
+**Amendment.**
+- G0 reads the certified event as it was certified: no fixed line and no laptop, desktop
+  or tablet. Its bar is unchanged (`0.01` of `0.088`).
+- A host setting CERTIFIED-EVENT is added: a host wherever the household is not in that
+  event. It is the one setting whose complement is certified, and it is generous: it
+  gives a host to a household whose only computer is a tablet.
+- ANY-COMPUTER keeps its definition (a fixed line, or a laptop or desktop). The sentence
+  calling its complement the certified event is withdrawn; its complement is wider by the
+  households whose only computer is a tablet, and rests on counts that are unresolved.
+- The product reading and the seat's queue are read under CERTIFIED-EVENT as well as
+  ANY-COMPUTER.
+
+Nothing else changes: stakes, bars, kills, the population, seeds, joins, phone rules, tie
+shares and branches are as frozen. S1, S2 and S3 do not read a host setting.

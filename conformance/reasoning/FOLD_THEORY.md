@@ -436,3 +436,35 @@ see how responses are formed from inputs so we can optimize."
   grid as ground and the wake over it, in shared coordinates: a pair's difference
   projected onto the mapped category directions at each layer. Those projections do not
   exist yet (the RATCHET session's next step), so the explorer still shows 2 views.
+
+## A dated note, 2026-11-12: EXIT-G2's one read of CONFIRM, and what it does to the early-exit fold
+
+The RATCHET session's test (RATCHET `bdba575`, `experiments/kindscope/EXITG_RESULTS.md`;
+its numbers, not re-checked here). Blind stop items, summaries withheld, default
+template, scored by pairs over 160 pair groups in 80 scenarios.
+
+- **E1 holds:** a linear head on Gemma's state at layer 19 of 35 beats Gemma's own verb
+  by +0.594 [0.500, 0.681] (0.625 against 0.031).
+- **E2 fails:** the same head loses to matching surface words by 0.206 [0.119, 0.306]
+  (0.625 against 0.831). By the frozen rule, E1 is then not evidence that the state holds
+  the decision beyond the words.
+- **E3 holds:** the head beats the corrected final read-out by +0.356 [0.269, 0.450].
+- **Neither model's verb step makes the stop call** (Gemma 0.087 and Qwen 0.087 as
+  deployed, against a base rate of 0.60 on items).
+- **Harm, a number against a line, defeats each reader:** 0.25 for the head and 0.38 for
+  the surface words, where the other 3 pair kinds read 0.65 to 1.00.
+
+What this does to the theory above:
+
+- **The early-exit fold (stop at layer 19) is not supported as a saving of the model's
+  own reasoning.** What the head reads there is mostly what the words already say. A
+  reader of the words is cheaper than 19 layers and scores higher on these items.
+- **The system-level folds stand and gain weight.** On authored stop items the decision
+  is carried by the input's wording, the verb step does not use it, and the consciences
+  do the stopping. The cheap part is finding the stop; the expensive part is 35 layers
+  that then do not act on it.
+- **The limit:** these are authored situations, where the stop is written into the words
+  by construction. Whether deployed inputs carry it as plainly is not tested.
+- **For a purpose-built network, 2 baselines are now fixed by evidence:** a surface word
+  reader (0.831 here) and the pair kind it fails on (harm at 0.38). A design earns its
+  place by beating the first or by solving the second.

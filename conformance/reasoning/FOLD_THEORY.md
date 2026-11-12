@@ -240,3 +240,37 @@ selection, by the consciences. For a purpose-built model that means:
 
 One harness, one model, single-turn mental-health questions. Whether the consciences carry
 the stopping elsewhere is not known.
+
+## CORRECTION 2026-11-12, from the lead: a kind is a type of CHANGE, not a type of token
+
+In his words: "Yall seem to be looking at tokens by kind, kind is types of change not
+types of tokens". He is right, and it reaches most of what is above and in the explorer.
+
+**What was mis-framed.** The Constitution's table is headed "By kind of change": Manner
+(how it is said), Facts (a number, a name, a value), Rules (permitted, required, refused),
+Circumstances, Identity, Structure, Model, Process, Confidence, Priorities, Premises, and
+touching the Record. A kind classifies the DIFFERENCE between a before and an after. The
+work drifted into treating it as a label on a text or a token:
+- the hand-over's probes asked "which kind is this item" of a layer's state;
+- the small-model work took parts of speech, a category of tokens, as a stand-in;
+- this session's explorer colours each character by a property of the character (which
+  one it is, where it sits in its word), and its findings are about where categories sit;
+- the blind set asks for "the kind of an item" as a second label, where a kind can only
+  label a pair of items.
+
+**What is already of the right form.** A minimal pair is a change: Part A's pairs differ
+in one fact (a value above or below a line; reversible or not; addressed to the owner or
+to the agent). An edit to the weights is a change, and the RATCHET series already plans
+"one edit per kind of change". Those are the objects to study.
+
+**The question, restated.** Not "where does the model hold the kind of this text" but:
+when the input changes in one way, WHAT CHANGES IN THE MODEL, where, and how far does it
+travel? Stage by stage, the difference between the model's state on the after and on the
+before; whether changes of different kinds move it in different places or directions;
+and whether a change of each kind reaches the decision. For folding: a stage that a kind
+of change passes through untouched is not needed for that kind.
+
+**What this session will do about it.** Ask the RATCHET session to read differences on
+the pairs it already holds states for, by kind of change, as exploration; ask the
+Constitution session to label each PAIR KIND by the kind of change it is; and rebuild the
+explorer's lead view around a change travelling through the model.

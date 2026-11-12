@@ -7,6 +7,7 @@
 //! from a row of shares, and only the last household is touched to make the sum exact.
 
 use crate::seed::{mix, Stream};
+use crate::verdict::Verdict;
 
 /// Pick an index from shares in any common unit (parts per million here).
 fn pick(st: &mut Stream, shares: &[u64], total: u64) -> usize {
@@ -78,6 +79,116 @@ pub fn digest(shares: &[u64], sizes: &[u8]) -> u64 {
         }
     }
     h
+}
+
+/// The reference a row comes from.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Reference {
+    /// Zensus 2022 on its 1 km grid, by the tile's own density class (HOUSEHOLD-0, Germany).
+    Germany2022,
+    /// ACS 2020-2024 by census-tract density class (HOUSEHOLD-0, United States).
+    UnitedStates2024,
+}
+
+/// Notices that must travel with anything produced from the rows.
+pub const NOTICE_DE: &str = "Source: Statistische Aemter des Bundes und der Laender, Zensus 2022, Ergebnisse in Gitterzellen; Data licence Germany - attribution - Version 2.0 (dl-de/by-2-0), www.govdata.de/dl-de/by-2-0; data changed: aggregated by density class.";
+pub const NOTICE_US: &str = "Source: U.S. Census Bureau, 2020-2024 American Community Survey 5-Year Estimates, Tables B25008 and B25009. A derived work; not endorsed or certified by the Census Bureau.";
+
+/// Germany, classes 1..=5 (village, suburban, terraced, apartment blocks, dense fabric):
+/// shares of households in parts per million at sizes 1, 2, 3, 4, 5 and 6-or-more, fitted
+/// on ALL cells (`conformance/scene/tables/housegen1/rows.json`). The village row's last
+/// three shares come from columns that failed the disclosure check.
+pub const DE_PPM: [[u64; 6]; 5] = [
+    [323_365, 352_902, 152_510, 113_690, 37_753, 19_780],
+    [359_185, 341_645, 142_815, 107_542, 33_115, 15_698],
+    [455_845, 297_434, 117_192, 85_793, 28_513, 15_223],
+    [563_116, 239_882, 95_242, 64_333, 22_981, 14_446],
+    [615_464, 210_298, 86_439, 55_289, 18_435, 14_075],
+];
+/// The top band is generated as 7 (its residual mean in the census is 7.4).
+pub const DE_SIZES: [u8; 6] = [1, 2, 3, 4, 5, 7];
+
+/// United States, the same five classes BY CENSUS TRACT: sizes 1..6 and 7-or-more
+/// (`conformance/scene/tables/household0_us/household_table.json`, tract key).
+pub const US_PPM: [[u64; 7]; 5] = [
+    [255_238, 377_663, 149_835, 124_017, 57_864, 21_849, 13_534],
+    [285_493, 340_975, 154_633, 128_882, 57_497, 20_756, 11_763],
+    [299_563, 306_221, 158_932, 129_482, 62_651, 25_455, 17_696],
+    [344_038, 283_416, 148_764, 113_994, 60_032, 26_560, 23_197],
+    [381_954, 296_377, 141_412, 97_934, 45_544, 19_845, 16_934],
+];
+/// The top band is generated as 8, a declared value; the survey gives it no usable mean.
+pub const US_SIZES: [u8; 7] = [1, 2, 3, 4, 5, 6, 8];
+
+/// Below this many people the draw's own bias was not measured (HOUSEGEN-1, S2).
+pub const UNIT_FLOOR: u64 = 10;
+
+/// One consumer's verdict for a call. It is a statement about the rule over many units of
+/// the class, never about one draw.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Call {
+    pub verdict: Verdict,
+    pub reason: &'static str,
+}
+
+/// What a call returns.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Households {
+    /// One entry per household; they sum to the people passed.
+    pub sizes: Vec<u8>,
+    /// Consumer: households per unit (the mean household size).
+    pub per_unit: Call,
+    /// Consumer: household composition (the share of one-person households).
+    pub composition: Call,
+    pub notice: &'static str,
+}
+
+fn row(class: u8, reference: Reference) -> (&'static [u64], &'static [u8]) {
+    assert!((1..=5).contains(&class), "class 1..=5");
+    let c = class as usize - 1;
+    match reference {
+        Reference::Germany2022 => (&DE_PPM[c], &DE_SIZES),
+        Reference::UnitedStates2024 => (&US_PPM[c], &US_SIZES),
+    }
+}
+
+/// The two verdicts HOUSEGEN-1 issued, by reference and class (`HOUSEGEN1_RESULTS.md`).
+pub fn verdicts(people: u64, class: u8, reference: Reference, in_country: bool) -> (Call, Call) {
+    let both = |verdict, reason| (Call { verdict, reason }, Call { verdict, reason });
+    match reference {
+        Reference::UnitedStates2024 => both(Verdict::Unresolved, "key is a census tract; not shown to transfer to a tile"),
+        Reference::Germany2022 if !in_country => both(Verdict::Unresolved, "outside the country read"),
+        Reference::Germany2022 if people < UNIT_FLOOR => both(Verdict::Unresolved, "below the unit floor"),
+        Reference::Germany2022 => match class {
+            1 => (
+                Call { verdict: Verdict::Unresolved, reason: "held-out regions differ by more than the budget resolves" },
+                Call { verdict: Verdict::Certified, reason: "rows fitted on three bands, scored on the tiles of the other three, within budget; a statement about the rule over many units, not one draw" },
+            ),
+            2 => both(Verdict::Unresolved, "held-out regions differ by more than the budget resolves"),
+            _ => both(Verdict::Unresolved, "read, not certified: too few independent regions"),
+        },
+    }
+}
+
+/// Households in a 1 km tile of `class` (1..=5) holding `people`. The sizes sum to `people`
+/// for every seed; the verdicts say what HOUSEGEN-1 found for this reference and class.
+pub fn generate(seed: u64, people: u64, class: u8, reference: Reference, in_country: bool) -> Households {
+    let (shares, sizes) = row(class, reference);
+    let (per_unit, composition) = verdicts(people, class, reference, in_country);
+    let notice = match reference {
+        Reference::Germany2022 => NOTICE_DE,
+        Reference::UnitedStates2024 => NOTICE_US,
+    };
+    Households { sizes: draw(seed, people, shares, sizes), per_unit, composition, notice }
+}
+
+/// The number of households the row expects for `people`, rounded half up: an integer a
+/// consumer may apportion from above before any unit is generated.
+pub fn expected_households(people: u64, class: u8, reference: Reference) -> u64 {
+    let (shares, sizes) = row(class, reference);
+    let total: u128 = shares.iter().map(|&x| x as u128).sum();
+    let mean_num: u128 = shares.iter().zip(sizes).map(|(&w, &s)| w as u128 * s as u128).sum();
+    ((2 * people as u128 * total + mean_num) / (2 * mean_num)) as u64
 }
 
 #[cfg(test)]
@@ -180,5 +291,63 @@ mod tests {
     #[test]
     fn the_digest_is_stable() {
         assert_eq!(digest(&ROW, &SIZES), digest(&ROW, &SIZES));
+    }
+    #[test]
+    fn rows_are_whole() {
+        for r in DE_PPM.iter() {
+            assert_eq!(r.iter().sum::<u64>(), 1_000_000);
+        }
+        for r in US_PPM.iter() {
+            assert!((r.iter().sum::<u64>() as i64 - 1_000_000).abs() <= 1);
+        }
+    }
+
+    #[test]
+    fn generate_obeys_the_law_for_each_reference_and_class() {
+        for reference in [Reference::Germany2022, Reference::UnitedStates2024] {
+            for class in 1..=5u8 {
+                for i in 0..2000u64 {
+                    let people = (i * 13) % 1500;
+                    let h = generate(mix(i), people, class, reference, true);
+                    assert_eq!(sum(&h.sizes), people);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn only_what_was_certified_is_certified() {
+        let mut certified = 0;
+        for reference in [Reference::Germany2022, Reference::UnitedStates2024] {
+            for class in 1..=5u8 {
+                for in_country in [true, false] {
+                    for people in [0u64, 9, 10, 500] {
+                        let (a, b) = verdicts(people, class, reference, in_country);
+                        for (which, c) in [(0, a), (1, b)] {
+                            assert_ne!(c.verdict, Verdict::Refused);
+                            if c.verdict == Verdict::Certified {
+                                certified += 1;
+                                assert!(reference == Reference::Germany2022 && in_country && class == 1 && which == 1 && people >= UNIT_FLOOR);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        assert_eq!(certified, 2);
+        assert_eq!(generate(1, 500, 1, Reference::UnitedStates2024, true).composition.verdict, Verdict::Unresolved);
+    }
+
+    /// The expected count is what the draw gives on average, to the draw's own small bias.
+    #[test]
+    fn the_expected_count_matches_the_draw() {
+        for class in 1..=5u8 {
+            let people = 2000u64;
+            let n: u64 = (0..400u64).map(|i| generate(mix(i), people, class, Reference::Germany2022, true).sizes.len() as u64).sum();
+            let want = 400 * expected_households(people, class, Reference::Germany2022);
+            let off = (n as f64 / want as f64 - 1.0).abs();
+            assert!(off < 0.005, "class {class}: {n} against {want}");
+        }
+        assert_eq!(expected_households(0, 3, Reference::Germany2022), 0);
     }
 }

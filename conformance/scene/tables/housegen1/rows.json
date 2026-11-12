@@ -1,0 +1,147 @@
+{
+ "sizes": [
+  1,
+  2,
+  3,
+  4,
+  5,
+  "6 or more, generated as 7"
+ ],
+ "classes": {
+  "village": {
+   "shares_ppm_all_cells": [
+    323365,
+    352902,
+    152510,
+    113690,
+    37753,
+    19780
+   ],
+   "shares_ppm_fit_bands": [
+    322705,
+    339813,
+    152651,
+    121342,
+    41491,
+    21998
+   ],
+   "shares_ppm_heldout_bands": [
+    324087,
+    367218,
+    152355,
+    105322,
+    33664,
+    17354
+   ],
+   "persons_per_household": 2.268996028293993
+  },
+  "suburban": {
+   "shares_ppm_all_cells": [
+    359185,
+    341645,
+    142815,
+    107542,
+    33115,
+    15698
+   ],
+   "shares_ppm_fit_bands": [
+    352459,
+    335595,
+    145018,
+    113753,
+    35985,
+    17190
+   ],
+   "shares_ppm_heldout_bands": [
+    371614,
+    352824,
+    138743,
+    96065,
+    27813,
+    12941
+   ],
+   "persons_per_household": 2.173679618086197
+  },
+  "terraced": {
+   "shares_ppm_all_cells": [
+    455845,
+    297434,
+    117192,
+    85793,
+    28513,
+    15223
+   ],
+   "shares_ppm_fit_bands": [
+    438177,
+    299542,
+    121964,
+    92574,
+    31201,
+    16542
+   ],
+   "shares_ppm_heldout_bands": [
+    496222,
+    292617,
+    106285,
+    70298,
+    22371,
+    12207
+   ],
+   "persons_per_household": 1.9952969272741414
+  },
+  "apartment blocks": {
+   "shares_ppm_all_cells": [
+    563116,
+    239882,
+    95242,
+    64333,
+    22981,
+    14446
+   ],
+   "shares_ppm_fit_bands": [
+    547849,
+    242284,
+    98869,
+    69120,
+    25654,
+    16224
+   ],
+   "shares_ppm_heldout_bands": [
+    586781,
+    236159,
+    89620,
+    56913,
+    18838,
+    11689
+   ],
+   "persons_per_household": 1.8120493970555904
+  },
+  "dense fabric": {
+   "shares_ppm_all_cells": [
+    615464,
+    210298,
+    86439,
+    55289,
+    18435,
+    14075
+   ],
+   "shares_ppm_fit_bands": [
+    603440,
+    220701,
+    86394,
+    55815,
+    19174,
+    14476
+   ],
+   "shares_ppm_heldout_bands": [
+    624456,
+    202521,
+    86472,
+    54895,
+    17882,
+    13774
+   ],
+   "persons_per_household": 1.7285800704368772
+  }
+ }
+}

@@ -1,0 +1,54 @@
+{
+ "reference": "HOUSEGEN-1 (the generator's rows, Germany)",
+ "version": 1,
+ "table": "rows.json",
+ "bytes": 2003,
+ "sha256": "561bf5c041334f4f5570d665248a4ff901fc892bc041428f143364ec2e39ed01",
+ "serves_registry_rows": [
+  "persons per household",
+  "households per tile"
+ ],
+ "generator": "holon_scene::world::household::generate (engine/crates/holon-scene/src/household.rs); the compiled-in rows are shares_ppm_all_cells",
+ "preregistration": "conformance/scene/HOUSEGEN1_PREREG.md at dac7fd7",
+ "results": "conformance/scene/HOUSEGEN1_RESULTS.md",
+ "sources": [
+  {
+   "name": "Zensus 2022, Ergebnisse in Gitterzellen, 1 km",
+   "publisher": "Statistische Aemter des Bundes und der Laender",
+   "licence": "dl-de/by-2-0",
+   "notice": "Source: Statistische Aemter des Bundes und der Laender, Zensus 2022, Ergebnisse in Gitterzellen; Data licence Germany - attribution - Version 2.0 (dl-de/by-2-0), www.govdata.de/dl-de/by-2-0; data changed: aggregated by density class by the author."
+  }
+ ],
+ "envelope": {
+  "country": "Germany",
+  "unit": "a 1 km tile; one call per tile",
+  "unit_floor_people": 10,
+  "class": "the tile's density class by this census's population count"
+ },
+ "verdicts": {
+  "village": {
+   "households_per_unit": "unresolved: held-out regions differ by more than the budget resolves",
+   "composition": "certified"
+  },
+  "suburban": {
+   "households_per_unit": "unresolved",
+   "composition": "unresolved (miss 0.019 with a gap of 0.011 against 0.03)"
+  },
+  "terraced, apartment blocks, dense fabric": "unresolved: read, not certified (too few independent regions in the held-out half)",
+  "any United States call": "unresolved: key is a census tract"
+ },
+ "law": "sizes sum to the people passed for every seed (tested over 100,000 calls); each row sums to 1,000,000",
+ "cannot_give": [
+  "who is home",
+  "adults against children",
+  "which households share a building",
+  "building type or tenure",
+  "vacant dwellings",
+  "variation between tiles: real tiles' one-person share spreads 2 to 12 times wider than these draws"
+ ],
+ "limits": [
+  "communal residents are in the people passed and become household members (0.6 % in Germany)",
+  "the village row's shares at 4, 5 and 6+ come from columns that failed the disclosure check"
+ ],
+ "holds_no_real_feature": "This table holds no coordinate, cell id or name of any real place."
+}

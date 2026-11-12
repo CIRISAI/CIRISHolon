@@ -1572,3 +1572,25 @@ Records cited; nothing below changes a tier's status.*
   and was not checked. Corrected the same day.
 
 *(Placed at the end, as above.)*
+
+### 2026-11-11, last — HOUSEGEN-1: the first generator shipped for the twin to call
+
+- **Shipped** (`engine/crates/holon-scene/src/household.rs`, `conformance/scene/HOUSEGEN1_RESULTS.md`,
+  rows under `conformance/scene/tables/housegen1/`): households in a 1 km tile, sizes drawn
+  from a row by density class, summing to the tile's people for every seed; two verdicts
+  per call. The lead confirmed the division of labour (Holon builds generators and scores
+  both sides; the twin calls and draws).
+- **Its certificate, as found:** neither branch of the freeze. Rows fitted on three bands
+  of Germany, scored on the tiles of the other three: one verdict certified (village,
+  composition), three unresolved, none refused. The misses are the table's: held-out
+  regions hold smaller households at the same class.
+- **Met, forecast by the reviewer:** real tiles vary 2 to 12 times more than independent
+  draws. A tile-level effect is the next generator.
+- **Per tile:** household count within 5 % for 25 to 55 % of households by class, against
+  0 to 12 % for the twin's legacy rule.
+- **The review** (`HOUSEGEN1_REVIEW.md`) replaced a biased draw, stopped rows being
+  borrowed across classes, and split the verdict in two.
+- **Owed:** a tile-level effect and a region key, each on its own freeze; the registry row
+  in the crate; the US rows' transfer from tract to tile.
+
+*(Placed at the end, as above.)*

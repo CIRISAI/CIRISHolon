@@ -1658,3 +1658,22 @@ Records cited; nothing below changes a tier's status.*
   weaker as coded than as frozen, said before the read.
 
 *(Placed at the end, as above.)*
+
+### 2026-11-11 to 12 — TIES-1 (United States, 2008)
+
+- **Read** (`conformance/scene/TIES1_RESULTS.md`, table under
+  `conformance/scene/tables/ties1_us/`): a person's closest ties by relation and distance
+  from "same house" outward, with contact by eight means, from a survey the lead
+  registered for. 0.237 of closest ties are in the house, 0.433 within 5 miles, 0.750
+  within 50.
+- **Measured who is missing:** 58 % of partners at home were named, 16 % of children.
+- **MET:** the household takes at least 0.29 of electronic contact with closest ties
+  (0.52 to 0.61 with unnamed co-residents).
+- **Neither:** written contact is 0.03 to 0.06 nearer than ties, inside its gap; kin and
+  non-kin have the same total contact at equal distance.
+- **Not replicated:** "dense places reach farther" (TIES-0) does not appear for closest
+  ties.
+- **Below a district:** 0.142 of near ties are on the block or under a mile, seven times
+  a distance law on even ground.
+
+*(Placed at the end, as above.)*

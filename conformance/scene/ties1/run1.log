@@ -1,0 +1,242 @@
+plants: {'P-KEYS': True, 'P-SCALE': True, 'P-NOTHELD': True, 'P-DK': True, 'P-EMPTY': True, 'P-COVER': np.True_, 'P-TOP': np.True_, 'P-CLUSTER': True, 'P-WEIGHT': np.True_}
+G0: {"respondents": 2512, "ties": 7059, "ties_per_respondent_weighted": 2.7827744375851107, "respondents_with_no_ties": 0.14155092516730355, "respondents_with_ten_ties": 17, "respondents_with_a_fifth_name_in_the_first_question": 168, "ties_with_distance": 0.9790338574868962, "ties_with_relation": 0.9930585068706616, "publisher_counts_reproduced": 2512, "weights_positive": true, "columns_described": {"form": {"distinct": 2, "values": ["1", "2"], "counts": {"1": 1245, "2": 1267}}, "form2": {"distinct": 4, "values": ["", "1", "2", "3"], "counts": {"": 2007, "1": 165, "2": 171, "3": 169}}, "samptype": {"distinct": 2, "values": ["1", "2"], "counts": {"1": 2007, "2": 505}}, "usr": {"distinct": 4, "values": ["", "R", "S", "U"], "counts": {"": 10, "R": 575, "S": 1048, "U": 879}}, "rbcounty": {"distinct": 5, "values": ["1", "2", "3", "4", "5"], "counts": {"1": 467, "2": 414, "3": 428, "4": 604, "5": 599}}, "density3": {"distinct": 5, "values": ["1", "2", "3", "4", "5"], "counts": {"1": 610, "2": 562, "3": 516, "4": 448, "5": 376}}}, "answered_distance_by_name_position": [0.980733082706767, 0.9810344827586207, 0.9767801857585139, 0.9768250289687138, 0.9810246679316889, 0.9625468164794008, 0.9696969696969697, 1.0, 1.0, 1.0], "pass": true}
+{
+ "S0": {
+  "partnered_who_named_a_same_house_partner": 0.5772027311231797,
+  "named_same_house_adults_over_other_adults_at_home": 0.46700241746339977,
+  "named_same_house_children_over_children_at_home": 0.15686081904170074,
+  "note": "households of three or more adults or children are counted as three, so coverage is overstated; a grown child at home counts as a child",
+  "unnamed_coresidents_per_respondent_weighted": {
+   "partners": 0.23671099067482296,
+   "other_adults": 0.31790030110112427,
+   "children": 0.5907296934648852
+  }
+ },
+ "S1": {
+  "days": {
+   "share_of_written_contact_within_5_miles": 0.28486359441025555,
+   "share_of_ties_within_5_miles": 0.2567477490036641,
+   "difference": 0.028115845406591455,
+   "gap": 0.02967761835585813
+  },
+  "top answer 3 a day": {
+   "share_of_written_contact_within_5_miles": 0.3027685176624977,
+   "share_of_ties_within_5_miles": 0.2567477490036641,
+   "difference": 0.04602076865883359,
+   "gap": 0.040646377803420695
+  },
+  "top answer 10 a day": {
+   "share_of_written_contact_within_5_miles": 0.31595933800726056,
+   "share_of_ties_within_5_miles": 0.2567477490036641,
+   "difference": 0.059211589003596465,
+   "gap": 0.049810747590300915
+  },
+  "top answer 30 a day": {
+   "share_of_written_contact_within_5_miles": 0.3212399247372396,
+   "share_of_ties_within_5_miles": 0.2567477490036641,
+   "difference": 0.06449217573357552,
+   "gap": 0.05285693375845058
+  },
+  "outcome": "neither"
+ },
+ "S2": {
+  "days": {
+   "floor_as_named": 0.2928348415121642,
+   "floor_gap": 0.018796150956092956,
+   "ceiling_with_unnamed_coresidents": 0.5193166224379292,
+   "ceiling_gap": 0.01637833232053824
+  },
+  "top answer 3 a day": {
+   "floor_as_named": 0.33507900758553333,
+   "floor_gap": 0.023276098220540224,
+   "ceiling_with_unnamed_coresidents": 0.5673861026091944,
+   "ceiling_gap": 0.020101423097058962
+  },
+  "top answer 10 a day": {
+   "floor_as_named": 0.3653668368210301,
+   "floor_gap": 0.02627592319123975,
+   "ceiling_with_unnamed_coresidents": 0.5993919610954057,
+   "ceiling_gap": 0.02322836482607525
+  },
+  "top answer 30 a day": {
+   "floor_as_named": 0.37729959626322945,
+   "floor_gap": 0.030957347968007115,
+   "ceiling_with_unnamed_coresidents": 0.6114840545877551,
+   "ceiling_gap": 0.02479421358667346
+  },
+  "outcome": "met",
+  "share_of_ties_same_house": 0.23669085561521022
+ },
+ "S3": {
+  "electronic": {
+   "kin_days": 534.363372447651,
+   "non_kin_days": 531.6499816727643,
+   "relative_difference": 0.005090725673180001,
+   "gap": 0.1139721884109941
+  },
+  "written": {
+   "kin_days": 217.45446407670306,
+   "non_kin_days": 287.2752310635641,
+   "relative_difference": -0.27666597649840063,
+   "gap": 0.17703700833870523
+  },
+  "voice": {
+   "kin_days": 316.9089083709471,
+   "non_kin_days": 244.37475060920036,
+   "relative_difference": 0.25845811329530344,
+   "gap": 0.11234170506742326
+  },
+  "ties": {
+   "kin": 416,
+   "non_kin": 458
+  },
+  "outcome": "neither"
+ },
+ "S4": {
+  "by_community_type": {
+   "R": [
+    0.35022081001231775,
+    0.020149381363719295
+   ],
+   "S": [
+    0.326758230645752,
+    0.014210740758142482
+   ],
+   "U": [
+    0.3194374120625941,
+    0.01605908887254719
+   ]
+  },
+  "by_density3": {
+   "1": [
+    0.3477007160438972,
+    0.0204419057945255
+   ],
+   "2": [
+    0.3313629655432918,
+    0.018417659354266598
+   ],
+   "3": [
+    0.32084800397109237,
+    0.02202271824743113
+   ],
+   "4": [
+    0.3502637829612001,
+    0.022675642891213207
+   ],
+   "5": [
+    0.2884013843066151,
+    0.025180764591642018
+   ]
+  }
+ },
+ "S6": {
+  "share_of_ties_within_50_miles_that_are_on_the_block_or_under_a_mile": 0.14173993984412372,
+  "se": 0.007427569614350023,
+  "on_the_same_block_alone": 0.0644264697082459,
+  "a_1_over_distance_law_on_uniform_population": 0.02,
+  "ties_0_bracket_for_within_1_km_of_own_district_ties": [
+   0.004,
+   0.48
+  ]
+ },
+ "S7": {
+  "four or more means": {
+   "share_of_electronic_contact_within_5_miles": 0.3059693621573655,
+   "share_of_ties_within_5_miles": 0.2417934604790305,
+   "difference": 0.06417590167833498,
+   "ties": 1498
+  },
+  "two or fewer means": {
+   "share_of_electronic_contact_within_5_miles": 0.33000390245814026,
+   "share_of_ties_within_5_miles": 0.2740020699947885,
+   "difference": 0.056001832463351775,
+   "ties": 2599
+  }
+ },
+ "S8": {
+  "close_ties_outside_the_house_within_50_miles": 0.6715643990066159,
+  "se": 0.009356865165969236,
+  "all_friendship_links_within_50_miles_published_us": 0.554
+ },
+ "T4": {
+  "days": {
+   "household_and_kin_as_named": 0.702309430841113,
+   "household_and_kin_with_unnamed_coresidents": 0.7976499456539183,
+   "kin_elsewhere_within_100_miles": 0.7483084611316687,
+   "kin_elsewhere_within_500_miles": 0.8645920269085025
+  },
+  "top answer 3 a day": {
+   "household_and_kin_as_named": 0.7152210243120041,
+   "household_and_kin_with_unnamed_coresidents": 0.8147158174086474,
+   "kin_elsewhere_within_100_miles": 0.7751219061200326,
+   "kin_elsewhere_within_500_miles": 0.8799014520299901
+  },
+  "top answer 10 a day": {
+   "household_and_kin_as_named": 0.7244782584949516,
+   "household_and_kin_with_unnamed_coresidents": 0.8260787003518294,
+   "kin_elsewhere_within_100_miles": 0.7970424719461475,
+   "kin_elsewhere_within_500_miles": 0.8924172351112456
+  },
+  "top answer 30 a day": {
+   "household_and_kin_as_named": 0.7281254115393752,
+   "household_and_kin_with_unnamed_coresidents": 0.8303716969902659,
+   "kin_elsewhere_within_100_miles": 0.806400381191486,
+   "kin_elsewhere_within_500_miles": 0.8977602341532324
+  },
+  "kin_ties_elsewhere_within_100_miles": 0.6768583559813204,
+  "kin_ties_elsewhere_within_500_miles": 0.8224613480909027
+ },
+ "S5_building": {
+  "detached house": [
+   0.08875866819012888,
+   0.006349102502337218
+  ],
+  "apartment": [
+   0.08685122765686623,
+   0.015067735886774644
+  ]
+ },
+ "contact_missing_share_by_means": {
+  "in person": 0.009458672875436554,
+  "mobile voice": 0.00669383003492433,
+  "landline voice": 0.09967986030267753,
+  "card or letter": 0.008440046565774156,
+  "email": 0.006402793946449359,
+  "text": 0.0018917345750873108,
+  "instant message": 0.0032013969732246797,
+  "social-network message": 0.0024738067520372526
+ }
+}
+T1 bands {'same house': 0.237, 'same block or street': 0.033, 'under 1 mile': 0.04, '1 to 5 miles': 0.123, '5 to 50 miles': 0.317, '50 to 100 miles': 0.048, '100 to 500 miles': 0.089, '500 to 3,000 miles': 0.087, '3,000 miles or more': 0.027}
+   partner       0.152 of ties (1012) [0.82, 0.0, 0.01, 0.02, 0.08, 0.01, 0.02, 0.02, 0.02]
+   child         0.186 of ties (1412) [0.29, 0.02, 0.04, 0.11, 0.27, 0.05, 0.12, 0.09, 0.02]
+   parent        0.108 of ties (662) [0.19, 0.05, 0.04, 0.11, 0.26, 0.05, 0.12, 0.14, 0.04]
+   sibling       0.109 of ties (721) [0.07, 0.04, 0.03, 0.14, 0.31, 0.08, 0.14, 0.16, 0.03]
+   other family  0.124 of ties (875) [0.15, 0.02, 0.03, 0.15, 0.36, 0.06, 0.11, 0.08, 0.03]
+   non-kin       0.321 of ties (2190) [0.04, 0.05, 0.06, 0.17, 0.46, 0.05, 0.07, 0.07, 0.03]
+   flag co-worker    0.087 (595) [0.09, 0.01, 0.04, 0.15, 0.56, 0.05, 0.06, 0.02, 0.01]
+   flag neighbour    0.019 (154) [0.03, 0.55, 0.21, 0.07, 0.09, 0.01, 0.01, 0.04, 0.0]
+   flag group member 0.061 (457) [0.23, 0.03, 0.06, 0.18, 0.37, 0.02, 0.05, 0.06, 0.01]
+   flag online       0.004 (25) [0.16, 0.0, 0.08, 0.08, 0.17, 0.05, 0.19, 0.13, 0.13]
+T2 same house             n= 1552 [358, 227, 118, 5, 47, 75, 12, 8]
+T2 same block or street   n=  241 [271, 128, 145, 10, 41, 60, 13, 12]
+T2 under 1 mile           n=  260 [246, 147, 124, 4, 58, 48, 26, 10]
+T2 1 to 5 miles           n=  856 [207, 160, 129, 7, 61, 68, 29, 14]
+T2 5 to 50 miles          n= 2128 [158, 140, 93, 5, 59, 57, 17, 12]
+T2 50 to 100 miles        n=  325 [104, 120, 69, 8, 60, 38, 11, 13]
+T2 100 to 500 miles       n=  662 [57, 111, 65, 9, 61, 33, 17, 7]
+T2 500 to 3,000 miles     n=  668 [43, 80, 55, 7, 65, 35, 23, 13]
+T2 3,000 miles or more    n=  180 [34, 91, 61, 18, 71, 35, 32, 10]
+T3 each respondent, a means not held is zero
+    ties       [0.237, 0.033, 0.04, 0.123, 0.317, 0.048, 0.089, 0.087, 0.027]
+    written    [0.236, 0.029, 0.039, 0.149, 0.322, 0.041, 0.073, 0.082, 0.028]
+    voice      [0.325, 0.036, 0.043, 0.142, 0.294, 0.036, 0.062, 0.046, 0.016]
+    electronic [0.293, 0.033, 0.041, 0.144, 0.304, 0.038, 0.066, 0.059, 0.02]
+    in person  [0.437, 0.046, 0.05, 0.132, 0.258, 0.026, 0.026, 0.019, 0.005]
+T3 respondents who hold mobile, text and email
+    ties       [0.237, 0.026, 0.037, 0.12, 0.316, 0.05, 0.085, 0.095, 0.035]
+    written    [0.241, 0.032, 0.04, 0.154, 0.322, 0.04, 0.065, 0.079, 0.027]
+    voice      [0.323, 0.03, 0.039, 0.142, 0.3, 0.038, 0.057, 0.051, 0.022]
+    electronic [0.285, 0.031, 0.039, 0.147, 0.31, 0.039, 0.061, 0.064, 0.024]
+    in person  [0.423, 0.036, 0.044, 0.139, 0.278, 0.028, 0.024, 0.022, 0.006]

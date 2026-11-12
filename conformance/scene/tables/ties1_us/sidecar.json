@@ -1,0 +1,55 @@
+{
+ "reference": "TIES-1 (United States, 2008)",
+ "version": 1,
+ "table": "ties_by_kind_table.json",
+ "bytes": 36169,
+ "sha256": "64aeb4ceefffa317a7833cca3bb21caab8d8b91974ca3bc83f6f86479267b376",
+ "serves_registry_rows": [
+  "person.tie by relation and distance band, from 'same house' outward (closest ties only)",
+  "act.recipient: the bridge from ties to contact by means (a 2008 price)",
+  "household.kin"
+ ],
+ "preregistration": "conformance/scene/TIES1_PREREG.md",
+ "extractor": "conformance/scene/ties1/ties1.py",
+ "results": "conformance/scene/TIES1_RESULTS.md",
+ "sources": [
+  {
+   "name": "Personal Networks and Communities survey, 9 July to 10 August 2008 (the survey behind 'Social Isolation and New Technology', 2009)",
+   "publisher": "Pew Research Center, Internet & American Life Project",
+   "licence": "the publisher's dataset terms: 'a nonexclusive, non-sublicensable, non-transferable, revocable, worldwide, and royalty-free license to access, copy, reproduce, cite, link, display, download, distribute, broadcast, transmit, publish, modify, create derivatives of, or otherwise exploit the survey datasets' (as read by a scout; the clause was truncated in its extract)",
+   "file_sha256": "conformance/scene/ties1/raw_file_sha256.txt",
+   "notice": "Source: Pew Research Center, Personal Networks and Communities survey, 2008. Pew Research Center bears no responsibility for the analyses or interpretations of the data presented here."
+  }
+ ],
+ "keys": {
+  "unit": "a tie: a respondent (US adult) and one of up to ten people named as someone they discuss important matters with or who is most significant to them",
+  "where": "same house or not",
+  "relation": "partner, child, parent, sibling, other family, non-kin; co-worker, neighbour, group member, online are overlapping flags",
+  "distance": "nine bands as asked, in miles"
+ },
+ "envelope": {
+  "country": "United States",
+  "year": 2008,
+  "ties": "closest ties only, at most ten; 14 % of respondents named nobody",
+  "respondents": "adults; 2,512 by telephone"
+ },
+ "tags": {
+  "may_last": "where closest ties live, by relation (T1); the in-person gradient",
+  "a_2008_price_not_to_be_carried": "each level of electronic contact, the mix of means, and the bridge shares in T3"
+ },
+ "who_is_missing": "58 % of partnered respondents named a partner at home; named co-resident adults are 47 % of the other adults at home and named children 16 % of the children at home. Household rows are given as named (a floor) and with unnamed co-residents added at the contact of named ones (a ceiling).",
+ "verdict": {
+  "household_share_of_electronic_contact": "at least 0.29 as named (met against a bar of 0.15); 0.52 to 0.61 with unnamed co-residents",
+  "written_contact_nearer_than_ties": "neither met nor killed: 0.03 to 0.06 nearer, with gaps as large",
+  "relation_beyond_distance": "neither: the total is the same for kin and non-kin at 5 to 50 miles; the mix is not (kin by voice, non-kin in writing)",
+  "all_rows": "readings of a reference; no generator scored"
+ },
+ "not_in_this_instrument": [
+  "school ties",
+  "public or broadcast follows",
+  "a person's own devices",
+  "weak ties",
+  "anyone under 18 as a respondent"
+ ],
+ "holds_no_real_feature": "no respondent, name or place"
+}

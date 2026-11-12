@@ -43,5 +43,11 @@
   "coastal cells read as uneven because sea pixels hold nobody and the cell class uses whole area"
  ],
  "holds_no_real_feature": "This table holds no coordinate, id, name or tag of any real feature. It holds 15 rows of counts and shares by class.",
- "edge_columns": "pixel column 0 holds 18.81 people and lands in cell column 2879; pixel column 43201 holds 0.00 and lands in cell column 0. The file's two extra columns do not double-count."
+ "edge_columns": "pixel column 0 holds 18.81 people and lands in cell column 2879; pixel column 43201 holds 0.00 and lands in cell column 0. The file's two extra columns do not double-count.",
+ "also": {
+  "table": "transition_table_by_region.json",
+  "bytes": 27873,
+  "sha256": "4d898027a39845203744087dda941cd1983e0629e360e64e70e3bc842a35f607",
+  "note": "the same per-cell rows re-cut by the twin's nine regions with no new read of the grid; 45 classes, each with its own verdict line; classes under 30 cells publish no shares"
+ }
 }

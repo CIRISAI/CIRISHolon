@@ -1,0 +1,1646 @@
+{
+ "reference": "UNEVEN-0",
+ "version": 1,
+ "cut": "by region",
+ "unit": "parts per million",
+ "grain_pixels": 1,
+ "tile_classes": [
+  "empty",
+  "village",
+  "suburban",
+  "terraced",
+  "apartment blocks",
+  "dense fabric"
+ ],
+ "regions": [
+  "N. America",
+  "Latin America",
+  "Europe",
+  "MENA",
+  "Sub-Saharan Africa",
+  "South Asia",
+  "East Asia",
+  "SE Asia & Oceania",
+  "Russia & C. Asia"
+ ],
+ "region_table": "cewp-twin-regions/v1 at twin/globe 825a867 (MODEL)",
+ "precision": "shares from half-precision per-cell rows: three significant digits; vectors sum to 1,000,000 within 2,000 parts",
+ "unlisted_parents": "a 1/8 degree cell whose 1.5 degree parent is not in the region table takes the region of the nearest listed parent (the twin's rule)",
+ "rows": [
+  {
+   "region": 0,
+   "region_name": "N. America",
+   "cell_class": 1,
+   "cell_class_name": "village",
+   "cells": 42191,
+   "people": 167887938,
+   "cells_assigned_by_nearest_parent": 1751,
+   "tiles_each_cell_once": [
+    558927,
+    420964,
+    18325,
+    1731,
+    50,
+    4
+   ],
+   "people_each_cell_once": [
+    8486,
+    713566,
+    232011,
+    42903,
+    2735,
+    298
+   ],
+   "tiles_by_people": [
+    368020,
+    551329,
+    71154,
+    9108,
+    359,
+    33
+   ],
+   "people_by_people": [
+    1420,
+    417240,
+    401763,
+    159985,
+    17144,
+    2450
+   ],
+   "verdict": "unresolved",
+   "reason": "a reading of the reference; no generator scored"
+  },
+  {
+   "region": 0,
+   "region_name": "N. America",
+   "cell_class": 2,
+   "cell_class_name": "suburban",
+   "cells": 2258,
+   "people": 205039086,
+   "cells_assigned_by_nearest_parent": 0,
+   "tiles_each_cell_once": [
+    201533,
+    393978,
+    277312,
+    121399,
+    5143,
+    634
+   ],
+   "people_each_cell_once": [
+    33,
+    66230,
+    394475,
+    463371,
+    60952,
+    14931
+   ],
+   "tiles_by_people": [
+    190957,
+    342526,
+    292925,
+    164616,
+    7951,
+    1026
+   ],
+   "people_by_people": [
+    25,
+    47557,
+    345357,
+    510686,
+    77051,
+    19316
+   ],
+   "verdict": "unresolved",
+   "reason": "a reading of the reference; no generator scored"
+  },
+  {
+   "region": 0,
+   "region_name": "N. America",
+   "cell_class": 3,
+   "cell_class_name": "terraced",
+   "cells": 276,
+   "people": 104689913,
+   "cells_assigned_by_nearest_parent": 0,
+   "tiles_each_cell_once": [
+    113592,
+    145712,
+    208950,
+    441191,
+    75926,
+    14622
+   ],
+   "people_each_cell_once": [
+    4,
+    4729,
+    88127,
+    615992,
+    217992,
+    73149
+   ],
+   "tiles_by_people": [
+    106324,
+    141879,
+    193669,
+    432828,
+    102681,
+    22605
+   ],
+   "people_by_people": [
+    3,
+    4197,
+    73960,
+    561255,
+    259537,
+    101040
+   ],
+   "verdict": "unresolved",
+   "reason": "a reading of the reference; no generator scored"
+  },
+  {
+   "region": 0,
+   "region_name": "N. America",
+   "cell_class": 4,
+   "cell_class_name": "apartment blocks",
+   "cells": 12,
+   "people": 16522797,
+   "cells_assigned_by_nearest_parent": 0,
+   "verdict": "unresolved",
+   "reason": "fewer than 30 cells in this class: below the resolution floor, no shares published"
+  },
+  {
+   "region": 0,
+   "region_name": "N. America",
+   "cell_class": 5,
+   "cell_class_name": "dense fabric",
+   "cells": 3,
+   "people": 6936826,
+   "cells_assigned_by_nearest_parent": 0,
+   "verdict": "unresolved",
+   "reason": "fewer than 30 cells in this class: below the resolution floor, no shares published"
+  },
+  {
+   "region": 1,
+   "region_name": "Latin America",
+   "cell_class": 1,
+   "cell_class_name": "village",
+   "cells": 43054,
+   "people": 186252735,
+   "cells_assigned_by_nearest_parent": 1087,
+   "tiles_each_cell_once": [
+    671821,
+    313625,
+    11568,
+    2754,
+    217,
+    17
+   ],
+   "people_each_cell_once": [
+    7899,
+    659043,
+    210092,
+    108370,
+    13023,
+    1572
+   ],
+   "tiles_by_people": [
+    494458,
+    450506,
+    40952,
+    12529,
+    1421,
+    136
+   ],
+   "people_by_people": [
+    1331,
+    315742,
+    273379,
+    326094,
+    71911,
+    11542
+   ],
+   "verdict": "unresolved",
+   "reason": "a reading of the reference; no generator scored"
+  },
+  {
+   "region": 1,
+   "region_name": "Latin America",
+   "cell_class": 2,
+   "cell_class_name": "suburban",
+   "cells": 1519,
+   "people": 149355198,
+   "cells_assigned_by_nearest_parent": 0,
+   "tiles_each_cell_once": [
+    339381,
+    444750,
+    124025,
+    69095,
+    19039,
+    3713
+   ],
+   "people_each_cell_once": [
+    55,
+    56812,
+    170729,
+    423330,
+    254983,
+    94093
+   ],
+   "tiles_by_people": [
+    331000,
+    422402,
+    129556,
+    84558,
+    26738,
+    5747
+   ],
+   "people_by_people": [
+    42,
+    44344,
+    145098,
+    410216,
+    284162,
+    116139
+   ],
+   "verdict": "unresolved",
+   "reason": "a reading of the reference; no generator scored"
+  },
+  {
+   "region": 1,
+   "region_name": "Latin America",
+   "cell_class": 3,
+   "cell_class_name": "terraced",
+   "cells": 230,
+   "people": 111441649,
+   "cells_assigned_by_nearest_parent": 0,
+   "tiles_each_cell_once": [
+    202604,
+    274532,
+    143886,
+    200135,
+    135788,
+    43053
+   ],
+   "people_each_cell_once": [
+    5,
+    7891,
+    43462,
+    286358,
+    416432,
+    245841
+   ],
+   "tiles_by_people": [
+    182803,
+    250932,
+    142347,
+    210524,
+    159101,
+    54292
+   ],
+   "people_by_people": [
+    4,
+    6574,
+    38256,
+    264205,
+    418277,
+    272671
+   ],
+   "verdict": "unresolved",
+   "reason": "a reading of the reference; no generator scored"
+  },
+  {
+   "region": 1,
+   "region_name": "Latin America",
+   "cell_class": 4,
+   "cell_class_name": "apartment blocks",
+   "cells": 41,
+   "people": 61683251,
+   "cells_assigned_by_nearest_parent": 0,
+   "tiles_each_cell_once": [
+    88341,
+    123799,
+    91707,
+    154146,
+    241072,
+    300932
+   ],
+   "people_each_cell_once": [
+    0,
+    1183,
+    8747,
+    74062,
+    269568,
+    646450
+   ],
+   "tiles_by_people": [
+    86703,
+    124131,
+    90216,
+    149052,
+    232483,
+    317411
+   ],
+   "people_by_people": [
+    0,
+    1161,
+    8310,
+    68943,
+    251926,
+    669664
+   ],
+   "verdict": "unresolved",
+   "reason": "a reading of the reference; no generator scored"
+  },
+  {
+   "region": 1,
+   "region_name": "Latin America",
+   "cell_class": 5,
+   "cell_class_name": "dense fabric",
+   "cells": 5,
+   "people": 13081140,
+   "cells_assigned_by_nearest_parent": 0,
+   "verdict": "unresolved",
+   "reason": "fewer than 30 cells in this class: below the resolution floor, no shares published"
+  },
+  {
+   "region": 2,
+   "region_name": "Europe",
+   "cell_class": 1,
+   "cell_class_name": "village",
+   "cells": 40321,
+   "people": 232605920,
+   "cells_assigned_by_nearest_parent": 527,
+   "tiles_each_cell_once": [
+    572928,
+    390056,
+    32665,
+    4233,
+    112,
+    6
+   ],
+   "people_each_cell_once": [
+    2660,
+    586240,
+    308859,
+    96221,
+    5510,
+    510
+   ],
+   "tiles_by_people": [
+    407701,
+    505426,
+    73221,
+    13150,
+    473,
+    29
+   ],
+   "people_by_people": [
+    570,
+    347316,
+    395032,
+    234075,
+    20750,
+    2258
+   ],
+   "verdict": "unresolved",
+   "reason": "a reading of the reference; no generator scored"
+  },
+  {
+   "region": 2,
+   "region_name": "Europe",
+   "cell_class": 2,
+   "cell_class_name": "suburban",
+   "cells": 3552,
+   "people": 239680101,
+   "cells_assigned_by_nearest_parent": 0,
+   "tiles_each_cell_once": [
+    226084,
+    487152,
+    182548,
+    92915,
+    9907,
+    1395
+   ],
+   "people_each_cell_once": [
+    38,
+    76674,
+    261752,
+    509240,
+    121128,
+    31165
+   ],
+   "tiles_by_people": [
+    213371,
+    457996,
+    194070,
+    116560,
+    15486,
+    2518
+   ],
+   "people_by_people": [
+    30,
+    60500,
+    227499,
+    513656,
+    151860,
+    46454
+   ],
+   "verdict": "unresolved",
+   "reason": "a reading of the reference; no generator scored"
+  },
+  {
+   "region": 2,
+   "region_name": "Europe",
+   "cell_class": 3,
+   "cell_class_name": "terraced",
+   "cells": 396,
+   "people": 130446413,
+   "cells_assigned_by_nearest_parent": 0,
+   "tiles_each_cell_once": [
+    99630,
+    256790,
+    207364,
+    305105,
+    101401,
+    29709
+   ],
+   "people_each_cell_once": [
+    3,
+    9675,
+    70197,
+    446649,
+    306330,
+    167157
+   ],
+   "tiles_by_people": [
+    98040,
+    231019,
+    197247,
+    307806,
+    122185,
+    43699
+   ],
+   "people_by_people": [
+    3,
+    7837,
+    59427,
+    397113,
+    319847,
+    215785
+   ],
+   "verdict": "unresolved",
+   "reason": "a reading of the reference; no generator scored"
+  },
+  {
+   "region": 2,
+   "region_name": "Europe",
+   "cell_class": 4,
+   "cell_class_name": "apartment blocks",
+   "cells": 28,
+   "people": 29618825,
+   "cells_assigned_by_nearest_parent": 0,
+   "verdict": "unresolved",
+   "reason": "fewer than 30 cells in this class: below the resolution floor, no shares published"
+  },
+  {
+   "region": 2,
+   "region_name": "Europe",
+   "cell_class": 5,
+   "cell_class_name": "dense fabric",
+   "cells": 6,
+   "people": 14224666,
+   "cells_assigned_by_nearest_parent": 0,
+   "verdict": "unresolved",
+   "reason": "fewer than 30 cells in this class: below the resolution floor, no shares published"
+  },
+  {
+   "region": 3,
+   "region_name": "MENA",
+   "cell_class": 1,
+   "cell_class_name": "village",
+   "cells": 21971,
+   "people": 126469342,
+   "cells_assigned_by_nearest_parent": 560,
+   "tiles_each_cell_once": [
+    759966,
+    214699,
+    20946,
+    3931,
+    391,
+    69
+   ],
+   "people_each_cell_once": [
+    4411,
+    507590,
+    320569,
+    136628,
+    23924,
+    6878
+   ],
+   "tiles_by_people": [
+    613873,
+    314548,
+    55782,
+    13691,
+    1758,
+    350
+   ],
+   "people_by_people": [
+    758,
+    228331,
+    342000,
+    308072,
+    88615,
+    32224
+   ],
+   "verdict": "unresolved",
+   "reason": "a reading of the reference; no generator scored"
+  },
+  {
+   "region": 3,
+   "region_name": "MENA",
+   "cell_class": 2,
+   "cell_class_name": "suburban",
+   "cells": 2001,
+   "people": 187254249,
+   "cells_assigned_by_nearest_parent": 0,
+   "tiles_each_cell_once": [
+    414625,
+    360190,
+    140751,
+    61031,
+    16767,
+    6637
+   ],
+   "people_each_cell_once": [
+    46,
+    49798,
+    182025,
+    345574,
+    228774,
+    193788
+   ],
+   "tiles_by_people": [
+    390179,
+    350590,
+    152888,
+    74239,
+    22661,
+    9445
+   ],
+   "people_by_people": [
+    35,
+    39724,
+    157067,
+    331128,
+    244426,
+    227627
+   ],
+   "verdict": "unresolved",
+   "reason": "a reading of the reference; no generator scored"
+  },
+  {
+   "region": 3,
+   "region_name": "MENA",
+   "cell_class": 3,
+   "cell_class_name": "terraced",
+   "cells": 359,
+   "people": 162122433,
+   "cells_assigned_by_nearest_parent": 0,
+   "tiles_each_cell_once": [
+    185651,
+    273488,
+    230011,
+    166697,
+    83689,
+    60464
+   ],
+   "people_each_cell_once": [
+    4,
+    9472,
+    65582,
+    218057,
+    276239,
+    430636
+   ],
+   "tiles_by_people": [
+    179226,
+    257865,
+    226053,
+    172687,
+    91078,
+    73086
+   ],
+   "people_by_people": [
+    3,
+    8097,
+    57791,
+    200725,
+    265236,
+    468138
+   ],
+   "verdict": "unresolved",
+   "reason": "a reading of the reference; no generator scored"
+  },
+  {
+   "region": 3,
+   "region_name": "MENA",
+   "cell_class": 4,
+   "cell_class_name": "apartment blocks",
+   "cells": 43,
+   "people": 57204902,
+   "cells_assigned_by_nearest_parent": 0,
+   "tiles_each_cell_once": [
+    90235,
+    134571,
+    141493,
+    177260,
+    206312,
+    250136
+   ],
+   "people_each_cell_once": [
+    1,
+    1486,
+    13927,
+    82130,
+    247704,
+    654778
+   ],
+   "tiles_by_people": [
+    88644,
+    130938,
+    135716,
+    174617,
+    204907,
+    265188
+   ],
+   "people_by_people": [
+    1,
+    1383,
+    12986,
+    78303,
+    238358,
+    669001
+   ],
+   "verdict": "unresolved",
+   "reason": "a reading of the reference; no generator scored"
+  },
+  {
+   "region": 3,
+   "region_name": "MENA",
+   "cell_class": 5,
+   "cell_class_name": "dense fabric",
+   "cells": 8,
+   "people": 27688185,
+   "cells_assigned_by_nearest_parent": 0,
+   "verdict": "unresolved",
+   "reason": "fewer than 30 cells in this class: below the resolution floor, no shares published"
+  },
+  {
+   "region": 4,
+   "region_name": "Sub-Saharan Africa",
+   "cell_class": 1,
+   "cell_class_name": "village",
+   "cells": 62427,
+   "people": 455067860,
+   "cells_assigned_by_nearest_parent": 589,
+   "tiles_each_cell_once": [
+    645351,
+    322899,
+    28481,
+    2906,
+    307,
+    56
+   ],
+   "people_each_cell_once": [
+    4462,
+    540337,
+    326783,
+    103631,
+    19433,
+    5356
+   ],
+   "tiles_by_people": [
+    442257,
+    471261,
+    76317,
+    8696,
+    1207,
+    264
+   ],
+   "people_by_people": [
+    924,
+    334301,
+    375080,
+    202599,
+    63572,
+    23525
+   ],
+   "verdict": "unresolved",
+   "reason": "a reading of the reference; no generator scored"
+  },
+  {
+   "region": 4,
+   "region_name": "Sub-Saharan Africa",
+   "cell_class": 2,
+   "cell_class_name": "suburban",
+   "cells": 4323,
+   "people": 408264149,
+   "cells_assigned_by_nearest_parent": 0,
+   "tiles_each_cell_once": [
+    247408,
+    427146,
+    266947,
+    42572,
+    10940,
+    4984
+   ],
+   "people_each_cell_once": [
+    60,
+    84300,
+    341309,
+    245383,
+    166490,
+    162456
+   ],
+   "tiles_by_people": [
+    241808,
+    402164,
+    278884,
+    54487,
+    15386,
+    7268
+   ],
+   "people_by_people": [
+    48,
+    65702,
+    310510,
+    249419,
+    182628,
+    191692
+   ],
+   "verdict": "unresolved",
+   "reason": "a reading of the reference; no generator scored"
+  },
+  {
+   "region": 4,
+   "region_name": "Sub-Saharan Africa",
+   "cell_class": 3,
+   "cell_class_name": "terraced",
+   "cells": 324,
+   "people": 162004763,
+   "cells_assigned_by_nearest_parent": 0,
+   "tiles_each_cell_once": [
+    185572,
+    273988,
+    194764,
+    201299,
+    91015,
+    53361
+   ],
+   "people_each_cell_once": [
+    7,
+    8160,
+    63087,
+    275612,
+    293045,
+    360076
+   ],
+   "tiles_by_people": [
+    181429,
+    256233,
+    184389,
+    206234,
+    103661,
+    68051
+   ],
+   "people_by_people": [
+    6,
+    6843,
+    53044,
+    250784,
+    290644,
+    398663
+   ],
+   "verdict": "unresolved",
+   "reason": "a reading of the reference; no generator scored"
+  },
+  {
+   "region": 4,
+   "region_name": "Sub-Saharan Africa",
+   "cell_class": 4,
+   "cell_class_name": "apartment blocks",
+   "cells": 40,
+   "people": 60780790,
+   "cells_assigned_by_nearest_parent": 0,
+   "tiles_each_cell_once": [
+    90007,
+    171553,
+    126895,
+    193113,
+    178000,
+    240443
+   ],
+   "people_each_cell_once": [
+    1,
+    1615,
+    12654,
+    91029,
+    205851,
+    688869
+   ],
+   "tiles_by_people": [
+    91926,
+    170650,
+    122296,
+    188386,
+    173116,
+    253637
+   ],
+   "people_by_people": [
+    1,
+    1534,
+    11817,
+    85784,
+    192560,
+    708327
+   ],
+   "verdict": "unresolved",
+   "reason": "a reading of the reference; no generator scored"
+  },
+  {
+   "region": 4,
+   "region_name": "Sub-Saharan Africa",
+   "cell_class": 5,
+   "cell_class_name": "dense fabric",
+   "cells": 7,
+   "people": 23571873,
+   "cells_assigned_by_nearest_parent": 0,
+   "verdict": "unresolved",
+   "reason": "fewer than 30 cells in this class: below the resolution floor, no shares published"
+  },
+  {
+   "region": 5,
+   "region_name": "South Asia",
+   "cell_class": 1,
+   "cell_class_name": "village",
+   "cells": 16167,
+   "people": 247060015,
+   "cells_assigned_by_nearest_parent": 208,
+   "tiles_each_cell_once": [
+    574474,
+    335794,
+    82285,
+    6951,
+    428,
+    71
+   ],
+   "people_each_cell_once": [
+    508,
+    353903,
+    464642,
+    150317,
+    23339,
+    7291
+   ],
+   "tiles_by_people": [
+    352846,
+    485740,
+    147364,
+    13053,
+    854,
+    143
+   ],
+   "people_by_people": [
+    116,
+    239648,
+    505832,
+    202963,
+    38336,
+    13108
+   ],
+   "verdict": "unresolved",
+   "reason": "a reading of the reference; no generator scored"
+  },
+  {
+   "region": 5,
+   "region_name": "South Asia",
+   "cell_class": 2,
+   "cell_class_name": "suburban",
+   "cells": 9633,
+   "people": 1004150608,
+   "cells_assigned_by_nearest_parent": 0,
+   "tiles_each_cell_once": [
+    153261,
+    402086,
+    359381,
+    73630,
+    7753,
+    3892
+   ],
+   "people_each_cell_once": [
+    17,
+    77245,
+    430671,
+    297282,
+    99127,
+    95658
+   ],
+   "tiles_by_people": [
+    134238,
+    356249,
+    393835,
+    99356,
+    10493,
+    5833
+   ],
+   "people_by_people": [
+    13,
+    56809,
+    394592,
+    318677,
+    107741,
+    122169
+   ],
+   "verdict": "unresolved",
+   "reason": "a reading of the reference; no generator scored"
+  },
+  {
+   "region": 5,
+   "region_name": "South Asia",
+   "cell_class": 3,
+   "cell_class_name": "terraced",
+   "cells": 993,
+   "people": 417286947,
+   "cells_assigned_by_nearest_parent": 0,
+   "tiles_each_cell_once": [
+    84376,
+    223227,
+    368484,
+    230843,
+    45358,
+    47708
+   ],
+   "people_each_cell_once": [
+    2,
+    9326,
+    138596,
+    303256,
+    158301,
+    390518
+   ],
+   "tiles_by_people": [
+    82197,
+    220069,
+    353042,
+    228339,
+    53831,
+    62516
+   ],
+   "people_by_people": [
+    2,
+    8163,
+    118811,
+    271084,
+    160865,
+    441069
+   ],
+   "verdict": "unresolved",
+   "reason": "a reading of the reference; no generator scored"
+  },
+  {
+   "region": 5,
+   "region_name": "South Asia",
+   "cell_class": 4,
+   "cell_class_name": "apartment blocks",
+   "cells": 61,
+   "people": 92976744,
+   "cells_assigned_by_nearest_parent": 0,
+   "tiles_each_cell_once": [
+    70383,
+    147170,
+    212527,
+    188349,
+    109949,
+    271626
+   ],
+   "people_each_cell_once": [
+    0,
+    1645,
+    19412,
+    74679,
+    118016,
+    786249
+   ],
+   "tiles_by_people": [
+    72987,
+    143708,
+    206307,
+    184503,
+    108923,
+    283575
+   ],
+   "people_by_people": [
+    0,
+    1538,
+    18051,
+    70153,
+    111672,
+    798585
+   ],
+   "verdict": "unresolved",
+   "reason": "a reading of the reference; no generator scored"
+  },
+  {
+   "region": 5,
+   "region_name": "South Asia",
+   "cell_class": 5,
+   "cell_class_name": "dense fabric",
+   "cells": 35,
+   "people": 126205075,
+   "cells_assigned_by_nearest_parent": 0,
+   "tiles_each_cell_once": [
+    62480,
+    72384,
+    109966,
+    154034,
+    98281,
+    502867
+   ],
+   "people_each_cell_once": [
+    0,
+    346,
+    4763,
+    29414,
+    50763,
+    914676
+   ],
+   "tiles_by_people": [
+    58816,
+    67486,
+    104922,
+    149890,
+    90042,
+    528852
+   ],
+   "people_by_people": [
+    0,
+    298,
+    4181,
+    25572,
+    42646,
+    927267
+   ],
+   "verdict": "unresolved",
+   "reason": "a reading of the reference; no generator scored"
+  },
+  {
+   "region": 6,
+   "region_name": "East Asia",
+   "cell_class": 1,
+   "cell_class_name": "village",
+   "cells": 30088,
+   "people": 300140431,
+   "cells_assigned_by_nearest_parent": 1279,
+   "tiles_each_cell_once": [
+    683127,
+    259358,
+    50838,
+    6121,
+    475,
+    79
+   ],
+   "people_each_cell_once": [
+    1353,
+    393592,
+    408127,
+    162369,
+    27609,
+    6950
+   ],
+   "tiles_by_people": [
+    503990,
+    375509,
+    105312,
+    13701,
+    1248,
+    241
+   ],
+   "people_by_people": [
+    245,
+    219727,
+    445720,
+    252893,
+    61489,
+    19925
+   ],
+   "verdict": "unresolved",
+   "reason": "a reading of the reference; no generator scored"
+  },
+  {
+   "region": 6,
+   "region_name": "East Asia",
+   "cell_class": 2,
+   "cell_class_name": "suburban",
+   "cells": 8479,
+   "people": 752191003,
+   "cells_assigned_by_nearest_parent": 0,
+   "tiles_each_cell_once": [
+    198678,
+    418063,
+    299119,
+    71905,
+    9083,
+    3153
+   ],
+   "people_each_cell_once": [
+    30,
+    80598,
+    375697,
+    338542,
+    119584,
+    85549
+   ],
+   "tiles_by_people": [
+    173269,
+    397466,
+    319286,
+    92284,
+    12924,
+    4771
+   ],
+   "people_by_people": [
+    23,
+    64403,
+    338974,
+    355449,
+    135114,
+    106037
+   ],
+   "verdict": "unresolved",
+   "reason": "a reading of the reference; no generator scored"
+  },
+  {
+   "region": 6,
+   "region_name": "East Asia",
+   "cell_class": 3,
+   "cell_class_name": "terraced",
+   "cells": 896,
+   "people": 380035615,
+   "cells_assigned_by_nearest_parent": 0,
+   "tiles_each_cell_once": [
+    94922,
+    254415,
+    291530,
+    236531,
+    77252,
+    45352
+   ],
+   "people_each_cell_once": [
+    3,
+    10262,
+    94476,
+    307649,
+    241729,
+    345887
+   ],
+   "tiles_by_people": [
+    89625,
+    237124,
+    277412,
+    248692,
+    90676,
+    56467
+   ],
+   "people_by_people": [
+    3,
+    8515,
+    80589,
+    285490,
+    245732,
+    379681
+   ],
+   "verdict": "unresolved",
+   "reason": "a reading of the reference; no generator scored"
+  },
+  {
+   "region": 6,
+   "region_name": "East Asia",
+   "cell_class": 4,
+   "cell_class_name": "apartment blocks",
+   "cells": 86,
+   "people": 112139809,
+   "cells_assigned_by_nearest_parent": 0,
+   "tiles_each_cell_once": [
+    34368,
+    100722,
+    149150,
+    268165,
+    230701,
+    216902
+   ],
+   "people_each_cell_once": [
+    0,
+    1144,
+    15269,
+    122165,
+    254185,
+    607215
+   ],
+   "tiles_by_people": [
+    31658,
+    96451,
+    144454,
+    265664,
+    231433,
+    230350
+   ],
+   "people_by_people": [
+    0,
+    1048,
+    14284,
+    116625,
+    246295,
+    621720
+   ],
+   "verdict": "unresolved",
+   "reason": "a reading of the reference; no generator scored"
+  },
+  {
+   "region": 6,
+   "region_name": "East Asia",
+   "cell_class": 5,
+   "cell_class_name": "dense fabric",
+   "cells": 38,
+   "people": 102018720,
+   "cells_assigned_by_nearest_parent": 0,
+   "tiles_each_cell_once": [
+    12397,
+    52982,
+    94973,
+    182690,
+    163273,
+    493701
+   ],
+   "people_each_cell_once": [
+    0,
+    319,
+    4926,
+    41871,
+    97328,
+    855559
+   ],
+   "tiles_by_people": [
+    12552,
+    52287,
+    88194,
+    175489,
+    156984,
+    514509
+   ],
+   "people_by_people": [
+    0,
+    293,
+    4476,
+    38807,
+    88793,
+    867633
+   ],
+   "verdict": "unresolved",
+   "reason": "a reading of the reference; no generator scored"
+  },
+  {
+   "region": 7,
+   "region_name": "SE Asia & Oceania",
+   "cell_class": 1,
+   "cell_class_name": "village",
+   "cells": 24514,
+   "people": 197039888,
+   "cells_assigned_by_nearest_parent": 1298,
+   "tiles_each_cell_once": [
+    717171,
+    238710,
+    40451,
+    3486,
+    159,
+    23
+   ],
+   "people_each_cell_once": [
+    3082,
+    476648,
+    422743,
+    86720,
+    8756,
+    2050
+   ],
+   "tiles_by_people": [
+    513618,
+    369474,
+    105155,
+    11039,
+    616,
+    99
+   ],
+   "people_by_people": [
+    351,
+    255259,
+    511270,
+    195866,
+    29085,
+    8168
+   ],
+   "verdict": "unresolved",
+   "reason": "a reading of the reference; no generator scored"
+  },
+  {
+   "region": 7,
+   "region_name": "SE Asia & Oceania",
+   "cell_class": 2,
+   "cell_class_name": "suburban",
+   "cells": 2736,
+   "people": 283179089,
+   "cells_assigned_by_nearest_parent": 0,
+   "tiles_each_cell_once": [
+    272094,
+    347879,
+    290363,
+    77331,
+    9644,
+    2692
+   ],
+   "people_each_cell_once": [
+    23,
+    67765,
+    377942,
+    360332,
+    123159,
+    70779
+   ],
+   "tiles_by_people": [
+    240360,
+    323421,
+    314858,
+    103134,
+    14206,
+    4024
+   ],
+   "people_by_people": [
+    17,
+    52127,
+    335771,
+    382270,
+    143770,
+    86043
+   ],
+   "verdict": "unresolved",
+   "reason": "a reading of the reference; no generator scored"
+  },
+  {
+   "region": 7,
+   "region_name": "SE Asia & Oceania",
+   "cell_class": 3,
+   "cell_class_name": "terraced",
+   "cells": 279,
+   "people": 132855359,
+   "cells_assigned_by_nearest_parent": 0,
+   "tiles_each_cell_once": [
+    117245,
+    164750,
+    299082,
+    293362,
+    90115,
+    35444
+   ],
+   "people_each_cell_once": [
+    2,
+    6801,
+    109967,
+    398149,
+    281251,
+    203833
+   ],
+   "tiles_by_people": [
+    115029,
+    157294,
+    276234,
+    291975,
+    111019,
+    48452
+   ],
+   "people_by_people": [
+    2,
+    5778,
+    91630,
+    357692,
+    302643,
+    242255
+   ],
+   "verdict": "unresolved",
+   "reason": "a reading of the reference; no generator scored"
+  },
+  {
+   "region": 7,
+   "region_name": "SE Asia & Oceania",
+   "cell_class": 4,
+   "cell_class_name": "apartment blocks",
+   "cells": 34,
+   "people": 52213064,
+   "cells_assigned_by_nearest_parent": 0,
+   "tiles_each_cell_once": [
+    93332,
+    66015,
+    112686,
+    228764,
+    254627,
+    244571
+   ],
+   "people_each_cell_once": [
+    0,
+    757,
+    12039,
+    107026,
+    281308,
+    598848
+   ],
+   "tiles_by_people": [
+    87325,
+    63000,
+    108112,
+    223338,
+    261019,
+    257201
+   ],
+   "people_by_people": [
+    0,
+    700,
+    11184,
+    101478,
+    281213,
+    605408
+   ],
+   "verdict": "unresolved",
+   "reason": "a reading of the reference; no generator scored"
+  },
+  {
+   "region": 7,
+   "region_name": "SE Asia & Oceania",
+   "cell_class": 5,
+   "cell_class_name": "dense fabric",
+   "cells": 14,
+   "people": 43422744,
+   "cells_assigned_by_nearest_parent": 0,
+   "verdict": "unresolved",
+   "reason": "fewer than 30 cells in this class: below the resolution floor, no shares published"
+  },
+  {
+   "region": 8,
+   "region_name": "Russia & C. Asia",
+   "cell_class": 1,
+   "cell_class_name": "village",
+   "cells": 34550,
+   "people": 86892822,
+   "cells_assigned_by_nearest_parent": 2534,
+   "tiles_each_cell_once": [
+    838733,
+    143690,
+    15037,
+    2472,
+    62,
+    4
+   ],
+   "people_each_cell_once": [
+    3493,
+    629278,
+    296465,
+    67147,
+    3289,
+    328
+   ],
+   "tiles_by_people": [
+    672320,
+    254016,
+    57473,
+    15647,
+    508,
+    39
+   ],
+   "people_by_people": [
+    774,
+    261463,
+    406533,
+    304737,
+    23221,
+    3271
+   ],
+   "verdict": "unresolved",
+   "reason": "a reading of the reference; no generator scored"
+  },
+  {
+   "region": 8,
+   "region_name": "Russia & C. Asia",
+   "cell_class": 2,
+   "cell_class_name": "suburban",
+   "cells": 1367,
+   "people": 92223340,
+   "cells_assigned_by_nearest_parent": 1,
+   "tiles_each_cell_once": [
+    398543,
+    334456,
+    158685,
+    94742,
+    12078,
+    1499
+   ],
+   "people_each_cell_once": [
+    49,
+    46324,
+    231928,
+    540987,
+    144614,
+    36094
+   ],
+   "tiles_by_people": [
+    350772,
+    335408,
+    175992,
+    118088,
+    17364,
+    2381
+   ],
+   "people_by_people": [
+    39,
+    38622,
+    208277,
+    537430,
+    167499,
+    48131
+   ],
+   "verdict": "unresolved",
+   "reason": "a reading of the reference; no generator scored"
+  },
+  {
+   "region": 8,
+   "region_name": "Russia & C. Asia",
+   "cell_class": 3,
+   "cell_class_name": "terraced",
+   "cells": 158,
+   "people": 48865541,
+   "cells_assigned_by_nearest_parent": 0,
+   "tiles_each_cell_once": [
+    161433,
+    241293,
+    194316,
+    255919,
+    114767,
+    32265
+   ],
+   "people_each_cell_once": [
+    5,
+    7705,
+    63338,
+    379219,
+    362772,
+    186963
+   ],
+   "tiles_by_people": [
+    146710,
+    232816,
+    187565,
+    260808,
+    129421,
+    42678
+   ],
+   "people_by_people": [
+    4,
+    6699,
+    55598,
+    351480,
+    361336,
+    224883
+   ],
+   "verdict": "unresolved",
+   "reason": "a reading of the reference; no generator scored"
+  },
+  {
+   "region": 8,
+   "region_name": "Russia & C. Asia",
+   "cell_class": 4,
+   "cell_class_name": "apartment blocks",
+   "cells": 17,
+   "people": 15457119,
+   "cells_assigned_by_nearest_parent": 0,
+   "verdict": "unresolved",
+   "reason": "fewer than 30 cells in this class: below the resolution floor, no shares published"
+  },
+  {
+   "region": 8,
+   "region_name": "Russia & C. Asia",
+   "cell_class": 5,
+   "cell_class_name": "dense fabric",
+   "cells": 5,
+   "people": 7782364,
+   "cells_assigned_by_nearest_parent": 0,
+   "verdict": "unresolved",
+   "reason": "fewer than 30 cells in this class: below the resolution floor, no shares published"
+  }
+ ]
+}

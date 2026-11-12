@@ -231,3 +231,41 @@ As reported by the agent session, from saved states; not re-derived here.
   maximum of a curve that was looked at, so the 0.09 is biased upward. The test on the
   sealed items (exit fixed at 28, this session's two lines as stated) has not been run and
   waits on the lead's word given to that session directly.
+
+## The sealed held-out, opened once (2026-11-11, as reported by the agent session)
+
+As reported; not re-derived here. The lead gave the word to that session directly. Design
+frozen there before the read (PROBE-FIX-1, digest beginning `7ca77788`). 124 held-out
+curated items; each fitted part was fitted on the 124 original items only. Accuracy, and
+the difference from the model's own final answer with a paired bootstrap 95 % interval.
+
+| reader | accuracy | difference |
+|---|---|---|
+| the model's final answer | 0.460 | |
+| exit at layer 28 | 0.500 | +0.040 [−0.056, +0.137] |
+| final 12 name-scores, recalibrated (a 12 × 12 map) | 0.621 | +0.161 [+0.065, +0.250] |
+| layer 28, recalibrated | 0.629 | +0.169 |
+| trained readout at layer 25 | 0.774 | +0.315 |
+| trained readout at layer 16 | 0.815 | +0.355 [+0.250, +0.460] |
+
+- **This session's line "+0.05 overall from exiting at 28" FAILS.** The interval includes
+  zero. The in-sample 0.09 was the maximum of a curve that had been looked at, as said then.
+- **This session's line "+0.30 on Priorities" HOLDS** (0.10 to 0.90), on ten items.
+- **The story this record carried is wrong in one place, and it was this session that
+  leaned on it.** "One block (28 to 29) flips the lost items" was read as a removable
+  suppressor. Skipping block 29 does not restore the answer (0.516 against 0.556 clean on
+  the curated set; Priorities 0.1). Skipping any one block from 24 to 34 gives at most
+  0.589. The reader at layer 28 is a different reader, not a view of what the final head
+  would have said. The agent session says it over-read the trace; the prediction recorded
+  above as "HOLDS, sharply" held as a description of the trace and not as a mechanism.
+- **The information is not lost at the end.** A 12 × 12 recalibration of the final scores
+  recovers 0.62 on held-out. Much of "held but not said" is a bias against particular
+  names (Premises: final 0.00, recalibrated 0.25, trained readout at layer 25, 0.83).
+- **What the lead's correction asked for** ("what it is FAILING TO DO") now has a sized
+  answer on items of this authoring process: the kind is readable at 0.82 from layer 16 and
+  said at 0.46.
+- **The limit.** The held-out file of real revisions (238 items) has no labels. On it the
+  readers disagree with each other (pairwise agreement 0.29 to 0.58; the layer-16 readout
+  calls 106 of 238 one kind and none another). The fix transfers to unseen items written
+  the same way and is unverified on real ones. The guard, policy, story and confirm sets,
+  which have outcomes, are where "does it help" can be answered.

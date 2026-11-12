@@ -1641,3 +1641,20 @@ Records cited; nothing below changes a tier's status.*
   hold-out was not one, the own-area convention was unread. Second draft with the reviewer.
 
 *(Placed at the end, as above.)*
+
+### 2026-11-11 to 12 — TIES-0 (Germany)
+
+- **Read** (`conformance/scene/TIES0_RESULTS.md`, table under
+  `conformance/scene/tables/ties0_de/`): of a German district's friendship links, 0.35 are
+  in the district, 0.75 within 300 km, 0.15 in foreign Europe; dense places reach farther
+  (own share 0.44 to 0.23). The index's own-area convention checked from its nested levels
+  and found as assumed; privacy noise read at about 2 %.
+- **Failed as a one-parameter assumption:** users in proportion to residents (tilt 0.12
+  from one pair of levels, 0.04 from the other).
+- **KILLED:** a law fitted between districts predicting ties within one (2.8 % of held-out
+  population within 0.05, against 53.5 % for the band-mean rival). The share within a
+  kilometre therefore has NO LICENCE; its bracket spans 0.4 % to 48 %.
+- **Reviewed twice** (`TIES0_REVIEW.md`): a redesign, then four fixes. Three plants are
+  weaker as coded than as frozen, said before the read.
+
+*(Placed at the end, as above.)*

@@ -1,0 +1,47 @@
+{
+ "reference": "TIES-0 (Germany)",
+ "version": 1,
+ "table": "ties_table.json",
+ "bytes": 18229,
+ "sha256": "3ca880e83577204bfd9ede906381b4307f1bb980bed7b16dac0289f67d77a06f",
+ "serves_registry_rows": [
+  "person.tie by distance band (an outer envelope for kin and acquaintance ties between areas; NOT by kind of tie)"
+ ],
+ "preregistration": "conformance/scene/TIES0_PREREG.md",
+ "extractor": "conformance/scene/ties0/ties0.py",
+ "results": "conformance/scene/TIES0_RESULTS.md",
+ "sources": [
+  {
+   "name": "Social Connectedness Index, 2026 release (friendships as of 25 January 2026), European regions at NUTS 1, 2 and 3",
+   "publisher": "Meta, via the Humanitarian Data Exchange",
+   "licence": "the catalogue states 'Public Domain / No restrictions (CC0)'",
+   "notice": "Source: Meta, Social Connectedness Index (2026 release), via the Humanitarian Data Exchange; region boundaries, centre points and populations: Eurostat/GISCO. Shares are derived under a stated assumption and are not published by the source."
+  },
+  {
+   "name": "NUTS 2024 boundaries (1:10 million), label points; population on 1 January 2024 by NUTS 3",
+   "publisher": "Eurostat / GISCO",
+   "licence": "Eurostat reuse policy; boundaries (c) EuroGeographics for the administrative boundaries"
+  }
+ ],
+ "file_sha256": "conformance/scene/ties0/raw_file_sha256.txt",
+ "keys": {
+  "origin": "a German NUTS 3 area (400 of them), in population-weighted fifths of density",
+  "destination": "each European NUTS 3 area with a population and a shape (1,323)",
+  "bands": "own area; within 100 km; 100 to 300 km; farther in Germany; foreign Europe; beyond Europe is not identified"
+ },
+ "assumption": "an area's users are taken as population^(1+g). g = 0 is 'in proportion to residents'. The index's own nested levels give g = 0.12 from one pair of levels and 0.04 from the other, which do not agree: the one-parameter form fails, and each share is given at g = 0 and at g = 0.12.",
+ "what_is_identified_without_the_assumption": "the distance exponent (about 1.0 between 100 and 400 km; 0.78 once same-Land and former-border terms are allowed)",
+ "verdict": {
+  "kernel_predicts_own_area_ties": "REFUSED in each density fifth: a law fitted on ties between areas misses the ties within an area by 0.18 to 0.44 of all ties. Being in the same area carries more than distance does.",
+  "share_within_1_km": "NO LICENCE. The bracket printed spans 0.4 % to 48 % of own-area ties for the median area. Nobody measured it; do not use a value.",
+  "shares_by_band": "readings under the stated assumption; no generator scored"
+ },
+ "limits": [
+  "one undifferentiated count of friendship links: nothing by kind of tie, nothing about the household, nothing about messages",
+  "links among users active in 30 days with more than 20 friends; a stale tie counts as a daily one",
+  "foreign Europe assumes equal reach across countries and is the weakest band; ties beyond Europe are not in the file",
+  "privacy noise read from the file: about 2 % at NUTS 3",
+  "one country"
+ ],
+ "holds_no_real_feature": "no area code, name or coordinate; rows by density fifth"
+}

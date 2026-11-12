@@ -1,0 +1,298 @@
+plants: {'P-UNIFORM': True, 'P-CENTROID': True, 'P-REACH': True, 'P-DIAG': np.True_, 'P-FLOOR': True, '_floor_rung_median_miss': 0.016452794377161357, 'P-LEAK': True, 'P-NOISE': True}
+G0: {"areas": {"nuts3": 1343, "nuts2": 298, "nuts1": 114}, "german_nuts3": 400, "nuts3_without_population_or_shape": 20, "self_pairs_present": true, "positive": true, "german_area_km2": 356211.4570490848, "german_population": 83456045.0, "scale_log_3_to_2": {"single_unit_regions": 52, "pairs": 2704, "from_single_units": 0.05944902702608032, "from_off_diagonal_parent_pairs_at_g0": 0.0630124718149553, "agree_within_2pct": true, "privacy_noise_log_sd": 0.02106992241888338}, "scale_log_2_to_1": {"single_unit_regions": 33, "pairs": 1089, "from_single_units": 1.8077489236730715, "privacy_noise_log_sd": 0.07905473783064769}, "convention": {"parents_used": 15, "median_R_A": 0.9375584654774864, "median_R_B": 1.2200164104158973, "R_A_10_90": [0.8487116270792201, 0.9801209414350357], "used": "A"}, "pass": true}
+S0: {'g_nuts3_into_2': 0.12000000000000066, 'spread': 0.017317300277147403, 'g_nuts2_into_1': 0.04000000000000059, 'spread_2_into_1': 0.022358195116978695, 'agree_within_spreads': False}
+{
+ "strata": {
+  "density_fifth_upper_bounds_per_km2": [
+   130.12051826450184,
+   241.93793197954543,
+   540.3180976422628,
+   2007.2787714447254,
+   4665.883386084909
+  ],
+  "areas_per_density_fifth": [
+   125,
+   96,
+   64,
+   85,
+   30
+  ],
+  "own_population_third_upper_bounds": [
+   183535.0,
+   328657.0,
+   3662381.0
+  ],
+  "median_radius_km": 15.96363975805704,
+  "radius_10_90_km": [
+   5.246311048993107,
+   23.954465625686748
+  ]
+ },
+ "S2": {
+  "exponent_nuts3": 1.0245450278638486,
+  "pairs_nuts3": 51817,
+  "exponent_nuts2": 1.1849628990568857,
+  "pairs_nuts2": 474,
+  "difference": 0.16041787119303708,
+  "artefact_of_unit_size_alone": 0.03041860462590318,
+  "artefact_exponents_small_big": [
+   1.0229278145604603,
+   1.0533464191863635
+  ],
+  "unit_sides_km": [
+   28.294814764217744,
+   89.35792619678651
+  ],
+  "with_terms": {
+   "exponent_nuts3": 0.7776203690240413,
+   "same_land_log": 0.5422771388730734,
+   "across_former_border_log": -0.3147738112993361
+  },
+  "outcome": "met"
+ },
+ "S3": {
+  "own_share_by_density_fifth_within_population_third": {
+   "g0_disc": {
+    "population third 1": [
+     0.4301206881569118,
+     0.3788782995791845,
+     0.3018422024186277,
+     0.21696002824118044,
+     0.18659472463135546
+    ],
+    "population third 2": [
+     0.44257667435162745,
+     0.4323784349154936,
+     0.38111699070779703,
+     0.27843041722566975,
+     0.20826140801905338
+    ],
+    "population third 3": [
+     null,
+     null,
+     0.3953779670681119,
+     0.3321890334497416,
+     0.23716471589109492
+    ]
+   },
+   "gfit_disc": {
+    "population third 1": [
+     0.40808037655971335,
+     0.3576573951827777,
+     0.2802443316847924,
+     0.1967005079416344,
+     0.1697182503199678
+    ],
+    "population third 2": [
+     0.43161812075370587,
+     0.4241671293211911,
+     0.37278483986012556,
+     0.26907674850241725,
+     0.20074555456450713
+    ],
+    "population third 3": [
+     null,
+     null,
+     0.40365632854588673,
+     0.338058969643597,
+     0.26304580005869876
+    ]
+   }
+  },
+  "areas_per_cell_floor": 5,
+  "outcome": "not killed"
+ },
+ "S4": {
+  "g0": {
+   "exponent": 1.241727613506159,
+   "pairs": 19408,
+   "b_from_fit_own_indices_km": 0.05000000000000001,
+   "b_from_off_diagonal_alone_km": 0.05000000000000001,
+   "off_diagonal_rms_by_b_is_flat": true,
+   "stake": {
+    "within_0.05_population_share": 0.027861441076002202,
+    "median_miss": 0.37169741223946307,
+    "mean_signed_miss": -0.18180897864392187
+   },
+   "rung": {
+    "within_0.05_population_share": 0.027861441076002202,
+    "median_miss": 0.37169741223946307,
+    "mean_signed_miss": -0.18180897864392187
+   },
+   "rival_band_mean": {
+    "within_0.05_population_share": 0.5345254832407891,
+    "median_miss": 0.046298697297187885
+   },
+   "outcome": "killed"
+  },
+  "gfit": {
+   "exponent": 1.241727613506159,
+   "pairs": 19408,
+   "b_from_fit_own_indices_km": 0.05000000000000001,
+   "b_from_off_diagonal_alone_km": 0.05000000000000001,
+   "off_diagonal_rms_by_b_is_flat": true,
+   "stake": {
+    "within_0.05_population_share": 0.0297429418326657,
+    "median_miss": 0.36369282413557374,
+    "mean_signed_miss": -0.18122982005092775
+   },
+   "rung": {
+    "within_0.05_population_share": 0.0297429418326657,
+    "median_miss": 0.36369282413557374,
+    "mean_signed_miss": -0.18122982005092775
+   },
+   "rival_band_mean": {
+    "within_0.05_population_share": 0.45973797696840957,
+    "median_miss": 0.0509074986505787
+   },
+   "outcome": "killed"
+  },
+  "fit_regions": [
+   "DE11",
+   "DE12",
+   "DE13",
+   "DE14",
+   "DE23",
+   "DE26",
+   "DE27",
+   "DE40",
+   "DE50",
+   "DE72",
+   "DE80",
+   "DE92",
+   "DE93",
+   "DEA1",
+   "DEA2",
+   "DEB1",
+   "DEB3",
+   "DEC0",
+   "DED2"
+  ],
+  "note": "own shares in S4 are taken over ties within Germany (the kernel is fitted on German pairs)",
+  "outcome": "killed",
+  "verdict_by_density_fifth": {
+   "fifth 1": {
+    "areas": 69,
+    "miss": 0.43578196419720494,
+    "miss_at_fitted_g": 0.42452961804658196,
+    "gap": 0.04102669140147967,
+    "verdict": "refused"
+   },
+   "fifth 2": {
+    "areas": 49,
+    "miss": 0.4030257876261277,
+    "miss_at_fitted_g": 0.3967250333279579,
+    "gap": 0.05421508931229466,
+    "verdict": "refused"
+   },
+   "fifth 3": {
+    "areas": 27,
+    "miss": 0.3275733883954652,
+    "miss_at_fitted_g": 0.32681308961576433,
+    "gap": 0.09181690296166808,
+    "verdict": "refused"
+   },
+   "fifth 4": {
+    "areas": 40,
+    "miss": 0.1807999344085413,
+    "miss_at_fitted_g": 0.17854344676397255,
+    "gap": 0.0523594930287651,
+    "verdict": "refused"
+   },
+   "fifth 5": {
+    "areas": 16,
+    "miss": 0.26832062524918165,
+    "miss_at_fitted_g": 0.25511258524227126,
+    "gap": 0.134977060290711,
+    "verdict": "refused"
+   }
+  }
+ },
+ "S4b": {
+  "b_nuts3_km": 0.05000000000000001,
+  "b_nuts2_km": 0.05000000000000001,
+  "exponent_nuts2_kernel": 1.042723245869924,
+  "ratio": 1.0,
+  "drifts": false,
+  "at_grid_edge": true
+ },
+ "S5": {
+  "exponent_all_german_pairs": 1.2042420921805634,
+  "cross_border_pairs": 24284,
+  "ties_across_over_prediction": 0.9257181894084688,
+  "ties_same_side_over_prediction": 1.0347716435517653
+ },
+ "S6": {
+  "label": "extrapolation bracket; no population measured below about 20 km here",
+  "has_licence": false,
+  "share_of_own_area_ties_within_1_km": {
+   "a city of radius 4 km": {
+    "values": {
+     "b from S4, fitted exponent": 0.3275033937986455,
+     "b from S4b, fitted exponent": 0.3275033937986455,
+     "b from S4, exponent 0.9": 0.21218974036563865,
+     "floor zero-like (0.05 km), fitted exponent": 0.3275033937986455,
+     "uniform population": 0.055878928533963694,
+     "rank law": 0.6831968982683793
+    },
+    "low": 0.055878928533963694,
+    "high": 0.6831968982683793
+   },
+   "the median area": {
+    "values": {
+     "b from S4, fitted exponent": 0.11352023339523745,
+     "b from S4b, fitted exponent": 0.11352023339523745,
+     "b from S4, exponent 0.9": 0.047990933091340844,
+     "floor zero-like (0.05 km), fitted exponent": 0.11352023339523745,
+     "uniform population": 0.0038026451979568405,
+     "rank law": 0.4823568738936832
+    },
+    "low": 0.0038026451979568405,
+    "high": 0.4823568738936832
+   },
+   "a district of radius 35 km": {
+    "values": {
+     "b from S4, fitted exponent": 0.0620891947669932,
+     "b from S4b, fitted exponent": 0.0620891947669932,
+     "b from S4, exponent 0.9": 0.020338819185853473,
+     "floor zero-like (0.05 km), fitted exponent": 0.0620891947669932,
+     "uniform population": 0.0008024261448091784,
+     "rank law": 0.40358982539117616
+    },
+    "low": 0.0008024261448091784,
+    "high": 0.40358982539117616
+   }
+  },
+  "not": "a share of acts; a measurement"
+ },
+ "S7": {
+  "beyond_300_km_in_germany": 0.09991357496636627,
+  "foreign_europe": 0.15149034356909133,
+  "within_300_km_including_own": 0.7485960814645424,
+  "twin": {
+   "diaspora": 0.12,
+   "interest groups in the signer's area": 0.5
+  }
+ }
+}
+g0_disc
+   fifth 1  own area 0.435 (0.36-0.50)  within 100 0.258 (0.20-0.34)  100 to 300 0.129 (0.09-0.17)  farther in 0.087 (0.04-0.13)  foreign Eu 0.091 (0.05-0.14)
+   fifth 2  own area 0.407 (0.31-0.48)  within 100 0.275 (0.20-0.35)  100 to 300 0.119 (0.09-0.16)  farther in 0.080 (0.04-0.12)  foreign Eu 0.120 (0.07-0.19)
+   fifth 3  own area 0.376 (0.24-0.46)  within 100 0.270 (0.21-0.37)  100 to 300 0.123 (0.09-0.16)  farther in 0.081 (0.05-0.13)  foreign Eu 0.149 (0.09-0.21)
+   fifth 4  own area 0.284 (0.15-0.33)  within 100 0.323 (0.29-0.46)  100 to 300 0.132 (0.09-0.19)  farther in 0.098 (0.06-0.14)  foreign Eu 0.163 (0.11-0.22)
+   fifth 5  own area 0.230 (0.14-0.26)  within 100 0.243 (0.24-0.37)  100 to 300 0.142 (0.10-0.19)  farther in 0.152 (0.07-0.18)  foreign Eu 0.233 (0.16-0.27)
+   all      own area 0.346 (0.20-0.48)  within 100 0.274 (0.21-0.38)  100 to 300 0.129 (0.09-0.18)  farther in 0.100 (0.05-0.13)  foreign Eu 0.151 (0.06-0.21)
+gfit_disc
+   fifth 1  own area 0.416 (0.34-0.49)  within 100 0.257 (0.20-0.34)  100 to 300 0.135 (0.09-0.19)  farther in 0.090 (0.05-0.14)  foreign Eu 0.102 (0.06-0.16)
+   fifth 2  own area 0.393 (0.30-0.47)  within 100 0.272 (0.20-0.35)  100 to 300 0.120 (0.09-0.16)  farther in 0.082 (0.05-0.12)  foreign Eu 0.133 (0.08-0.21)
+   fifth 3  own area 0.373 (0.22-0.46)  within 100 0.265 (0.21-0.37)  100 to 300 0.120 (0.09-0.16)  farther in 0.082 (0.06-0.13)  foreign Eu 0.161 (0.10-0.23)
+   fifth 4  own area 0.278 (0.13-0.33)  within 100 0.314 (0.27-0.44)  100 to 300 0.131 (0.09-0.20)  farther in 0.099 (0.07-0.14)  foreign Eu 0.178 (0.13-0.24)
+   fifth 5  own area 0.249 (0.13-0.26)  within 100 0.229 (0.22-0.37)  100 to 300 0.133 (0.10-0.19)  farther in 0.145 (0.08-0.18)  foreign Eu 0.245 (0.18-0.29)
+   all      own area 0.341 (0.18-0.46)  within 100 0.267 (0.21-0.38)  100 to 300 0.128 (0.09-0.19)  farther in 0.100 (0.05-0.14)  foreign Eu 0.164 (0.08-0.23)
+g0_centre
+   fifth 1  own area 0.435 (0.36-0.50)  within 100 0.261 (0.21-0.34)  100 to 300 0.127 (0.09-0.17)  farther in 0.087 (0.04-0.13)  foreign Eu 0.091 (0.05-0.14)
+   fifth 2  own area 0.407 (0.31-0.48)  within 100 0.276 (0.21-0.35)  100 to 300 0.118 (0.08-0.16)  farther in 0.080 (0.05-0.12)  foreign Eu 0.120 (0.07-0.19)
+   fifth 3  own area 0.376 (0.24-0.46)  within 100 0.271 (0.21-0.37)  100 to 300 0.123 (0.09-0.16)  farther in 0.081 (0.05-0.13)  foreign Eu 0.149 (0.09-0.21)
+   fifth 4  own area 0.284 (0.15-0.33)  within 100 0.324 (0.29-0.46)  100 to 300 0.131 (0.09-0.19)  farther in 0.098 (0.06-0.14)  foreign Eu 0.163 (0.11-0.22)
+   fifth 5  own area 0.230 (0.14-0.26)  within 100 0.244 (0.24-0.37)  100 to 300 0.141 (0.10-0.19)  farther in 0.152 (0.07-0.18)  foreign Eu 0.233 (0.16-0.27)
+   all      own area 0.346 (0.20-0.48)  within 100 0.275 (0.21-0.39)  100 to 300 0.128 (0.09-0.18)  farther in 0.100 (0.05-0.13)  foreign Eu 0.151 (0.06-0.21)

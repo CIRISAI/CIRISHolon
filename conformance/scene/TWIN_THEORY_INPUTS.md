@@ -156,3 +156,25 @@ definition: the data centres are not partly displaced, they are not needed.
 **The adoption-path question** (how much a person gives up on the way there) is a
 different question. Its priors stay in `tables/upstream0/` under that label and are not
 the theory's test.
+
+## The AI branch, as the twin's session reports the lead's decision (2026-11-12)
+
+Reported by the twin's session, not said in this one: in the full-replacement scenario AI
+is a HYBRID. Inference is not moved to people's devices; agents call hosted models through
+a router with zero data retention. So inference people ask for stays in data centres at
+data-centre efficiency, neither removed nor relocated. What vanishes is retention, and the
+training, ranking and advertising work done on harvested data. "All AI on devices" and
+"no AI in scope" stay as labelled counterfactuals.
+
+**What that changes in the inputs wanted:**
+- Out: the energy of comparable inference on a device against a data centre.
+- In: of data-centre AI energy, the share that is inference people ask for against
+  ranking, advertising and training on retained data; AI's share of the estate by year;
+  and how inference demand per person changes when people run agents (carried by the twin
+  as a multiple of 1, 2 or 5, added back on the mesh side).
+
+**The twin's first result under full replacement** (its own, before this change; kWh per
+person-year against a baseline of 75.5): with AI left out, a saving of 16.5 at its
+defaults and a range of −65 to +111 over its inputs; with AI included and moved to
+devices, a cost of 6.2 at its defaults. The mesh's own additions are 2.8. Four guessed
+inputs decide the sign; a scout is sourcing them (`SCOUT_ESTATE.md`, when filed).

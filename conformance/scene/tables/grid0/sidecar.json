@@ -1,0 +1,29 @@
+{
+ "reference": "GRID-0 (a table of priors)",
+ "version": 1,
+ "table": "grid_table.json",
+ "bytes": 266548,
+ "sha256": "ffd498180d9c3bb095f2277a10315c98a87e6bd389cf46579e3767f5de5512cf",
+ "rows": 271,
+ "trust": {
+  "B": 138,
+  "A": 93,
+  "C": 40
+ },
+ "serves_registry_rows": [
+  "grid.carbon_intensity (the twin's Power map: gCO2 per person-year added or saved, by place)"
+ ],
+ "provenance": "conformance/scene/SCOUT_GRID.md (documentation only: published pages and PDFs; no dataset was downloaded; each row says how it was read)",
+ "verdict": {
+  "all_rows": "unresolved",
+  "reason": "priors gathered from documents; nothing scored. Web pages were read through a fetch tool's extraction, not raw; 52 US state rows were transcribed by eye and are rated B for it"
+ },
+ "law": "each row is a price in a regime: its year and its kind are part of the value. Kinds kept apart: generation or consumption mix; direct or life-cycle; CO2 or all gases; per kWh generated or delivered; location-based or market-based; average or marginal; and the edition of the method. Rows of different kinds must not be compared or mapped together without saying so.",
+ "warning": "an average rate times a change in load is an attribution, and must not be called emissions avoided. For a long-run 'this load never existed' reading use the average, location-based row of a stated year; for a short-run change use a non-baseload or operating-margin row where one exists (United States, India). The marginal map is flatter and higher than the average one: US subregions span 6.4 times on average rates and 2.1 times on non-baseload rates.",
+ "shares_by_source": "as published; several are partial and do not sum to 100",
+ "disagreements": "rows that disagree for one place and year are both kept and never averaged (Ember against IEA for 2025; Ember's own editions for the United States 2023: 369 and 393)",
+ "moves": "world about -1.5 % a year (2015 to 2025); United States average -4.1 % a year and non-baseload -0.8 % a year (2018 to 2023); not always down (South Africa +5.5 % in 2024)",
+ "licences": "values are facts quoted with their sources; each row carries the licence as read, and the report lists the licences that could not be read",
+ "holds_no_real_feature": "no person, household or building; places are countries, grid subregions, states and provinces",
+ "datasets_not_fetched_needing_approval": "listed in SCOUT_GRID.md; the first (Ember Yearly Electricity Data, CC BY 4.0) would replace most trust-C country rows, the third (EPA eGRID2023 workbooks, public domain) would check the transcribed state rows"
+}

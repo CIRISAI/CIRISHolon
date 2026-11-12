@@ -1740,3 +1740,18 @@ Records cited; nothing below changes a tier's status.*
 - **Spent:** 2024, for this question.
 
 *(Placed at the end, as above.)*
+
+### 2026-11-12 — GRID-0: carbon intensity of electricity by place, a table of priors
+
+- **Published** (`conformance/scene/tables/grid0/`, report `conformance/scene/SCOUT_GRID.md`):
+  271 rows from documents alone, no dataset fetched; countries, 27 US grid subregions with
+  average and non-baseload rates, US states, Canadian provinces, Australian state grids,
+  Chinese regional grids and provinces. Each row carries its year, kind, source, licence
+  and a trust rating. Asked for by the twin, to draw power by place.
+- **The kind is part of the value:** US subregions span 6.4 times on average rates and 2.1
+  times on non-baseload rates; Germany 2025 reads 330 to 406 in one official table.
+- **Not found at source:** official figures for 14 of the countries asked for (rated C
+  from secondhand pages); marginal rates outside the United States and India.
+- **Verdict:** every row unresolved; nothing scored.
+
+*(Placed at the end, as above.)*

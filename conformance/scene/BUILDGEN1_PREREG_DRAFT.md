@@ -67,6 +67,29 @@ Dwelling`, for the United States 2020; any other reference returns `unresolved`.
   the survey's zone and urban type (a further campaign, on county tables); how dwellings
   compose into an apartment building; anything outside the United States.
 
+## Roof tone: ASSUMED, not certified
+
+No source gives a roof's colour. The survey gives its material. The twin's lead proposed
+this mapping on 2026-11-12, as "what the material usually looks like from above, nothing
+more"; it is recorded here so that neither side holds it privately, and the generator
+returns it in a field named `roof_tone_assumed`:
+
+| roof material (the survey's code) | tone | approximate sRGB |
+|---|---|---|
+| ceramic or clay tiles | red_tile | 178, 98, 72 |
+| concrete tiles | brown_tile | 142, 122, 104 |
+| wood shingles or shakes | weathered_wood | 128, 112, 94 |
+| slate or synthetic slate | grey_slate | 92, 100, 110 |
+| shingles, composition or asphalt | dark_shingle | 84, 82, 80 |
+| metal | metal_light | 168, 172, 176 |
+| other | neutral | the renderer's present roof colour |
+| not asked (buildings of 5 or more units) | concrete_flat | 150, 150, 146 |
+
+The weakest row is the largest: composition shingles are sold in many colours. The last
+row is assumed twice over (the survey did not ask; a flat membrane is a guess). No stake
+touches this table, and no verdict but `assumed` may be shown for a roof's colour. Roof
+FORM is not in the survey and none is returned.
+
 ## Plants
 
 - **P-INDEP.** A synthetic survey with independent attributes: the fitted correlations

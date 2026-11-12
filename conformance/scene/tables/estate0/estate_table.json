@@ -661,7 +661,8 @@
    "twin_guess": 0.4,
    "scout": "0.6 (0.45 to 0.75)",
    "basis": "the scout's bracket from two derivations; NO source splits energy by consumer against business. Enterprise alone is 25 % and stays. Two large consumer operators counted wholly as consumer are 12 % of the total.",
-   "depends_on": "what 'replace the internet entirely' includes; if enterprise, government and science computing also go, this input is a definition and is near zero"
+   "depends_on": "what 'replace the internet entirely' includes; if enterprise, government and science computing also go, this input is a definition and is near zero",
+   "resolved_as": "Case A (central): 0.6 (0.45 to 0.75). Case B (counterfactual): rented business work relocated at 1.4 to 4 times. See 'businesses'."
   },
   "of_consumer_work_the_share_that_vanishes": {
    "twin_guess": 0.5,
@@ -682,5 +683,18 @@
    "scout": "same model: 3 to 30 (laptop 3 to 10, phone 10 to 30; never measured like for like). As served (a small device model against a hosted frontier model): 0.3 to 5. Frontier models and training cannot move to homes at all."
   }
  },
- "written_before": "the lead's statement that AI in the scenario is a mix across tiers placed by the market; the scout's AI rows compare a device with a data centre and do not yet give energy by tier"
+ "written_before": "the lead's statement that AI in the scenario is a mix across tiers placed by the market; the scout's AI rows compare a device with a data centre and do not yet give energy by tier",
+ "businesses": {
+  "how_the_constitution_models_a_business": "an affiliation: 'a room that acts as one voice', a body on the network that runs nodes it owns ('a node is a device or server you own'); one of the five circles",
+  "case_A_central": {
+   "statement": "organisations' work stays on servers, owned or rented, placed by the market at about today's efficiency; the share of the estate that stays is 0.45 to 0.75 (centre 0.6)",
+   "basis": "enterprise-owned is 0.25 (IEA 2025, read at source); the rest is the scout's bracket, unsourced"
+  },
+  "case_B_counterfactual": {
+   "statement": "no large facilities: rented business work moves to organisations' own premises",
+   "efficiency_ratio": "1.4 (overhead alone: PUE 1.54 against about 1.1) to about 4 (a vendor-commissioned claim of 3.2 to 4.1); near 1 for best practice",
+   "basis": "web search results, not read at source: IEA cooling shares 7 % against over 30 %; Uptime 2025 average PUE 1.54; utilisation about 65 % cloud against 12 to 18 % on premises (2014, as quoted by a vendor)"
+  },
+  "not_found": "any split of a hyperscale operator's capacity or energy between its own consumer services and its business customers"
+ }
 }

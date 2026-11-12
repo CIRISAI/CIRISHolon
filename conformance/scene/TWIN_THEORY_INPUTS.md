@@ -206,3 +206,66 @@ to a scout before the lead corrected it.
 **Inputs wanted now:** energy per unit of inference at each tier, with the model size each
 can run; what share of inference each tier carries today and how that is moving; and how
 demand per person changes when people run agents.
+
+## How much of the estate stays: made defensible from how the Constitution models a business (2026-11-12)
+
+The lead's word on the "share that stays" input: "whatever is defensible, do some web
+searches and look at how CC models businesses". Read: the Constitution's text in its own
+repository (rc at `c834afd`, read-only) and four web searches. Search results are marked.
+
+**How the Constitution models a business.**
+- "A business, a school or a court is a room that acts as one voice" (the users' guide,
+  citing CC 4.4.3.2.8). It is an AFFILIATION: an institutional cohort gathered by
+  necessity and not by interest, from a holiday-party committee to an intergovernmental
+  body, with its own charter, roles, retention policy and classification scheme.
+- Businesses are one of the five circles a person's things can sit in ("the communities
+  and businesses you join").
+- "A node is a device or server you own." The network "runs on the phones and computers
+  people already own, with no company in the middle" (executive summary); "Nobody runs a
+  server you depend on" (users' guide).
+
+**What follows for the test.** In the scenario businesses do not disappear and do not sit
+outside it. They are bodies ON the network that run nodes they own. So the input is not
+"which data centres survive" but two different things:
+1. **Work an organisation already runs on its own servers.** That is already "a node you
+   own". It is inside the scenario and unchanged: neither a saving nor a cost.
+2. **Work an organisation rents from a company in the middle.** In the scenario it runs on
+   nodes the organisation owns or chooses, placed by the market (the lead's "office
+   appliance, servers, etc... - the market optimizes").
+
+**What is sourced.**
+- The estate by owner (IEA, Energy and AI 2025, read at source by the scout): enterprise
+  106 TWh of 416 in 2024, a quarter. That is item 1 and stays.
+- Hyperscale operators held 41 % of worldwide data-centre capacity in 2024 (a commercial
+  analyst, by search result). No source found splits a hyperscale operator's capacity
+  between its own consumer services and its business customers.
+- Efficiency of an organisation's own facility against a hyperscale one:
+  - Cooling is about 7 % of consumption in efficient hyperscale centres and over 30 % in
+    less efficient enterprise ones (IEA, by search result).
+  - The surveyed industry average overhead (PUE) is 1.54 and has been flat for six years
+    (Uptime 2025, by search result), against about 1.1 at hyperscale.
+  - Server utilisation: about 65 % in cloud against 12 to 18 % on premises (a 2014
+    assessment as quoted by a cloud vendor, by search result).
+  - A vendor-commissioned study claims its cloud is 3.2 to 4.1 times more energy
+    efficient than on-premises; an independent 2012 study found best-practice on-premises
+    facilities close to the best public clouds. Both by search result.
+  - So the ratio for item 2 moved to an organisation's own typical facility is about 1.4
+    (overhead alone) to about 4 (the vendor's claim), and near 1 for a best-practice one.
+
+**The defensible treatment, as two labelled cases.**
+- **Case A, the market keeps servers where they are cheapest (the central case).**
+  Organisations' work stays on servers, owned or rented, at about today's efficiency.
+  What goes is the company in the middle of people's lives, not the rack. The share of the
+  estate that stays is then enterprise (0.25) plus the business part of hyperscale and
+  colocation: the scout's bracket of 0.45 to 0.75, centre 0.6, with no source for the
+  split inside it. This is the reading consistent with "the market optimizes".
+- **Case B, no large facilities at all (a labelled counterfactual).** The rented business
+  work moves to each organisation's own premises at 1.4 to 4 times the energy. On the
+  scout's centres that is about 25 kWh per user-year of work becoming 35 to 100, which by
+  itself can exceed the whole saving. It shows the price of reading "no massive
+  datacenters" as a ban on scale, where the Constitution only bans dependence.
+
+**What this does to the size of the claim.** Under Case A the part of the estate in play
+is consumer work, about 29 kWh per user-year (18 to 40), of which what VANISHES is the
+saving and what relocates is roughly neutral on devices already on. The saving is then a
+share of 29, not of 72: real, and smaller than the old headline.

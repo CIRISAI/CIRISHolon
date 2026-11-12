@@ -38,7 +38,7 @@ Bursill and Hamer (2002). Every stake is a direction those papers give. A re-fin
   `N ∈ {12, 14, 16, 18}`. At `x = 3` the lattice is coarse (the registry's
   `N ≳ 20√x = 35` for a continuum reading is NOT met): every statement is about this
   lattice at these sizes (M-VOLUME-SCALE, committed, not merely contacted).
-- **Readings.** `ΔE± = E₀(Q = ±1) − E₀(Q = 0)`. The gap inside the `−1` sector,
+- **Readings.** `ΔE± = E₀(Q = ±1) − E₀(Q = 0)`. The gap within the `−1` sector,
   `δ = E₁ − E₀`. The charge's mean position `X = Σ n (q_n − q_n⁰)/Q` with `q⁰` the `Q = 0`
   state's profile, and its distance from the right end, `(N − 1) − X`. The step of the
   field it carries, `−(L_n − L_n⁰)`, as a two-link mean. The two-link mean of `⟨L + α⟩` at

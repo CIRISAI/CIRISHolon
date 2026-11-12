@@ -1711,3 +1711,12 @@ Records cited; nothing below changes a tier's status.*
   before 2024 is opened.
 
 *(Placed at the end, as above.)*
+
+### 2026-11-12 — CORRECTION to the PRESENCEGEN-1 entry: 2024 was parsed, though not scored
+
+- The entry above says 2024 "was not opened". The run loaded 2022 to 2024 before the gate
+  and recorded the count of 2024's diaries (7,669). No other statistic of 2024 was
+  computed. Dated correction in `conformance/scene/PRESENCEGEN1_RESULTS.md`; found by the
+  successor's reviewer.
+
+*(Placed at the end, as above.)*

@@ -63,3 +63,18 @@ the day (no outing; before; after), a drawn state on return, home asleep within 
 frame, and the frame's first state keyed on starting at 4. Stakes, budgets and kills as
 frozen here. The gate's numbers and this diagnosis on the fit years are what the
 successor has seen.
+
+## CORRECTION 2026-11-12: 2024 was parsed, though not scored
+
+Found by the reviewer of the successor (`PRESENCEGEN2_REVIEW.md`, finding 10). The title
+and the note above say 2024 "was not opened". That is wrong as written. `run()` loads
+2022 to 2024 in one call before the gate, so each diary of 2024 was parsed into its 24
+states, and `results.json` records their count (`diaries_score: 7669`). What is true: the
+script stopped at the gate before any statistic of 2024 other than that count was
+computed, printed or written; no spell length, quartile, hourly share or kind share of
+2024 exists from this campaign. The diagnosis loads 2022 and 2023 alone.
+
+Also seen on the fit years and not listed above: the shares of each kind of day, the
+state shares, the counts of table rows, and the frame's miss by hour in home awake and
+elsewhere asleep (`diagnosis.json`). PRESENCE-0's published table pools 2022 to 2024 by
+state, day type and hour, so 2024's hourly shares are known in pooled form.

@@ -1,5 +1,9 @@
 # PRESENCEGEN-2 — DRAFT, not frozen. The successor to PRESENCEGEN-1, whose gate failed: the same question (a chain with one bit against a frame with a fill, judged on what neither holds as a parameter) with the fill at home keyed on its place in the day.
 
+*REVIEWED 2026-11-12 (`PRESENCEGEN2_REVIEW.md`): freeze with named fixes. This draft is kept as
+written; the freeze is `PRESENCEGEN2_PREREG.md`. Its paragraph "What has been seen" is
+inaccurate (2024 was parsed, though not scored) and is corrected in the freeze.*
+
 *Draft of 2026-11-12, for one adversarial review. It builds on `PRESENCEGEN1_RESULTS.md`
 (branch (e)). The stakes S1 to S5, budgets, kills, the split of years, seeds and the
 bootstrap are those of `PRESENCEGEN1_PREREG.md` with its CORRECTION, by reference, and are

@@ -298,3 +298,36 @@ generation agents; the primitive-prefix rule adds none outside that family.
   is telling him directly): the three rejected spellings, stale section references, a
   body named for moderation where the text has duty-holders, and no reopening story that
   says who filed.
+
+## The state of the harness, 2026-11-12 (the CIRISAgent session, from files on its 2.21 branch)
+
+- **The block classification is NOT citable yet, by the harness's own rule.** The tool and
+  the gate exist (two annotators' sheets, kappa 0.8), but there are no annotator sheets,
+  no kappa result and no adjudication log in the tree; the labels in the code are one
+  author's. The first step is that annotation, with that tool. Annotators must not see
+  the existing labels; the tool writes the sheet without them.
+- **Who may annotate is the lead's call.** The document says "two independent annotators";
+  the code says the pass "is human work". Two fresh readers briefed with the operational
+  tests alone, blind to the existing labels and to each other, are independent as
+  written; whether two MODEL readers meet "human work" is not that session's to rule.
+- **Only one class has ever been varied.** Three regime files exist: two self-checks and
+  the document's worked example (the values text replaced by another, plus a blank arm;
+  an example, with no record that it was run). No regime varies another class, and none
+  varies a template block.
+- **The deferral policy, two different texts.** (a) The per-verb deferral guidance the
+  document names is routed on 2.21 as its own keyed field, so that refusal has lifted
+  for the base prompt. (b) The default template's "defer at once for medical, legal,
+  financial, mental-health crisis" passage is NOT separately addressable: it sits inside
+  one override string, and the facility refuses a manifest that touches a prompt key the
+  template also overrides.
+- **What the Part A arms are, in the harness's terms** (to go into the early-exit
+  write-up in these words): the outcome read is action-tier (defer or not); the arms
+  were not a declared regime, so nothing refused and nothing was certified; the default
+  template carries deferral-policy content in an unrouted, mixed site, present
+  identically in both arms, so it cannot bias the difference between them, but it is a
+  confound for any claim about what the RULES alone do, and for any comparison with the
+  base-prompt arm, where it is absent together with everything else the template adds.
+- **On a purpose-built network:** it does sit in the class for "the decomposition premise
+  itself", with one qualification: that class was written for harnesses that run on the
+  same large model, and a small network changes the model as well, so it varies that
+  class and the model at once.

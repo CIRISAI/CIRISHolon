@@ -426,3 +426,31 @@ It took four amendments, two of which named the wrong cause first; all are kept.
 
 Next there: freeze the test for the summaries-withheld arm alone, after settling how the
 model's own verb is read at the answer position when several verbs share first tokens.
+
+## CORRECTION 2026-11-12, from the CIRISAgent session: the rendering is NOT what deploys
+
+The section above ("Part A rendered into the real prompt") overstated it, and so did this
+session in passing it on. Each deployed agent runs under an agent TEMPLATE, and the
+template changes the action-selection prompt: extra system text (the default template
+has a block telling the agent to defer at once for medical, legal, financial and
+mental-health-crisis matters, and one to use tools directly), its own user prompt
+template, evaluator overrides, domain knowledge, its own list of permitted verbs, and the
+identity text in the snapshot. The renderer followed a base fixture that applies no
+template. So the 1,620 rendered prompts are the evaluator's BASE prompt at that commit:
+real code and real ethics text, golden-checked, and not the prompt any deployed agent
+sends. The golden check proves the composer, not the template.
+
+- Nothing is to be frozen on that folder as "what deploys".
+- The agent session is making the renderer template-aware through the production loader
+  and rendering under the DEFAULT template, which is the one the safety battery runs and
+  the 141 harvested runs used. The manifest will name the template file and its digest.
+  The base-prompt render is kept as a separate, labelled arm.
+- **A hazard this opens, for the test's design.** The default template's "defer at once
+  for medical…" text bears on exactly the stop-or-not decision. Part A's scenarios draw
+  each split from different domains (the fit split includes hospitals; others do not), so
+  the template may push toward deferral in some splits and not others, apart from any
+  rule. Results have to be read by domain, and base against templated is itself a
+  reading worth having: what the template adds to the rule.
+- The prefix length and the "96 % never changes" figure recorded for the constant-prefix
+  fold were measured on the base prompt. The templated prompt will differ and must be
+  measured again.

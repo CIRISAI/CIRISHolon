@@ -19,7 +19,7 @@ they reach the output.
 ## How a pair is made
 
 - **Seed.** A website story that turns on one stated change (the 25 CORRECTION stories and
-  the stories of reconsideration, hand-over, conscience and the hard case: about 50
+  the stories of reconsideration, hand-over, conscience and the hard case: 37
   candidates by a crude index). Its ending is cut where it tells the outcome.
 - **Base.** From a seed, one BEFORE text: the situation with the earlier claim standing,
   100 to 200 words, in the seed's own plain language, ending with one fixed neutral

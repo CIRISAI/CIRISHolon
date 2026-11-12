@@ -27,6 +27,21 @@
 //! the gate prices at zero is one the target can be predicted without; a candidate it carries
 //! is one the target cannot be predicted without FROM THIS DICTIONARY. Neither is a statement
 //! about what an intervention would do. The price is a prediction to be realised by one.
+//!
+//! # First use on a carrier that is not the engine's own, 2026-11-12 (the RATCHET session's run)
+//!
+//! PARALLAX-H put this gate to a small language model: one dictionary per MLP layer (a
+//! probe's direction, the model's writing direction, its residual, a block of byte
+//! forecasts, shuffled probes), target the final next-byte log-probabilities, each price
+//! then REALISED by projecting the direction out. As that session reports it: the price and
+//! the realised cost rank-correlate at 0.14 to 0.61 by layer, and they part both ways. A
+//! probe's direction was CARRIED (+0.044 R squared) where removing it cost +0.0001 nats:
+//! predictive, and not read. The writing direction was DROPPED at every layer, its
+//! information redundant given the others, where removing it cost +0.006 to +0.058: read,
+//! though redundant. Registered there as KS-PRICE-NOT-COST. The gate answers "is this
+//! information needed, given the rest of the dictionary"; a patch answers "is this channel
+//! read". A system reads its own channels and does not re-derive their content from
+//! elsewhere. Neither answer stands in for the other, and a map should show both.
 
 use holon_closure::removable::{Admission, Candidate, Folds, Horizon, Mat, Nulls, Price, Question, Ridge, Swap, Unit};
 

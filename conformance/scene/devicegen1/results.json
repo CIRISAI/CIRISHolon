@@ -1,0 +1,873 @@
+{
+ "plants": {
+  "P-CELLS": true,
+  "P-CLUSTER": true,
+  "P-CONSISTENT": true,
+  "P-PERSONS": true,
+  "P-TWOPHONES": true,
+  "P-SEED": true,
+  "P-COVARIATE": true,
+  "_covariate_ratios_survey_rival": [
+   2.938716639064355,
+   2.8759163103173457
+  ],
+  "P-THIN": true
+ },
+ "split": {
+  "states": 51,
+  "fit_records": 9948,
+  "score_records": 8548
+ },
+ "fit": {
+  "strata_written": {},
+  "min_records": 30,
+  "histogram_rows_by_fallback_level": [
+   368,
+   320,
+   248,
+   144,
+   40
+  ],
+  "phones": {
+   "rates_by_group_and_connection": [
+    [
+     0.9733794690750804,
+     0.8246248721387781,
+     0.412250601449508
+    ],
+    [
+     0.739266578103043,
+     0.6167661599406372,
+     0.24315627354158922
+    ],
+    [
+     0.5013401819860058,
+     0.5730249208921657,
+     0.3280096416883164
+    ]
+   ],
+   "q_two_phones": 0.07708740234375,
+   "target_share_more_phones_than_persons": 0.0850506867263402
+  },
+  "rows": 1173
+ },
+ "G0": {
+  "largest_cell_frequency_difference_on_fit": 0.0019011710376833912,
+  "cells_survey_fit": [
+   0.010891236339659488,
+   0.013796187816200498,
+   0.1931883507440327,
+   0.5128362378448417,
+   0.022545846069544538,
+   0.008634121637941234,
+   0.06990940574454999,
+   0.09578302695943852,
+   0.054355702874929336,
+   0.001895486984687818,
+   0.01411134911227329,
+   0.0020530478719010268
+  ],
+  "cells_generated_fit": [
+   0.011256296675943375,
+   0.01328308772086177,
+   0.1922754184376234,
+   0.5147374088825251,
+   0.02177944513407027,
+   0.009185447086317914,
+   0.06956828262566642,
+   0.09412466988071289,
+   0.054989547423551124,
+   0.0020712730118561157,
+   0.014412921689314887,
+   0.002316201431556783
+  ],
+  "digest_native_fit_tables": "17781197424588059001",
+  "persons_sum_to_size": true,
+  "pass": true,
+  "note": "the bar of 0.002 is read with the Monte Carlo error of 10 seeds over the FIT households added (0.004)"
+ },
+ "R1": {
+  "cells": {
+   "smartphone": [
+    {
+     "size": "1",
+     "survey": 0.8557156573366123,
+     "generated": 0.7441685966664873,
+     "relative_miss": -0.1303552876633246,
+     "gap_relative": 0.03749591535283332,
+     "verdict": "unresolved"
+    },
+    {
+     "size": "2",
+     "survey": 1.7510206856878026,
+     "generated": 1.616004237427013,
+     "relative_miss": -0.07710728340582396,
+     "gap_relative": 0.017471078758445162,
+     "verdict": "certified"
+    },
+    {
+     "size": "3",
+     "survey": 2.468858195678886,
+     "generated": 2.4583755740825506,
+     "relative_miss": -0.0042459391206358665,
+     "gap_relative": 0.0319218539181042,
+     "verdict": "certified"
+    },
+    {
+     "size": "4",
+     "survey": 3.064737300161715,
+     "generated": 3.1074771439378894,
+     "relative_miss": 0.013945679381367926,
+     "gap_relative": 0.02551466480023568,
+     "verdict": "certified"
+    },
+    {
+     "size": "5 or more",
+     "survey": 3.7178672101064887,
+     "generated": 4.082688414478271,
+     "relative_miss": 0.09812647514146522,
+     "gap_relative": 0.041128352179809556,
+     "verdict": "certified"
+    },
+    {
+     "size": "all",
+     "survey": 1.955416531047939,
+     "generated": 1.9129337798552335,
+     "relative_miss": -0.021725678656269842,
+     "gap_relative": 0.019742742971845438,
+     "verdict": "certified"
+    }
+   ],
+   "laptop": [
+    {
+     "size": "1",
+     "survey": 0.6679519039136095,
+     "generated": 0.7505417285878948,
+     "relative_miss": 0.12364636464149847,
+     "gap_relative": 0.052431337145165506,
+     "verdict": "unresolved"
+    },
+    {
+     "size": "2",
+     "survey": 1.1836483470647912,
+     "generated": 1.255203314629928,
+     "relative_miss": 0.060452893583283096,
+     "gap_relative": 0.03237542154593872,
+     "verdict": "certified"
+    },
+    {
+     "size": "3",
+     "survey": 1.7182755333232296,
+     "generated": 1.8007851096869654,
+     "relative_miss": 0.048018827460202695,
+     "gap_relative": 0.05041557840613124,
+     "verdict": "certified"
+    },
+    {
+     "size": "4",
+     "survey": 2.175996966583013,
+     "generated": 2.17990227152801,
+     "relative_miss": 0.0017947198479462134,
+     "gap_relative": 0.04329670947188168,
+     "verdict": "certified"
+    },
+    {
+     "size": "5 or more",
+     "survey": 2.442973979786563,
+     "generated": 2.5123260069201834,
+     "relative_miss": 0.028388360951629776,
+     "gap_relative": 0.06011105969608764,
+     "verdict": "certified"
+    },
+    {
+     "size": "all",
+     "survey": 1.359625598538658,
+     "generated": 1.427373648439338,
+     "relative_miss": 0.04982846010953046,
+     "gap_relative": 0.025543667721473193,
+     "verdict": "certified"
+    }
+   ],
+   "desktop": [
+    {
+     "size": "1",
+     "survey": 0.31779971190652023,
+     "generated": 0.29937006091860097,
+     "relative_miss": -0.057991402438213324,
+     "gap_relative": 0.08425997934862417,
+     "verdict": "certified"
+    },
+    {
+     "size": "2",
+     "survey": 0.5460333980777049,
+     "generated": 0.568668418031186,
+     "relative_miss": 0.04145354484389974,
+     "gap_relative": 0.0558954314833159,
+     "verdict": "certified"
+    },
+    {
+     "size": "3",
+     "survey": 0.6237189045100164,
+     "generated": 0.6250293793088427,
+     "relative_miss": 0.002101066344711411,
+     "gap_relative": 0.07270224581238217,
+     "verdict": "certified"
+    },
+    {
+     "size": "4",
+     "survey": 0.7074030249226126,
+     "generated": 0.656593246004103,
+     "relative_miss": -0.07182578689717656,
+     "gap_relative": 0.09704988647895912,
+     "verdict": "unresolved"
+    },
+    {
+     "size": "5 or more",
+     "survey": 0.7062414439371613,
+     "generated": 0.6910819654036807,
+     "relative_miss": -0.021465008409828457,
+     "gap_relative": 0.1377335365949661,
+     "verdict": "unresolved"
+    },
+    {
+     "size": "all",
+     "survey": 0.5299748673841262,
+     "generated": 0.5258913916366592,
+     "relative_miss": -0.007705036594702008,
+     "gap_relative": 0.03665819516512271,
+     "verdict": "certified"
+    }
+   ],
+   "tablet": [
+    {
+     "size": "1",
+     "survey": 0.49769042217457976,
+     "generated": 0.4452755958196301,
+     "relative_miss": -0.1053161242804942,
+     "gap_relative": 0.06044570507423476,
+     "verdict": "unresolved"
+    },
+    {
+     "size": "2",
+     "survey": 0.9482872997000116,
+     "generated": 0.9539670082372217,
+     "relative_miss": 0.005989438579433459,
+     "gap_relative": 0.04044819280377158,
+     "verdict": "certified"
+    },
+    {
+     "size": "3",
+     "survey": 1.2495768538220176,
+     "generated": 1.2466924349885147,
+     "relative_miss": -0.0023083164710361315,
+     "gap_relative": 0.06391888415059631,
+     "verdict": "certified"
+    },
+    {
+     "size": "4",
+     "survey": 1.5520352320221436,
+     "generated": 1.579243179443214,
+     "relative_miss": 0.017530495996293416,
+     "gap_relative": 0.06227806352627071,
+     "verdict": "certified"
+    },
+    {
+     "size": "5 or more",
+     "survey": 1.7675583747221488,
+     "generated": 1.8147816810875956,
+     "relative_miss": 0.02671668842216879,
+     "gap_relative": 0.07232826916495384,
+     "verdict": "certified"
+    },
+    {
+     "size": "all",
+     "survey": 1.0195513914937366,
+     "generated": 1.0146416377479046,
+     "relative_miss": -0.004815602025356247,
+     "gap_relative": 0.026261932198786666,
+     "verdict": "certified"
+    }
+   ],
+   "television": [
+    {
+     "size": "1",
+     "survey": 1.574379070779777,
+     "generated": 1.6113499502341626,
+     "relative_miss": 0.023482832146691557,
+     "gap_relative": 0.025217427532354664,
+     "verdict": "certified"
+    },
+    {
+     "size": "2",
+     "survey": 2.2449753574998033,
+     "generated": 2.2944011969034546,
+     "relative_miss": 0.02201620576303176,
+     "gap_relative": 0.019717235367133882,
+     "verdict": "certified"
+    },
+    {
+     "size": "3",
+     "survey": 2.596709700225963,
+     "generated": 2.8373838905671014,
+     "relative_miss": 0.09268428824377062,
+     "gap_relative": 0.03062263541907029,
+     "verdict": "certified"
+    },
+    {
+     "size": "4",
+     "survey": 2.7079711985776336,
+     "generated": 2.922008173236995,
+     "relative_miss": 0.07903960528523513,
+     "gap_relative": 0.03446647364020545,
+     "verdict": "certified"
+    },
+    {
+     "size": "5 or more",
+     "survey": 3.2202093297372665,
+     "generated": 3.2314806808542986,
+     "relative_miss": 0.0035001920567541145,
+     "gap_relative": 0.043652182970086224,
+     "verdict": "certified"
+    },
+    {
+     "size": "all",
+     "survey": 2.261272795678003,
+     "generated": 2.3521268182570054,
+     "relative_miss": 0.04017826719211093,
+     "gap_relative": 0.014539882734856126,
+     "verdict": "certified"
+    }
+   ],
+   "set-top box": [
+    {
+     "size": "1",
+     "survey": 0.8917198573105798,
+     "generated": 0.9228698700935153,
+     "relative_miss": 0.03493250994419217,
+     "gap_relative": 0.058202009480396916,
+     "verdict": "certified"
+    },
+    {
+     "size": "2",
+     "survey": 1.3795670503320763,
+     "generated": 1.4523370066726382,
+     "relative_miss": 0.05274840126331326,
+     "gap_relative": 0.04309540820752046,
+     "verdict": "certified"
+    },
+    {
+     "size": "3",
+     "survey": 1.181328545389197,
+     "generated": 1.466986371110755,
+     "relative_miss": 0.2418106519447949,
+     "gap_relative": 0.08626571115152736,
+     "verdict": "refused"
+    },
+    {
+     "size": "4",
+     "survey": 1.133968685500172,
+     "generated": 1.2435803102851162,
+     "relative_miss": 0.09666195035764735,
+     "gap_relative": 0.09200295336666275,
+     "verdict": "unresolved"
+    },
+    {
+     "size": "5 or more",
+     "survey": 1.3399084262260548,
+     "generated": 1.2426095807456639,
+     "relative_miss": -0.07261604119800924,
+     "gap_relative": 0.10477008107067794,
+     "verdict": "unresolved"
+    },
+    {
+     "size": "all",
+     "survey": 1.184269534629811,
+     "generated": 1.2660565940531183,
+     "relative_miss": 0.0690611866908093,
+     "gap_relative": 0.026400109720230425,
+     "verdict": "certified"
+    }
+   ],
+   "streaming device": [
+    {
+     "size": "1",
+     "survey": 0.6226994271673469,
+     "generated": 0.6435113328164339,
+     "relative_miss": 0.03342207289921584,
+     "gap_relative": 0.07521994807453702,
+     "verdict": "certified"
+    },
+    {
+     "size": "2",
+     "survey": 0.9690074950812029,
+     "generated": 1.0189281767529001,
+     "relative_miss": 0.05151733286388449,
+     "gap_relative": 0.056479904475063146,
+     "verdict": "certified"
+    },
+    {
+     "size": "3",
+     "survey": 1.4061403063773075,
+     "generated": 1.4052029957650751,
+     "relative_miss": -0.0006665839873740698,
+     "gap_relative": 0.06493522617493201,
+     "verdict": "certified"
+    },
+    {
+     "size": "4",
+     "survey": 1.5012481075111503,
+     "generated": 1.6421989993654955,
+     "relative_miss": 0.09388913874337601,
+     "gap_relative": 0.06307127929740768,
+     "verdict": "unresolved"
+    },
+    {
+     "size": "5 or more",
+     "survey": 1.6411910044928855,
+     "generated": 1.679698326131971,
+     "relative_miss": 0.023463034792214232,
+     "gap_relative": 0.08001465265055495,
+     "verdict": "certified"
+    },
+    {
+     "size": "all",
+     "survey": 1.0664392997908885,
+     "generated": 1.1109360423442547,
+     "relative_miss": 0.04172459000909967,
+     "gap_relative": 0.035706326261944,
+     "verdict": "certified"
+    }
+   ],
+   "games console": [
+    {
+     "size": "1",
+     "survey": 0.14367124824951033,
+     "generated": 0.16467047991515985,
+     "relative_miss": 0.146161684550695,
+     "gap_relative": 0.15272411320027499,
+     "verdict": "unresolved"
+    },
+    {
+     "size": "2",
+     "survey": 0.3019208971090091,
+     "generated": 0.3168796315044466,
+     "relative_miss": 0.049545210479540414,
+     "gap_relative": 0.08028098963680688,
+     "verdict": "certified"
+    },
+    {
+     "size": "3",
+     "survey": 0.7409301024624049,
+     "generated": 0.7235338949860736,
+     "relative_miss": -0.023478877992022196,
+     "gap_relative": 0.06183037759713666,
+     "verdict": "certified"
+    },
+    {
+     "size": "4",
+     "survey": 0.9033504201976112,
+     "generated": 1.0543868831360101,
+     "relative_miss": 0.16719587389504853,
+     "gap_relative": 0.06451098180914165,
+     "verdict": "unresolved"
+    },
+    {
+     "size": "5 or more",
+     "survey": 1.1486292646591763,
+     "generated": 1.1936950413771348,
+     "relative_miss": 0.03923439712406296,
+     "gap_relative": 0.06859956047945967,
+     "verdict": "certified"
+    },
+    {
+     "size": "all",
+     "survey": 0.4751917636704741,
+     "generated": 0.5063139817624577,
+     "relative_miss": 0.0654940183550099,
+     "gap_relative": 0.034801802391081556,
+     "verdict": "certified"
+    }
+   ],
+   "smart speaker": [
+    {
+     "size": "1",
+     "survey": 0.34702567676444845,
+     "generated": 0.33444440735836645,
+     "relative_miss": -0.036254577826590695,
+     "gap_relative": 0.12848714139169615,
+     "verdict": "unresolved"
+    },
+    {
+     "size": "2",
+     "survey": 0.5558262593263622,
+     "generated": 0.6015763797986303,
+     "relative_miss": 0.08231010986727272,
+     "gap_relative": 0.06629864195117771,
+     "verdict": "certified"
+    },
+    {
+     "size": "3",
+     "survey": 0.7920462164580869,
+     "generated": 0.8099705614616399,
+     "relative_miss": 0.022630428163280758,
+     "gap_relative": 0.09747858418847094,
+     "verdict": "certified"
+    },
+    {
+     "size": "4",
+     "survey": 0.9791986287574432,
+     "generated": 1.0315398742802848,
+     "relative_miss": 0.05345314421984049,
+     "gap_relative": 0.1157718584806278,
+     "verdict": "unresolved"
+    },
+    {
+     "size": "5 or more",
+     "survey": 0.9770892728729627,
+     "generated": 0.9998128680539443,
+     "relative_miss": 0.023256416595555107,
+     "gap_relative": 0.1261803077346161,
+     "verdict": "certified"
+    },
+    {
+     "size": "all",
+     "survey": 0.6244492312620108,
+     "generated": 0.6489202173526617,
+     "relative_miss": 0.039188111483771104,
+     "gap_relative": 0.04171682119145624,
+     "verdict": "certified"
+    }
+   ]
+  },
+  "refused_cells": 1,
+  "each_kind_certified_at_all_sizes": true,
+  "outcome": "not reproduced"
+ },
+ "R2": {
+  "survey_ratio": 2.853214325104093,
+  "gap": 0.1516342493493512,
+  "generated_ratio": 2.9232492980994604,
+  "survey_share_neither": 0.0868320525200757,
+  "generated_share_neither": 0.08803302601381092,
+  "reproduced": true
+ },
+ "S7": {
+  "survey_ratio": 2.853214325104093,
+  "gap": 0.1516342493493512,
+  "shipped_ratio": 2.9232492980994604,
+  "rival_ratio": 1.3846812017205354,
+  "rival_share_neither": 0.028362652568525062,
+  "rival_gives": "each kind alone given pooled size, building, any child, any adult over 64",
+  "outcome": "met"
+ },
+ "R3": {
+  "apartment_against_house": {
+   "desktop": {
+    "survey": -0.4555228939525184,
+    "gap": 0.10226301167329095,
+    "generated": -0.35082624742946067,
+    "reproduced": true
+   },
+   "television": {
+    "survey": -0.3131237360312194,
+    "gap": 0.034585318659679065,
+    "generated": -0.27210801988581784,
+    "reproduced": true
+   },
+   "set-top box": {
+    "survey": -0.563181062113246,
+    "gap": 0.09613454481784592,
+    "generated": -0.49765299749956426,
+    "reproduced": true
+   },
+   "smart speaker": {
+    "survey": -0.3043144510638716,
+    "gap": 0.1467655317796541,
+    "generated": -0.2995023396674764,
+    "reproduced": true
+   }
+  },
+  "reproduced": true
+ },
+ "R4": {
+  "variance_over_mean": {
+   "smartphone": [
+    {
+     "size": 1,
+     "survey": 0.3668320399269645,
+     "generated": 0.40775069044248297,
+     "gap": 0.029693546898215236,
+     "reproduced": true
+    },
+    {
+     "size": 2,
+     "survey": 0.33132327222031216,
+     "generated": 0.37121334481464763,
+     "gap": 0.0286406686217658,
+     "reproduced": true
+    },
+    {
+     "size": 3,
+     "survey": 0.4244287104403444,
+     "generated": 0.34426210838834914,
+     "gap": 0.06367282967706449,
+     "reproduced": true
+    },
+    {
+     "size": 4,
+     "survey": 0.4724610423526779,
+     "generated": 0.3739489973956193,
+     "gap": 0.04625135096167428,
+     "reproduced": true
+    },
+    {
+     "size": 5,
+     "survey": 0.79427093748146,
+     "generated": 0.4918938278154942,
+     "gap": 0.10071128392444982,
+     "reproduced": false
+    }
+   ],
+   "smart speaker": [
+    {
+     "size": 1,
+     "survey": 2.235016265506027,
+     "generated": 2.059044163276897,
+     "gap": 0.4275043969943387,
+     "reproduced": true
+    },
+    {
+     "size": 2,
+     "survey": 2.104815183110851,
+     "generated": 2.3209195482142064,
+     "gap": 0.19938636562276688,
+     "reproduced": true
+    },
+    {
+     "size": 3,
+     "survey": 2.2027436387858486,
+     "generated": 2.1551658375839984,
+     "gap": 0.19446467815062302,
+     "reproduced": true
+    },
+    {
+     "size": 4,
+     "survey": 2.247170313172877,
+     "generated": 2.4214546647995845,
+     "gap": 0.25913553828878677,
+     "reproduced": true
+    },
+    {
+     "size": 5,
+     "survey": 2.6124385772170218,
+     "generated": 2.5788851798360657,
+     "gap": 0.3539533140035333,
+     "reproduced": true
+    }
+   ]
+  },
+  "reproduced": false
+ },
+ "R5": {
+  "shares": {
+   "any child": [
+    {
+     "size": 1,
+     "survey": 0.0,
+     "generated": 0.0,
+     "verdict": "certified"
+    },
+    {
+     "size": 2,
+     "survey": 0.06674298206499879,
+     "generated": 0.07038941037926426,
+     "verdict": "certified"
+    },
+    {
+     "size": 3,
+     "survey": 0.5279906012198351,
+     "generated": 0.5221412368163656,
+     "verdict": "certified"
+    },
+    {
+     "size": 4,
+     "survey": 0.7683320379177541,
+     "generated": 0.782830383003553,
+     "verdict": "unresolved"
+    },
+    {
+     "size": 5,
+     "survey": 0.9112307531088094,
+     "generated": 0.8986034572012802,
+     "verdict": "certified"
+    }
+   ],
+   "any adult over 64": [
+    {
+     "size": 1,
+     "survey": 0.4647418110284219,
+     "generated": 0.46725263564978403,
+     "verdict": "certified"
+    },
+    {
+     "size": 2,
+     "survey": 0.4976839708244932,
+     "generated": 0.49277789955349344,
+     "verdict": "certified"
+    },
+    {
+     "size": 3,
+     "survey": 0.27164060984136174,
+     "generated": 0.2602638638752213,
+     "verdict": "certified"
+    },
+    {
+     "size": 4,
+     "survey": 0.14409964633583297,
+     "generated": 0.14704896093910833,
+     "verdict": "certified"
+    },
+    {
+     "size": 5,
+     "survey": 0.23444666801726097,
+     "generated": 0.22724150172703125,
+     "verdict": "certified"
+    }
+   ]
+  },
+  "none_refused": true
+ },
+ "S8": {
+  "apartment_share_by_size_1_to_8": [
+   0.45907063057247355,
+   0.23188739320529864,
+   0.2142261880599785,
+   0.18089504569928147,
+   0.15867026557626226,
+   0.13399962589145578,
+   0.20163516250307922,
+   0.20163516250307922
+  ],
+  "apartment_share_overall": 0.2785441185955416,
+  "desktop": {
+   "building_given_size": 0.51443,
+   "building_apart_from_size": 0.508915,
+   "relative_change": -0.010720603386272232
+  },
+  "television": {
+   "building_given_size": 2.32895,
+   "building_apart_from_size": 2.320025,
+   "relative_change": -0.0038321990596621447
+  },
+  "set-top box": {
+   "building_given_size": 1.23339,
+   "building_apart_from_size": 1.228975,
+   "relative_change": -0.0035795652632176767
+  },
+  "smart speaker": {
+   "building_given_size": 0.643175,
+   "building_apart_from_size": 0.62999,
+   "relative_change": -0.020499863956154996
+  },
+  "mean_persons_per_household_in_the_chain": 2.46545
+ },
+ "S9": {
+  "share_of_persons_who_are_children": 0.21325721470725426,
+  "share_of_persons_over_64": 0.20932486969924355,
+  "survey_all_records": {
+   "children": 0.20646846134503866,
+   "over_64": 0.2160895117520173
+  },
+  "census_2020_from_memory_not_read": {
+   "under_18": 0.221,
+   "over_64": 0.168
+  },
+  "one_person_households_any_senior": {
+   "house": 0.5430479235359946,
+   "apartment": 0.35025768014560155
+  }
+ },
+ "S6": {
+  "smartphone": {
+   "generated_2020_tables": 1.9129337798552335,
+   "survey_2024": 2.114119549790157,
+   "relative_miss": -0.09516291070431315
+  },
+  "laptop": {
+   "generated_2020_tables": 1.427373648439338,
+   "survey_2024": 1.295904498624056,
+   "relative_miss": 0.10144972099014327
+  },
+  "desktop": {
+   "generated_2020_tables": 0.5258913916366592,
+   "survey_2024": 0.4926030156296008,
+   "relative_miss": 0.06757647629199393
+  },
+  "tablet": {
+   "generated_2020_tables": 1.0146416377479046,
+   "survey_2024": 0.9884867316839989,
+   "relative_miss": 0.02645954186896149
+  },
+  "television": {
+   "generated_2020_tables": 2.3521268182570054,
+   "survey_2024": 2.1442503972495466,
+   "relative_miss": 0.09694596362164809
+  },
+  "set-top box": {
+   "generated_2020_tables": 1.2660565940531183,
+   "survey_2024": 0.7185898878151065,
+   "relative_miss": 0.7618625248159285
+  },
+  "streaming device": {
+   "generated_2020_tables": 1.1109360423442547,
+   "survey_2024": 1.4175826951258292,
+   "relative_miss": -0.21631658868010917
+  },
+  "games console": {
+   "generated_2020_tables": 0.5063139817624577,
+   "survey_2024": 0.5851361291220418,
+   "relative_miss": -0.13470736711789033
+  },
+  "smart speaker": {
+   "generated_2020_tables": 0.6489202173526617,
+   "survey_2024": 0.747952352430531,
+   "relative_miss": -0.13240433666136153
+  }
+ },
+ "branch": "(a)",
+ "all_tables": {
+  "rows": 1479,
+  "info": {
+   "strata_written": {},
+   "min_records": 30,
+   "histogram_rows_by_fallback_level": [
+    512,
+    424,
+    280,
+    168,
+    40
+   ],
+   "phones": {
+    "rates_by_group_and_connection": [
+     [
+      0.9665036247923781,
+      0.8541962167356293,
+      0.45441285803417375
+     ],
+     [
+      0.7505452298160561,
+      0.6377408830571241,
+      0.2307262169306941
+     ],
+     [
+      0.5014808144206295,
+      0.5461841879986096,
+      0.26837624648696884
+     ]
+    ],
+    "q_two_phones": 0.07720947265625,
+    "target_share_more_phones_than_persons": 0.08034348515251032
+   }
+  }
+ }
+}

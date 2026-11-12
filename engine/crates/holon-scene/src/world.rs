@@ -22,6 +22,8 @@ use crate::verdict::Verdict;
 
 /// Households in a unit (HOUSEGEN-1): `world::household::generate`.
 pub use crate::household;
+/// Devices in a household (DEVICEGEN-1): `world::devices::generate`.
+pub use crate::devices;
 
 /// The four types of row (FSD section 10.1).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

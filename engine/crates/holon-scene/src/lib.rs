@@ -25,6 +25,7 @@
 
 pub mod apportion;
 pub mod devices;
+pub mod devices_tables;
 pub mod dist;
 pub mod edges;
 pub mod household;

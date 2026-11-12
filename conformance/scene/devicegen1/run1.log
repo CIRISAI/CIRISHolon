@@ -1,0 +1,235 @@
+plants: {'P-CELLS': True, 'P-CLUSTER': np.True_, 'P-CONSISTENT': True, 'P-PERSONS': True, 'P-TWOPHONES': True, 'P-SEED': True, 'P-COVARIATE': True, '_covariate_ratios_survey_rival': [2.938716639064355, 2.8759163103173457], 'P-THIN': True}
+G0: {'largest_cell_frequency_difference_on_fit': 0.0019011710376833912, 'digest_native_fit_tables': '17781197424588059001', 'persons_sum_to_size': True, 'pass': True, 'note': 'the bar of 0.002 is read with the Monte Carlo error of 10 seeds over the FIT households added (0.004)'}
+{
+ "split": {
+  "states": 51,
+  "fit_records": 9948,
+  "score_records": 8548
+ },
+ "R2": {
+  "survey_ratio": 2.853214325104093,
+  "gap": 0.1516342493493512,
+  "generated_ratio": 2.9232492980994604,
+  "survey_share_neither": 0.0868320525200757,
+  "generated_share_neither": 0.08803302601381092,
+  "reproduced": true
+ },
+ "S7": {
+  "survey_ratio": 2.853214325104093,
+  "gap": 0.1516342493493512,
+  "shipped_ratio": 2.9232492980994604,
+  "rival_ratio": 1.3846812017205354,
+  "rival_share_neither": 0.028362652568525062,
+  "rival_gives": "each kind alone given pooled size, building, any child, any adult over 64",
+  "outcome": "met"
+ },
+ "R3": {
+  "apartment_against_house": {
+   "desktop": {
+    "survey": -0.4555228939525184,
+    "gap": 0.10226301167329095,
+    "generated": -0.35082624742946067,
+    "reproduced": true
+   },
+   "television": {
+    "survey": -0.3131237360312194,
+    "gap": 0.034585318659679065,
+    "generated": -0.27210801988581784,
+    "reproduced": true
+   },
+   "set-top box": {
+    "survey": -0.563181062113246,
+    "gap": 0.09613454481784592,
+    "generated": -0.49765299749956426,
+    "reproduced": true
+   },
+   "smart speaker": {
+    "survey": -0.3043144510638716,
+    "gap": 0.1467655317796541,
+    "generated": -0.2995023396674764,
+    "reproduced": true
+   }
+  },
+  "reproduced": true
+ },
+ "R5": {
+  "shares": {
+   "any child": [
+    {
+     "size": 1,
+     "survey": 0.0,
+     "generated": 0.0,
+     "verdict": "certified"
+    },
+    {
+     "size": 2,
+     "survey": 0.06674298206499879,
+     "generated": 0.07038941037926426,
+     "verdict": "certified"
+    },
+    {
+     "size": 3,
+     "survey": 0.5279906012198351,
+     "generated": 0.5221412368163656,
+     "verdict": "certified"
+    },
+    {
+     "size": 4,
+     "survey": 0.7683320379177541,
+     "generated": 0.782830383003553,
+     "verdict": "unresolved"
+    },
+    {
+     "size": 5,
+     "survey": 0.9112307531088094,
+     "generated": 0.8986034572012802,
+     "verdict": "certified"
+    }
+   ],
+   "any adult over 64": [
+    {
+     "size": 1,
+     "survey": 0.4647418110284219,
+     "generated": 0.46725263564978403,
+     "verdict": "certified"
+    },
+    {
+     "size": 2,
+     "survey": 0.4976839708244932,
+     "generated": 0.49277789955349344,
+     "verdict": "certified"
+    },
+    {
+     "size": 3,
+     "survey": 0.27164060984136174,
+     "generated": 0.2602638638752213,
+     "verdict": "certified"
+    },
+    {
+     "size": 4,
+     "survey": 0.14409964633583297,
+     "generated": 0.14704896093910833,
+     "verdict": "certified"
+    },
+    {
+     "size": 5,
+     "survey": 0.23444666801726097,
+     "generated": 0.22724150172703125,
+     "verdict": "certified"
+    }
+   ]
+  },
+  "none_refused": true
+ },
+ "S8": {
+  "apartment_share_by_size_1_to_8": [
+   0.45907063057247355,
+   0.23188739320529864,
+   0.2142261880599785,
+   0.18089504569928147,
+   0.15867026557626226,
+   0.13399962589145578,
+   0.20163516250307922,
+   0.20163516250307922
+  ],
+  "apartment_share_overall": 0.2785441185955416,
+  "desktop": {
+   "building_given_size": 0.51443,
+   "building_apart_from_size": 0.508915,
+   "relative_change": -0.010720603386272232
+  },
+  "television": {
+   "building_given_size": 2.32895,
+   "building_apart_from_size": 2.320025,
+   "relative_change": -0.0038321990596621447
+  },
+  "set-top box": {
+   "building_given_size": 1.23339,
+   "building_apart_from_size": 1.228975,
+   "relative_change": -0.0035795652632176767
+  },
+  "smart speaker": {
+   "building_given_size": 0.643175,
+   "building_apart_from_size": 0.62999,
+   "relative_change": -0.020499863956154996
+  },
+  "mean_persons_per_household_in_the_chain": 2.46545
+ },
+ "S9": {
+  "share_of_persons_who_are_children": 0.21325721470725426,
+  "share_of_persons_over_64": 0.20932486969924355,
+  "survey_all_records": {
+   "children": 0.20646846134503866,
+   "over_64": 0.2160895117520173
+  },
+  "census_2020_from_memory_not_read": {
+   "under_18": 0.221,
+   "over_64": 0.168
+  },
+  "one_person_households_any_senior": {
+   "house": 0.5430479235359946,
+   "apartment": 0.35025768014560155
+  }
+ },
+ "S6": {
+  "smartphone": {
+   "generated_2020_tables": 1.9129337798552335,
+   "survey_2024": 2.114119549790157,
+   "relative_miss": -0.09516291070431315
+  },
+  "laptop": {
+   "generated_2020_tables": 1.427373648439338,
+   "survey_2024": 1.295904498624056,
+   "relative_miss": 0.10144972099014327
+  },
+  "desktop": {
+   "generated_2020_tables": 0.5258913916366592,
+   "survey_2024": 0.4926030156296008,
+   "relative_miss": 0.06757647629199393
+  },
+  "tablet": {
+   "generated_2020_tables": 1.0146416377479046,
+   "survey_2024": 0.9884867316839989,
+   "relative_miss": 0.02645954186896149
+  },
+  "television": {
+   "generated_2020_tables": 2.3521268182570054,
+   "survey_2024": 2.1442503972495466,
+   "relative_miss": 0.09694596362164809
+  },
+  "set-top box": {
+   "generated_2020_tables": 1.2660565940531183,
+   "survey_2024": 0.7185898878151065,
+   "relative_miss": 0.7618625248159285
+  },
+  "streaming device": {
+   "generated_2020_tables": 1.1109360423442547,
+   "survey_2024": 1.4175826951258292,
+   "relative_miss": -0.21631658868010917
+  },
+  "games console": {
+   "generated_2020_tables": 0.5063139817624577,
+   "survey_2024": 0.5851361291220418,
+   "relative_miss": -0.13470736711789033
+  },
+  "smart speaker": {
+   "generated_2020_tables": 0.6489202173526617,
+   "survey_2024": 0.747952352430531,
+   "relative_miss": -0.13240433666136153
+  }
+ },
+ "branch": "(a)"
+}
+fit {"strata_written": {}, "min_records": 30, "histogram_rows_by_fallback_level": [368, 320, 248, 144, 40], "phones": {"rates_by_group_and_connection": [[0.9733794690750804, 0.8246248721387781, 0.412250601449508], [0.739266578103043, 0.6167661599406372, 0.24315627354158922], [0.5013401819860058, 0.5730249208921657, 0.3280096416883164]], "q_two_phones": 0.07708740234375, "target_share_more_phones_than_persons": 0.0850506867263402}, "rows": 1173}
+R1 not reproduced refused 1
+   smartphone        [('1', 0.86, 0.74, 'unre'), ('2', 1.75, 1.62, 'cert'), ('3', 2.47, 2.46, 'cert'), ('4', 3.06, 3.11, 'cert'), ('5 or more', 3.72, 4.08, 'cert'), ('all', 1.96, 1.91, 'cert')]
+   laptop            [('1', 0.67, 0.75, 'unre'), ('2', 1.18, 1.26, 'cert'), ('3', 1.72, 1.8, 'cert'), ('4', 2.18, 2.18, 'cert'), ('5 or more', 2.44, 2.51, 'cert'), ('all', 1.36, 1.43, 'cert')]
+   desktop           [('1', 0.32, 0.3, 'cert'), ('2', 0.55, 0.57, 'cert'), ('3', 0.62, 0.63, 'cert'), ('4', 0.71, 0.66, 'unre'), ('5 or more', 0.71, 0.69, 'unre'), ('all', 0.53, 0.53, 'cert')]
+   tablet            [('1', 0.5, 0.45, 'unre'), ('2', 0.95, 0.95, 'cert'), ('3', 1.25, 1.25, 'cert'), ('4', 1.55, 1.58, 'cert'), ('5 or more', 1.77, 1.81, 'cert'), ('all', 1.02, 1.01, 'cert')]
+   television        [('1', 1.57, 1.61, 'cert'), ('2', 2.24, 2.29, 'cert'), ('3', 2.6, 2.84, 'cert'), ('4', 2.71, 2.92, 'cert'), ('5 or more', 3.22, 3.23, 'cert'), ('all', 2.26, 2.35, 'cert')]
+   set-top box       [('1', 0.89, 0.92, 'cert'), ('2', 1.38, 1.45, 'cert'), ('3', 1.18, 1.47, 'refu'), ('4', 1.13, 1.24, 'unre'), ('5 or more', 1.34, 1.24, 'unre'), ('all', 1.18, 1.27, 'cert')]
+   streaming device  [('1', 0.62, 0.64, 'cert'), ('2', 0.97, 1.02, 'cert'), ('3', 1.41, 1.41, 'cert'), ('4', 1.5, 1.64, 'unre'), ('5 or more', 1.64, 1.68, 'cert'), ('all', 1.07, 1.11, 'cert')]
+   games console     [('1', 0.14, 0.16, 'unre'), ('2', 0.3, 0.32, 'cert'), ('3', 0.74, 0.72, 'cert'), ('4', 0.9, 1.05, 'unre'), ('5 or more', 1.15, 1.19, 'cert'), ('all', 0.48, 0.51, 'cert')]
+   smart speaker     [('1', 0.35, 0.33, 'unre'), ('2', 0.56, 0.6, 'cert'), ('3', 0.79, 0.81, 'cert'), ('4', 0.98, 1.03, 'unre'), ('5 or more', 0.98, 1.0, 'cert'), ('all', 0.62, 0.65, 'cert')]
+R4 smartphone     [(1, 0.37, 0.41, True), (2, 0.33, 0.37, True), (3, 0.42, 0.34, True), (4, 0.47, 0.37, True), (5, 0.79, 0.49, False)]
+R4 smart speaker  [(1, 2.24, 2.06, True), (2, 2.1, 2.32, True), (3, 2.2, 2.16, True), (4, 2.25, 2.42, True), (5, 2.61, 2.58, True)]

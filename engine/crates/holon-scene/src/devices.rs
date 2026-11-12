@@ -181,6 +181,47 @@ pub struct Call {
     pub reason: &'static str,
 }
 
+/// The notice that must travel with anything produced from the compiled-in tables.
+pub const NOTICE_US: &str = "Source: U.S. Energy Information Administration, Residential Energy Consumption Survey 2020 public-use microdata. A derived work; not endorsed by the agency.";
+
+/// The compiled-in tables: United States, 2020, fitted on all records.
+pub fn us_2020() -> Tables<'static> {
+    Tables { rows: crate::devices_tables::ROWS }
+}
+
+/// Generate a household from the compiled-in tables, with the two verdicts DEVICEGEN-1
+/// issued (`conformance/scene/DEVICEGEN1_RESULTS.md`): counts per kind, and whether the
+/// household has nothing to host on. Each is a statement about the rule over many
+/// households in the United States in 2020, never about one draw.
+pub fn generate(seed: u64, persons: u32, building: u8, in_country: bool) -> (HouseholdDevices, Call, Call) {
+    let h = generate_with(&us_2020(), seed, persons, building);
+    if !in_country {
+        let c = Call { verdict: Verdict::Unresolved, reason: "outside the country read (United States, 2020)" };
+        return (h, c, c);
+    }
+    (
+        h,
+        Call { verdict: Verdict::Unresolved, reason: "2020: each kind certified pooled over household sizes; by size 32 of 45 cells certified, 12 unresolved, 1 refused; by 2024 set-top boxes had fallen 40 % and streaming devices risen 33 %" },
+        Call { verdict: Verdict::Certified, reason: "2020: the share of households with no computer and no fixed line, and its clustering, reproduced on states never seen and not carried by a rival that draws each kind alone" },
+    )
+}
+
+/// One number for 1,000 fixed calls on the compiled-in tables, to compare builds.
+pub fn digest() -> u64 {
+    use crate::seed::mix;
+    let t = us_2020();
+    let mut d = 0u64;
+    for i in 0..1000u64 {
+        let h = generate_with(&t, mix(i), (i % 9) as u32, (i % 3) as u8);
+        d = mix(d ^ h.persons() as u64);
+        for x in h.counts.iter().chain(h.phones.iter()) {
+            d = mix(d ^ *x as u64);
+        }
+        d = mix(d ^ h.connection as u64);
+    }
+    d
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -298,5 +339,32 @@ mod tests {
             assert_eq!(h.counts, [0; 8]);
             assert_eq!(h.phones, [0; 3]);
         });
+    }
+    #[test]
+    fn the_compiled_tables_obey_the_law() {
+        let t = us_2020();
+        assert!(t.rows.windows(2).all(|w| w[0].0 < w[1].0), "rows sorted by key");
+        for persons in 0..=10u32 {
+            for b in 0..3u8 {
+                for i in 0..500u64 {
+                    let h = generate_with(&t, mix(i), persons, b);
+                    assert_eq!(h.persons(), persons);
+                    let comp = h.counts[0] + h.counts[1] + h.counts[2];
+                    assert!(h.connection <= 2 && h.tv_hours <= 24 && h.weekdays_someone_home <= 5);
+                    let _ = comp;
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn verdicts_are_as_issued() {
+        let (_, counts, host) = generate(1, 3, BUILDING_HOUSE, true);
+        assert_eq!(counts.verdict, Verdict::Unresolved);
+        assert_eq!(host.verdict, Verdict::Certified);
+        let (_, a, b) = generate(1, 3, BUILDING_HOUSE, false);
+        assert_eq!(a.verdict, Verdict::Unresolved);
+        assert_eq!(b.verdict, Verdict::Unresolved);
+        assert_eq!(digest(), digest());
     }
 }

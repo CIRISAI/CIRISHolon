@@ -1677,3 +1677,20 @@ Records cited; nothing below changes a tier's status.*
   a distance law on even ground.
 
 *(Placed at the end, as above.)*
+
+### 2026-11-12 — DEVICEGEN-1: the second generator shipped for the twin
+
+- **Shipped** (`engine/crates/holon-scene/src/devices.rs`, `conformance/scene/DEVICEGEN1_RESULTS.md`,
+  tables under `conformance/scene/tables/devicegen1/`): who lives in a household of a
+  given size and the devices it holds; the connection, any computer and any speaker drawn
+  together from one 12-cell table; smartphones per person.
+- **MET:** a fair rival that draws each kind alone given size, building and composition
+  reaches a clustering of 1.38 where the survey has 2.85 and the generator 2.92.
+- **Not fully reproduced:** counts by household size (32 of 45 cells certified, 1
+  refused); smartphones at the two ends of household size.
+- **A reading nobody had:** drawing building apart from household size moves device
+  counts by 2 % at most.
+- **The review** (`DEVICEGEN1_REVIEW.md`) removed a latent class that had more parameters
+  than its table has cells, and a combined flag no reading supported.
+
+*(Placed at the end, as above.)*

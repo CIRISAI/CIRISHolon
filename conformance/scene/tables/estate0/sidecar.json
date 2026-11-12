@@ -1,9 +1,9 @@
 {
  "reference": "ESTATE-0 (a table of priors)",
- "version": 3,
+ "version": 4,
  "table": "estate_table.json",
- "bytes": 27993,
- "sha256": "c1b7c684907d725676b9fbdf8a7ef962bab4838982f35a73444de026f3a4ac24",
+ "bytes": 29946,
+ "sha256": "0c5e8aae9a445f476d8e0c382d0c3079b2ca8969abc8914b0ed92331a854ab60",
  "serves_registry_rows": [
   "the inputs of the twin's full-replacement energy test"
  ],
@@ -14,5 +14,5 @@
  },
  "law": "long-run averages are the right kind of number for a full-replacement thought experiment and are still prices in a year and a system",
  "holds_no_real_feature": "no person, household or place",
- "changes": "version 2 (2026-11-12): a 'businesses' block from how the Constitution models a business and four web searches; the 'stays' input resolved as two labelled cases; version 3 (2026-11-12): AI as a mix across tiers, from the scout's amendment (which corrects its own earlier statement that no like-for-like measurement existed)"
+ "changes": "version 2 (2026-11-12): a 'businesses' block from how the Constitution models a business and four web searches; the 'stays' input resolved as two labelled cases; version 3 (2026-11-12): AI as a mix across tiers, from the scout's amendment (which corrects its own earlier statement that no like-for-like measurement existed); version 4 (2026-11-12): idle draw by tier and a trust rating per row"
 }

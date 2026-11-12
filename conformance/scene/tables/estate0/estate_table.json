@@ -769,6 +769,54 @@
    "note": "per person per day is unmeasured; energy rises less than tokens because agent traffic is mostly input"
   },
   "zero_data_retention": "prompts and responses are not stored after processing; metadata, safety exceptions and in-memory caching remain; by default API data is not trained on. On the hosted tier it removes almost no energy: what vanishes is the platforms' own ranking, advertising and training.",
-  "suggested_inputs": "energy per token by tier with model size and a utilisation term; the local share swept from 0 to 0.8; the vanish share of AI 0.2 to 0.6; the agent multiple 1, 2, 5, 15"
+  "suggested_inputs": "energy per token by tier with model size and a utilisation term; the local share swept from 0 to 0.8; the vanish share of AI 0.2 to 0.6; the agent multiple 1, 2, 5, 15",
+  "idle_draw_by_tier": [
+   {
+    "tier": "small desktop",
+    "value": "4 to 7",
+    "unit": "W at the wall",
+    "basis": "vendor-measured, read at source",
+    "trust": "high"
+   },
+   {
+    "tier": "workstation with integrated accelerator",
+    "value": "6 to 13",
+    "unit": "W",
+    "basis": "vendor-measured, read at source",
+    "trust": "high"
+   },
+   {
+    "tier": "consumer graphics card alone",
+    "value": "22 to 30",
+    "unit": "W",
+    "basis": "forum posts only",
+    "trust": "low"
+   },
+   {
+    "tier": "small appliance; on-premises GPU server",
+    "value": "no idle figure published",
+    "note": "a 240 W supply; 10.2 kW maximum",
+    "trust": "none"
+   },
+   {
+    "tier": "hosted",
+    "value": "idle reserve is about 10 % of 0.24 Wh per prompt",
+    "basis": "one operator's disclosure",
+    "trust": "high, and it fell 33 times in a year"
+   }
+  ],
+  "idle_decides_the_home_and_office_tiers": "The scout's arithmetic, with the query count assumed: a 5 W box answering 50 queries a day spends 96 % of its energy idle, 2.5 Wh per query, ten times the hosted figure. A desktop with a high-end card idling at an assumed 80 W is 700 kWh a year. A tier that is on FOR inference carries its idle draw; a tier that is on anyway does not.",
+  "trust_by_row": {
+   "high": "same-model workstation against data centre (1.6 to 2.3 times unbatched; batching a further 11 to 20); vendor idle figures; hosted batched joules per token; the per-prompt disclosure",
+   "medium": "phone joules per token (2022-2023 phones, not the neural processor)",
+   "low": "laptop (power assumed); consumer graphics card (card only); on-premises server",
+   "none": "small appliance: vendor capacity claims only"
+  },
+  "still_missing": [
+   "measured energy for a single high-end consumer graphics card",
+   "any figure for a small inference appliance",
+   "any phone neural processor",
+   "benchmark power results (optional and rare; not opened)"
+  ]
  }
 }

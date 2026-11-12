@@ -555,3 +555,63 @@ Least trusted: my 5 to 20 % for requested inference (mismatched years, text prom
 - **The original 2019 "80 to 90 % inference" statements** (a chip vendor's and a cloud provider's): seen only second-hand.
 - **Counterpoint and Gartner releases** on capable phones and PCs: search summaries only.
 - **OpenRouter's privacy and logging page**: what the router itself stores as metadata is not on the page read.
+
+---
+
+# 4c. Inference by tier
+
+Added 2026-11-12 at the lead's request. Same rules and marking as the rest of the file. Parts 1, 3 and 4 of the request were answered in the AMENDMENT directly above (sections A1, A2 and A5), written after the lead's two follow-up messages; they are indexed here, not repeated. What is new in 4c: idle draw by tier (part 2), the two tiers the amendment left empty, what MLPerf does and does not publish, and the closing table with a trust rating per row.
+
+## 4c.1 Energy per unit, by tier (index to A1, plus additions)
+
+All per-token figures are in A1 with hardware, year, model size and scope. Additions:
+
+- **MLPerf Client** (mlcommons.org/benchmarks/client, read): reports time to first token and tokens per second only. Power is not a result; the page mentions only experimental "power efficiency testing tools". Models: Llama 3.1 8B, Phi 4 Mini, Phi 4 Reasoning 14B, Qwen 3 8B, all "int4-quantized"; latest version 2.0. **So the standard client benchmark fixes the "largest useful model" for a PC at about 8 to 14 billion parameters at 4-bit, and gives no joules.**
+- **MLPerf Inference, datacenter and edge** (mlcommons.org/benchmarks/inference-datacenter, read): power is an optional add-on, "the measured average AC power (energy) consumed by the entire system", at the wall, reported as system power or energy per stream. Latest round on the page: v6.1 (2026). In the v5.1 round (September 2025) only two submissions carried power: one data-centre (Lenovo), one edge `[search summary]`. The values sit in an interactive results table that is a dataset, not opened. **MLPerf is the right like-for-like source and almost nobody submits power to it.**
+- **Small inference appliance** (NVIDIA DGX Spark product page, read): 240 W power supply, chip rated 140 W, 128 GB unified memory, "inference with AI models up to 200 billion parameters" (quantisation not stated; 400 billion on two units, 700 billion on four). Vendor claim, CAP. No tokens per second, no joules, no idle figure on the page.
+- **On-premises GPU server** (NVIDIA DGX H100 user guide, read): eight H100 accelerators; input "10.2 kW max."; 38,557 BTU/hr. CAP. No idle figure on the page.
+- **Prosumer workstation, one high-end consumer card:** no measured joules per token found for a current top card. The only measured consumer-card figures are for a mid-range card (0.27 to 0.32 J/token on 1-billion models, card only; A1). A1's dual-card blog figure should not be used.
+
+"Already on?" by tier, as the sources treat it: the phone figure is the whole phone's draw while generating (it is on and in the hand); the laptop figures assume the machine on and count either the chip (0.47 W) or an assumed 10 W system; the consumer-card figures count the card alone and ignore the PC around it; hosted figures count the accelerator node, and only Google's adds idle reserve and cooling. **No source counts a home or office box's idle hours against its inference.**
+
+## 4c.2 Idle draw when not inferring
+
+| Tier | Idle draw | What it measures | Basis | Year | Source, how read | What it is NOT |
+|---|---|---|---|---|---|---|
+| Phone | 11.4 mW screen off (2012 handset); order of 10 to 50 mW today `[my reading]` | radio idle, screen off | measured (old) | 2012 | Huang et al. via `SCOUT_DEVICES_POWER.md` | a 2012 handset; the phone is on regardless, so its idle is not chargeable to the mesh |
+| Small desktop used as a node | 4 W (M4, 2024), 5 W (M4 Pro), 7 W (M2 and M2 Pro, 2023); maximum 65 to 140 W | "power used with only Finder open, using the default power management settings", "measured from the wall power source and includes all power supply and system losses" | vendor-measured, at the wall | 2023-2024 | Apple, Mac mini power consumption, https://support.apple.com/en-us/103253 , read (page dated 21 September 2026) | awake and idle, not asleep; one vendor |
+| Prosumer workstation, integrated accelerator | 6 W (M4 Max, 2025), 9 W (M3 Ultra, 512 GB, 2025), 9 to 13 W (2022-2023 models); maximum 145 to 295 W | same definition | vendor-measured, at the wall | 2022-2025 | Apple, Mac Studio power consumption, https://support.apple.com/en-us/102027 , read | "Max" is a processor stress test, not inference |
+| Prosumer workstation, one high-end consumer card | card alone about 22 W (RTX 4090) and 30 W (RTX 5090) at idle; others report 45 to 100 W for the newer card | graphics card only | users' forum measurements | 2025 | `[search summary of forum posts]` | not a review, not the whole PC. A whole desktop with such a card idles at perhaps 60 to 100 W `[my reading; not sourced]` |
+| Small inference appliance | not published; supply 240 W, chip 140 W | - | vendor specification, CAP | 2025-2026 | NVIDIA DGX Spark page, read | no idle figure exists on the page |
+| On-premises eight-GPU server | not published; 10.2 kW maximum | - | vendor specification, CAP | 2023 | NVIDIA DGX H100 user guide, read | idle of such a server is of the order of 1 to 2 kW `[my reading; not sourced]` |
+| Hosted hyperscale | idle is inside the per-prompt figure: 0.02 of 0.24 Wh (10 %) for machines held in reserve, plus 0.02 for cooling and conversion | energy "consumed by idle systems provisioned for reliability and low latency", allocated per prompt | operator-measured | May 2025 | Google, arXiv 2508.15734, read | one operator; conventional servers idle at about 35 % of rated power (section 3.1) |
+| Small board, home gateway | 3.1 W; 2.8 to 5.2 W | section 3.2 | - | - | section 3.2 | - |
+
+`[my arithmetic]` What idle does to energy per query on a box that is on for the mesh. Take the best case found, a small desktop idling at 5 W and answering 50 queries a day at 0.1 Wh each (a 600-token reply at about 0.6 J per token): inference 5 Wh a day, idle 120 Wh a day. **Idle is 96 % of the box's energy and the effective cost is 2.5 Wh per query, ten times the hosted frontier figure of 0.24.** At 6 W it is 53 kWh a year; a desktop with a high-end card at an assumed 80 W is 700 kWh a year, ten times the whole per-user data-centre baseline of 72. The conclusion of section 3 holds for AI as it did for storage: the tier is decided by whether the machine was on anyway and how many people share it. A machine already on for other reasons, sleeping otherwise, or shared by an office, changes the sum entirely; the query count is my assumption.
+
+## 4c.3 Which jobs route where, and the direction (index)
+
+In A2. In one line: no source measures the share of inference run on devices; capability is measured (local models answer 71 to 89 % of single-turn queries correctly in 2025, 23 % in 2023); capable hardware is about a third of new phones and PCs (analysts, `[search summary]`); the one routing study sends the easy four-fifths of queries to small local models and the hard fifth to a hosted frontier model, and attributes the 48 to 80 % energy saving to model size. Addition from 4c.1: the industry's own client benchmark stops at 8 to 14 billion parameters at 4-bit, which is where "runs usefully on a PC" sits today.
+
+## 4c.4 Tokens per person under agents, and zero data retention (index)
+
+In A5. In one line: agents about 4 times the tokens of chat per task and multi-agent systems about 15 (one operator's statement, June 2025); tokens per request on a router's whole traffic up fourfold in two years; a chat user sends about 3 prompts a day `[my arithmetic]`; per-person-per-day agent use is not measured for households. Zero data retention means prompts and responses are not stored after processing; metadata, safety exceptions and in-memory caching remain.
+
+## 4c.5 Table to transcribe
+
+| Tier | Energy per unit | Idle draw | Largest useful model | Year | Source | Trust |
+|---|---|---|---|---|---|---|
+| Phone | 0.58 to 0.76 J/token (3 bn, 4-bit; whole phone; phone GPU, not the neural processor) | about 0.01 to 0.05 W, on regardless | about 3 bn comfortably; 10 bn at 15 tokens/s on 2024 flagships (vendor claim) | 2022-2024 | Laskaridis et al. 2024; IEA 2025 | **Medium.** Measured at the battery, but two-year-old phones and no neural-processor figure exists |
+| Laptop or small desktop, integrated accelerator | 0.09 to 0.25 J/token (3 to 9 bn, 4-bit) | 4 to 7 W at the wall | 8 to 14 bn at 4-bit (the client benchmark's range) | 2024-2026 | Kannan et al. 2026; Apple; MLPerf Client | **Energy: low** (system power assumed, a preprint). **Idle: high** (vendor-measured at the wall) |
+| Prosumer workstation, integrated accelerator (128 to 512 GB) | 1.6 to 2.3 times worse per joule than a data-centre accelerator on the same 8 to 120 bn models, unbatched; no absolute J/token read | 6 to 13 W at the wall | up to about 120 bn (measured running) | 2025 | Saad-Falcon et al. 2025; Apple | **Ratio: high** (measured, repeated, like for like). **Idle: high** |
+| Prosumer workstation, one consumer graphics card | 0.27 to 0.32 J/token (1 bn; card only); up to 4.4 times that at 7 bn | card 22 to 30 W; whole PC not sourced | about 7 to 14 bn on a 16 to 24 GB card `[my reading]` | 2025-2026 | Zähl and Hennig 2026; forum posts | **Low.** Mid-range card, card-only scope, idle from forum posts |
+| Small office or home appliance | not published | not published (240 W supply, 140 W chip) | "up to 200 billion parameters" (vendor claim, precision unstated) | 2025-2026 | NVIDIA product page | **None for energy.** Capacity claims only |
+| Edge or on-premises GPU server | unbatched, within about 2 times a workstation on the same model; no absolute figure. About 4 J/token for 7 bn is an estimate, not a measurement | not published (10.2 kW maximum for eight accelerators) | hundreds of billions | 2023-2025 | NVIDIA user guide; Saad-Falcon et al.; Kannan et al. | **Low.** No measured energy at realistic office load |
+| Hosted, batched, open model | 0.15 to 0.21 J/token (32 bn); 0.026 Wh per 627-token reply; 11 to 20 times better than unbatched | carried in the operator figure below | any | 2025-2026 | Chung et al. 2026; Saad-Falcon et al. | **High** for the accelerator node; excludes cooling and idle reserve |
+| Hosted, frontier, in production | 0.24 Wh per median text prompt, everything inside the data centre | 10 % of the above is idle reserve, 8 % cooling | any | May 2025 | Google (Elsworth et al. 2025) | **High as measured; low as a constant:** it fell 33-fold in a year |
+
+## 4c.6 For a human to open
+
+- **MLPerf Inference results tables, rounds v5.1 to v6.1, filtered to power** (mlcommons.org): the only wall-power, like-for-like figures for edge and data-centre systems. An interactive dataset; not opened under the documentation-only rule.
+- **A measured idle and loaded wall draw for a single-card workstation and for the small appliance**: reviews exist (hardware press) but were seen only as forum summaries.
+- **Any neural-processor energy-per-token measurement on a 2025 phone**: not found.

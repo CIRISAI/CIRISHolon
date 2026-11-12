@@ -1,0 +1,17 @@
+{
+ "reference": "UPSTREAM-0 (a table of priors)",
+ "version": 1,
+ "table": "upstream_table.json",
+ "bytes": 18511,
+ "sha256": "3eeea60a7ce8d036adb39a22ccc6ca5ad56910eda93d3e60dcc0009825188d1a",
+ "serves_registry_rows": [
+  "the avoided-upstream term of the twin's energy delta, by named component"
+ ],
+ "provenance": "conformance/scene/SCOUT_UPSTREAM.md (documentation only; each row says how it was read: at source, the scout's reading, or a search summary)",
+ "verdict": {
+  "all_rows": "unresolved",
+  "reason": "priors gathered from documents; nothing scored; most are average allocations from different systems and years, and several are the scout's own estimates, marked"
+ },
+ "law": "each row is a price in a regime (its year and system are part of the value); an average allocation is not a marginal saving; the short-run marginal saving is about zero",
+ "holds_no_real_feature": "no person, household or place"
+}

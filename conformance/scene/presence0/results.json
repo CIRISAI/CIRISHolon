@@ -1,0 +1,202 @@
+{
+ "plants": {
+  "P-LASTEPISODE": true,
+  "P-MIDNIGHT": true,
+  "P-GROOM-DRIVE": true,
+  "P-AWAY": true,
+  "P-SHORT": true,
+  "P-WEIGHT": true,
+  "P-STANDARD": true,
+  "P-NULL-YEAR": true,
+  "P-SHIFT": true,
+  "_null_year_certified_share": null
+ },
+ "G0": {
+  "diaries": 24353,
+  "by_year": {
+   "2022": 8136,
+   "2023": 8548,
+   "2024": 7669
+  },
+  "diaries_summing_to_1440": 1.0,
+  "mean_sleep_hours": 9.041202839522207,
+  "weighted_days_max_over_min": 1.0152561487606362,
+  "shares_sum_to_one": 3.4416913763379853e-15,
+  "sleep_minutes_defaulted_to_home_share": 0.09109207757311935,
+  "pass": true
+ },
+ "replicate_weights": {
+  "respondents_matched": 24353,
+  "median_ratio_replicate_over_bootstrap": 0.9503477926699552,
+  "ratio_10th_90th": [
+   0.8750294970129724,
+   1.0383214145374793
+  ]
+ },
+ "error_inflation_applied": 1.0,
+ "R1": {
+  "weekly_mean_awake_share": {
+   "reference": 0.6233059227944818,
+   "se": 0.0009175090710235117,
+   "twin": 0.85,
+   "verdict": "refused",
+   "awake_hours_a_day": 14.959342147067563,
+   "twin_hours": 20.4,
+   "lowest_and_highest_hour_of_week": [
+    0.03753289370651855,
+    0.9754079383489997
+   ]
+  },
+  "employed_at_workplace_Mon_Thu": {
+   "peak_share": 0.5128223972307606,
+   "se": 0.007754232430232265,
+   "hours_above_half_peak": [
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16
+   ],
+   "twin": "everyone, 8 to 18",
+   "by_clock_hour": [
+    0.01756897688862542,
+    0.015897676959723595,
+    0.015204062957550463,
+    0.015363191680666764,
+    0.027622596406245644,
+    0.05574229113998871,
+    0.1264656074208981,
+    0.2618175844876763,
+    0.41148096373856763,
+    0.48786684668397834,
+    0.507910052991394,
+    0.5128223972307606,
+    0.49641320369156955,
+    0.5016504588486177,
+    0.4794610007535556,
+    0.424068753700843,
+    0.31119086142225566,
+    0.1814239356583217,
+    0.11616953674122125,
+    0.08297569763238512,
+    0.06324012849627181,
+    0.04718216235117582,
+    0.03446969806091994,
+    0.023283330055524402
+   ]
+  },
+  "wifi_bracket_of_awake_time": {
+   "upper_home_or_workplace_or_school": 0.7937485822558799,
+   "lower_home_only": 0.6075685463735309,
+   "se": [
+    0.0017663203839685378,
+    0.002509434197731786
+   ],
+   "twin": 0.65
+  }
+ },
+ "S3": {
+  "home_awake_MonThu_minus_Saturday_by_clock_hour": [
+   -0.023819869428181595,
+   -0.010234569192816324,
+   -0.0036211762314269334,
+   6.130123946066629e-05,
+   0.02366314378553662,
+   0.060675409011374776,
+   0.11172259898815681,
+   0.0441193158140043,
+   -0.07340572382049315,
+   -0.12269749907887834,
+   -0.14243648811210685,
+   -0.13561521328405035,
+   -0.11371879014524011,
+   -0.10182385993272308,
+   -0.09889566178390674,
+   -0.08582790936556417,
+   -0.04110495395075031,
+   0.003961123483612994,
+   0.04082792140819569,
+   0.052439025933367356,
+   0.0414763902255193,
+   0.017004413627133452,
+   -0.031984645408886014,
+   -0.04909803329707607
+  ],
+  "hours_over_0.05": 11,
+  "outcome": "neither"
+ },
+ "S4": {
+  "standardised_difference_one_person_minus_three_or_more": 0.014958059126357282,
+  "gap": 0.03146187369443265,
+  "raw_difference": 0.1152006876425199,
+  "standardised_by_size": [
+   0.5182485541785451,
+   0.5225516035262854,
+   0.5032904950521878
+  ],
+  "raw_by_size": [
+   0.565657243180729,
+   0.5481721581476272,
+   0.45045655553820907
+  ],
+  "outcome": "neither"
+ },
+ "S6a": {
+  "cells": 288,
+  "cells_that_can_carry_a_verdict": 6,
+  "certified_share": 0.6666666666666666,
+  "refused_share": 0.0,
+  "refused_anywhere": 0,
+  "largest_abs_difference": 0.08117071954711919,
+  "outcome": "neither",
+  "null_year_certified_share_in_the_plant": null
+ },
+ "S6b": {
+  "cells": 96,
+  "cells_that_can_carry_a_verdict": 4,
+  "certified_share": 1.0,
+  "refused_share": 0.0,
+  "refused_anywhere": 3,
+  "largest_abs_difference": 0.0728171994441269,
+  "outcome": "met",
+  "records": {
+   "metropolitan": 20482,
+   "non_metropolitan": 3605,
+   "not_identified": 266
+  },
+  "mean_difference_metro_minus_non": -0.014964839098113419,
+  "difference_9_to_17_Mon_Thu": -0.011911164136482327
+ },
+ "household_bracket": {
+  "household of 1": {
+   "note": "measured"
+  },
+  "household of 2": {
+   "note": "a bracket, not a measurement; members counted as 2; nobody under 15 has a diary"
+  },
+  "household of 3 or more": {
+   "note": "a bracket, not a measurement; members counted as 3; nobody under 15 has a diary"
+  }
+ },
+ "S5": {
+  "diaries_2015_2019": 50649,
+  "at_home_9_to_17_Mon_Thu": {
+   "y2015_2019": 0.41434603633833605,
+   "y2022_2024": 0.5014504258587125
+  },
+  "weekly_mean_awake": {
+   "y2015_2019": 0.6327143557331121,
+   "y2022_2024": 0.6233059227944818
+  },
+  "employed_at_home_9_to_17_Mon_Thu": {
+   "y2015_2019": 0.2669546535047868,
+   "y2022_2024": 0.3864915202632378
+  }
+ },
+ "branch": "(a)"
+}

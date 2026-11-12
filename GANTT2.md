@@ -1624,3 +1624,20 @@ Records cited; nothing below changes a tier's status.*
   source gives ties by kind and distance; four kinds have none.
 
 *(Placed at the end, as above.)*
+
+### 2026-11-11 to 12 — PRESENCE-0 (United States), and TIES-0 sent back for redesign
+
+- **PRESENCE-0** (`conformance/scene/PRESENCE0_RESULTS.md`, table under
+  `conformance/scene/tables/presence0_us/`): people aged 15 and over are awake 0.623 of
+  the time (15.0 hours a day), so the twin's flat 0.85 is refused; at most 0.51 of the
+  employed are at a workplace at once; of awake time 0.61 is at home and 0.79 at home or
+  at a workplace or school. The working day moved home after 2020 (0.414 to 0.501).
+  Household size adds 0.015 beyond age and employment (raw 0.115). Two transfer stakes are
+  untestable at the 0.03 budget, as a plant said before the read.
+- **CORRECTION, this session's:** the PRESENCE-0 freeze was committed while the prereg
+  audit refused it (the command chain let the refusal through); one sentence reworded in
+  a dated correction before any fetch.
+- **TIES-0** (`TIES0_REVIEW.md`): REDESIGN. The distance bands read unit size, the
+  hold-out was not one, the own-area convention was unread. Second draft with the reviewer.
+
+*(Placed at the end, as above.)*

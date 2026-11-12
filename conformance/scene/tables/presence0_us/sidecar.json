@@ -1,0 +1,55 @@
+{
+ "reference": "PRESENCE-0 (United States)",
+ "version": 1,
+ "table": "presence_table.json",
+ "bytes": 125466,
+ "sha256": "c953def411e5df67799bc7c35560364fcad5e2135f1cdf2c9c004f0e3105eec9",
+ "serves_registry_rows": [
+  "presence.people (share of persons in each of six states, by day type and clock hour)",
+  "attach.phone.network (a bracket from places, not a measurement of networks)"
+ ],
+ "preregistration": "conformance/scene/PRESENCE0_PREREG.md",
+ "extractor": "conformance/scene/presence0/presence0.py",
+ "results": "conformance/scene/PRESENCE0_RESULTS.md",
+ "sources": [
+  {
+   "name": "American Time Use Survey, multi-year microdata 2003-2024 (diary years 2022-2024 for the table; 2015-2019 beside it)",
+   "publisher": "U.S. Bureau of Labor Statistics",
+   "licence": "public domain",
+   "file_sha256": "conformance/scene/presence0/raw_file_sha256.txt",
+   "notice": "Source: U.S. Bureau of Labor Statistics, American Time Use Survey, 2003-2024 multi-year microdata files. A derived work; not endorsed by the Bureau."
+  }
+ ],
+ "keys": {
+  "unit": "a person aged 15 or over; one diary day each",
+  "day_type": "Monday to Thursday, Friday, Saturday, Sunday; hours after midnight carry the next day's name",
+  "hour": "clock hour 0 to 23",
+  "value": "weighted mean share of the hour's minutes in each state; the six sum to 1"
+ },
+ "envelope": {
+  "country": "United States",
+  "years": "2022-2024",
+  "persons": "aged 15 and over",
+  "place": "no geography; metropolitan and non-metropolitan respondents differ by 0.015 on average in the at-home share and by up to 0.07 in an hour"
+ },
+ "budgets": {
+  "weekly_mean_awake_share": "5 % of the reference",
+  "a_cell": 0.03
+ },
+ "errors": "a weighted bootstrap over respondents; the survey's replicate weights give 0.95 of it at the median, so it is not understated",
+ "verdict": {
+  "twin_awake_0.85": "refused (0.623; 15.0 hours a day against 20.4)",
+  "twin_at_work_8_to_18_everyone": "a reading: at most 0.51 of the employed are at a workplace at once (Monday to Thursday), above half that peak from 7 to 17",
+  "twin_on_wifi_0.65": "inside the bracket 0.61 to 0.79 of awake time (at home; at home or at a workplace or school): a statement about places, not networks",
+  "one_table_for_town_and_country": "untestable at this budget: 4 of 96 cells have errors small enough to carry a verdict",
+  "rows_by_age_and_employment_predict_household_size_strata": "untestable at this budget: 6 of 288 cells"
+ },
+ "limits": [
+  "one person per household: whether anyone is home is measured only for one-person households; otherwise the 'household' block is a bracket",
+  "nobody under 15",
+  "a person awake is not a device awake",
+  "9.1 % of sleep minutes had no located episode in their segment and are at home by default",
+  "the regime moved: the at-home share 9 to 17 on working days was 0.414 in 2015-2019 and 0.501 in 2022-2024"
+ ],
+ "holds_no_real_feature": "no person, household or place"
+}

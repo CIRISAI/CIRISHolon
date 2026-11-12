@@ -301,3 +301,22 @@ Part A" or "hold".
 **A cost this adds, to be decided before A1:** arm A1 needs the agent's four evaluators RUN
 on about 510 situations. On which model, and whether that spends provider money, is not
 settled; if it does, it is the lead's to approve, as with the capture runs.
+
+## CORRECTION 2026-11-12, from the CIRISAgent session: Part B has NO source of real prompts today
+
+ANSWER 3 above said the fullest trace level carries the action-selection prompt. The
+schema does, but the agent refuses that level: a switch in its code (the agent does not
+install the scrubber) downgrades each request for full traces to the next level down,
+which keeps the verb and a HASH of the prompt and no prompt text. The RATCHET session
+found it in a real artifact. It applies to the research-capture workflow too, so a paid
+capture run would not have produced prompts. That cost is not to be put to the lead on
+the earlier description.
+
+What does exist: 141 battery artifacts being harvested by the RATCHET session, about 29
+action selections a run, each with the verb, the evaluators' results, conscience
+overrides and prompt hashes. That gives a MEASURED prior over verbs (replacing the
+two-run count) and hashes that could verify a re-rendered prompt.
+
+Two ways to get prompt text are with the lead, undecided: wiring the scrubber so full
+traces are delivered, or a local capture file in the battery workflow for synthetic
+questions alone.

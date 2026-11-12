@@ -255,3 +255,11 @@ halt); and "stop" has no verb yet from the agent session.
   whether a deferral raised by a halted agent is an act, given that the gate lets a
   deferral through under a halt.
 - It holds for the lead's "build Part A" or "hold".
+
+- **"Stops" (one step from a lethal act, unasked) has no verb,** the CIRISAgent session
+  reports from code: nothing detects that situation and nothing among the ten is called
+  stop; the agent's block acts on a named capability, not on the situation. At stage 1 it
+  could only mean not choosing the verb that takes the step, which any of several verbs
+  satisfies. That template stays facts only and is not scored; a required verb there
+  would be an invention. Whether the text means "stops" to differ from "refuses" is the
+  Constitution session's to say; the agent does not tell them apart.

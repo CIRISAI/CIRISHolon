@@ -349,3 +349,44 @@ this model does not thread it through each stage at each position. It writes it 
 happened and reads it back at the end. A network built for that would keep the stages
 that write a change well where it occurs and the one that fetches it, and would not pay
 for carrying it along the text in between.
+
+## A source of short stories about change, 2026-11-12 (pointed to by the lead)
+
+His words: "Look at ciris-website - it has a perfect set of short stories". Found in
+`ciris-website` at `51e4305b`, `src/app/grammar/lib/stories-generated.ts`: 240 stories, each
+a scenario of 210 to 368 characters (median 259) in plain story language, with a title,
+a family (STANDING 125, DETECTION 35, ACTION 30, CONSENSUS 25, CORRECTION 25), the grammar
+primitive it shows, a walkthrough and an example. Beside it, `red-riding-hood.ts`: one
+story told by eight voices over time, in which claims are withdrawn, recanted and
+superseded. An index by id is `scope0/website_stories_index.tsv` (ids, family, primitive
+and two crude flags; no story text is copied here).
+
+**Why they fit, as this session reads it:**
+- **They are about change, and they name its type.** The CORRECTION family tells apart a
+  claim WITHDRAWN (it was true when made; the world changed), RECANTED (it was false when
+  made; the reading was wrong) and SUPERSEDED (extended, not denied); one story is about
+  choosing between two of them. Others reopen a ruling for NEW EVIDENCE against a
+  PROCEDURAL ERROR against a COMPROMISED QUORUM, or hand a question to another party. That
+  is the lead's point in story form: the same surface event, a different kind of change.
+- **They exercise what the safety battery never does.** There are stories for each
+  evaluator and each conscience by name (the veto on optimisation, humility about what is
+  known, coherence, the hard case), and for refusing, declining, asking first and
+  handing to a person.
+- **They are short and plain enough for the small model,** which reads children's
+  stories, and for Gemma alike.
+
+**What they are not, to be said before anyone builds on them:**
+- Written by generation agents and passed by a review of agents ("240 stories surviving
+  the 5-agent review", none dropped); nobody has checked them against the Constitution.
+- Labelled by family and grammar primitive, NOT by the eleven kinds of change. By a crude
+  word match 36 scenarios name a change and 22 name a stop, refusal or hand-off.
+- Each tells its own ending ("It declines…"). As a test of a decision the ending has to
+  be cut from the situation; as a study of change it needs a BEFORE and an AFTER, which
+  most stories give in one paragraph and not as two texts.
+- The website is under the Affero licence; its text is referenced here by path and commit.
+
+**How they could serve the question, for the other sessions to weigh:** as the seed of the
+set built as changes: take a story that turns on one change, write its counterpart in
+which the change is of another kind (the route was safe and a landslide came, against the
+steward had misread the map), and ask where and how far the difference travels. The
+kinds would be labelled by the Constitution session with the RATCHET series' definitions.

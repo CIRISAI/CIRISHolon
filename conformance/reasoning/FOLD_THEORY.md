@@ -99,3 +99,42 @@ place where a smaller, purpose-built part would do the same work.
 3. **DROP (F4)**: ordered removal of pairs with refitting.
 4. **A first purpose-built perceiver** only after 1 holds: the depth from 1, the shape
    from 2 and 3, trained on the teacher's read directions.
+
+## CORRECTION 2026-11-12, the same day: three things in this theory were naive (the RATCHET session's review)
+
+Sent to the session that owns the instrument for attack; these are its findings, accepted.
+
+1. **The clock is known, and F1 is a fact about this small model alone.** GoldWorm adds a
+   learned position signal to each character at the start. That such signals form a ring
+   or helix is prior art from analyses of GPT-2. It stays the widest plane because the
+   stream only adds and nothing subtracts it. Gemma and its family apply position inside
+   the looking-back stages (rotary position) and never put a clock in the stream. So
+   "give position to attention directly" is how the target family is already built. F1
+   is withdrawn as a route to the phone goal. What the ring still shows: the loudest part
+   of the state is not the part that carries meaning.
+2. **"Room in use" counted spread, and the model does not use the spread.** On this model
+   the channels the network reads are quiet: the writing directions hold 1 to 5 % of the
+   state's variance, the probe's direction 0.1 % (and is unused). A compression that keeps
+   the widest directions would delete exactly the channels that are read. The figures
+   above (11 to 58 directions; nine tenths in 30 to 95) say how loud the state is, not how
+   much of it is needed, and the "factor of two to three" drawn from them is withdrawn.
+   A fold must be ranked by USE (what removal costs), never by spread. F2 also held two
+   different claims: the rank of a looking-back stage's WEIGHTS (readable with no data)
+   and the spread of its writes on text (the 5 to 23 above); they are different
+   compressions.
+3. **F3 named the wrong task.** H3ERE's decision is not "the kind". It is the choice of an
+   action verb from a closed set of ten, in two stages, under an extreme prior and unequal
+   costs, where deferring is a floor and not an error. A head that exits early has to be
+   judged on that outcome with its prior and costs, against the full model's own choice
+   and against a cheap fix of the final readout, and with controls for word-level
+   shortcuts. "Held at layer 16" is not "enough for the task".
+
+**What that leaves.** F3 in its corrected form (cut the speaking half, judged on the verb
+choice) is still the fold that matters most, and F2 and F4 stand as things to test by
+removal. The binding constraint is not a fold at all: only 14 captured prompts of the
+real task exist. No theory of the network can be tested for H3ERE without task data.
+
+**What the RATCHET session will run on the small model, preregistered:** truncating the
+stream and the writes by use against by spread at equal rank (its stake: use wins at each
+rank and each block); looking-back stages cut by weight rank against by data spread;
+attn1's constant push folded into a constant; the clock's removal as a curiosity.

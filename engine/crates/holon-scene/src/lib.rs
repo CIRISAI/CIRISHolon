@@ -24,6 +24,7 @@
 //! arithmetic it will use and [`verdict`] is the order in which it is consulted.
 
 pub mod apportion;
+pub mod delivery;
 pub mod devices;
 pub mod devices_tables;
 pub mod dist;

@@ -26,6 +26,8 @@ pub use crate::household;
 pub use crate::devices;
 /// A person's day by the hour (PRESENCEGEN-2): `world::presence::day`.
 pub use crate::presence;
+/// Who holds a message (MESH-0): `world::delivery::simulate`, a composition of the three above.
+pub use crate::delivery;
 
 /// The four types of row (FSD section 10.1).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

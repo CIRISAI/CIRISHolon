@@ -56,6 +56,7 @@ table.grid th.d { text-align: right; padding: 0 6px 0 0; }
 .cell { width: 54px; min-width: 40px; border-radius: 2px; border: 0; padding: 0; display: block; cursor: pointer; position: relative; background: transparent; }
 .cell.none { cursor: default; background: transparent; outline: 1px dashed var(--empty); outline-offset: -1px; }
 .cell.exploratory::after { content: ""; position: absolute; inset: 0; border-radius: 2px; background: repeating-linear-gradient(45deg, transparent 0 4px, var(--hatch) 4px 5px); }
+.cell.unconv::after { content: ""; position: absolute; inset: 0; border-radius: 2px; background: radial-gradient(var(--hatch) 1px, transparent 1.4px) 0 0 / 5px 5px; }
 .cell.void { background: var(--void) !important; }
 .cell.void::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to top right, transparent calc(50% - .6px), var(--ink3) calc(50% - .6px) calc(50% + .6px), transparent calc(50% + .6px)); }
 .cell.sel { box-shadow: 0 0 0 2px var(--panel), 0 0 0 4px var(--ink); z-index: 1; }
@@ -126,12 +127,13 @@ const siteName = s => "layer " + s.layer + " · " + s.component + (s.position ? 
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 let state = { model: Object.keys(T.models)[0], layer: null, sel: null };
 try { const h = location.hash.slice(1); if (T.layers.some(l => l.id.replace(/\./g, "-") === h)) { state.layer = h; } } catch (e) {}
+const sub = r => r.site.position || r.category || null;
 function layerOf(id) { return T.layers.find(l => l.id.replace(/\./g, "-") === id); }
 function rowsOf(l) { return T.rows.filter(r => r.layer === l.id); }
 function columns(l) {
   const m = T.models[l.model], rows = rowsOf(l), cols = [];
   for (const c of m.components) {
-    const ps = [...new Set(rows.filter(r => r.site.component === c).map(r => r.site.position))];
+    const ps = [...new Set(rows.filter(r => r.site.component === c).map(sub))];
     for (const p of (ps.length ? ps : [null])) cols.push({ component: c, position: p });
   }
   return cols;
@@ -139,7 +141,7 @@ function columns(l) {
 function render() {
   if (!state.layer || layerOf(state.layer).model !== state.model) state.layer = T.layers.find(l => l.model === state.model).id.replace(/\./g, "-");
   const l = layerOf(state.layer), m = T.models[l.model], rows = rowsOf(l), cols = columns(l);
-  const at = (L, c) => rows.find(r => r.site.layer === L && r.site.component === c.component && r.site.position === c.position);
+  const at = (L, c) => rows.find(r => r.site.layer === L && r.site.component === c.component && sub(r) === c.position);
   if (!state.sel || !rows.includes(state.sel)) state.sel = rows.filter(r => r.standing !== "void").sort((a, b) => Math.abs(b.value) - Math.abs(a.value))[0] || rows[0];
   for (const b of $("models").querySelectorAll("button")) b.setAttribute("aria-pressed", b.dataset.id === state.model);
   $("frame").innerHTML = "<b>The instrument's frame is " + esc(m.frame) + " on this model.</b> " + esc(m.frame_reason) + ".";
@@ -158,7 +160,7 @@ function render() {
     cols.forEach((c, ci) => {
       const r = at(L, c);
       if (!r) html += "<td><span class='cell none' style='height:" + h + "px' title='not measured'></span></td>";
-      else html += "<td><button class='cell " + r.standing + (r === state.sel ? " sel" : "") + "' style='height:" + h + "px;background:" + (r.standing === "void" ? "" : colour(l, r.value)) + "' data-i='" + T.rows.indexOf(r) + "' aria-label='" + esc(siteName(r.site) + ", " + (r.standing === "void" ? "void" : fmt(r.value) + " " + l.unit) + ", " + r.standing) + "'></button></td>";
+      else html += "<td><button class='cell " + r.standing + (r.fit === "unconverged" ? " unconv" : "") + (r === state.sel ? " sel" : "") + "' style='height:" + h + "px;background:" + (r.standing === "void" ? "" : colour(l, r.value)) + "' data-i='" + T.rows.indexOf(r) + "' aria-label='" + esc(siteName(r.site) + ", " + (r.standing === "void" ? "void" : fmt(r.value) + " " + l.unit) + ", " + r.standing) + "'></button></td>";
     });
     html += "</tr>";
   }
@@ -174,12 +176,13 @@ function render() {
   $("legend").innerHTML = "<span class='sw'><span class='mono'>" + fmt(a < 0 ? -Math.max(Math.abs(a), Math.abs(b)) : a) + "</span><span class='ramp' style='background:linear-gradient(to right," + stops.join(",") + ")'></span><span class='mono'>" + fmt(a < 0 ? Math.max(Math.abs(a), Math.abs(b)) : b) + " " + esc(l.unit) + "</span></span>" +
     (has("preregistered") ? "<span class='sw'><i style='background:" + stops[stops.length - 2] + "'></i>solid: preregistered</span>" : "") +
     (has("exploratory") ? "<span class='sw'><i class='cell exploratory' style='width:18px;min-width:0;height:12px;display:inline-block;background:" + stops[stops.length - 2] + "'></i>hatched: exploratory</span>" : "") +
+    (rows.some(r => r.fit === "unconverged") ? "<span class='sw'><i class='cell unconv' style='width:18px;min-width:0;height:12px;display:inline-block;background:" + stops[stops.length - 2] + "'></i>dotted: fit did not converge</span>" : "") +
     (has("void") ? "<span class='sw'><i class='cell void' style='width:18px;min-width:0;height:12px;display:inline-block'></i>struck: void, not a value</span>" : "") +
     "<span class='sw'><i style='outline:1px dashed var(--empty);outline-offset:-1px'></i>empty: not measured</span>";
   const total = m.layers * cols.length;
   $("count").textContent = rows.length + " of " + total + " sites in this view have a reading. Compared against: " + l.null + ".";
   detail(l, state.sel); profile(l, rows, state.sel);
-  $("rows").innerHTML = "<tr><th>site</th><th>value</th><th>interval</th><th>compared against</th><th>standing</th><th>experiment</th></tr>" + rows.map(r => "<tr><td>" + esc(siteName(r.site)) + "</td><td>" + (r.standing === "void" ? "<s>" + fmt(r.value) + "</s>" : fmt(r.value)) + "</td><td>" + (r.interval ? fmt(r.interval) : "") + "</td><td>" + (r.null ? fmt(r.null.value) : "") + "</td><td>" + r.standing + (r.stake ? ", stake " + r.stake : "") + "</td><td>" + esc(r.source.experiment) + "</td></tr>").join("");
+  $("rows").innerHTML = "<tr><th>site</th><th>value</th><th>interval</th><th>compared against</th><th>standing</th><th>experiment</th></tr>" + rows.map(r => "<tr><td>" + esc(siteName(r.site) + (r.category ? " · " + r.category : "")) + "</td><td>" + (r.standing === "void" ? "<s>" + fmt(r.value) + "</s>" : fmt(r.value)) + "</td><td>" + (r.interval ? fmt(r.interval) : "") + "</td><td>" + (r.null ? fmt(r.null.value) : "") + "</td><td>" + r.standing + (r.fit === "unconverged" ? ", unconverged" : "") + (r.stake ? ", stake " + r.stake : "") + "</td><td>" + esc(r.source.experiment) + "</td></tr>").join("");
 }
 function detail(l, r) {
   if (!r) { $("detail").innerHTML = "<h2>Nothing measured in this view</h2>"; return; }
@@ -188,8 +191,9 @@ function detail(l, r) {
     "<div class='big'>" + (voided ? "<s>" + fmt(r.value) + "</s>" : fmt(r.value)) + " <small>" + esc(l.unit) + "</small></div>" +
     "<dl class='read'>" +
     "<dt>standing</dt><dd><span class='pill " + r.standing + "'>" + r.standing + "</span> " + esc(T.standings[r.standing]) + "</dd>" +
+    (r.fit && r.fit !== "n/a" ? "<dt>the fit</dt><dd><span class='pill'>" + r.fit + "</span> " + esc(T.fits[r.fit]) + "</dd>" : "") +
     (r.interval ? "<dt>95 % interval</dt><dd class='mono'>" + fmt(r.interval) + (r.n ? " (n = " + (Array.isArray(r.n) ? r.n.join(", ") : r.n) + ")" : "") + "</dd>" : "") +
-    (r.null ? "<dt>compared against</dt><dd><span class='mono'>" + fmt(r.null.value) + "</span> " + esc(r.null.kind) + "</dd>" : "<dt>compared against</dt><dd>nothing stored beside this value</dd>") +
+    (r.null ? "<dt>compared against</dt><dd><span class='mono'>" + fmt(r.null.value) + "</span> " + esc(r.null.kind) + "</dd>" : "<dt>compared against</dt><dd>" + esc(r.bare || (r.interval ? "zero; see the interval" : "nothing stored beside this value")) + "</dd>") +
     (r.stake ? "<dt>the stake on it</dt><dd>" + esc(r.stake) + "</dd>" : "") +
     (r.note ? "<dt>note</dt><dd>" + esc(r.note) + "</dd>" : "") +
     "<dt>experiment</dt><dd>" + esc(r.source.experiment) + "</dd>" +
@@ -199,8 +203,8 @@ function detail(l, r) {
 function profile(l, rows, sel) {
   const svg = $("profile"), m = T.models[l.model];
   if (!sel) { svg.innerHTML = ""; return; }
-  const col = rows.filter(r => r.site.component === sel.site.component && r.site.position === sel.site.position).sort((x, y) => x.site.layer - y.site.layer);
-  $("ptitle").textContent = "By depth: " + sel.site.component + (sel.site.position ? ", " + sel.site.position + " byte" : "");
+  const col = rows.filter(r => r.site.component === sel.site.component && sub(r) === sub(sel)).sort((x, y) => x.site.layer - y.site.layer);
+  $("ptitle").textContent = "By depth: " + sel.site.component + (sub(sel) ? ", " + sub(sel) : "");
   $("pkind").textContent = "The selected column down the model, with what each value is compared against (hollow marks). Gaps are sites with no reading.";
   const W = 720, H = 210, x0 = 46, x1 = W - 14, y0 = 14, y1 = H - 30;
   let lo = l.domain[0], hi = l.domain[1];
@@ -231,7 +235,7 @@ for (const [id, m] of Object.entries(T.models)) {
   b.onclick = () => { state.model = id; state.sel = null; render(); }; $("models").appendChild(b);
 }
 if (state.layer) state.model = layerOf(state.layer).model;
-$("foot").textContent = "SCOPE-0, version " + SIDE.version + ": " + T.rows.length + " readings copied from result files of the RATCHET kindscope series (commit " + SIDE.ratchet + ") and of the earlier hand-over bundle. Nothing was measured or re-derived to draw this page. Which experiments feed each view was chosen by the CIRISHolon session; the session that owns the instrument has not yet confirmed the selection.";
+$("foot").textContent = "SCOPE-0, version " + SIDE.version + ": " + T.rows.length + " readings copied from result files of the RATCHET kindscope series (commit " + SIDE.ratchet + ") and of the earlier hand-over bundle. Nothing was measured or re-derived to draw this page. Which experiments feed each view was chosen by the CIRISHolon session and corrected once by the session that owns the instrument.";
 render();
 try { matchMedia("(prefers-color-scheme: dark)").addEventListener("change", render); new MutationObserver(render).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] }); } catch (e) {}
 </script>

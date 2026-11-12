@@ -529,3 +529,33 @@ provider: five calls an item, no errors, 12.74 dollars by the reported figure.
   (which changes the language guidance and the ethics text served).
 - If a later part wants items that look like real first thoughts, the wrapper format is
   on record in that artifact.
+
+## CORRECTION 2026-11-12 to "The measured verb prior" above (the RATCHET session's own correction)
+
+The table above is NOT the model's prior. The first run with the capture file shows that
+where a conscience overrode a thought, the trace records the conscience's replacement
+action as the "selected action", not what the model chose: in all 8 overridden thoughts
+of that run whose traces read ponder (7) or defer (1), the model had chosen speak.
+
+Corrected (RATCHET `6b8c400`):
+
+| the model's own selection, where no override occurred (1,720 thoughts) | count | share |
+|---|---|---|
+| speak | 792 | 46.0 % |
+| task_complete | 780 | 45.3 % |
+| ponder | 143 | 8.3 % |
+| defer | 5 | 0.3 % |
+
+In the 669 overridden thoughts the trace shows the conscience's action (ponder 599, defer
+70); what the model chose there went unrecorded until the capture file existed.
+
+**What changes.** At the action-selection step the battery's model almost never defers (5
+of 1,720 where it can be seen). Deferral in the battery is the conscience's doing. A small
+model that replaces action selection alone inherits a step that rarely stops anything by
+itself; the stopping lives in the conscience stage.
+
+**Status, same day:** the early-exit test is FROZEN (RATCHET `b213454`); the truth table
+was released to the RATCHET session by the Constitution session, without the reserve
+templates, which it held back; the design phase is running on fit and explore. Its
+write-up will say the test is of the selection step on authored situations in the
+deployed prompt frame, not on the deployed input distribution.

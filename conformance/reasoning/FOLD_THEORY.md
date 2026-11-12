@@ -217,3 +217,26 @@ session):** the prefix is 20,438 tokens of an item's roughly 22,840, so about 89
 what the step reads on each call never changes under the default template, not the 96 %
 of the base prompt. It fits that desktop GPU with about 0.3 of 15.6 GB to spare, with
 the prefix cached. The conclusion stands at the smaller figure.
+
+## CORRECTION 2026-11-12 to F6: the stopping is not in action selection
+
+F6 above supposed that action selection mostly reads the evaluators' verdicts, so that
+the judgment sits in the evaluators. The RATCHET session's corrected count from the
+safety battery adds a third place and moves the weight: where it can be seen, the model
+at the action-selection step chose to defer in 5 of 1,720 thoughts (0.3 %), while a
+conscience overrode 669 of 2,389 selections (28 %), and nearly every deferral in the
+battery (70 of 75) was the conscience's replacement and not the model's choice.
+
+So on this harness the decision "must the agent stop?" is made mostly AFTER action
+selection, by the consciences. For a purpose-built model that means:
+
+- a small model for action selection alone would inherit a step that rarely stops
+  anything; making that step cheap does not make the agent safe or fast;
+- the consciences are four more model calls a thought, each with the same long prefix,
+  and they are where the stopping is. They belong at the centre of any plan to fold the
+  pipeline, not at its edge;
+- Part A (does the bare selection step stop where a rule requires it?) is still the right
+  first question, and this says what to expect of the full model on it: seldom.
+
+One harness, one model, single-turn mental-health questions. Whether the consciences carry
+the stopping elsewhere is not known.

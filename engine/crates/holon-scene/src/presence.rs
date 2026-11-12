@@ -1,0 +1,321 @@
+//! Where a person is in each hour of a day (PRESENCEGEN-1,
+//! `conformance/scene/PRESENCEGEN1_PREREG.md`).
+//!
+//! Two generators over the six states of PRESENCE-0. `Chain`: a chain over the state and
+//! one bit (has the person left home today). `Frame`: a kind of day is drawn, then the
+//! hour first left and the hours until last home from one aggregated table, then a short
+//! chain between them; before and after, a two-state chain at home.
+//! The law: one state per person per hour (`SceneRhythm.conserved`). Integers only.
+//!
+//! Slot `s` of a day is clock hour `(4 + s) mod 24`. States: 0 home asleep, 1 home awake,
+//! 2 workplace or school, 3 elsewhere awake, 4 elsewhere asleep, 5 travelling.
+
+use crate::devices::Tables;
+use crate::seed::Stream;
+
+pub const KIND_HOME: u8 = 0;
+pub const KIND_WORK_EARLY: u8 = 1;
+pub const KIND_WORK_LATE: u8 = 2;
+pub const KIND_OUT: u8 = 3;
+/// A day from the chain has no kind.
+pub const KIND_NONE: u8 = 4;
+
+const ANY: u32 = 4;
+const ANY_SLOT: u32 = 24;
+const NO_FRAME: usize = 12;
+
+/// Table ids.
+pub const T_KIND: u32 = 1;
+pub const T_INIT: u32 = 2;
+pub const T_CHAIN: u32 = 3;
+pub const T_HOME_INIT: u32 = 4;
+pub const T_HOME_CHAIN: u32 = 5;
+pub const T_LEFT: u32 = 6;
+pub const T_AWAY: u32 = 7;
+pub const T_INSIDE_INIT: u32 = 8;
+pub const T_INSIDE: u32 = 9;
+pub const T_CHANGES: u32 = 10;
+pub const T_EMPLOYED: u32 = 11;
+
+/// The key of one table row.
+pub fn key(table: u32, employed: u32, x: u32, slot: u32, from: u32) -> u32 {
+    (((table * 2 + employed) * 8 + x) * 32 + slot) * 16 + from
+}
+
+/// Which generator.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Generator {
+    Chain,
+    Frame,
+}
+
+/// One generated day.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Day {
+    pub states: [u8; 24],
+    pub kind: u8,
+    /// Changes of place in the day, drawn from the diaries' minute-level count for the kind.
+    pub place_changes: u8,
+    /// A row was borrowed from a coarser table.
+    pub fallback: bool,
+}
+
+fn pick(st: &mut Stream, shares: &[u32]) -> usize {
+    let total: u64 = shares.iter().map(|&x| x as u64).sum();
+    if total == 0 {
+        return 0;
+    }
+    let mut u = st.below(total);
+    for (i, &w) in shares.iter().enumerate() {
+        if u < w as u64 {
+            return i;
+        }
+        u -= w as u64;
+    }
+    shares.len() - 1
+}
+
+fn get<'a>(t: &Tables<'a>, k: u32) -> Option<&'a [u32]> {
+    t.rows.binary_search_by_key(&k, |r| r.0).ok().map(|i| t.rows[i].1)
+}
+
+/// Inside states of a frame, in table order.
+const INSIDE: [u8; 5] = [2, 3, 4, 5, 1];
+
+/// Generate one day. `day_type`: 0 Monday to Thursday, 1 Friday, 2 Saturday, 3 Sunday.
+/// `week_same_kind`: a declared, unmeasured knob; when set, the kind of a working-week day
+/// is drawn from `person_seed` and so is the same on each such day.
+pub fn day_with(t: &Tables, g: Generator, seed: u64, employed: bool, day_type: u8, person_seed: u64, week_same_kind: bool) -> Day {
+    let e = employed as u32;
+    let d = (day_type as u32).min(3);
+    let mut st = Stream::new(seed);
+    let mut out = Day { states: [0; 24], kind: KIND_NONE, place_changes: 0, fallback: false };
+    match g {
+        Generator::Chain => {
+            let init = get(t, key(T_INIT, e, d, 0, 0)).expect("initial row");
+            let mut s = pick(&mut st, init) as u32;
+            let mut left = (s > 1) as u32;
+            out.states[0] = s as u8;
+            for slot in 0..23u32 {
+                let from = s * 2 + left;
+                let row = match get(t, key(T_CHAIN, e, d, slot, from)) {
+                    Some(r) => r,
+                    None => {
+                        out.fallback = true;
+                        match get(t, key(T_CHAIN, e, ANY, slot, from)).or_else(|| get(t, key(T_CHAIN, e, ANY, ANY_SLOT, from))) {
+                            Some(r) => r,
+                            None => {
+                                out.states[slot as usize + 1] = s as u8;
+                                continue;
+                            }
+                        }
+                    }
+                };
+                s = pick(&mut st, row) as u32;
+                left |= (s > 1) as u32;
+                out.states[slot as usize + 1] = s as u8;
+            }
+        }
+        Generator::Frame => {
+            let kinds = get(t, key(T_KIND, e, d, 0, 0)).expect("kind row");
+            let kind = if week_same_kind && d <= 1 {
+                let mut ps = Stream::new(person_seed);
+                pick(&mut ps, kinds) as u32
+            } else {
+                pick(&mut st, kinds) as u32
+            };
+            out.kind = kind as u8;
+            // the frame
+            let (mut first, mut last) = (24u32, 24u32);
+            if kind != KIND_HOME as u32 {
+                let lrow = get(t, key(T_LEFT, e, kind, 0, 0)).expect("first-left row");
+                let lb = pick(&mut st, lrow);
+                if lb != NO_FRAME {
+                    first = (lb as u32) * 2 + st.below(2) as u32;
+                    let arow = match get(t, key(T_AWAY, e, kind, lb as u32, 0)) {
+                        Some(r) => r,
+                        None => {
+                            out.fallback = true;
+                            get(t, key(T_AWAY, e, kind, 12, 0)).expect("pooled away row")
+                        }
+                    };
+                    // one-hour cells (amendment of 2026-11-12: a two-hour cell straddles the eight-hour line)
+                    let dur = pick(&mut st, arow) as u32 + 1;
+                    last = (first + dur).min(24);
+                }
+            }
+            // at home before and after
+            let hi = get(t, key(T_HOME_INIT, e, 0, 0, 0)).expect("home initial row");
+            let mut h = pick(&mut st, hi) as u32;
+            let mut inside = 0usize;
+            for slot in 0..24u32 {
+                if slot >= first && slot < last {
+                    if slot == first {
+                        let ii = get(t, key(T_INSIDE_INIT, e, kind, 0, 0)).expect("inside initial row");
+                        inside = pick(&mut st, ii);
+                    } else {
+                        let row = match get(t, key(T_INSIDE, e, kind, slot - 1, inside as u32)) {
+                            Some(r) => Some(r),
+                            None => {
+                                out.fallback = true;
+                                get(t, key(T_INSIDE, e, kind, ANY_SLOT, inside as u32))
+                            }
+                        };
+                        if let Some(r) = row {
+                            inside = pick(&mut st, r);
+                        }
+                    }
+                    // the frame's last hour is away from home by definition
+                    if slot + 1 == last && INSIDE[inside] == 1 {
+                        inside = 3;
+                    }
+                    out.states[slot as usize] = INSIDE[inside];
+                    h = 1;
+                } else {
+                    if slot > 0 && !(slot == last) {
+                        if let Some(r) = get(t, key(T_HOME_CHAIN, e, 0, slot - 1, h)) {
+                            h = pick(&mut st, r) as u32;
+                        }
+                    }
+                    out.states[slot as usize] = h as u8;
+                }
+            }
+            if let Some(c) = get(t, key(T_CHANGES, e, kind, 0, 0)) {
+                out.place_changes = pick(&mut st, c) as u8;
+            }
+        }
+    }
+    out
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::seed::mix;
+
+    fn toy() -> Vec<(u32, Vec<u32>)> {
+        let mut rows: Vec<(u32, Vec<u32>)> = Vec::new();
+        for e in 0..2u32 {
+            for d in 0..4u32 {
+                rows.push((key(T_KIND, e, d, 0, 0), vec![250_000, 400_000, 100_000, 250_000]));
+                rows.push((key(T_INIT, e, d, 0, 0), vec![900_000, 100_000, 0, 0, 0, 0]));
+            }
+            rows.push((key(T_HOME_INIT, e, 0, 0, 0), vec![900_000, 100_000]));
+            for slot in 0..24u32 {
+                for from in 0..2u32 {
+                    let wake = if (3..18).contains(&slot) { 900_000 } else { 100_000 };
+                    rows.push((key(T_HOME_CHAIN, e, 0, slot, from), vec![1_000_000 - wake, wake]));
+                }
+            }
+            for kind in 1..4u32 {
+                let mut l = vec![0u32; 13];
+                l[2] = 700_000;
+                l[5] = 200_000;
+                l[12] = 100_000;
+                rows.push((key(T_LEFT, e, kind, 0, 0), l));
+                let mut a = vec![0u32; 24];
+                a[if kind == 3 { 1 } else { 8 }] = 1_000_000;
+                rows.push((key(T_AWAY, e, kind, 12, 0), a));
+                rows.push((key(T_INSIDE_INIT, e, kind, 0, 0), vec![0, 0, 0, 1_000_000, 0]));
+                for from in 0..5u32 {
+                    rows.push((key(T_INSIDE, e, kind, ANY_SLOT, from), vec![600_000, 200_000, 0, 100_000, 100_000]));
+                }
+                rows.push((key(T_CHANGES, e, kind, 0, 0), vec![0, 0, 500_000, 300_000, 200_000]));
+            }
+            // a chain that leaves home at slot 4 with probability one half, returns at slot 13
+            for slot in 0..23u32 {
+                for from in 0..12u32 {
+                    let s = from / 2;
+                    let mut r = vec![0u32; 6];
+                    if s <= 1 && slot == 4 && from % 2 == 0 {
+                        r[1] = 500_000;
+                        r[2] = 500_000;
+                    } else if s > 1 && slot == 13 {
+                        r[1] = 1_000_000;
+                    } else {
+                        r[if s == 0 && slot >= 3 { 1 } else { s as usize }] = 1_000_000;
+                    }
+                    rows.push((key(T_CHAIN, e, ANY, slot, from), r));
+                }
+            }
+        }
+        rows.sort_by_key(|r| r.0);
+        rows
+    }
+
+    fn with<R>(f: impl Fn(&Tables) -> R) -> R {
+        let owned = toy();
+        let rows: Vec<(u32, &[u32])> = owned.iter().map(|r| (r.0, r.1.as_slice())).collect();
+        f(&Tables { rows: &rows })
+    }
+
+    /// P-ONE: one state per hour, a known state; a HOME day never leaves home.
+    #[test]
+    fn one_state_per_hour() {
+        with(|t| {
+            for i in 0..5000u64 {
+                for g in [Generator::Chain, Generator::Frame] {
+                    let d = day_with(t, g, mix(i), i % 2 == 0, (i % 4) as u8, 0, false);
+                    assert!(d.states.iter().all(|&s| s <= 5));
+                    if d.kind == KIND_HOME {
+                        assert!(d.states.iter().all(|&s| s <= 1));
+                    }
+                }
+            }
+        });
+    }
+
+    /// The frame's hours away are a single run bounded by home, and its last hour is away.
+    #[test]
+    fn the_frame_is_respected() {
+        with(|t| {
+            let mut framed = 0;
+            for i in 0..4000u64 {
+                let d = day_with(t, Generator::Frame, mix(i), true, 0, 0, false);
+                let away: Vec<usize> = (0..24).filter(|&s| d.states[s] > 1).collect();
+                if let (Some(&a), Some(&b)) = (away.first(), away.last()) {
+                    framed += 1;
+                    assert!(d.states[..a].iter().all(|&s| s <= 1));
+                    assert!(d.states[b + 1..].iter().all(|&s| s <= 1));
+                    assert!(a == 4 || a == 5 || a == 10 || a == 11, "first left {a}");
+                }
+            }
+            assert!(framed > 2000);
+        });
+    }
+
+    /// P-SEED.
+    #[test]
+    fn one_seed_one_day() {
+        with(|t| {
+            assert_eq!(day_with(t, Generator::Frame, 9, true, 0, 1, false), day_with(t, Generator::Frame, 9, true, 0, 1, false));
+            let differ = (0..500u64).filter(|&i| day_with(t, Generator::Frame, mix(i), true, 0, 0, false) != day_with(t, Generator::Frame, mix(i + 7000), true, 0, 0, false)).count();
+            assert!(differ > 300, "{differ}");
+        });
+    }
+
+    /// P-WEEK: with the knob set, a person's working-week days share a kind.
+    #[test]
+    fn the_week_knob() {
+        with(|t| {
+            for p in 0..200u64 {
+                let kinds: Vec<u8> = (0..5u64).map(|day| day_with(t, Generator::Frame, mix(p * 10 + day), true, if day == 4 { 1 } else { 0 }, mix(p + 99), true).kind).collect();
+                assert!(kinds.iter().all(|&k| k == kinds[0]));
+            }
+            let varied = (0..200u64).filter(|&p| {
+                let kinds: Vec<u8> = (0..5u64).map(|day| day_with(t, Generator::Frame, mix(p * 10 + day), true, 0, mix(p + 99), false).kind).collect();
+                kinds.iter().any(|&k| k != kinds[0])
+            }).count();
+            assert!(varied > 150);
+        });
+    }
+
+    /// P-BORROW: a chain row missing for the day type is borrowed and the day is flagged.
+    #[test]
+    fn a_borrowed_row_is_flagged() {
+        with(|t| {
+            let d = day_with(t, Generator::Chain, 3, true, 2, 0, false);
+            assert!(d.fallback);
+        });
+    }
+}

@@ -275,3 +275,26 @@ here from the agent's main branch: `FSD/RESEARCH_PROMPT_OVERRIDES.md` §10 to §
 **Not known yet, asked of the CIRISAgent session:** whether a version of the block
 classification has passed the kappa bar (so that it can be cited), and which of the
 existing regime manifests cover the arms listed above.
+
+## The seed check, 2026-11-12 (the Constitution session; a fresh reader, with both faulty verdicts checked by that session)
+
+`scope0/website_seed_check.tsv` (id, family, primitives, verdict, sentence at fault, clause
+broken, note). 25 candidates, each of the CORRECTION family and each from one of the nine
+generation agents; the primitive-prefix rule adds none outside that family.
+
+- **20 sound, 2 faulty, 3 unclear.** Dropped and counted: the 2 faulty (one gives the wrong
+  mechanism for limiting onward delegation; one teaches a family name the text has
+  retired, though its reasoning about withdrawing against recanting is right) and the 3
+  unclear (two have a moderation event filed by people the story does not say hold the
+  duty; one turns on a word the text does not define). 20 seeds remain.
+- **The family is sound on what it was chosen for.** Each of the twelve stories about
+  superseding, withdrawing and recanting gets the distinctions right, and each ground and
+  outcome of a reopening is in the text's closed set.
+- **For the writer:** keep the pairs to the stories' PROSE. Their example blocks carry
+  spellings the text rejects (a member name, upper-case values where lower case is
+  required, a member the text does not have), and a pair that kept one in both members
+  would teach a row the door refuses.
+- **For the lead, as corrections to a public primer and not as seed faults** (that session
+  is telling him directly): the three rejected spellings, stale section references, a
+  body named for moderation where the text has duty-holders, and no reopening story that
+  says who filed.

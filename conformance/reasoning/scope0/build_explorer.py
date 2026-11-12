@@ -103,14 +103,16 @@ details.more > .inner { display: flex; flex-direction: column; gap: 16px; margin
 <div class="wrap">
   <header>
     <h1>Kindscope</h1>
-    <p class="lede">Every dot is one character of a story, placed by what a small language model is holding in mind at that character. Press play and watch the cloud change shape as the model works through its 13 stages. Drag to turn it. Hover a dot to see which character it is.</p>
+    <p class="lede">Every dot is one character of a story, placed by what a small language model is holding in mind at that character. Press play and watch the cloud change shape as the model works through its 13 stages: stripes, then a ring, then clusters. Drag to turn it. Hover a dot to see which character it is.</p>
   </header>
   <section class="panel">
+    <div class="lab" style="margin-bottom:4px">The filmstrip: the same cloud after each of the 13 stages. Click a frame.</div>
+    <div id="c-film" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px"></div>
     <canvas id="cloud" style="width:100%;height:560px;display:block;touch-action:none;cursor:grab;border-radius:4px;background:var(--bg)" aria-label="a cloud of points, one per character, changing shape through the model's 13 stages"></canvas>
     <div class="ctl">
       <button class="chip" id="c-play" aria-pressed="false">Play through the stages</button>
       <label>Stage <input type="range" id="c-stage" min="0" max="12" step="0.01" value="0"></label>
-      <span class="row"><button class="chip" id="c-place" aria-pressed="true">Colour: place in the word</button><button class="chip" id="c-surprise" aria-pressed="false">Colour: how hard the next character was</button></span>
+      <span class="row"><button class="chip" id="c-place" aria-pressed="true">Colour: place in the word</button><button class="chip" id="c-pos" aria-pressed="false">Colour: position in the story</button><button class="chip" id="c-surprise" aria-pressed="false">Colour: how hard the next character was</button></span>
     </div>
     <div class="key" id="c-key"></div>
     <p class="say" id="c-say"></p>
@@ -296,15 +298,28 @@ function profile(l, rows, sel) {
   svg.setAttribute("aria-label", l.title + " by depth for " + sel.site.component);
 }
 // ---------------------------------------------------------------- the shape of what the model holds
-const CS = { k: 0, yaw: 0.6, pitch: 0.35, mode: "place", play: false, hover: null, scr: [] };
+const CS = { k: 0, yaw: 0.0, pitch: 0.0, mode: "place", play: false, hover: null, scr: [] };
 const PLACE_COL = ["--ink3", "--s7", "--s1", "--s3", "--s2", "--s4"];
 const STAGE_SAY = n => n === "embed" ? "the character itself, before any thinking" : n.startsWith("attn") ? "after looking back at earlier characters (round " + (+n.slice(-1) + 1) + ")" : "after rewriting what it holds (round " + (+n.slice(-1) + 1) + ")";
+function dotColour(m, cols, seqc) {
+  if (CS.mode === "place") return cols[m.place];
+  const v = CS.mode === "pos" ? (m.pos - 13) / 242 : Math.max(0, Math.min(1, m.surprise / 6)), u = v * 5, i = Math.min(4, Math.floor(u));
+  return mix(seqc[i], seqc[i + 1], u - i);
+}
+function film() {
+  const cols = PLACE_COL.map(c => css(c)), seqc = [0, 1, 2, 3, 4, 5].map(i => hex(css("--seq" + i)));
+  CL.stages.forEach((nm, k) => {
+    const cv = $("film-" + k), g = cv.getContext("2d"), W = cv.width; g.clearRect(0, 0, W, W);
+    for (let n = 0; n < CL.points.length; n += 2) { const a = CL.xyz[n][k]; g.fillStyle = dotColour(CL.points[n], cols, seqc); g.fillRect(W / 2 + a[0] * W / 5.2 - 1, W / 2 - a[1] * W / 5.2 - 1, 2, 2); }
+    cv.style.outline = Math.round(CS.k) === k ? "2px solid var(--ink)" : "1px solid var(--line)";
+  });
+}
 function cloud() {
   const cv = $("cloud"), dpr = Math.min(2, window.devicePixelRatio || 1), Wp = cv.clientWidth || 900, Hp = cv.clientHeight || 560;
   if (cv.width !== Math.round(Wp * dpr)) { cv.width = Math.round(Wp * dpr); cv.height = Math.round(Hp * dpr); }
   const g = cv.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, Wp, Hp);
   const k0 = Math.min(11, Math.floor(CS.k)), t = CS.k - k0, e = t * t * (3 - 2 * t);
-  const cy = Math.cos(CS.yaw), sy = Math.sin(CS.yaw), cp = Math.cos(CS.pitch), sp = Math.sin(CS.pitch), sc = Math.min(Wp, Hp) / 5.2;
+  const cy = Math.cos(CS.yaw), sy = Math.sin(CS.yaw), cp = Math.cos(CS.pitch), sp = Math.sin(CS.pitch), sc = Math.min(Wp, Hp) / 5.0;
   const cols = PLACE_COL.map(c => css(c)), seqc = [0, 1, 2, 3, 4, 5].map(i => hex(css("--seq" + i)));
   const pts = [];
   for (let n = 0; n < CL.points.length; n++) {
@@ -314,30 +329,28 @@ function cloud() {
   }
   pts.sort((p, q) => p[2] - q[2]);
   CS.scr = pts;
-  for (const p of pts) {
-    const m = CL.points[p[3]];
-    if (CS.mode === "place") g.fillStyle = cols[m.place];
-    else { const u = Math.max(0, Math.min(1, m.surprise / 6)) * 5, i = Math.min(4, Math.floor(u)); g.fillStyle = mix(seqc[i], seqc[i + 1], u - i); }
-    g.globalAlpha = 0.82; g.beginPath(); g.arc(p[0], p[1], 2.6 + Math.max(-1, Math.min(1.6, p[2] * 0.5)), 0, 6.2832); g.fill();
-  }
+  for (const p of pts) { g.fillStyle = dotColour(CL.points[p[3]], cols, seqc); g.globalAlpha = 0.85; g.beginPath(); g.arc(p[0], p[1], 2.8 + Math.max(-0.8, Math.min(1.4, p[2] * 0.5)), 0, 6.2832); g.fill(); }
   g.globalAlpha = 1;
   if (CS.hover != null) { const p = pts.find(q => q[3] === CS.hover); if (p) { g.beginPath(); g.arc(p[0], p[1], 7, 0, 6.2832); g.strokeStyle = css("--ink"); g.lineWidth = 2; g.stroke(); } }
-  const kn = Math.round(CS.k), name = CL.stages[kn], sep = CL.separation.place_in_word_3d[kn], chr = CL.separation.which_character_3d[kn];
+  const kn = Math.round(CS.k), name = CL.stages[kn], sep = CL.separation.place_in_word_3d[kn], chr = CL.separation.which_character_3d[kn], clk = CL.clock[kn], room = CL.room_in_use[kn];
   let say = "Stage " + (kn + 1) + " of 13: " + STAGE_SAY(name) + ". ";
   if (CS.hover != null) {
-    const m = CL.points[CS.hover], story = CL.points.filter(q => q.story === m.story), txt = story.map(q => q.byte === 10 ? "↵" : String.fromCharCode(q.byte)).join("");
-    say = "This dot is the “" + (m.byte === 32 ? "space" : m.byte === 10 ? "line break" : String.fromCharCode(m.byte)) + "” in: …" + txt.slice(Math.max(0, m.pos - 14), m.pos) + "[" + txt[m.pos] + "]" + txt.slice(m.pos + 1, m.pos + 12) + "… (" + CL.places[m.place] + "; the next character cost " + m.surprise + ").";
-  } else if (kn === 0) say += "The dots sit in tidy groups by which character they are (" + Math.round(chr * 100) + "% of the spread you can see).";
-  else if (kn <= 2) say += "The moment the model looks back at what came before, the tidy groups dissolve: which character it is now explains only " + Math.round(chr * 100) + "% of what you can see.";
-  else if (kn < 10) say += "The cloud is slowly re-sorting. Where a character sits in its word explains " + Math.round(sep * 100) + "% of the spread you can see, up from 8% just after the first look back.";
-  else say += "The cloud has pulled apart again, now by where each character sits in its word (" + Math.round(sep * 100) + "% of what you can see). Hover the dots to see which is which. A likely reason, not tested: where you are in a word is most of what you need to guess the next character.";
+    const m = CL.points[CS.hover], story = CL.points.filter(q => q.story === m.story), at = story.indexOf(m), txt = story.map(q => q.byte === 10 ? "↵" : String.fromCharCode(q.byte)).join("");
+    say = "This dot is the “" + (m.byte === 32 ? "space" : m.byte === 10 ? "line break" : String.fromCharCode(m.byte)) + "” in: …" + txt.slice(Math.max(0, at - 14), at) + "[" + txt[at] + "]" + txt.slice(at + 1, at + 12) + "… It is character " + m.pos + " of its story (" + CL.places[m.place] + ").";
+  } else if (kn === 0) say += "Stripes: the dots line up by which character they are (" + Math.round(chr * 100) + "% of what you can see), with spaces off on their own.";
+  else if (clk > 0.75) say += "A ring. It is a clock: going round the ring is going through the story, character by character (the match is " + clk.toFixed(2) + " out of 1). The widest thing the model is holding here is where it is in the text, not what the text says. Colour by position to see it.";
+  else say += "The clock is gone from view (" + clk.toFixed(2) + ") and the dots have gathered by where each character sits in its word (" + Math.round(sep * 100) + "% of what you can see): spaces, first letters, the insides of words, last letters.";
   $("c-say").textContent = say;
-  $("c-honest").textContent = "What you are looking at is a flat-ish picture of a cloud that really lives in 192 dimensions. At this stage the picture keeps " + Math.round(CL.share_of_spread_kept_by_the_projection[kn] * 100) + "% of the cloud’s spread, so most of its shape is out of view. The re-sorting described here was seen while building this page, on eight stories; it has not been tested.";
+  $("c-honest").textContent = "The model’s state has " + CL.width + " directions to use. At this stage it is really using about " + Math.round(room.effective) + " of them (" + room.for_90_percent + " hold nine tenths of the spread). This picture shows the widest three, which keep " + Math.round(CL.share_of_spread_kept_by_the_projection[kn] * 100) + "%. Eight stories, one small model; seen by looking, not tested.";
   $("c-stage").value = CS.k;
-  $("c-key").innerHTML = CS.mode === "place" ? CL.places.map((n, i) => "<span><i style='background:var(" + PLACE_COL[i] + ");width:10px;height:10px;border-radius:50%'></i>" + esc(n) + "</span>").join("") : "<span><i style='background:var(--seq1);width:10px;height:10px;border-radius:50%'></i>easy to guess</span><span><i style='background:var(--seq5);width:10px;height:10px;border-radius:50%'></i>hard to guess</span>";
+  $("c-key").innerHTML = CS.mode === "place" ? CL.places.map((n, i) => "<span><i style='background:var(" + PLACE_COL[i] + ");width:10px;height:10px;border-radius:50%'></i>" + esc(n) + "</span>").join("")
+    : CS.mode === "pos" ? "<span><i style='background:var(--seq1);width:10px;height:10px;border-radius:50%'></i>start of the story</span><span><i style='background:var(--seq5);width:10px;height:10px;border-radius:50%'></i>end of the story</span>"
+    : "<span><i style='background:var(--seq1);width:10px;height:10px;border-radius:50%'></i>next character easy to guess</span><span><i style='background:var(--seq5);width:10px;height:10px;border-radius:50%'></i>hard to guess</span>";
+  CL.stages.forEach((nm, k) => { const f = $("film-" + k); if (f) f.style.outline = kn === k ? "2px solid var(--ink)" : "1px solid var(--line)"; });
 }
 function cloudInit() {
   const cv = $("cloud"); let drag = null, last = 0;
+  CL.stages.forEach((nm, k) => { const c = document.createElement("canvas"); c.width = 120; c.height = 120; c.id = "film-" + k; c.title = "stage " + (k + 1); c.style.cssText = "width:76px;height:76px;cursor:pointer;border-radius:3px;background:var(--bg)"; c.onclick = () => { CS.k = k; CS.play = false; $("c-play").setAttribute("aria-pressed", "false"); cloud(); }; $("c-film").appendChild(c); });
   cv.onpointerdown = e => { drag = [e.clientX, e.clientY, CS.yaw, CS.pitch]; try { cv.setPointerCapture(e.pointerId); } catch (x) {} };
   cv.onpointerup = () => { drag = null; };
   cv.onpointermove = e => {
@@ -348,11 +361,11 @@ function cloudInit() {
   };
   cv.onpointerleave = () => { if (CS.hover != null) { CS.hover = null; cloud(); } };
   $("c-stage").oninput = e => { CS.k = +e.target.value; CS.play = false; $("c-play").setAttribute("aria-pressed", "false"); cloud(); };
-  for (const m of ["place", "surprise"]) $("c-" + m).onclick = () => { CS.mode = m; $("c-place").setAttribute("aria-pressed", m === "place"); $("c-surprise").setAttribute("aria-pressed", m === "surprise"); cloud(); };
-  function tick(ts) { if (!CS.play) return; if (last) CS.k += (ts - last) / 1400; last = ts; if (CS.k >= 12) { CS.k = 12; CS.play = false; $("c-play").setAttribute("aria-pressed", "false"); } if (!drag) cloud(); if (CS.play) requestAnimationFrame(tick); }
+  for (const m of ["place", "pos", "surprise"]) $("c-" + m).onclick = () => { CS.mode = m; for (const q of ["place", "pos", "surprise"]) $("c-" + q).setAttribute("aria-pressed", q === m); film(); cloud(); };
+  function tick(ts) { if (!CS.play) return; if (last) CS.k += (ts - last) / 1600; last = ts; if (CS.k >= 12) { CS.k = 12; CS.play = false; $("c-play").setAttribute("aria-pressed", "false"); } if (!drag) cloud(); if (CS.play) requestAnimationFrame(tick); }
   $("c-play").onclick = () => { CS.play = !CS.play; $("c-play").setAttribute("aria-pressed", CS.play); if (CS.play) { if (CS.k >= 12) CS.k = 0; last = 0; requestAnimationFrame(tick); } };
   try { addEventListener("resize", cloud); } catch (x) {}
-  cloud();
+  film(); cloud();
 }
 // ---------------------------------------------------------------- the model in three dimensions
 const FOUND = [
@@ -513,7 +526,7 @@ for (const [id, m] of Object.entries(T.models)) {
 if (state.layer) state.model = layerOf(state.layer).model;
 $("foot").textContent = "The model is GoldWorm v6, a small public model of 2.76 million parameters that reads children\u2019s stories one character at a time. Every finding here is about this one model; none is a claim about any other. The findings are the RATCHET session\u2019s experiments, stated here in plain words by the CIRISHolon session; \u201ctested, and it held\u201d means a prediction was written down before the experiment and came true. SCOPE-0, version " + SIDE.version + ": " + T.rows.length + " readings copied from result files of the RATCHET kindscope series (commit " + SIDE.ratchet + ") and of the earlier hand-over bundle. Nothing was measured or re-derived to draw this page. Which experiments feed each view was chosen by the CIRISHolon session and corrected once by the session that owns the instrument.";
 cloudInit(); s3init(); render(); passView();
-try { matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { cloud(); scene(); render(); passView(); }); new MutationObserver(() => { cloud(); scene(); render(); passView(); }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] }); } catch (e) {}
+try { matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { film(); cloud(); scene(); render(); passView(); }); new MutationObserver(() => { film(); cloud(); scene(); render(); passView(); }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] }); } catch (e) {}
 </script>
 """
 

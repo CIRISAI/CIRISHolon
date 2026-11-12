@@ -383,3 +383,34 @@ first action selections. Traces at the level without prompt text.
 - **Tested by unit tests only so far.** The PR's own battery run will be the first to
   exercise it; the artifact will be named `safety-battery-llm-calls-<run>-<lang>`.
 - The renderer for Part A's items is being written with the fixed settings agreed.
+
+## Part A rendered into the real prompt, 2026-11-12 (the CIRISAgent session, as it reports)
+
+`/home/emoore/blindverb1-rendered-2026-11-12/` (local, 16 MB; not in any repository). All
+1,620 items; no model called, nothing spent.
+
+- **A prompt** is the shared prefix (four system messages, 86,072 characters, the same for
+  each item, stored once) followed by one user message per item (9,488 to 9,725
+  characters). Reassembly reproduced the recorded hash for each of the 1,620, and the
+  hashes are distinct.
+- **Evidence it is the deployed composer:** the same function, given the agent's own test
+  fixture, equals its committed golden file byte for byte; that check runs before any
+  item and is in the manifest.
+- **Pinned to** renderer commit `6cf3aae0a` on a research branch of CIRISAgent that is
+  LOCAL ONLY, not pushed, sitting on the 2.21 release head. Until it is pushed the pin
+  cannot be checked by anyone but that session. Input digests equal this repository's
+  `SHA256SUMS` for the four files.
+- **Held fixed for each item:** English; thought depth 0; the ten verbs in the builder's
+  order; no tools; no retry block; no last-attempt advisory; no user profile; one
+  snapshot.
+- **The summaries-withheld arm:** two evaluator sections carry a stated sentence ("Not
+  provided for this item."), one the builder's own absent-result text, one the builder's
+  own empty string. The manifest says which.
+- **Contact with the unread splits, as that session describes it:** none read by eye;
+  aggregate checks only (counts, hash uniqueness, length range), and one count of a
+  placeholder word across rendered items, confirmed by count without printing.
+- **Three things to know before use:** the user message's header says evaluations come
+  from four prior evaluators, and in this arm they are withheld, so the prompt tells the
+  model about inputs it does not get; task and thought are wrapped in quotes with no
+  escaping, as deployed; and the battery's real calls will have summaries present and
+  depth varying, so they compare with this arm in format alone.

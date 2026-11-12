@@ -146,3 +146,40 @@ I do not know which member of a pair is which and have not worked it out. These 
 - Files that changed: `stop_vocab.json` (threshold slots only), `stop_items_reserve.jsonl`, `stop_vocab_build.py`, `self_check.py`, `SHA256SUMS`. The fit, explore and confirm files have the same checksums as before. `stop_fill.py` is unchanged.
 - I did not open the reserve file. The numbers above come from the vocabulary through the check.
 - What the symmetric construction leaves: t alone still leans between members (medians 0.405 and 0.53), since t is u shifted down or up.
+
+## Addition: scenario domains as fields (coordinator's request)
+
+- `stop_domains.py` writes `stop_scenario_domains.tsv`: 335 rows, one per scenario, with scenario, split, pair, context, setting, domain. The context-to-domain table is written out in the script by hand; no domain is read from words. The script runs its own checks and exits non-zero on a failure: one row per scenario; split equal to the items' split; each domain declared for its split; each context in one domain; the four item files' sha256 equal to `SHA256SUMS`.
+- The four item files did not change. Their sums in `SHA256SUMS` are the same lines as before; two lines were added for the new script and the table. `stop_vocab.json`, `stop_fill.py`, `self_check.py` and `stop_vocab_build.py` did not change either. The script reads only the `scenario` and `split` fields of the item files; I did not read them.
+- Scenarios per domain. fit: hospitals 35, parcel and warehouse logistics 30, schools 30, city services 30. explore: farming 25, libraries 25. confirm: shipping and ports 25, laboratories 25, housing 25, sports clubs 25. reserve: 10 each for mountain and cave rescue, mines and quarries, relief camps, forestry, museums, theatre.
+
+### Domains that could be read as medical, legal, financial or mental-health-crisis settings
+
+Judged from the vocabulary (settings, roles and slot values), not from the items. "yes" means a reader could fairly take the setting that way, not that every scenario in it does. I leaned to "yes" when unsure.
+
+| split | domain | medical | legal | financial | mental-health crisis |
+|---|---|---|---|---|---|
+| fit | hospitals | yes | no | no | no |
+| fit | parcel and warehouse logistics | no | no | no | no |
+| fit | schools | no | no | no | no |
+| fit | city services | no | no | no | no |
+| explore | farming | no | no | no | no |
+| explore | libraries | no | no | no | no |
+| confirm | shipping and ports | no | yes | no | no |
+| confirm | laboratories | no | no | no | no |
+| confirm | housing | no | yes | yes | yes |
+| confirm | sports clubs | no | no | no | no |
+| reserve | mountain and cave rescue | yes | no | no | no |
+| reserve | mines and quarries | no | no | no | no |
+| reserve | relief camps | yes | no | no | yes |
+| reserve | forestry | no | no | no | no |
+| reserve | museums | no | no | no | no |
+| reserve | theatre | no | no | no | no |
+
+Why the "yes" cells, and what the table does not catch:
+
+- hospitals: wards, clinics, a pharmacy; drugs, doses and patients throughout. mountain and cave rescue: a paramedic, a medic, an aid post. relief camps: a camp medic and a nutrition aide.
+- shipping and ports, legal: one of five settings is a customs shed with a customs surveyor (context p5). housing, legal and financial: tenancies, a lettings bureau, deposits, an eviction entry, vetting by credit rating (contexts t1, t4 most of all). housing and relief camps, mental-health crisis: no scenario states one, but a homeless hostel (t5), sheltered housing (t3) and camps for flood, earthquake and refugee survivors (r11 to r15) are places where a reader may expect one.
+- By pair, whatever the domain: every triage scenario (all 30, in all six reserve domains) names a life-saving medical thing (an oxygen cylinder, a defibrillator, a vial of insulin), so triage items in forestry, museums and theatre read as medical too. Every lethal scenario is about a death, and several outside hospitals name medical matter (an allergy or epilepsy medicine at a school, a home breathing aid in city services, a kidney machine in housing, a cardiac condition at a sports club). Several harm scenarios outside hospitals name an injury or an illness. The laboratories are for soil, materials, seed genetics, food microbiology and optics; none is clinical, but one harm scenario there is a worker catching a germ.
+- Money is in every item as a distractor (a yearly cost or a saving), and a third of the accept scenarios are a grant, some of a sum of money. No setting is a bank, insurer, lender or adviser. I marked financial "yes" for housing alone.
+- No setting is a court, a law firm or the police.

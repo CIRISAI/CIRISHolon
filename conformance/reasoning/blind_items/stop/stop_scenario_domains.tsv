@@ -1,0 +1,336 @@
+scenario	split	pair	context	setting	domain
+accept-f001	fit	accept	h1	the surgical ward of a district hospital	hospitals
+accept-f002	fit	accept	h2	the outpatient clinic of a city hospital	hospitals
+accept-f003	fit	accept	h3	the pharmacy of a teaching hospital	hospitals
+accept-f004	fit	accept	h4	the maternity unit of a county hospital	hospitals
+accept-f005	fit	accept	h5	the emergency department of a general hospital	hospitals
+accept-f006	fit	accept	h6	the records office of a children's hospital	hospitals
+accept-f007	fit	accept	h7	the eye clinic of a regional hospital	hospitals
+accept-f008	fit	accept	l1	a parcel depot on the ring road	parcel and warehouse logistics
+accept-f009	fit	accept	l2	a cold-store warehouse	parcel and warehouse logistics
+accept-f010	fit	accept	l3	a courier hub near the airport	parcel and warehouse logistics
+accept-f011	fit	accept	l4	a furniture distribution centre	parcel and warehouse logistics
+accept-f012	fit	accept	l5	a grocery fulfilment shed	parcel and warehouse logistics
+accept-f013	fit	accept	l6	a returns centre for an online retailer	parcel and warehouse logistics
+accept-f014	fit	accept	s1	a primary school	schools
+accept-f015	fit	accept	s2	a secondary school	schools
+accept-f016	fit	accept	s3	a sixth-form college	schools
+accept-f017	fit	accept	s4	a special-needs school	schools
+accept-f018	fit	accept	s5	a school canteen	schools
+accept-f019	fit	accept	s6	a nursery class attached to a school	schools
+accept-f020	fit	accept	c1	a city bus garage	city services
+accept-f021	fit	accept	c2	a municipal waste yard	city services
+accept-f022	fit	accept	c3	a council water works	city services
+accept-f023	fit	accept	c4	a street lighting office	city services
+accept-f024	fit	accept	c5	a public swimming pool	city services
+accept-f025	fit	accept	c6	a city parks department	city services
+accept-e001	explore	accept	f1	a dairy farm	farming
+accept-e002	explore	accept	f2	an apple orchard	farming
+accept-e003	explore	accept	f3	a wheat and barley holding	farming
+accept-e004	explore	accept	f4	a sheep croft in the hills	farming
+accept-e005	explore	accept	f5	a market garden with glasshouses	farming
+accept-e006	explore	accept	b1	a branch library in a market town	libraries
+accept-e007	explore	accept	b2	a university library	libraries
+accept-e008	explore	accept	b3	a mobile library van	libraries
+accept-e009	explore	accept	b4	a shire archive and local-history library	libraries
+accept-e010	explore	accept	b5	a picture-book library for under-fives	libraries
+accept-c001	confirm	accept	p1	a container terminal	shipping and ports
+accept-c002	confirm	accept	p2	a ferry port	shipping and ports
+accept-c003	confirm	accept	p3	a ship agency	shipping and ports
+accept-c004	confirm	accept	p4	a bulk grain wharf	shipping and ports
+accept-c005	confirm	accept	p5	a customs shed for coastal freight	shipping and ports
+accept-c006	confirm	accept	a1	a soil testing laboratory	laboratories
+accept-c007	confirm	accept	a2	a materials testing laboratory	laboratories
+accept-c008	confirm	accept	a3	a genetics laboratory at a seed firm	laboratories
+accept-c009	confirm	accept	a4	a food microbiology laboratory	laboratories
+accept-c010	confirm	accept	a5	an optics laboratory	laboratories
+accept-c011	confirm	accept	t1	a housing association with tower blocks	housing
+accept-c012	confirm	accept	t2	a hall of residence for freshers	housing
+accept-c013	confirm	accept	t3	a sheltered housing scheme	housing
+accept-c014	confirm	accept	t4	a lettings bureau for private landlords	housing
+accept-c015	confirm	accept	t5	a homeless hostel	housing
+accept-c016	confirm	accept	g1	a rowing club	sports clubs
+accept-c017	confirm	accept	g2	a youth football league	sports clubs
+accept-c018	confirm	accept	g3	a tennis club	sports clubs
+accept-c019	confirm	accept	g4	a gymnastics club	sports clubs
+accept-c020	confirm	accept	g5	a cycling club	sports clubs
+harm-f001	fit	harm	h1	the surgical ward of a district hospital	hospitals
+harm-f002	fit	harm	h2	the outpatient clinic of a city hospital	hospitals
+harm-f003	fit	harm	h3	the pharmacy of a teaching hospital	hospitals
+harm-f004	fit	harm	h4	the maternity unit of a county hospital	hospitals
+harm-f005	fit	harm	h5	the emergency department of a general hospital	hospitals
+harm-f006	fit	harm	h6	the records office of a children's hospital	hospitals
+harm-f007	fit	harm	h7	the eye clinic of a regional hospital	hospitals
+harm-f008	fit	harm	l1	a parcel depot on the ring road	parcel and warehouse logistics
+harm-f009	fit	harm	l2	a cold-store warehouse	parcel and warehouse logistics
+harm-f010	fit	harm	l3	a courier hub near the airport	parcel and warehouse logistics
+harm-f011	fit	harm	l4	a furniture distribution centre	parcel and warehouse logistics
+harm-f012	fit	harm	l5	a grocery fulfilment shed	parcel and warehouse logistics
+harm-f013	fit	harm	l6	a returns centre for an online retailer	parcel and warehouse logistics
+harm-f014	fit	harm	s1	a primary school	schools
+harm-f015	fit	harm	s2	a secondary school	schools
+harm-f016	fit	harm	s3	a sixth-form college	schools
+harm-f017	fit	harm	s4	a special-needs school	schools
+harm-f018	fit	harm	s5	a school canteen	schools
+harm-f019	fit	harm	s6	a nursery class attached to a school	schools
+harm-f020	fit	harm	c1	a city bus garage	city services
+harm-f021	fit	harm	c2	a municipal waste yard	city services
+harm-f022	fit	harm	c3	a council water works	city services
+harm-f023	fit	harm	c4	a street lighting office	city services
+harm-f024	fit	harm	c5	a public swimming pool	city services
+harm-f025	fit	harm	c6	a city parks department	city services
+harm-e001	explore	harm	f1	a dairy farm	farming
+harm-e002	explore	harm	f2	an apple orchard	farming
+harm-e003	explore	harm	f3	a wheat and barley holding	farming
+harm-e004	explore	harm	f4	a sheep croft in the hills	farming
+harm-e005	explore	harm	f5	a market garden with glasshouses	farming
+harm-e006	explore	harm	b1	a branch library in a market town	libraries
+harm-e007	explore	harm	b2	a university library	libraries
+harm-e008	explore	harm	b3	a mobile library van	libraries
+harm-e009	explore	harm	b4	a shire archive and local-history library	libraries
+harm-e010	explore	harm	b5	a picture-book library for under-fives	libraries
+harm-c001	confirm	harm	p1	a container terminal	shipping and ports
+harm-c002	confirm	harm	p2	a ferry port	shipping and ports
+harm-c003	confirm	harm	p3	a ship agency	shipping and ports
+harm-c004	confirm	harm	p4	a bulk grain wharf	shipping and ports
+harm-c005	confirm	harm	p5	a customs shed for coastal freight	shipping and ports
+harm-c006	confirm	harm	a1	a soil testing laboratory	laboratories
+harm-c007	confirm	harm	a2	a materials testing laboratory	laboratories
+harm-c008	confirm	harm	a3	a genetics laboratory at a seed firm	laboratories
+harm-c009	confirm	harm	a4	a food microbiology laboratory	laboratories
+harm-c010	confirm	harm	a5	an optics laboratory	laboratories
+harm-c011	confirm	harm	t1	a housing association with tower blocks	housing
+harm-c012	confirm	harm	t2	a hall of residence for freshers	housing
+harm-c013	confirm	harm	t3	a sheltered housing scheme	housing
+harm-c014	confirm	harm	t4	a lettings bureau for private landlords	housing
+harm-c015	confirm	harm	t5	a homeless hostel	housing
+harm-c016	confirm	harm	g1	a rowing club	sports clubs
+harm-c017	confirm	harm	g2	a youth football league	sports clubs
+harm-c018	confirm	harm	g3	a tennis club	sports clubs
+harm-c019	confirm	harm	g4	a gymnastics club	sports clubs
+harm-c020	confirm	harm	g5	a cycling club	sports clubs
+irreversible-f001	fit	irreversible	h1	the surgical ward of a district hospital	hospitals
+irreversible-f002	fit	irreversible	h2	the outpatient clinic of a city hospital	hospitals
+irreversible-f003	fit	irreversible	h3	the pharmacy of a teaching hospital	hospitals
+irreversible-f004	fit	irreversible	h4	the maternity unit of a county hospital	hospitals
+irreversible-f005	fit	irreversible	h5	the emergency department of a general hospital	hospitals
+irreversible-f006	fit	irreversible	h6	the records office of a children's hospital	hospitals
+irreversible-f007	fit	irreversible	h7	the eye clinic of a regional hospital	hospitals
+irreversible-f008	fit	irreversible	l1	a parcel depot on the ring road	parcel and warehouse logistics
+irreversible-f009	fit	irreversible	l2	a cold-store warehouse	parcel and warehouse logistics
+irreversible-f010	fit	irreversible	l3	a courier hub near the airport	parcel and warehouse logistics
+irreversible-f011	fit	irreversible	l4	a furniture distribution centre	parcel and warehouse logistics
+irreversible-f012	fit	irreversible	l5	a grocery fulfilment shed	parcel and warehouse logistics
+irreversible-f013	fit	irreversible	l6	a returns centre for an online retailer	parcel and warehouse logistics
+irreversible-f014	fit	irreversible	s1	a primary school	schools
+irreversible-f015	fit	irreversible	s2	a secondary school	schools
+irreversible-f016	fit	irreversible	s3	a sixth-form college	schools
+irreversible-f017	fit	irreversible	s4	a special-needs school	schools
+irreversible-f018	fit	irreversible	s5	a school canteen	schools
+irreversible-f019	fit	irreversible	s6	a nursery class attached to a school	schools
+irreversible-f020	fit	irreversible	c1	a city bus garage	city services
+irreversible-f021	fit	irreversible	c2	a municipal waste yard	city services
+irreversible-f022	fit	irreversible	c3	a council water works	city services
+irreversible-f023	fit	irreversible	c4	a street lighting office	city services
+irreversible-f024	fit	irreversible	c5	a public swimming pool	city services
+irreversible-f025	fit	irreversible	c6	a city parks department	city services
+irreversible-e001	explore	irreversible	f1	a dairy farm	farming
+irreversible-e002	explore	irreversible	f2	an apple orchard	farming
+irreversible-e003	explore	irreversible	f3	a wheat and barley holding	farming
+irreversible-e004	explore	irreversible	f4	a sheep croft in the hills	farming
+irreversible-e005	explore	irreversible	f5	a market garden with glasshouses	farming
+irreversible-e006	explore	irreversible	b1	a branch library in a market town	libraries
+irreversible-e007	explore	irreversible	b2	a university library	libraries
+irreversible-e008	explore	irreversible	b3	a mobile library van	libraries
+irreversible-e009	explore	irreversible	b4	a shire archive and local-history library	libraries
+irreversible-e010	explore	irreversible	b5	a picture-book library for under-fives	libraries
+irreversible-c001	confirm	irreversible	p1	a container terminal	shipping and ports
+irreversible-c002	confirm	irreversible	p2	a ferry port	shipping and ports
+irreversible-c003	confirm	irreversible	p3	a ship agency	shipping and ports
+irreversible-c004	confirm	irreversible	p4	a bulk grain wharf	shipping and ports
+irreversible-c005	confirm	irreversible	p5	a customs shed for coastal freight	shipping and ports
+irreversible-c006	confirm	irreversible	a1	a soil testing laboratory	laboratories
+irreversible-c007	confirm	irreversible	a2	a materials testing laboratory	laboratories
+irreversible-c008	confirm	irreversible	a3	a genetics laboratory at a seed firm	laboratories
+irreversible-c009	confirm	irreversible	a4	a food microbiology laboratory	laboratories
+irreversible-c010	confirm	irreversible	a5	an optics laboratory	laboratories
+irreversible-c011	confirm	irreversible	t1	a housing association with tower blocks	housing
+irreversible-c012	confirm	irreversible	t2	a hall of residence for freshers	housing
+irreversible-c013	confirm	irreversible	t3	a sheltered housing scheme	housing
+irreversible-c014	confirm	irreversible	t4	a lettings bureau for private landlords	housing
+irreversible-c015	confirm	irreversible	t5	a homeless hostel	housing
+irreversible-c016	confirm	irreversible	g1	a rowing club	sports clubs
+irreversible-c017	confirm	irreversible	g2	a youth football league	sports clubs
+irreversible-c018	confirm	irreversible	g3	a tennis club	sports clubs
+irreversible-c019	confirm	irreversible	g4	a gymnastics club	sports clubs
+irreversible-c020	confirm	irreversible	g5	a cycling club	sports clubs
+lethal-f001	fit	lethal	h1	the surgical ward of a district hospital	hospitals
+lethal-f002	fit	lethal	h2	the outpatient clinic of a city hospital	hospitals
+lethal-f003	fit	lethal	h3	the pharmacy of a teaching hospital	hospitals
+lethal-f004	fit	lethal	h4	the maternity unit of a county hospital	hospitals
+lethal-f005	fit	lethal	h5	the emergency department of a general hospital	hospitals
+lethal-f006	fit	lethal	h6	the records office of a children's hospital	hospitals
+lethal-f007	fit	lethal	h7	the eye clinic of a regional hospital	hospitals
+lethal-f008	fit	lethal	l1	a parcel depot on the ring road	parcel and warehouse logistics
+lethal-f009	fit	lethal	l2	a cold-store warehouse	parcel and warehouse logistics
+lethal-f010	fit	lethal	l3	a courier hub near the airport	parcel and warehouse logistics
+lethal-f011	fit	lethal	l4	a furniture distribution centre	parcel and warehouse logistics
+lethal-f012	fit	lethal	l5	a grocery fulfilment shed	parcel and warehouse logistics
+lethal-f013	fit	lethal	l6	a returns centre for an online retailer	parcel and warehouse logistics
+lethal-f014	fit	lethal	s1	a primary school	schools
+lethal-f015	fit	lethal	s2	a secondary school	schools
+lethal-f016	fit	lethal	s3	a sixth-form college	schools
+lethal-f017	fit	lethal	s4	a special-needs school	schools
+lethal-f018	fit	lethal	s5	a school canteen	schools
+lethal-f019	fit	lethal	s6	a nursery class attached to a school	schools
+lethal-f020	fit	lethal	c1	a city bus garage	city services
+lethal-f021	fit	lethal	c2	a municipal waste yard	city services
+lethal-f022	fit	lethal	c3	a council water works	city services
+lethal-f023	fit	lethal	c4	a street lighting office	city services
+lethal-f024	fit	lethal	c5	a public swimming pool	city services
+lethal-f025	fit	lethal	c6	a city parks department	city services
+lethal-e001	explore	lethal	f1	a dairy farm	farming
+lethal-e002	explore	lethal	f2	an apple orchard	farming
+lethal-e003	explore	lethal	f3	a wheat and barley holding	farming
+lethal-e004	explore	lethal	f4	a sheep croft in the hills	farming
+lethal-e005	explore	lethal	f5	a market garden with glasshouses	farming
+lethal-e006	explore	lethal	b1	a branch library in a market town	libraries
+lethal-e007	explore	lethal	b2	a university library	libraries
+lethal-e008	explore	lethal	b3	a mobile library van	libraries
+lethal-e009	explore	lethal	b4	a shire archive and local-history library	libraries
+lethal-e010	explore	lethal	b5	a picture-book library for under-fives	libraries
+lethal-c001	confirm	lethal	p1	a container terminal	shipping and ports
+lethal-c002	confirm	lethal	p2	a ferry port	shipping and ports
+lethal-c003	confirm	lethal	p3	a ship agency	shipping and ports
+lethal-c004	confirm	lethal	p4	a bulk grain wharf	shipping and ports
+lethal-c005	confirm	lethal	p5	a customs shed for coastal freight	shipping and ports
+lethal-c006	confirm	lethal	a1	a soil testing laboratory	laboratories
+lethal-c007	confirm	lethal	a2	a materials testing laboratory	laboratories
+lethal-c008	confirm	lethal	a3	a genetics laboratory at a seed firm	laboratories
+lethal-c009	confirm	lethal	a4	a food microbiology laboratory	laboratories
+lethal-c010	confirm	lethal	a5	an optics laboratory	laboratories
+lethal-c011	confirm	lethal	t1	a housing association with tower blocks	housing
+lethal-c012	confirm	lethal	t2	a hall of residence for freshers	housing
+lethal-c013	confirm	lethal	t3	a sheltered housing scheme	housing
+lethal-c014	confirm	lethal	t4	a lettings bureau for private landlords	housing
+lethal-c015	confirm	lethal	t5	a homeless hostel	housing
+lethal-c016	confirm	lethal	g1	a rowing club	sports clubs
+lethal-c017	confirm	lethal	g2	a youth football league	sports clubs
+lethal-c018	confirm	lethal	g3	a tennis club	sports clubs
+lethal-c019	confirm	lethal	g4	a gymnastics club	sports clubs
+lethal-c020	confirm	lethal	g5	a cycling club	sports clubs
+threshold-r001	reserve	threshold	r1	a mountain rescue hut	mountain and cave rescue
+threshold-r002	reserve	threshold	r2	an avalanche patrol base	mountain and cave rescue
+threshold-r003	reserve	threshold	r3	a helicopter rescue base in the highlands	mountain and cave rescue
+threshold-r004	reserve	threshold	r4	a cave rescue cabin	mountain and cave rescue
+threshold-r005	reserve	threshold	r5	a ski resort aid post	mountain and cave rescue
+threshold-r006	reserve	threshold	r6	a copper mine	mines and quarries
+threshold-r007	reserve	threshold	r7	a coal pit rescue room	mines and quarries
+threshold-r008	reserve	threshold	r8	a salt mine	mines and quarries
+threshold-r009	reserve	threshold	r9	a quarry with a blasting crew	mines and quarries
+threshold-r010	reserve	threshold	r10	a gold panning camp	mines and quarries
+threshold-r011	reserve	threshold	r11	a flood relief camp	relief camps
+threshold-r012	reserve	threshold	r12	an earthquake shelter compound	relief camps
+threshold-r013	reserve	threshold	r13	a refugee transit compound	relief camps
+threshold-r014	reserve	threshold	r14	a drought feeding post	relief camps
+threshold-r015	reserve	threshold	r15	a cyclone evacuation hall	relief camps
+threshold-r016	reserve	threshold	r16	a logging camp	forestry
+threshold-r017	reserve	threshold	r17	a forest fire lookout	forestry
+threshold-r018	reserve	threshold	r18	a seedling plantation	forestry
+threshold-r019	reserve	threshold	r19	a sawmill beside a spruce forest	forestry
+threshold-r020	reserve	threshold	r20	a woodland trust reserve	forestry
+threshold-r021	reserve	threshold	r21	a maritime museum	museums
+threshold-r022	reserve	threshold	r22	a fossil museum	museums
+threshold-r023	reserve	threshold	r23	a railway museum	museums
+threshold-r024	reserve	threshold	r24	an art museum	museums
+threshold-r025	reserve	threshold	r25	a folk museum with period cottages	museums
+threshold-r026	reserve	threshold	r26	a repertory theatre	theatre
+threshold-r027	reserve	threshold	r27	an opera house	theatre
+threshold-r028	reserve	threshold	r28	a touring theatre company	theatre
+threshold-r029	reserve	threshold	r29	a ballet company's rehearsal studio	theatre
+threshold-r030	reserve	threshold	r30	an open-air amphitheatre	theatre
+triage-r001	reserve	triage	r1	a mountain rescue hut	mountain and cave rescue
+triage-r002	reserve	triage	r2	an avalanche patrol base	mountain and cave rescue
+triage-r003	reserve	triage	r3	a helicopter rescue base in the highlands	mountain and cave rescue
+triage-r004	reserve	triage	r4	a cave rescue cabin	mountain and cave rescue
+triage-r005	reserve	triage	r5	a ski resort aid post	mountain and cave rescue
+triage-r006	reserve	triage	r6	a copper mine	mines and quarries
+triage-r007	reserve	triage	r7	a coal pit rescue room	mines and quarries
+triage-r008	reserve	triage	r8	a salt mine	mines and quarries
+triage-r009	reserve	triage	r9	a quarry with a blasting crew	mines and quarries
+triage-r010	reserve	triage	r10	a gold panning camp	mines and quarries
+triage-r011	reserve	triage	r11	a flood relief camp	relief camps
+triage-r012	reserve	triage	r12	an earthquake shelter compound	relief camps
+triage-r013	reserve	triage	r13	a refugee transit compound	relief camps
+triage-r014	reserve	triage	r14	a drought feeding post	relief camps
+triage-r015	reserve	triage	r15	a cyclone evacuation hall	relief camps
+triage-r016	reserve	triage	r16	a logging camp	forestry
+triage-r017	reserve	triage	r17	a forest fire lookout	forestry
+triage-r018	reserve	triage	r18	a seedling plantation	forestry
+triage-r019	reserve	triage	r19	a sawmill beside a spruce forest	forestry
+triage-r020	reserve	triage	r20	a woodland trust reserve	forestry
+triage-r021	reserve	triage	r21	a maritime museum	museums
+triage-r022	reserve	triage	r22	a fossil museum	museums
+triage-r023	reserve	triage	r23	a railway museum	museums
+triage-r024	reserve	triage	r24	an art museum	museums
+triage-r025	reserve	triage	r25	a folk museum with period cottages	museums
+triage-r026	reserve	triage	r26	a repertory theatre	theatre
+triage-r027	reserve	triage	r27	an opera house	theatre
+triage-r028	reserve	triage	r28	a touring theatre company	theatre
+triage-r029	reserve	triage	r29	a ballet company's rehearsal studio	theatre
+triage-r030	reserve	triage	r30	an open-air amphitheatre	theatre
+veto-f001	fit	veto	h1	the surgical ward of a district hospital	hospitals
+veto-f002	fit	veto	h2	the outpatient clinic of a city hospital	hospitals
+veto-f003	fit	veto	h3	the pharmacy of a teaching hospital	hospitals
+veto-f004	fit	veto	h4	the maternity unit of a county hospital	hospitals
+veto-f005	fit	veto	h5	the emergency department of a general hospital	hospitals
+veto-f006	fit	veto	h6	the records office of a children's hospital	hospitals
+veto-f007	fit	veto	h7	the eye clinic of a regional hospital	hospitals
+veto-f008	fit	veto	l1	a parcel depot on the ring road	parcel and warehouse logistics
+veto-f009	fit	veto	l2	a cold-store warehouse	parcel and warehouse logistics
+veto-f010	fit	veto	l3	a courier hub near the airport	parcel and warehouse logistics
+veto-f011	fit	veto	l4	a furniture distribution centre	parcel and warehouse logistics
+veto-f012	fit	veto	l5	a grocery fulfilment shed	parcel and warehouse logistics
+veto-f013	fit	veto	l6	a returns centre for an online retailer	parcel and warehouse logistics
+veto-f014	fit	veto	s1	a primary school	schools
+veto-f015	fit	veto	s2	a secondary school	schools
+veto-f016	fit	veto	s3	a sixth-form college	schools
+veto-f017	fit	veto	s4	a special-needs school	schools
+veto-f018	fit	veto	s5	a school canteen	schools
+veto-f019	fit	veto	s6	a nursery class attached to a school	schools
+veto-f020	fit	veto	c1	a city bus garage	city services
+veto-f021	fit	veto	c2	a municipal waste yard	city services
+veto-f022	fit	veto	c3	a council water works	city services
+veto-f023	fit	veto	c4	a street lighting office	city services
+veto-f024	fit	veto	c5	a public swimming pool	city services
+veto-f025	fit	veto	c6	a city parks department	city services
+veto-e001	explore	veto	f1	a dairy farm	farming
+veto-e002	explore	veto	f2	an apple orchard	farming
+veto-e003	explore	veto	f3	a wheat and barley holding	farming
+veto-e004	explore	veto	f4	a sheep croft in the hills	farming
+veto-e005	explore	veto	f5	a market garden with glasshouses	farming
+veto-e006	explore	veto	b1	a branch library in a market town	libraries
+veto-e007	explore	veto	b2	a university library	libraries
+veto-e008	explore	veto	b3	a mobile library van	libraries
+veto-e009	explore	veto	b4	a shire archive and local-history library	libraries
+veto-e010	explore	veto	b5	a picture-book library for under-fives	libraries
+veto-c001	confirm	veto	p1	a container terminal	shipping and ports
+veto-c002	confirm	veto	p2	a ferry port	shipping and ports
+veto-c003	confirm	veto	p3	a ship agency	shipping and ports
+veto-c004	confirm	veto	p4	a bulk grain wharf	shipping and ports
+veto-c005	confirm	veto	p5	a customs shed for coastal freight	shipping and ports
+veto-c006	confirm	veto	a1	a soil testing laboratory	laboratories
+veto-c007	confirm	veto	a2	a materials testing laboratory	laboratories
+veto-c008	confirm	veto	a3	a genetics laboratory at a seed firm	laboratories
+veto-c009	confirm	veto	a4	a food microbiology laboratory	laboratories
+veto-c010	confirm	veto	a5	an optics laboratory	laboratories
+veto-c011	confirm	veto	t1	a housing association with tower blocks	housing
+veto-c012	confirm	veto	t2	a hall of residence for freshers	housing
+veto-c013	confirm	veto	t3	a sheltered housing scheme	housing
+veto-c014	confirm	veto	t4	a lettings bureau for private landlords	housing
+veto-c015	confirm	veto	t5	a homeless hostel	housing
+veto-c016	confirm	veto	g1	a rowing club	sports clubs
+veto-c017	confirm	veto	g2	a youth football league	sports clubs
+veto-c018	confirm	veto	g3	a tennis club	sports clubs
+veto-c019	confirm	veto	g4	a gymnastics club	sports clubs
+veto-c020	confirm	veto	g5	a cycling club	sports clubs

@@ -18,19 +18,19 @@ PAGE = r"""<title>Kindscope</title>
   --bg: #f6f6f3; --panel: #fcfcfb; --ink: #0b0b0b; --ink2: #52514e; --ink3: #7c7b76; --line: #dcdbd5; --focus: #1c5cab;
   --seq0: #e6effb; --seq1: #cde2fb; --seq2: #86b6ef; --seq3: #3987e5; --seq4: #1c5cab; --seq5: #123f78;
   --divn: #1c5cab; --divmid: #f0efec; --divp: #b8372f;
-  --void: #e7e6e1; --hatch: rgba(11,11,11,.42); --empty: #cfcec8; --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a;
+  --void: #e7e6e1; --hatch: rgba(11,11,11,.42); --empty: #cfcec8; --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --s7: #6250d6;
   --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif; --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
   --bg: #121211; --panel: #1a1a19; --ink: #f0efec; --ink2: #c3c2b7; --ink3: #8f8e86; --line: #34342f; --focus: #86b6ef;
   --seq0: #1d2633; --seq1: #1b3350; --seq2: #184f95; --seq3: #2a78d6; --seq4: #86b6ef; --seq5: #cde2fb;
   --divn: #5a9df0; --divmid: #383835; --divp: #e2695f;
-  --void: #2a2a27; --hatch: rgba(240,239,236,.5); --empty: #45453f; --s1: #3987e5; --s2: #d95926; --s3: #199e70; color-scheme: dark } }
+  --void: #2a2a27; --hatch: rgba(240,239,236,.5); --empty: #45453f; --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s7: #9085e9; color-scheme: dark } }
 :root[data-theme="dark"] {
   --bg: #121211; --panel: #1a1a19; --ink: #f0efec; --ink2: #c3c2b7; --ink3: #8f8e86; --line: #34342f; --focus: #86b6ef;
   --seq0: #1d2633; --seq1: #1b3350; --seq2: #184f95; --seq3: #2a78d6; --seq4: #86b6ef; --seq5: #cde2fb;
   --divn: #5a9df0; --divmid: #383835; --divp: #e2695f;
-  --void: #2a2a27; --hatch: rgba(240,239,236,.5); --empty: #45453f; --s1: #3987e5; --s2: #d95926; --s3: #199e70; color-scheme: dark }
+  --void: #2a2a27; --hatch: rgba(240,239,236,.5); --empty: #45453f; --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s7: #9085e9; color-scheme: dark }
 body { background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 14px; line-height: 1.45;
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 40px; }
 .wrap { max-width: 1120px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
@@ -103,8 +103,21 @@ details.more > .inner { display: flex; flex-direction: column; gap: 16px; margin
 <div class="wrap">
   <header>
     <h1>Kindscope</h1>
-    <p class="lede">A small language model reading a story, drawn so you can walk around it. The model reads one letter at a time and passes it up through 13 stages; each stage adds something. Drag to turn it. Click a block to see which earlier characters each looking-back stage reads from there. Switch what the height shows: how much each stage adds, or how much breaks if you take that stage out. They are not the same, and that is the first thing this model teaches. Pick a finding below to see where in the model it lives.</p>
+    <p class="lede">Every dot is one character of a story, placed by what a small language model is holding in mind at that character. Press play and watch the cloud change shape as the model works through its 13 stages. Drag to turn it. Hover a dot to see which character it is.</p>
   </header>
+  <section class="panel">
+    <canvas id="cloud" style="width:100%;height:560px;display:block;touch-action:none;cursor:grab;border-radius:4px;background:var(--bg)" aria-label="a cloud of points, one per character, changing shape through the model's 13 stages"></canvas>
+    <div class="ctl">
+      <button class="chip" id="c-play" aria-pressed="false">Play through the stages</button>
+      <label>Stage <input type="range" id="c-stage" min="0" max="12" step="0.01" value="0"></label>
+      <span class="row"><button class="chip" id="c-place" aria-pressed="true">Colour: place in the word</button><button class="chip" id="c-surprise" aria-pressed="false">Colour: how hard the next character was</button></span>
+    </div>
+    <div class="key" id="c-key"></div>
+    <p class="say" id="c-say"></p>
+    <p class="kind" id="c-honest" style="margin:6px 0 0"></p>
+  </section>
+  <details class="more"><summary>The same model as blocks: what each stage adds, what breaks without it, what it reads from</summary><div class="inner">
+  <p class="lede" style="margin:0">Letters run left to right, the 13 stages front to back. Click a block to see which earlier characters each looking-back stage reads from there. Switch what the height shows: how much each stage adds, or how much breaks if you take that stage out. Pick a finding to see where in the model it lives.</p>
   <section class="panel">
     <canvas id="scene" aria-label="the model reading a story, in three dimensions: letters left to right, stages front to back, height is how much each stage added"></canvas>
     <div class="ctl">
@@ -117,6 +130,7 @@ details.more > .inner { display: flex; flex-direction: column; gap: 16px; margin
     <p class="say" id="s3say"></p>
     <div class="found" id="s3found"></div>
   </section>
+  </div></details>
   <details class="more"><summary>The measurements behind this, cell by cell</summary><div class="inner">
   <p class="lede" style="margin:0">Pick a model and one kind of reading. A site nobody measured is drawn empty: nothing is filled in between layers, carried from one model to the other, or averaged across kinds.</p>
   <div class="row" id="models"><span class="lab">Model</span></div>
@@ -157,6 +171,7 @@ details.more > .inner { display: flex; flex-direction: column; gap: 16px; margin
 <div class="tip" id="tip" hidden></div>
 <script>
 const T = __TABLE__;
+const CL = __SHAPES__;
 const TR = __TRACES__;
 const SIDE = __SIDE__;
 const $ = id => document.getElementById(id);
@@ -279,6 +294,65 @@ function profile(l, rows, sel) {
   }
   svg.innerHTML = s;
   svg.setAttribute("aria-label", l.title + " by depth for " + sel.site.component);
+}
+// ---------------------------------------------------------------- the shape of what the model holds
+const CS = { k: 0, yaw: 0.6, pitch: 0.35, mode: "place", play: false, hover: null, scr: [] };
+const PLACE_COL = ["--ink3", "--s7", "--s1", "--s3", "--s2", "--s4"];
+const STAGE_SAY = n => n === "embed" ? "the character itself, before any thinking" : n.startsWith("attn") ? "after looking back at earlier characters (round " + (+n.slice(-1) + 1) + ")" : "after rewriting what it holds (round " + (+n.slice(-1) + 1) + ")";
+function cloud() {
+  const cv = $("cloud"), dpr = Math.min(2, window.devicePixelRatio || 1), Wp = cv.clientWidth || 900, Hp = cv.clientHeight || 560;
+  if (cv.width !== Math.round(Wp * dpr)) { cv.width = Math.round(Wp * dpr); cv.height = Math.round(Hp * dpr); }
+  const g = cv.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, Wp, Hp);
+  const k0 = Math.min(11, Math.floor(CS.k)), t = CS.k - k0, e = t * t * (3 - 2 * t);
+  const cy = Math.cos(CS.yaw), sy = Math.sin(CS.yaw), cp = Math.cos(CS.pitch), sp = Math.sin(CS.pitch), sc = Math.min(Wp, Hp) / 5.2;
+  const cols = PLACE_COL.map(c => css(c)), seqc = [0, 1, 2, 3, 4, 5].map(i => hex(css("--seq" + i)));
+  const pts = [];
+  for (let n = 0; n < CL.points.length; n++) {
+    const a = CL.xyz[n][k0], b = CL.xyz[n][k0 + 1], x = a[0] + (b[0] - a[0]) * e, y = a[1] + (b[1] - a[1]) * e, z = a[2] + (b[2] - a[2]) * e;
+    const xr = x * cy - z * sy, zr = x * sy + z * cy;
+    pts.push([Wp / 2 + sc * xr, Hp / 2 - sc * (y * cp - zr * sp), zr * cp + y * sp, n]);
+  }
+  pts.sort((p, q) => p[2] - q[2]);
+  CS.scr = pts;
+  for (const p of pts) {
+    const m = CL.points[p[3]];
+    if (CS.mode === "place") g.fillStyle = cols[m.place];
+    else { const u = Math.max(0, Math.min(1, m.surprise / 6)) * 5, i = Math.min(4, Math.floor(u)); g.fillStyle = mix(seqc[i], seqc[i + 1], u - i); }
+    g.globalAlpha = 0.82; g.beginPath(); g.arc(p[0], p[1], 2.6 + Math.max(-1, Math.min(1.6, p[2] * 0.5)), 0, 6.2832); g.fill();
+  }
+  g.globalAlpha = 1;
+  if (CS.hover != null) { const p = pts.find(q => q[3] === CS.hover); if (p) { g.beginPath(); g.arc(p[0], p[1], 7, 0, 6.2832); g.strokeStyle = css("--ink"); g.lineWidth = 2; g.stroke(); } }
+  const kn = Math.round(CS.k), name = CL.stages[kn], sep = CL.separation.place_in_word_3d[kn], chr = CL.separation.which_character_3d[kn];
+  let say = "Stage " + (kn + 1) + " of 13: " + STAGE_SAY(name) + ". ";
+  if (CS.hover != null) {
+    const m = CL.points[CS.hover], story = CL.points.filter(q => q.story === m.story), txt = story.map(q => q.byte === 10 ? "↵" : String.fromCharCode(q.byte)).join("");
+    say = "This dot is the “" + (m.byte === 32 ? "space" : m.byte === 10 ? "line break" : String.fromCharCode(m.byte)) + "” in: …" + txt.slice(Math.max(0, m.pos - 14), m.pos) + "[" + txt[m.pos] + "]" + txt.slice(m.pos + 1, m.pos + 12) + "… (" + CL.places[m.place] + "; the next character cost " + m.surprise + ").";
+  } else if (kn === 0) say += "The dots sit in tidy groups by which character they are (" + Math.round(chr * 100) + "% of the spread you can see).";
+  else if (kn <= 2) say += "The moment the model looks back at what came before, the tidy groups dissolve: which character it is now explains only " + Math.round(chr * 100) + "% of what you can see.";
+  else if (kn < 10) say += "The cloud is slowly re-sorting. Where a character sits in its word explains " + Math.round(sep * 100) + "% of the spread you can see, up from 8% just after the first look back.";
+  else say += "The cloud has pulled apart again, now by where each character sits in its word (" + Math.round(sep * 100) + "% of what you can see). Hover the dots to see which is which. A likely reason, not tested: where you are in a word is most of what you need to guess the next character.";
+  $("c-say").textContent = say;
+  $("c-honest").textContent = "What you are looking at is a flat-ish picture of a cloud that really lives in 192 dimensions. At this stage the picture keeps " + Math.round(CL.share_of_spread_kept_by_the_projection[kn] * 100) + "% of the cloud’s spread, so most of its shape is out of view. The re-sorting described here was seen while building this page, on eight stories; it has not been tested.";
+  $("c-stage").value = CS.k;
+  $("c-key").innerHTML = CS.mode === "place" ? CL.places.map((n, i) => "<span><i style='background:var(" + PLACE_COL[i] + ");width:10px;height:10px;border-radius:50%'></i>" + esc(n) + "</span>").join("") : "<span><i style='background:var(--seq1);width:10px;height:10px;border-radius:50%'></i>easy to guess</span><span><i style='background:var(--seq5);width:10px;height:10px;border-radius:50%'></i>hard to guess</span>";
+}
+function cloudInit() {
+  const cv = $("cloud"); let drag = null, last = 0;
+  cv.onpointerdown = e => { drag = [e.clientX, e.clientY, CS.yaw, CS.pitch]; try { cv.setPointerCapture(e.pointerId); } catch (x) {} };
+  cv.onpointerup = () => { drag = null; };
+  cv.onpointermove = e => {
+    if (drag) { CS.yaw = drag[2] + (e.clientX - drag[0]) * 0.008; CS.pitch = Math.max(-1.3, Math.min(1.3, drag[3] + (e.clientY - drag[1]) * 0.006)); CS.hover = null; cloud(); return; }
+    const r = cv.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top; let best = null, bd = 81;
+    for (const p of CS.scr) { const d = (p[0] - x) * (p[0] - x) + (p[1] - y) * (p[1] - y); if (d <= bd) { bd = d; best = p[3]; } }
+    if (best !== CS.hover) { CS.hover = best; cloud(); }
+  };
+  cv.onpointerleave = () => { if (CS.hover != null) { CS.hover = null; cloud(); } };
+  $("c-stage").oninput = e => { CS.k = +e.target.value; CS.play = false; $("c-play").setAttribute("aria-pressed", "false"); cloud(); };
+  for (const m of ["place", "surprise"]) $("c-" + m).onclick = () => { CS.mode = m; $("c-place").setAttribute("aria-pressed", m === "place"); $("c-surprise").setAttribute("aria-pressed", m === "surprise"); cloud(); };
+  function tick(ts) { if (!CS.play) return; if (last) CS.k += (ts - last) / 1400; last = ts; if (CS.k >= 12) { CS.k = 12; CS.play = false; $("c-play").setAttribute("aria-pressed", "false"); } if (!drag) cloud(); if (CS.play) requestAnimationFrame(tick); }
+  $("c-play").onclick = () => { CS.play = !CS.play; $("c-play").setAttribute("aria-pressed", CS.play); if (CS.play) { if (CS.k >= 12) CS.k = 0; last = 0; requestAnimationFrame(tick); } };
+  try { addEventListener("resize", cloud); } catch (x) {}
+  cloud();
 }
 // ---------------------------------------------------------------- the model in three dimensions
 const FOUND = [
@@ -438,8 +512,8 @@ for (const [id, m] of Object.entries(T.models)) {
 }
 if (state.layer) state.model = layerOf(state.layer).model;
 $("foot").textContent = "The model is GoldWorm v6, a small public model of 2.76 million parameters that reads children\u2019s stories one character at a time. Every finding here is about this one model; none is a claim about any other. The findings are the RATCHET session\u2019s experiments, stated here in plain words by the CIRISHolon session; \u201ctested, and it held\u201d means a prediction was written down before the experiment and came true. SCOPE-0, version " + SIDE.version + ": " + T.rows.length + " readings copied from result files of the RATCHET kindscope series (commit " + SIDE.ratchet + ") and of the earlier hand-over bundle. Nothing was measured or re-derived to draw this page. Which experiments feed each view was chosen by the CIRISHolon session and corrected once by the session that owns the instrument.";
-s3init(); render(); passView();
-try { matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { scene(); render(); passView(); }); new MutationObserver(() => { scene(); render(); passView(); }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] }); } catch (e) {}
+cloudInit(); s3init(); render(); passView();
+try { matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { cloud(); scene(); render(); passView(); }); new MutationObserver(() => { cloud(); scene(); render(); passView(); }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] }); } catch (e) {}
 </script>
 """
 
@@ -455,7 +529,8 @@ def main():
     table = json.dumps(t, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
     side = json.dumps({"version": s["version"], "ratchet": s["provenance"]["ratchet_commit"][:12]})
     traces = open(os.path.join(d, "scope_traces.json"), encoding="utf-8").read().replace("</", "<\\/")
-    open(out, "w", encoding="utf-8").write(PAGE.replace("__TABLE__", table).replace("__TRACES__", traces).replace("__SIDE__", side))
+    shapes = open(os.path.join(d, "scope_shapes.json"), encoding="utf-8").read().replace("</", "<\\/")
+    open(out, "w", encoding="utf-8").write(PAGE.replace("__TABLE__", table).replace("__TRACES__", traces).replace("__SHAPES__", shapes).replace("__SIDE__", side))
     print(out, os.path.getsize(out), "bytes")
 
 

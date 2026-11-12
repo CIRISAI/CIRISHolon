@@ -114,3 +114,37 @@ with few people awake, the rate per awake person about triples. This campaign dr
 hour sent evenly over the SENDER'S awake hours. Neither is measured. This campaign's
 choice has no free number and cannot put a message on a sleeping sender; that is all
 that can be said for it. A reference for messaging by hour has not been found.
+
+## NOTE 2026-11-12, from the twin's lead: why the twin's waits were shorter, and a definition a viability test has to fix first
+
+The twin adopted the sending recommendation (a per-person day leads where one exists; its
+assumed curve is a second, labelled setting; the page says sending by hour has no
+reference). It then switched its street to this campaign's assumptions one at a time,
+nothing tuned, against this file's 0.858 taken at once, a 4-hour median wait and 0.23
+waiting over 8 hours:
+
+| the twin's street, with | at once | median wait | over 8 h |
+|---|---|---|---|
+| the page as it runs | 0.730 | 1.0 h | 0.000 |
+| each message followed a further 24 h | 0.730 | 1.1 h | 0.030 |
+| only messages to people | 0.615 | 1.1 h | 0.030 |
+| the addressee a person, received at their PHONE | 0.806 | 2.8 h | 0.171 |
+| all of this campaign's assumptions together | 0.838 | 2.1 h | 0.114 |
+
+- **The twin's short waits came from what it addresses: a device.** 65 % of its messages go
+  to another device in the sender's household, which can be a laptop or the always-on
+  home node, and a held row waits only for a mailbox to pass it on. Requiring the
+  addressee's phone, as this campaign does, closes most of the gap in "at once" and about
+  half of the gap in waits.
+- **Unexplained after each switch:** a median of 2.1 to 2.5 hours against 4, and 0.11 to
+  0.13 over 8 hours against 0.23. Its untested guesses: one street of about 40 households
+  on one weekday against 100,000 here, and four messages an addressee here against its
+  flat rate per awake device.
+- **"Delivered to a person" against "delivered to a device" is the definition to fix
+  first.** The real system delivers to a device, and a person may read on any of theirs.
+  This campaign counted a person at their phone; that is one choice, and it is the choice
+  that makes the waits long.
+- **Adults with no phone** are 0.286 of adults on that street in the twin, against 0.196
+  here. Both are far above what a survey of ownership would give, and both come from how
+  the device generator's phones per household are shared among its adults. Unchecked,
+  and it moves each share in this file.

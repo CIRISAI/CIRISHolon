@@ -12,6 +12,7 @@
 //! | [`edges`] | `ScenePopulation.edgeView_comp`, `edgeView_total`, `Ladder.outflow_commutes` |
 //! | [`verdict`] | `SceneCert.verdict_certified_iff`, `unresolved_ignores_match` |
 //! | [`rhythm`] | `SceneRhythm.Continuity`, `continuity_coarse`, `source_is_the_defect` |
+//! | [`world`] | the call of `FSD_WORLD_MODEL.md` section 10: one verdict per requested row, always; and the first generator with a reference behind it |
 //! | [`dist`] | the cost of a coupling in one dimension, exact: `SceneCert.cost` |
 //! | [`sums`] | the checker for sums a consumer emits, one JSON object per line |
 //!
@@ -30,3 +31,4 @@ pub mod seed;
 pub mod sums;
 pub mod tree;
 pub mod verdict;
+pub mod world;

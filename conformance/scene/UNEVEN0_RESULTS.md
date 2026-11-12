@@ -1,8 +1,7 @@
 # UNEVEN-0 — READ: branch (a). In a typical "suburban" 14 km cell about a quarter of the tiles and of the people are at suburban density, and two thirds of the people live denser. The value is the table.
 
 *2026-11-11. Prereg `UNEVEN0_PREREG.md` (frozen alone, `b796a92`, after review); instrument
-`uneven0/uneven0.py` (committed before the grid was read, `8bd1f04`-era; see the log's own
-header); record `uneven0/uneven0.log`; outputs `uneven0/transition_tables.json`,
+`uneven0/uneven0.py` (committed before the grid was read, `6613ef5`); record `uneven0/uneven0.log`; outputs `uneven0/transition_tables.json`,
 `uneven0/cells.npz`, and for consumers `tables/uneven0/`. Input: GHS-POP R2023A, epoch 2020,
 30 arc-seconds, both digests matching the twin's record; 923,831,568 pixels read, none
 no-data, none negative; the raw file deleted after the tables were written.*

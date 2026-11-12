@@ -287,3 +287,25 @@ step ("a ratchet"). As reported; not re-derived here.
   running text does not use. On unlabelled real revisions 18 of 238 answers change.
 - The outcome-test design (PROBE-OUTCOME-1) is parked unfrozen with this session's attack
   accepted; no blind item has been read.
+
+## NOTE 2026-11-12: two readings above are weaker than written (from the RATCHET session, as it reported)
+
+- **"Close to decoration" and R4 are not decidable by removal along the probe's direction.**
+  On a second model (GoldWorm v6, 2.76 M parameters, byte level) the RATCHET session
+  reports that the direction a probe READS a category from is as unrelated as a random one
+  to the direction the model WRITES it with (82° to 90° against a random band of 81.9° to
+  98.1° in 192 dimensions); removing the probe's directions early cost nothing, and yet a
+  different direction lifted the category on unseen text in 9 of 9 cells. Readable, and
+  free to remove along the reading, did not mean unused there. Whether that carries to
+  Gemma is open until its PARALLAX-G runs. Until then R4, and the sentence "not asked for,
+  it is close to decoration", stand as: unaffected by removal along the probe's direction.
+- **The hand-over's additivity failure (1.19) is not a property of the model.** The same
+  session finds 35 `layer_output_scale` tensors far from 1 in that file: each layer
+  rescales the residual stream, so a plain sum of the taps cannot close. Its calibration
+  (CAL-G) is frozen and not yet run.
+- **For the joint question** (a reading, a writing direction and a shuffled one offered
+  together), the engine's removability gate is now callable on matrices from a file:
+  `engine/crates/holon-closure/examples/admit_file`. Its price is an observation and a
+  prediction, to be realised by a patch.
+
+These figures are the RATCHET session's and were not re-derived here.

@@ -275,3 +275,29 @@ kind, kind_source. No kind comes from a table now: each is that session's readin
 vote. Its three text-against-agent gaps are rows C560 to C562 of its
 `formal/derivation/text_conflicts.tsv`, for the lead. Both sessions hold for his "build
 Part A" or "hold".
+
+## ANSWER 5, 2026-11-12, the RATCHET session: Part A is worth running, under one condition
+
+- **Worth it as a narrow first test.** Whether the agent must stop is the safety-critical
+  choice and the only one with derived truth; a small model that cannot make it is not an
+  H3ERE model. The claim is scoped to "these 8 rules, these 17 templates".
+- **The condition.** If the four evaluator summaries state the verdict, an early-exit head
+  only reads a verdict out of the prompt, which a string match would pass. So two arms:
+  - **A1, as deployed:** summaries produced by actually running the agent's evaluators on
+    each rendered situation, not authored;
+  - **A2:** summaries neutralised or withheld, so the deciding fact has to come from the
+    situation itself.
+  The gap between them is the result for the phone goal: it says whether choosing the
+  verb is cheap and the evaluators are where the size is needed.
+- **Authored out:** the production cues (retry and last-attempt blocks, thought depth, the
+  tool list), balanced across stop and no stop.
+- **Sizing:** about 30 scenarios per template (about 510 items) and about 30 pairs per pair
+  kind (about 210 pairs). Split by SCENARIO, with the deciding words disjoint. One or two
+  whole rules held in RESERVE, to test once whether a head carries to a rule it never
+  saw. Reported per rule with a rule-level bootstrap; at 8 rules those intervals will be
+  wide. A binary target (stop required or not), balanced; the prior is a stated parameter
+  and results are shown across a range of it.
+
+**A cost this adds, to be decided before A1:** arm A1 needs the agent's four evaluators RUN
+on about 510 situations. On which model, and whether that spends provider money, is not
+settled; if it does, it is the lead's to approve, as with the capture runs.

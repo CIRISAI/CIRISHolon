@@ -103,17 +103,19 @@ details.more > .inner { display: flex; flex-direction: column; gap: 16px; margin
 <div class="wrap">
   <header>
     <h1>Kindscope</h1>
-    <p class="lede">A kind is a kind of <b>change</b>, so this starts from a change. Take two real story openings that differ in one word. Feed both to a small language model and ask, at each of its 13 stages and at each character after the change: how differently is the model now holding the two? Zero is identical. About one is as different as two unrelated texts. Press play to watch the difference spread.</p>
+    <p class="lede">A kind is a kind of <b>change</b>, and a change moves over a <b>map</b>. The map is where each type of word (a name, an action, a describing word) can be read inside a small language model, stage by stage. The change is two real story openings that differ in one word: at each of the model's 13 stages, and at each character from the changed word on, how differently is the model now holding the two? Both are drawn on one floor. Press play to watch the change spread, and drag to walk around it.</p>
   </header>
   <section class="panel">
     <div class="ctl"><span class="lab" style="width:auto">What changed</span><span id="pv-sorts" class="row"></span></div>
     <div class="ctl"><button class="chip" id="pv-prev">Previous pair</button><button class="chip" id="pv-next">Next pair</button><span id="pv-count" style="color:var(--ink3)"></span></div>
     <p id="pv-text" style="font-family:var(--mono);font-size:14px;line-height:1.7;margin:6px 0"></p>
-    <canvas id="wake" style="width:100%;height:500px;display:block;touch-action:none;cursor:grab;border-radius:4px;background:var(--bg)" aria-label="how differently the model holds the two versions, by stage (front to back) and by characters after the change (left to right)"></canvas>
+    <div style="display:flex;justify-content:space-between;font-weight:600;font-size:12px;margin-top:6px"><span>The map: where each type of word can be read</span><span>The change: one column for each character</span></div>
+    <canvas id="wake" style="width:100%;height:500px;display:block;touch-action:none;cursor:grab;border-radius:4px;background:var(--bg)" aria-label="left, the map: where each type of word can be read, by stage; right, the change: how differently the model holds the two versions, by stage (front to back) and by character from the changed word (left to right)"></canvas>
     <div class="ctl">
       <button class="chip" id="pv-play" aria-pressed="false">Play through the stages</button>
       <label>Stage <input type="range" id="pv-stage" min="0" max="12" step="0.01" value="12"></label>
       <span class="sw"><span class="mono">0 same</span><span class="ramp" id="pv-ramp"></span><span class="mono">1 unrelated</span></span>
+      <span class="sw"><span style="display:inline-block;width:12px;height:12px;background:var(--s2);border-radius:2px;vertical-align:middle"></span> <span class="mono">the part of the change inside the map</span></span>
     </div>
     <p class="say" id="pv-say"></p>
     <p class="kind" id="pv-honest" style="margin:6px 0 0"></p>
@@ -190,7 +192,7 @@ details.more > .inner { display: flex; flex-direction: column; gap: 16px; margin
 <script>
 const T = __TABLE__;
 const CL = __SHAPES__;
-const PR = __PAIRS__;
+const MM = __MM__;
 const TR = __TRACES__;
 const SIDE = __SIDE__;
 const $ = id => document.getElementById(id);
@@ -314,75 +316,80 @@ function profile(l, rows, sel) {
   svg.innerHTML = s;
   svg.setAttribute("aria-label", l.title + " by depth for " + sel.site.component);
 }
-// ---------------------------------------------------------------- a change travelling through the model
+// ---------------------------------------------------------------- a change travelling over the map
 const PV = { sort: null, idx: 0, k: 12, yaw: -0.55, pitch: 0.5, play: false };
-const PSORTS = [...new Set(PR.pairs.map(p => p.sort))];
-const SORT_SAY = { "name": "A name", "quality word": "A describing word", "thing": "The thing itself", "action word": "The wording only", "punctuation": "A comma or full stop", "number": "A number", "nothing changed": "Nothing (the check)" };
-function pvList() { return PR.pairs.filter(p => p.sort === PV.sort); }
+const PSORTS = [...new Set(MM.pairs.map(p => p.sort))];
+const SORT_SAY = { "name": "A name", "quality word": "A describing word", "thing": "The thing itself", "action word": "An action word", "punctuation": "A comma or full stop", "number": "A number" };
+function pvList() { return MM.pairs.filter(p => p.sort === PV.sort); }
 function wake() {
   const list = pvList(), p = list[PV.idx % list.length], cv = $("wake"), dpr = Math.min(2, window.devicePixelRatio || 1), Wp = cv.clientWidth || 900, Hp = cv.clientHeight || 500;
   if (cv.width !== Math.round(Wp * dpr)) { cv.width = Math.round(Wp * dpr); cv.height = Math.round(Hp * dpr); }
   const g = cv.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, Wp, Hp);
   $("pv-count").textContent = "pair " + (PV.idx % list.length + 1) + " of " + list.length;
-  const mark = (t, sp) => esc(t.slice(15, sp[0])) + "<b style='background:var(--seq1);padding:1px 3px;border-radius:2px'>" + esc(t.slice(sp[0], sp[1])) + "</b>" + esc(t.slice(sp[1]));
-  if (p.null) {
-    $("pv-text").innerHTML = "A: " + esc(p.text[0].slice(15)) + "<br>B: " + esc(p.text[1].slice(15));
-    g.font = "14px " + css("--sans"); g.fillStyle = css("--ink2"); g.textAlign = "center";
-    g.fillText("Nothing changed, so the model holds the two identically: the difference is " + p.largest_difference + " at each of " + p.positions + " characters and 13 stages.", Wp / 2, Hp / 2);
-    $("pv-say").textContent = "This pair is the check on the picture. The two openings are the same sentence, so any difference shown would be a fault in the drawing or the instrument. There is none.";
-    $("pv-honest").textContent = ""; return;
-  }
-  $("pv-text").innerHTML = "A: " + mark(p.text[0], p.changed_span[0]) + "<br>B: " + mark(p.text[1], p.changed_span[1]);
-  const K = PR.stages.length, J = p.state[0].length, sc = Math.min(Wp / (Math.max(J, 6) * 2.3), Hp / 30), dx = 1.7, dz = 1.5, HH = 9;
+  const mark = t => esc(t.slice(0, p.at)) + "<b style='background:var(--seq1);padding:1px 3px;border-radius:2px'>" + esc(t.slice(p.at, p.at + p.len)) + "</b>" + esc(t.slice(p.at + p.len));
+  $("pv-text").innerHTML = "A: " + mark(p.text[0]) + "<br>B: " + mark(p.text[1]);
+  const K = MM.stages.length, C = MM.categories.length, J = p.state[0].length, L = p.len - 1;
+  const mdx = 1.0, gap = 2.2, dx = 1.5, dz = 1.5, HH = 9, W = C * mdx + gap + J * dx, sc = Math.min(Wp / (W * 1.12), Hp / 30);
   const cy = Math.cos(PV.yaw), sy = Math.sin(PV.yaw), cp = Math.cos(PV.pitch), sp = Math.sin(PV.pitch);
   const P = (x, y, z) => { const xr = x * cy - z * sy, zr = x * sy + z * cy; return [Wp / 2 + sc * xr, Hp * 0.66 - sc * (y * cp - zr * sp), zr * cp + y * sp]; };
-  const seqc = [0, 1, 2, 3, 4, 5].map(i => hex(css("--seq" + i))), colour = v => { const u = Math.max(0, Math.min(1, v)) * 5, i = Math.min(4, Math.floor(u)); return mix(seqc[i], seqc[i + 1], u - i); };
-  const upto = PV.k, val = (k, j) => { const f = Math.max(0, Math.min(1, upto - k + 1)); return k > Math.ceil(upto) ? 0 : p.state[k][j] * f; };
-  const X = j => (j - (J - 1) / 2) * dx, Z = k => (k - (K - 1) / 2) * dz, quads = [];
+  const seqc = [0, 1, 2, 3, 4, 5].map(i => hex(css("--seq" + i))), ramp = v => { const u = Math.max(0, Math.min(1, v)) * 5, i = Math.min(4, Math.floor(u)); return seqc[i].map((x, n) => Math.round(x + (seqc[i + 1][n] - x) * (u - i))); };
+  const bg = hex(css("--bg")), onmap = hex(css("--s2")), quiet = hex(css("--empty")), flat = hex(css("--line"));
+  const upto = PV.k, fade = k => k > Math.ceil(upto) ? 0 : Math.max(0, Math.min(1, upto - k + 1));
+  const MX = c => -W / 2 + (c + .5) * mdx, WX = j => -W / 2 + C * mdx + gap + (j + .5) * dx, Z = k => (k - (K - 1) / 2) * dz;
+  const items = [];
+  // the map: one tile for each stage and type of word, darker where that type is read better than chance
+  for (let k = 0; k < K; k++) for (let c = 0; c < C; c++) {
+    const f = fade(k), part = Math.abs(p.foot[k][c]) * p.state[k][L] * f, seen = Math.abs(p.foot[k][c]) > 2 * MM.floor[k][c];
+    items.push({ x: MX(c), z: Z(k), hw: mdx * .46, hz: dz * .42, base: ramp(MM.lift[k][c] / 0.18), segs: [], post: part * HH, postc: seen ? onmap : quiet });
+  }
+  // the change: one column for each character from the changed word on; the part inside the map at the bottom
   for (let k = 0; k < K; k++) for (let j = 0; j < J; j++) {
-    const v = val(k, j), h = v * HH, x0 = X(j) - dx * .42, x1 = X(j) + dx * .42, z0 = Z(k) - dz * .42, z1 = Z(k) + dz * .42;
-    quads.push({ d: P(X(j), h / 2, Z(k))[2], v, pts: [[x0, z0], [x1, z0], [x1, z1], [x0, z1]], h });
+    const v = p.state[k][j] * fade(k), h = v * HH, inm = Math.max(0, Math.min(1, p.share[k][j])) * h;
+    items.push({ x: WX(j), z: Z(k), hw: dx * .42, hz: dz * .42, base: flat, segs: h > 0.02 ? [[0, inm, onmap], [inm, h, ramp(v)]] : [], post: 0 });
   }
-  quads.sort((a, b) => b.d - a.d);
-  const bg = hex(css("--bg"));
-  for (const q of quads) {
-    const top = q.pts.map(([x, z]) => P(x, q.h, z)), bot = q.pts.map(([x, z]) => P(x, 0, z)), c = colour(q.v).match(/\d+/g).map(Number);
-    const face = (a, b, t) => { g.beginPath(); g.moveTo(top[a][0], top[a][1]); g.lineTo(top[b][0], top[b][1]); g.lineTo(bot[b][0], bot[b][1]); g.lineTo(bot[a][0], bot[a][1]); g.closePath(); g.fillStyle = mix(c, bg, t); g.fill(); };
-    if (q.h > 0.02) { if (sy < 0) face(1, 2, .4); else face(3, 0, .4); if (cy > 0) face(0, 1, .25); else face(2, 3, .25); }
-    g.beginPath(); top.forEach((t, i) => i ? g.lineTo(t[0], t[1]) : g.moveTo(t[0], t[1])); g.closePath(); g.fillStyle = q.h > 0.02 ? mix(c, bg, 0) : css("--line"); g.fill();
+  items.forEach(q => q.d = P(q.x, 0, q.z)[2]); items.sort((a, b) => a.d - b.d);   // far first: a larger depth is nearer the eye
+  const box = (x, z, hw, hz, y0, y1, c, lid) => {
+    const pts = [[x - hw, z - hz], [x + hw, z - hz], [x + hw, z + hz], [x - hw, z + hz]], top = pts.map(([a, b]) => P(a, y1, b)), bot = pts.map(([a, b]) => P(a, y0, b));
+    const face = (i, n, t) => { g.beginPath(); g.moveTo(top[i][0], top[i][1]); g.lineTo(top[n][0], top[n][1]); g.lineTo(bot[n][0], bot[n][1]); g.lineTo(bot[i][0], bot[i][1]); g.closePath(); g.fillStyle = mix(c, bg, t); g.fill(); };
+    if (y1 - y0 > 0.005) { if (sy > 0) face(1, 2, .4); else face(3, 0, .4); if (cy > 0) face(2, 3, .25); else face(0, 1, .25); }
+    if (lid) { g.beginPath(); top.forEach((t, i) => i ? g.lineTo(t[0], t[1]) : g.moveTo(t[0], t[1])); g.closePath(); g.fillStyle = mix(c, bg, 0); g.fill(); }
+  };
+  for (const q of items) {
+    if (!q.segs.length) box(q.x, q.z, q.hw, q.hz, 0, 0, q.base, true);
+    q.segs.forEach((s, i) => { if (s[1] - s[0] > 0.004 || i === q.segs.length - 1) box(q.x, q.z, q.hw, q.hz, s[0], s[1], s[2], i === q.segs.length - 1); });
+    if (q.post > 0.01) box(q.x, q.z, q.hw * .5, q.hz * .5, 0, q.post, q.postc, true);
   }
-  g.font = "12px " + css("--mono"); g.textBaseline = "middle"; g.textAlign = "center"; g.fillStyle = css("--ink2");
-  const fz = cy > 0 ? Z(0) - dz * 1.1 : Z(K - 1) + dz * 1.1;
-  for (let j = 0; j < J; j++) { const ch = j === 0 ? "■" : (p.after[j - 1] === " " ? "·" : p.after[j - 1]), q = P(X(j), 0, fz); g.fillText(ch, q[0], q[1]); }
-  const sx = sy < 0 ? X(0) - dx * 1.2 : X(J - 1) + dx * 1.2; g.textAlign = sy < 0 ? "right" : "left"; g.fillStyle = css("--ink3");
-  for (let k = 0; k < K; k++) { const q = P(sx, 0, Z(k)); g.fillText(String(k + 1), q[0], q[1]); }
-  const kn = Math.round(PV.k), at = p.state[kn][0], nx = J > 1 ? p.state[kn][1] : null, n1 = J > 1 ? p.state[1][1] : null, far = J > 4 ? p.state[K - 1][J - 1] : null;
-  let say = "■ is the last letter of the changed word (" + esc(p.changed_word[0]) + " / " + esc(p.changed_word[1]) + "); to its right, the characters that follow. Stage " + (kn + 1) + " of 13: at the changed word the model holds the two versions " + at.toFixed(2) + " apart";
-  if (nx !== null) say += ", and one character later " + nx.toFixed(2) + ". ";
-  else say += ". ";
-  if (p.same_length && n1 !== null) say += "At stage 1 the next character is identical in both (0.00): it is the same letter in the same place. At stage 2, the first look back, it jumps to " + n1.toFixed(2) + ": the change has been carried onto the next character. ";
-  if (far !== null) say += "By the end of the sentence (" + (J - 1) + " characters on) the last stage holds them " + far.toFixed(2) + " apart.";
-  let bj = -1, bv = 0; for (let j = 3; j < J; j++) if (p.state[K - 1][j] > bv) { bv = p.state[K - 1][j]; bj = j; }
-  if (bj > 0 && bv > 0.15 && bv > 2 * p.state[6][bj]) say += " Look further right in the last two stages: the difference comes back (" + bv.toFixed(2) + ") at \u201c" + p.after.slice(Math.max(0, bj - 2), bj + 1).replace(/ /g, "\u00b7") + "\u201d, " + bj + " characters after the change, having been near zero there through the middle stages (" + p.state[6][bj].toFixed(2) + " at stage 7).";
+  g.font = "12px " + css("--mono"); g.textBaseline = "middle"; g.textAlign = "center";
+  const fz = cy > 0 ? Z(K - 1) + dz * 1.1 : Z(0) - dz * 1.1;
+  for (let j = 0; j < J; j++) { const ch = p.chars[j] === " " ? "·" : p.chars[j], q = P(WX(j), 0, fz); g.fillStyle = css(j <= L ? "--ink" : "--ink3"); g.fillText(ch, q[0], q[1]); }
+  g.font = "11px " + css("--sans"); g.fillStyle = css("--ink2");
+  for (let c = 0; c < C; c++) { const q = P(MX(c), 0, fz); g.save(); g.translate(q[0], q[1]); g.rotate(-Math.PI / 3); g.textAlign = cy > 0 ? "right" : "left"; g.fillText(MM.plain[c], 0, 0); g.restore(); }
+  g.font = "12px " + css("--mono"); g.textAlign = "center"; g.fillStyle = css("--ink3");
+  for (let k = 0; k < K; k++) { const q = P(-W / 2 + C * mdx + gap / 2, 0, Z(k)); g.fillText(String(k + 1), q[0], q[1]); }
+  const kn = Math.round(PV.k), at = p.state[kn][L], sh = p.share[kn][L], pct = v => (100 * v).toFixed(1) + "%";
+  let best = 0; for (let c = 1; c < C; c++) if (Math.abs(p.foot[kn][c]) > Math.abs(p.foot[kn][best])) best = c;
+  const far = J > L + 7 ? p.state[K - 1][L + 6] : null;
+  let say = "On the right, the change. Each column is one character, starting at the changed word (" + p.words[0] + " / " + p.words[1] + "), and its height is how differently the model holds the two versions: 0 is the same, 1 is as different as two unrelated stories. At stage " + (kn + 1) + " of 13, at the word's last letter, they are " + at.toFixed(2) + " apart. ";
+  if (far !== null) say += "Six characters later, at the last stage, " + far.toFixed(2) + ". ";
+  say += "On the left, the map, on the same floor with one row for each stage. Each tile is a type of word, and a darker tile means that type can be read from the model more reliably there. The orange at the foot of a column is the part of the change that lies inside the map: " + pct(sh) + " here. Ten directions picked at random would hold " + pct(MM.share_random) + ", and two unrelated stories " + pct(MM.share_unrelated_by_stage[kn]) + ". The small posts on the map show how much of this change lies along each type of word; the largest here is “" + MM.plain[best] + "”, at " + pct(Math.abs(p.foot[kn][best]) * Math.abs(p.foot[kn][best])) + " of the change" + (Math.abs(p.foot[kn][best]) > 2 * MM.floor[kn][best] ? ", above what unrelated text gives." : ", no more than unrelated text gives.");
   $("pv-say").textContent = say;
-  $("pv-honest").textContent = (p.same_length ? "" : "The two words differ in length here, so every later character also sits one or more places along: a second change mixed into the first. Pairs of equal length are the clean ones. ") + "Before the changed word the model holds the two versions identically, exactly (checked for every pair). The sorts above are descriptions of what differs, from a word tagger; they are not yet labelled by kind of change. One small model, real story openings, seen by looking and not tested.";
+  $("pv-honest").textContent = "Why the map barely registers this change: both words are the same type of word (these pairs were chosen that way), so what the map charts did not change. The change runs alongside the map, not across it. That is the expected result for these pairs and not a discovery. Changes that switch the type of word (263 real pairs) have not been read yet; the RATCHET session will fix its prediction before reading them. One small model, real story openings, exploratory. The labels above are a word tagger's description of what differs, not kinds of change.";
   $("pv-stage").value = PV.k;
 }
 function wakeInit() {
   PV.sort = PSORTS.includes("name") ? "name" : PSORTS[0];
-  const first = pvList().findIndex(p => p.same_length && p.state && p.state[0].length > 6); PV.idx = Math.max(0, first);
-  PSORTS.forEach(sn => { const b = document.createElement("button"); b.className = "chip"; b.id = "pvs-" + sn.replace(/\W+/g, "-"); b.textContent = SORT_SAY[sn] || sn; b.setAttribute("aria-pressed", sn === PV.sort);
-    b.onclick = () => { PV.sort = sn; const f = pvList().findIndex(p => p.same_length && p.state && p.state[0].length > 4); PV.idx = Math.max(0, f); $("pv-sorts").querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", x === b)); wake(); }; $("pv-sorts").appendChild(b); });
+  PSORTS.forEach(sn => { const b = document.createElement("button"); b.className = "chip"; b.textContent = SORT_SAY[sn] || sn; b.setAttribute("aria-pressed", sn === PV.sort);
+    b.onclick = () => { PV.sort = sn; PV.idx = 0; $("pv-sorts").querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", x === b)); wake(); }; $("pv-sorts").appendChild(b); });
   $("pv-prev").onclick = () => { const n = pvList().length; PV.idx = (PV.idx + n - 1) % n; wake(); };
   $("pv-next").onclick = () => { PV.idx = (PV.idx + 1) % pvList().length; wake(); };
+  $("pv-play").onclick = () => { PV.play = !PV.play; $("pv-play").setAttribute("aria-pressed", PV.play); if (PV.play) { if (PV.k >= 12) PV.k = 0; last = 0; requestAnimationFrame(tick); } };
   $("pv-ramp").style.background = "linear-gradient(to right," + [0, 1, 2, 3, 4, 5].map(i => css("--seq" + i)).join(",") + ")";
   const cv = $("wake"); let drag = null, last = 0;
   cv.onpointerdown = e => { drag = [e.clientX, e.clientY, PV.yaw, PV.pitch]; try { cv.setPointerCapture(e.pointerId); } catch (x) {} };
-  cv.onpointerup = () => { drag = null; };
+  cv.onpointerup = cv.onpointercancel = () => { drag = null; };
   cv.onpointermove = e => { if (drag) { PV.yaw = drag[2] + (e.clientX - drag[0]) * 0.008; PV.pitch = Math.max(0.15, Math.min(1.35, drag[3] + (e.clientY - drag[1]) * 0.006)); wake(); } };
   $("pv-stage").oninput = e => { PV.k = +e.target.value; PV.play = false; $("pv-play").setAttribute("aria-pressed", "false"); wake(); };
   function tick(ts) { if (!PV.play) return; if (last) PV.k += (ts - last) / 900; last = ts; if (PV.k >= 12) { PV.k = 12; PV.play = false; $("pv-play").setAttribute("aria-pressed", "false"); } wake(); if (PV.play) requestAnimationFrame(tick); }
-  $("pv-play").onclick = () => { PV.play = !PV.play; $("pv-play").setAttribute("aria-pressed", PV.play); if (PV.play) { PV.k = 0; last = 0; requestAnimationFrame(tick); } };
   try { addEventListener("resize", wake); } catch (x) {}
   wake();
 }
@@ -488,7 +495,7 @@ function scene() {
     const x = (i - NX / 2) * dx, z = (k - K / 2) * dz, h = S3.mode === "adds" ? Math.max(0.05, HH * it.write_norm[win + i][k] / mx) : (cst === null ? 0.05 : Math.max(0.05, HH * cst / COSTMAX));
     bars.push({ k, i, x, z, h, d: P(x + .4, h / 2, z + .8)[2] });
   }
-  bars.sort((a, b) => b.d - a.d);
+  bars.sort((a, b) => a.d - b.d);   // far first: a larger depth is nearer the eye
   S3.tops = [];
   const poly = (pts, fill) => { g.beginPath(); pts.forEach((p, j) => j ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1])); g.closePath(); g.fillStyle = fill; g.fill(); };
   for (const b of bars) {
@@ -498,8 +505,8 @@ function scene() {
     const x0 = b.x, x1 = b.x + .8, z0 = b.z, z1 = b.z + 1.5, h = b.h;
     const A = P(x0, 0, z0), B = P(x1, 0, z0), C = P(x1, 0, z1), D = P(x0, 0, z1), E = P(x0, h, z0), F = P(x1, h, z0), G = P(x1, h, z1), H = P(x0, h, z1);
     const shade = (t, toward) => mix(c, toward, t);
-    if (sy0 < 0) poly([B, C, G, F], shade(.38, bg)); else poly([A, D, H, E], shade(.38, bg));
-    poly(cy0 > 0 ? [A, B, F, E] : [D, C, G, H], shade(.22, bg));
+    if (sy0 > 0) poly([B, C, G, F], shade(.38, bg)); else poly([A, D, H, E], shade(.38, bg));
+    poly(cy0 > 0 ? [D, C, G, H] : [A, B, F, E], shade(.22, bg));
     poly([E, F, G, H], hot ? mix(c, ink, .45) : shade(0, bg));
     S3.tops.push({ k: b.k, i: b.i, pts: [E, F, G, H, A, B, C, D] });
   }
@@ -633,11 +640,8 @@ def main():
     side = json.dumps({"version": s["version"], "ratchet": s["provenance"]["ratchet_commit"][:12]})
     traces = open(os.path.join(d, "scope_traces.json"), encoding="utf-8").read().replace("</", "<\\/")
     shapes = open(os.path.join(d, "scope_shapes.json"), encoding="utf-8").read().replace("</", "<\\/")
-    pairs = json.load(open(os.path.join(d, "scope_pairs.json"), encoding="utf-8"))
-    for q in pairs["pairs"]:
-        q.pop("write", None)          # the page draws the state's difference; the writes' stay in the table
-    pairs = json.dumps(pairs, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
-    open(out, "w", encoding="utf-8").write(PAGE.replace("__TABLE__", table).replace("__TRACES__", traces).replace("__SHAPES__", shapes).replace("__PAIRS__", pairs).replace("__SIDE__", side))
+    mm = open(os.path.join(d, "scope_mapmotion.json"), encoding="utf-8").read().replace("</", "<\\/")
+    open(out, "w", encoding="utf-8").write(PAGE.replace("__TABLE__", table).replace("__TRACES__", traces).replace("__SHAPES__", shapes).replace("__MM__", mm).replace("__SIDE__", side))
     print(out, os.path.getsize(out), "bytes")
 
 

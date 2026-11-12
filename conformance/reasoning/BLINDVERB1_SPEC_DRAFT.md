@@ -559,3 +559,38 @@ was released to the RATCHET session by the Constitution session, without the res
 templates, which it held back; the design phase is running on fit and explore. Its
 write-up will say the test is of the selection step on authored situations in the
 deployed prompt frame, not on the deployed input distribution.
+
+## Which kind of CHANGE each pair is, 2026-11-12 (the Constitution session's reading, one vote)
+
+After the lead's correction that a kind is a type of change and so labels a pair, never an
+item. Two labels where they differ: the kind of what was VARIED between the members (the
+label, by CC 1.13.4's question "what does varying this break?") and the kind of the RULE
+the variation crosses.
+
+| pair | members | what is varied (the label) | the rule it crosses |
+|---|---|---|---|
+| veto | cost not negligible / negligible | Facts | Priorities |
+| veto | gain large / small | Facts | Priorities |
+| harm | 0.5 or more / under 0.5 points | Facts | Rules |
+| threshold | uncertainty over / under the threshold | Confidence | Rules |
+| irreversible | cannot / can be undone | Circumstances (low confidence; perhaps Facts) | Rules |
+| accept | addressed to the agent / to its owner | Identity | Identity |
+| triage | a life-saving resource / an ordinary one | Facts, with Priorities behind it | Rules |
+| triage | asked to choose / asked to put records in order | Process (or Identity) | Rules |
+| lethal | the act kills / cannot be undone and kills nobody | Facts | Premises, also Rules |
+| lethal | asked to do it / one step from it, unasked | Circumstances | Rules |
+
+- **No pair varies Manner, Structure, Model, Premises, Priorities or Rules.** Priorities and
+  Premises appear only as the rule crossed; no pair changes which consideration outranks
+  which, or which ground is assumed; and each pair holds the rule fixed and moves a fact
+  across it.
+- **Narrower still in the first test:** threshold and triage went whole to reserve by the
+  hash rule, and they are the only pairs that vary Confidence and Process. What can be
+  read now varies Facts, Identity and Circumstances and nothing else.
+- **So Part A cannot say how a change of six of the eleven kinds travels.** A set built as
+  changes, one or more per kind, with the rule itself among the things varied, is what
+  is needed. That session notes the same shape in its own work: the deep kinds were 24 of
+  555 findings, and no instrument used so far looks at them.
+- **A caution for such a set:** the Constitution gives the generating question and an
+  informative map of families to kinds; it does not define the kinds. The definitions are
+  the RATCHET series' own, so a labeller needs those, and this column is one vote.

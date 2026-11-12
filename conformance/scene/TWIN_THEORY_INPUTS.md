@@ -178,3 +178,31 @@ person-year against a baseline of 75.5): with AI left out, a saving of 16.5 at i
 defaults and a range of −65 to +111 over its inputs; with AI included and moved to
 devices, a cost of 6.2 at its defaults. The mesh's own additions are 2.8. Four guessed
 inputs decide the sign; a scout is sourcing them (`SCOUT_ESTATE.md`, when filed).
+
+## CORRECTION 2026-11-12, at the lead's word in this session: what "hybrid" means
+
+The section above recorded the AI branch as relayed by the twin's session: inference
+stays hosted, with zero data retention. The lead's own words here: "the answer is a hybrid
+means a mixture of on-device, edge, prosumer, office appliance, servers, etc... - the
+market optimizes".
+
+So the AI branch is NOT "all hosted" and not "all on devices". Inference is placed across
+tiers (a phone or laptop, a prosumer machine, an office appliance, an edge server, a
+hosted model reached with zero retention) and the placement is whatever the market finds
+cheapest for each job. The relayed reading was too narrow, and this session passed it on
+to a scout before the lead corrected it.
+
+**What that means for the test:**
+- The AI term is a MIX over tiers, not one efficiency ratio. Each tier has its own energy
+  per unit of inference for the size of model it can run.
+- Because the hosted tier stays available, a job is placed elsewhere only where that is
+  cheaper overall. If energy were the whole cost, the mix could not cost more energy than
+  all-hosted. It is not the whole cost (privacy, latency, hardware already owned), so the
+  mix can cost somewhat more or less; "all hosted" and "all on devices" are the two
+  bounds and the mix lies between or below them.
+- What vanishes is unchanged: retention, and the training, ranking and advertising done
+  on harvested data.
+
+**Inputs wanted now:** energy per unit of inference at each tier, with the model size each
+can run; what share of inference each tier carries today and how that is moving; and how
+demand per person changes when people run agents.

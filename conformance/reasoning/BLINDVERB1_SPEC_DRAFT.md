@@ -508,3 +508,24 @@ provider: five calls an item, no errors, 12.74 dollars by the reported figure.
   2.21.1); recognising one step from a lethal act is open design (#1354). How the first
   changes the scoring of the lethal-action item is for the Constitution and RATCHET
   sessions to settle before the test freezes.
+
+## Real calls now exist, and what Part A is not, 2026-11-12 (the CIRISAgent session, as it reports)
+
+- **The capture works in a real safety run.** Run 43254843464 (Amharic, mental health,
+  default template), artifact `safety-battery-llm-calls-43254843464-am`: 251 rows across
+  the four evaluators, action selection and the four consciences, each with the messages
+  as sent, the parsed reply and the raw completion text, and each prompt hash
+  reproducible from its messages. 31 of them are real action-selection calls; each later
+  battery run adds more. Part B has a source.
+- **The render against a live call: the frame matches** (message count and order, the
+  template's identity text, the verb lists and their order, the schemas, the sections).
+- **What differs, and it limits what Part A can claim.** At thought depth 0 a deployed
+  agent's "current thought" is never free prose: it is a wrapper ("You observed @user …
+  in channel …") followed by a conversation-history block and the newest message, and
+  the task is "Respond to message from @user …". Part A's items give a task and a thought
+  written in the agent's voice. So **Part A tests the selection step on authored
+  situations inside the deployed prompt frame; it does not sample the deployed input
+  distribution.** Also live-only: a full system snapshot, a tools list, and the locale
+  (which changes the language guidance and the ethics text served).
+- If a later part wants items that look like real first thoughts, the wrapper format is
+  on record in that artifact.

@@ -1,9 +1,9 @@
 {
  "reference": "GRID-0 (a table of priors)",
- "version": 1,
+ "version": 2,
  "table": "grid_table.json",
- "bytes": 266548,
- "sha256": "ffd498180d9c3bb095f2277a10315c98a87e6bd389cf46579e3767f5de5512cf",
+ "bytes": 266963,
+ "sha256": "e960afcd9382cfd7e2c7adf95d0dc5fec5d335d723a12206c0a14a65293a9d86",
  "rows": 271,
  "trust": {
   "B": 138,
@@ -25,5 +25,6 @@
  "moves": "world about -1.5 % a year (2015 to 2025); United States average -4.1 % a year and non-baseload -0.8 % a year (2018 to 2023); not always down (South Africa +5.5 % in 2024)",
  "licences": "values are facts quoted with their sources; each row carries the licence as read, and the report lists the licences that could not be read",
  "holds_no_real_feature": "no person, household or building; places are countries, grid subregions, states and provinces",
- "datasets_not_fetched_needing_approval": "listed in SCOUT_GRID.md; the first (Ember Yearly Electricity Data, CC BY 4.0) would replace most trust-C country rows, the third (EPA eGRID2023 workbooks, public domain) would check the transcribed state rows"
+ "datasets_not_fetched_needing_approval": "listed in SCOUT_GRID.md; the first (Ember Yearly Electricity Data, CC BY 4.0) would replace most trust-C country rows, the third (EPA eGRID2023 workbooks, public domain) would check the transcribed state rows",
+ "changes": "version 2 (2026-11-12): wording only, no value changed. 42 fields carried a drafting mark ('[my reading ...]') that a consumer publishing the text verbatim would show; they now read '(the scout's reading ...)' or '(as summarised; the licence page was not read at source)'. Reported by the twin."
 }

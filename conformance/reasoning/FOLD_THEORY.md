@@ -274,3 +274,41 @@ of change passes through untouched is not needed for that kind.
 the pairs it already holds states for, by kind of change, as exploration; ask the
 Constitution session to label each PAIR KIND by the kind of change it is; and rebuild the
 explorer's lead view around a change travelling through the model.
+
+## A first look at a CHANGE travelling through the model, 2026-11-12 (exploratory)
+
+After the lead's correction. The RATCHET session mined real story openings that differ in
+exactly one word (164 pairs; 8 of them identical sentences, as a check); each trace
+conserves. For each pair this session computed how far apart the model's state on the two
+versions is, at each stage and each byte after the change, against the typical distance
+between unrelated characters (`scope0/build_pairs_table.py`, `scope0/pairs_readings.txt`,
+a still in `scope0/change_wake_six_pairs.png`). One small model; seen by looking; nothing
+predicted first; the sorts are a word tagger's and are not kinds.
+
+- **The checks hold exactly.** Before the changed word the two states are identical (0.0
+  in each pair). In the eight no-change pairs the difference is 0.0 throughout. Where the
+  two words are the same length, the next character at stage 1 differs by 0.00.
+- **The first look back carries the change one or two characters on.** At stage 2 the next
+  character jumps from 0.00 to 0.6 to 1.0 of an unrelated text.
+- **Then it fades with depth and with distance.** One character on it falls to 0.2 to 0.5
+  by the last stage; by the end of the sentence the last stage holds the two versions
+  about 0.05 apart. At the changed word itself the difference stays through each stage
+  and drops in the last.
+- **And in some pairs it comes back, late, where it matters.** With a name changed ("Lily
+  and Ben" against "Anna and Ben") the difference is near zero through the middle stages
+  at the characters before the next name, and rises again in the last two stages exactly
+  there. By a crude rule (the largest later difference at the last stage over 0.15 and
+  over twice its value at stage 7): 4 of 8 name pairs, 3 of 4 thing pairs, 1 of 1 number
+  pair, 0 of 2 quality-word pairs, among equal-length pairs with six or more characters
+  after the change. Few pairs; a lead.
+- **Lengths matter.** Where the two words differ in length each later character sits at a
+  shifted position, a second change mixed into the first; the by-sort summaries use
+  equal-length pairs alone, which leaves 17 name, 6 thing, 3 quality-word and 1 number
+  pair, and none for wording-only or punctuation changes.
+
+**What it suggests for folding, as a question and not a finding:** a change is held where
+it happened, passed on briefly, and re-read late at the point where it bears on what
+comes next. If that is general, the middle stages are not carrying the change forward
+along the text; the last stages fetch it. Whether changes of different KINDS travel
+differently is the question the lead's correction poses, and these sorts cannot answer
+it until they are labelled by kind.

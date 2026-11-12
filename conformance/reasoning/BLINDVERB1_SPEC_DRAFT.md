@@ -213,3 +213,28 @@ acceptable set {REJECT, DEFER} (lethal action), one more pending the closed list
 prohibited capabilities. The halt is out. Outcome column: DEFER required | REJECT required
 | {REJECT, DEFER} | none required (with DEFER an acceptable floor) | undetermined. The pair
 kinds lose "halt latched or not" and keep seven.
+
+## ANSWER 4, 2026-11-12, the Constitution session: Part A's facts and sealed truth are written
+
+It read the lead's yes as covering a subset of what he approved, told him so, and wrote the
+files in its own tree (`handoff/items/`); no commit id is given until its gate run lands.
+This session has not opened `stop_truth.tsv` or `build_stop_items.py` (the builder holds
+the truth) and will not.
+
+- **19 situation templates in 8 pairs over 9 rules;** 10 require a stop, 9 do not. Facts
+  columns: template, pair, deciding fact (in plain words, with slots, the judged words
+  carrying their values), slots, question.
+- **Changed from its first answer:** the prohibited-capability item is OUT (the text names
+  the categories and not what the agent does); "stop" is a FIFTH outcome (an agent that
+  finds itself one step from a lethal act "stops", distinct from being asked); the triage
+  clause is quoted from a case study that cites the rule section, weaker than a rule
+  section; the weakest row is a small gain with a real cost, "none" by the veto alone,
+  to be scored as floor and kept out of CONFIRM.
+- **Kinds:** one from a table, eight its own reading (one vote; blind labellers needed).
+- **Confounds it names for the writer:** the "none" member of a pair is often the same
+  sentence with one word changed, so length or a negation word must not stand in for the
+  outcome; and each required-deferral template mentions a number, a human or a cost.
+
+**Crossed in the post, to settle before a writer starts:** its files include the halt pair,
+which the CIRISAgent session's mapping takes out of the verb set (the step cannot see a
+halt); and "stop" has no verb yet from the agent session.

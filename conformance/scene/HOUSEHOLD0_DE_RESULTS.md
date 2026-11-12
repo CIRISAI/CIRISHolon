@@ -141,3 +141,29 @@ Sum of 1 km cells over the 10 km file, per column, for 10 km cells that are most
 - What the table does not carry is regional. A region key is the next thing to add and to
   test with the same hold-out.
 - The US conclusion "density is a weak key" is not general and is marked so there.
+
+## Addendum, 2026-11-11: the twin's building rule beside the German table (a reading, not a certificate)
+
+The twin emitted its legacy building rule as a histogram from its own code (twin/hhsize
+`baae03a`, `docs/geo/building_hist.json`, digest `1dcbc53c…`, recomputed here). Both
+columns below were known when they were put side by side, so no stake was possible and
+none is claimed. Budgets were never stated for this quantity.
+
+| class | dwellings per building, Germany | the twin, synthetic leaves | the twin, real leaves |
+|---|---|---|---|
+| village | 1.36 | 1.005 | 1.0 (one German village) |
+| suburban | 1.59 | 1.076 | 1.07 |
+| terraced | 2.51 | 1.689 | 1.46 |
+| apartment blocks | 5.90 | 8.48 | 7.10 (Berlin centre only) |
+| dense fabric | 10.16 | 2.69 | 2.34 |
+
+- The twin's low classes are nearly all single dwellings where Germany has a third to a
+  half more per building; its apartment blocks hold more than Germany's; its dense fabric
+  holds a quarter of Germany's. The order of the two densest classes is reversed.
+- The twin's session describes the cause: buildings are drawn to fit street frontage and
+  then fitted to a household budget, so the final count reflects the mismatch and not a
+  building type; in dense fabric it is households shared over plots. It will not fix the
+  rule, which a generator from this table replaces.
+- A caution from the twin's session on its own layout numbers: its shipped page code and
+  its source disagree on 515 of 16,426 real leaves (cause not established). The file
+  follows the shipped code.

@@ -23,3 +23,17 @@ account, with every flag and every way an answer could leak, is `WRITER_NOTES.md
 - **Two limits on any confirm result**, from the Constitution session: "a way back" means
   the table offers a retraction of the statement, not that its effect is undone; the
   reading is derived by that session and the client session and is not the lead's ruling.
+
+## Known faults at source (from the Constitution session, 2026-11-11, after these were written)
+
+- **Policy, the 48 "removing a member" rows:** the facts file's rule dropped its last
+  clause ("and is dropped otherwise"). The truth file is right; the items here state the
+  truncated rule. Score those 48 apart or leave them out until the facts file is
+  regenerated and the rows rewritten.
+- **Confirm C008 against C034:** "and applies to them" is a wording difference at source,
+  not a difference in the table.
+- **Story:** the source's author calls it a rule exerciser, not an item bank; the three
+  ill-posed rows are to be counted and dropped.
+- **Guard, the book-club (membership) pairs:** the lead has not reviewed the
+  roster-widening question, so those pairs rest on the text's own sentence and the pinned
+  build, with no ruling behind the case where the two policy sources differ.

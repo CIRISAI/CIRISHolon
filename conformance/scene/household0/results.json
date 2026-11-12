@@ -1,0 +1,618 @@
+{
+ "plants": {
+  "P-EQUAL": true,
+  "P-SHIFT": true,
+  "P-MEAN": true,
+  "P-TOP": true,
+  "P-THIN": true,
+  "P-NEFF": true,
+  "P-NOISY": true,
+  "P-GQ": true,
+  "P-ZEROLAND": true,
+  "P-SENTINEL": true,
+  "P-PORT": true
+ },
+ "twin_file_sha256": "438568abd0258d56bad0d2e286c98e3e03d855848969465af79914971bb0a418",
+ "twin_meta": {
+  "what": "household sizes (persons per household) of the CEWP twin's focal street leaf, from the twin's own code path (MicroWorld::from_leaf -> populate -> popchain::persons_per_household), MODEL",
+  "leaf_shape": {
+   "leaves": 16667,
+   "households_per_leaf": 60,
+   "people_per_leaf": 150
+  },
+  "seed_scheme": "leaf k = 0..16666 is HolonId { level: 6, i: 0, j: k } (a synthetic id sequence); the world's seed is that id's HolonId::seed() as on the page; dwelling hi draws from Rng::new(seed ^ (hi + 1) * 0xA24B_AED4_963E_E407); MicroParams::default() (persons_per_household 2.5, the page never sets it)",
+  "conditioning": "none: one histogram; a household's size depends only on the leaf seed, its dwelling index, the leaf's people and its dwelling count (not density class, region or building type)",
+  "library_commit": "943ab2d8337b5dc07cbf9c5961837f4386e466d5",
+  "command": "cargo run --release -p cewp-sim --example household_hist -- --write"
+ },
+ "generator": {
+  "final": {
+   "mean": 2.5,
+   "p1": 0.18241935161296774,
+   "shares": [
+    0.0,
+    0.18241935161296774,
+    0.3211295774084518,
+    0.3547509049819004,
+    0.10625187496250076,
+    0.02733645327093458,
+    0.007403851922961541,
+    0.0007079858402831943
+   ]
+  },
+  "drawn": {
+   "mean": 2.5375392492150155,
+   "p1": 0.18241935161296774,
+   "shares": [
+    0.0,
+    0.18241935161296774,
+    0.31718465630687387,
+    0.31873362532749344,
+    0.14701205975880483,
+    0.03140037199256015,
+    0.003249935001299974,
+    0.0
+   ]
+  }
+ },
+ "generator_scored": "final",
+ "port": {
+  "mean": 2.5,
+  "p1": 0.18149537009259814,
+  "shares": [
+   0.0,
+   0.18149537009259814,
+   0.32252154956900864,
+   0.3547909041819164,
+   0.10575788484230315,
+   0.027220455590888183,
+   0.00754184916301674,
+   0.0006719865602687946
+  ],
+  "max_share_difference_from_twin": 0.0013919721605568092
+ },
+ "file_sha256": {
+  "2024_Gaz_tracts_national.zip": "089cbeb3908833b73f7c8ea45fcc4498b788f70ab1242d87923e1762c274b5c7",
+  "ACS20245YR_Table_Shells.txt": "5b46f4af873744a415c4974204010db976e2a61ff916674732f81c496a6b517d",
+  "Geos20245YR.txt": "b87a1d1a4db9f826d0d133d20cbf7d011932f9ec2cfa74eacf8c9cf387aea344",
+  "README.txt": "9ed1d170ab67a7f1038e07116b866f1ad670d682042cb7456ce6f0f2612485d8",
+  "acsdt5y2024-b25008.dat": "caf0a0ed0ed04f462880589096143d9f89c2e870c0e9e75c99a993cb3bf9c751",
+  "acsdt5y2024-b25009.dat": "26d9b1fac941674b8cb6fe9c3ec8e4ff3fc5bfc500ed95370a004a0636e889d7",
+  "acsdt5y2024-b25032.dat": "b2fc3d65dc9ef405cf16f26d16bfc3bad14a5cc72b9dafbd7607850f54a4dd13",
+  "acsdt5y2024-b25033.dat": "8a984923f7858ec8c791afb200d15433fb7ee5afffa45e70e0b31c6cc10dbabc",
+  "acsdt5y2024-b26001.dat": "7c2991c91ec5de57bbe79c589e27f7f5f1cd753dbb540adb8662fb8d97aec726",
+  "cb_2024_us_bg_500k.zip": "7c4da3ed6e4eaf6f99f731f7d3eeefd921d6d57d6b4a622c1da5e6f91ba38549"
+ },
+ "headers": {
+  "B25009": 17,
+  "B25008": 3,
+  "B25032": 23,
+  "B25033": 13,
+  "B26001": 1
+ },
+ "states": {
+  "codes": [
+   1,
+   2,
+   4,
+   5,
+   6,
+   8,
+   9,
+   10,
+   11,
+   12,
+   13,
+   15,
+   16,
+   17,
+   18,
+   19,
+   20,
+   21,
+   22,
+   23,
+   24,
+   25,
+   26,
+   27,
+   28,
+   29,
+   30,
+   31,
+   32,
+   33,
+   34,
+   35,
+   36,
+   37,
+   38,
+   39,
+   40,
+   41,
+   42,
+   44,
+   45,
+   46,
+   47,
+   48,
+   49,
+   50,
+   51,
+   53,
+   54,
+   55,
+   56
+  ],
+  "FIT": [
+   1,
+   2,
+   4,
+   8,
+   9,
+   10,
+   17,
+   22,
+   23,
+   24,
+   25,
+   26,
+   27,
+   29,
+   33,
+   34,
+   36,
+   37,
+   38,
+   42,
+   44,
+   45,
+   46,
+   48,
+   49,
+   50
+  ],
+  "SCORE": [
+   5,
+   6,
+   11,
+   12,
+   13,
+   15,
+   16,
+   18,
+   19,
+   20,
+   21,
+   28,
+   30,
+   31,
+   32,
+   35,
+   39,
+   40,
+   41,
+   47,
+   51,
+   53,
+   54,
+   55,
+   56
+  ]
+ },
+ "G0": {
+  "headers": true,
+  "labels": true,
+  "labels_read": {
+   "B25008_002": "Owner occupied",
+   "B25009_003": "1-person household",
+   "B25009_009": "7-or-more person household",
+   "B25009_010": "Renter occupied:",
+   "B25009_011": "1-person household",
+   "B25009_017": "7-or-more person household",
+   "B25032_003": "1, detached",
+   "B25032_013": "Renter-occupied housing units:",
+   "B25032_014": "1, detached",
+   "B25033_003": "1, detached or attached",
+   "B25033_008": "Renter occupied:"
+  },
+  "cells_equal_total_units": 0,
+  "households_B25009_total": 129208869.0,
+  "households_B25009_cells": 129208869.0,
+  "households_B25032": 129208869.0,
+  "block_group_households": 129209336.0,
+  "persons_per_household": 2.5280472968152057,
+  "counties": 3144,
+  "pass": true
+ },
+ "S1": {
+  "tract": {
+   "nation": {
+    "n_eff": 304.0473532116581,
+    "counties": 2978,
+    "households": 126710135.0,
+    "mean": {
+     "generator": 2.5,
+     "reference": 2.5323307010919054,
+     "difference": -0.03233070109190539,
+     "budget": 0.12,
+     "split_half_gap_95": 0.05305702846435404,
+     "verdict": "certified",
+     "reason": "within budget"
+    },
+    "p1": {
+     "generator": 0.18241935161296774,
+     "reference": 0.286139439437895,
+     "difference": -0.10372008782492725,
+     "budget": 0.03,
+     "split_half_gap_95": 0.010721564212377015,
+     "verdict": "refused",
+     "reason": "outside budget",
+     "witness": "one-person share"
+    },
+    "w1_top_at_8": 0.42160717158731964
+   },
+   "village": {
+    "n_eff": 1534.5154683171834,
+    "counties": 2934,
+    "households": 35450718.0,
+    "mean": {
+     "generator": 2.5,
+     "reference": 2.536721089823907,
+     "difference": -0.03672108982390698,
+     "budget": 0.12,
+     "split_half_gap_95": 0.020963964441497018,
+     "verdict": "certified",
+     "reason": "within budget"
+    },
+    "p1": {
+     "generator": 0.18241935161296774,
+     "reference": 0.25523801802829493,
+     "difference": -0.0728186664153272,
+     "budget": 0.03,
+     "split_half_gap_95": 0.00435481284239452,
+     "verdict": "refused",
+     "reason": "outside budget",
+     "witness": "one-person share"
+    },
+    "w1_top_at_8": 0.38845690646375874
+   },
+   "suburban": {
+    "n_eff": 368.11952471652535,
+    "counties": 1611,
+    "households": 46875210.0,
+    "mean": {
+     "generator": 2.5,
+     "reference": 2.5067834149436345,
+     "difference": -0.006783414943634547,
+     "budget": 0.12,
+     "split_half_gap_95": 0.04580755176766269,
+     "verdict": "certified",
+     "reason": "within budget"
+    },
+    "p1": {
+     "generator": 0.18241935161296774,
+     "reference": 0.285493206323769,
+     "difference": -0.10307385471080127,
+     "budget": 0.03,
+     "split_half_gap_95": 0.010379803217874066,
+     "verdict": "refused",
+     "reason": "outside budget",
+     "witness": "one-person share"
+    },
+    "w1_top_at_8": 0.4042762816189624
+   },
+   "terraced": {
+    "n_eff": 89.76983125086976,
+    "counties": 724,
+    "households": 35804315.0,
+    "mean": {
+     "generator": 2.5,
+     "reference": 2.5860926539161553,
+     "difference": -0.08609265391615528,
+     "budget": 0.12,
+     "split_half_gap_95": 0.10348940055558975,
+     "verdict": "unresolved",
+     "reason": "reference's own split-half gap exceeds half the budget"
+    },
+    "p1": {
+     "generator": 0.18241935161296774,
+     "reference": 0.29956311131772806,
+     "difference": -0.11714375970476032,
+     "budget": 0.03,
+     "split_half_gap_95": 0.022837793691301816,
+     "verdict": "unresolved",
+     "reason": "reference's own split-half gap exceeds half the budget"
+    },
+    "w1_top_at_8": 0.45232980304957526
+   },
+   "apartment blocks": {
+    "n_eff": 17.085377175540568,
+    "counties": 135,
+    "households": 4666448.0,
+    "mean": {
+     "verdict": "unresolved",
+     "reason": "effective counties under 30"
+    },
+    "p1": {
+     "verdict": "unresolved",
+     "reason": "effective counties under 30"
+    },
+    "w1_top_at_8": 0.5285687525998428
+   },
+   "dense fabric": {
+    "n_eff": 8.108742787447172,
+    "counties": 62,
+    "households": 3913444.0,
+    "mean": {
+     "verdict": "unresolved",
+     "reason": "effective counties under 30"
+    },
+    "p1": {
+     "verdict": "unresolved",
+     "reason": "effective counties under 30"
+    },
+    "w1_top_at_8": 0.5208691967952881
+   }
+  },
+  "block group": {
+   "nation": {
+    "n_eff": 304.0595649086314,
+    "counties": 3058,
+    "households": 126708015.0,
+    "mean": {
+     "generator": 2.5,
+     "reference": 2.532457784931758,
+     "difference": -0.032457784931758216,
+     "budget": 0.12,
+     "split_half_gap_95": 0.05271995165404004,
+     "verdict": "certified",
+     "reason": "within budget"
+    },
+    "p1": {
+     "generator": 0.18241935161296774,
+     "reference": 0.2861625446503917,
+     "difference": -0.10374319303742396,
+     "budget": 0.03,
+     "split_half_gap_95": 0.010876366778337808,
+     "verdict": "refused",
+     "reason": "outside budget",
+     "witness": "one-person share"
+    },
+    "w1_top_at_8": 0.4216709308818176
+   },
+   "village": {
+    "n_eff": 1541.8651454455423,
+    "counties": 3033,
+    "households": 32000670.0,
+    "mean": {
+     "generator": 2.5,
+     "reference": 2.52998690339921,
+     "difference": -0.029986903399210174,
+     "budget": 0.12,
+     "split_half_gap_95": 0.02050495315646108,
+     "verdict": "certified",
+     "reason": "within budget"
+    },
+    "p1": {
+     "generator": 0.18241935161296774,
+     "reference": 0.2535666596980626,
+     "difference": -0.07114730808509484,
+     "budget": 0.03,
+     "split_half_gap_95": 0.004340508438660234,
+     "verdict": "refused",
+     "reason": "outside budget",
+     "witness": "one-person share"
+    },
+    "w1_top_at_8": 0.38521408522582756
+   },
+   "suburban": {
+    "n_eff": 402.3463499045806,
+    "counties": 2327,
+    "households": 44520980.0,
+    "mean": {
+     "generator": 2.5,
+     "reference": 2.486659839922661,
+     "difference": 0.013340160077338847,
+     "budget": 0.12,
+     "split_half_gap_95": 0.04208066695797085,
+     "verdict": "certified",
+     "reason": "within budget"
+    },
+    "p1": {
+     "generator": 0.18241935161296774,
+     "reference": 0.28710994232382125,
+     "difference": -0.10469059071085351,
+     "budget": 0.03,
+     "split_half_gap_95": 0.009917735363340932,
+     "verdict": "refused",
+     "reason": "outside budget",
+     "witness": "one-person share"
+    },
+    "w1_top_at_8": 0.40176962796076365
+   },
+   "terraced": {
+    "n_eff": 115.83236645980598,
+    "counties": 1293,
+    "households": 39369197.0,
+    "mean": {
+     "generator": 2.5,
+     "reference": 2.5982604369603983,
+     "difference": -0.09826043696039832,
+     "budget": 0.12,
+     "split_half_gap_95": 0.09442113990650318,
+     "verdict": "unresolved",
+     "reason": "reference's own split-half gap exceeds half the budget"
+    },
+    "p1": {
+     "generator": 0.18241935161296774,
+     "reference": 0.2943723236214343,
+     "difference": -0.11195297200846654,
+     "budget": 0.03,
+     "split_half_gap_95": 0.019972090774793366,
+     "verdict": "unresolved",
+     "reason": "reference's own split-half gap exceeds half the budget"
+    },
+    "w1_top_at_8": 0.4463388703073552
+   },
+   "apartment blocks": {
+    "n_eff": 25.311165194804104,
+    "counties": 281,
+    "households": 5976281.0,
+    "mean": {
+     "verdict": "unresolved",
+     "reason": "effective counties under 30"
+    },
+    "p1": {
+     "verdict": "unresolved",
+     "reason": "effective counties under 30"
+    },
+    "w1_top_at_8": 0.518793037569441
+   },
+   "dense fabric": {
+    "n_eff": 11.47882622186855,
+    "counties": 130,
+    "households": 4840887.0,
+    "mean": {
+     "verdict": "unresolved",
+     "reason": "effective counties under 30"
+    },
+    "p1": {
+     "verdict": "unresolved",
+     "reason": "effective counties under 30"
+    },
+    "w1_top_at_8": 0.5251815124539937
+   }
+  }
+ },
+ "resolved": {
+  "tract": [
+   "village",
+   "suburban",
+   "terraced"
+  ],
+  "block group": [
+   "village",
+   "suburban",
+   "terraced"
+  ]
+ },
+ "S1_summary": {
+  "mean_nation": "certified",
+  "composition_by_class": {
+   "village": "refused",
+   "suburban": "refused",
+   "terraced": "unresolved"
+  },
+  "expectation": "stands"
+ },
+ "group_quarters_share_of_people": 0.024485328909872667,
+ "S2": {
+  "FIT-NATION-1": {
+   "mean": 2.509770816247405,
+   "p1": 0.290175833973634
+  },
+  "FIT-CLASS-1": {
+   "village": {
+    "mean": 2.5261676696986646,
+    "p1": 0.2546000014555849,
+    "n_eff_fit": 686.9168955527555,
+    "n_eff_score": 891.9663334647292
+   },
+   "suburban": {
+    "mean": 2.502473019452141,
+    "p1": 0.2857721536786605,
+    "n_eff_fit": 174.8684012372611,
+    "n_eff_score": 198.2357509012659
+   },
+   "terraced": {
+    "mean": 2.5350679025607477,
+    "p1": 0.3106939162022983,
+    "n_eff_fit": 54.9023237091955,
+    "n_eff_score": 38.642146077223444
+   },
+   "apartment blocks": {
+    "mean": 2.464766378259439,
+    "p1": 0.3485011466211633,
+    "n_eff_fit": 13.465949848825765,
+    "n_eff_score": 5.293549349607889
+   },
+   "dense fabric": {
+    "mean": 2.37463777315354,
+    "p1": 0.3667554103275052,
+    "n_eff_fit": 5.859346270952499,
+    "n_eff_score": 5.772796961263833
+   }
+  },
+  "classes_used": [
+   "village",
+   "suburban",
+   "terraced"
+  ],
+  "classes_left_out": [
+   "apartment blocks",
+   "dense fabric"
+  ],
+  "per_class": {
+   "village": {
+    "units": 212,
+    "households": 6246201.0,
+    "within_class_rule": 0.26572327723683564,
+    "within_national_rule": 0.12881782062408814,
+    "within_mean_only_class": 0.45388965228624567,
+    "within_p1_only_class": 0.46048342024216,
+    "within_mean_only_nation": 0.4531636109692916,
+    "within_p1_only_nation": 0.2228476156947239
+   },
+   "suburban": {
+    "units": 245,
+    "households": 18726542.0,
+    "within_class_rule": 0.2131901340888243,
+    "within_national_rule": 0.21694918367737087,
+    "within_mean_only_class": 0.3546451341630505,
+    "within_p1_only_class": 0.3248199267115093,
+    "within_mean_only_nation": 0.3500839076429594,
+    "within_p1_only_nation": 0.33734711939876566
+   },
+   "terraced": {
+    "units": 111,
+    "households": 16988055.0,
+    "within_class_rule": 0.11962970451885163,
+    "within_national_rule": 0.13923512727030846,
+    "within_mean_only_class": 0.21139465347857656,
+    "within_p1_only_class": 0.17096501041467077,
+    "within_mean_only_nation": 0.2166783071987935,
+    "within_p1_only_nation": 0.2500458116011515
+   }
+  },
+  "units": 568,
+  "coverage_of_score_households": 0.6963941889234039,
+  "share_within_class_rule": 0.18313166970752082,
+  "share_within_national_rule": 0.17236716994753054,
+  "difference": 0.010764499759990276,
+  "outcome": "neither"
+ },
+ "S2b": {
+  "village": {
+   "mean_tract_minus_block_group": 0.006734186424696809,
+   "p1_tract_minus_block_group": 0.0016713583302323531,
+   "transfers": true
+  },
+  "suburban": {
+   "mean_tract_minus_block_group": 0.020123575020973394,
+   "p1_tract_minus_block_group": -0.0016167360000522435,
+   "transfers": true
+  },
+  "terraced": {
+   "mean_tract_minus_block_group": -0.012167783044243041,
+   "p1_tract_minus_block_group": 0.005190787696293775,
+   "transfers": true
+  }
+ },
+ "S3": {
+  "largest_mean_difference": 0.07930923897252073,
+  "largest_p1_difference": 0.044325093289433126,
+  "outcome": "met"
+ },
+ "branch": "(a)"
+}

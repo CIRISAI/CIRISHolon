@@ -345,9 +345,9 @@ def load(raw):
             gq_for_flag, pop_for_flag = gq, a8[:, 0]
         U = make_units(
             geoid=ids, county=[int(g[:5]) for g in ids], state=[int(g[:2]) for g in ids],
-            h=a9[:, 2:9] + a9[:, 9:16], pop=a8[:, 0],
+            h=a9[:, 2:9] + a9[:, 10:17], pop=a8[:, 0],
             land=[land.get(g, 0.0) for g in ids], gq=gq,
-            ho=a9[:, 2:9], hr=a9[:, 9:16], popo=a8[:, 1], popr=a8[:, 2],
+            ho=a9[:, 2:9], hr=a9[:, 10:17], popo=a8[:, 1], popr=a8[:, 2],
             hh_total=a9[:, 0], s_hh=s_hh, s_pop=s_pop,
             no_area=np.array([g not in land for g in ids]))
         ex = exclusions(U)
@@ -460,6 +460,23 @@ def run(raw, twin_path, out_dir):
     # G0
     exp = {"B25009": 17, "B25008": 3, "B25032": 23, "B25033": 13, "B26001": 1}
     g0 = {"headers": all(len(heads[k]) == exp[k] for k in exp)}
+    # labels from the documentation file, at the lines the reader's slices assume
+    want = {"B25009_003": "1-person household", "B25009_009": "7-or-more person household",
+            "B25009_010": "Renter occupied:", "B25009_011": "1-person household",
+            "B25009_017": "7-or-more person household", "B25008_002": "Owner occupied",
+            "B25033_003": "1, detached or attached", "B25033_008": "Renter occupied:",
+            "B25032_003": "1, detached", "B25032_013": "Renter-occupied housing units:", "B25032_014": "1, detached"}
+    got = {}
+    with open(os.path.join(raw, "ACS20245YR_Table_Shells.txt"), encoding="latin-1") as sf:
+        for line in sf:
+            p = line.split("|")
+            if len(p) > 4 and p[3] in want:
+                got[p[3]] = p[4].strip()
+    g0["labels"] = got == want
+    g0["labels_read"] = got
+    # the owner and renter cells sum to the table's own total, unit by unit
+    okT0 = ~T["ex"]["coded"]
+    g0["cells_equal_total_units"] = int((np.abs(T["h"][okT0].sum(1) - T["hh_total"][okT0]) > 0.5).sum())
     okT = ~T["ex"]["coded"]
     nat_hh9 = float(T["hh_total"][okT].sum())
     nat_sum = float(T["h"][okT].sum())
@@ -471,7 +488,7 @@ def run(raw, twin_path, out_dir):
     g0.update(households_B25009_total=nat_hh9, households_B25009_cells=nat_sum,
               households_B25032=nat_hh32, block_group_households=bg_hh,
               persons_per_household=nat_ratio, counties=len(set(T["county"].tolist())))
-    g0["pass"] = bool(g0["headers"] and abs(nat_hh9 - nat_hh32) <= 1 and abs(nat_sum - nat_hh9) <= 1
+    g0["pass"] = bool(g0["headers"] and g0["labels"] and g0["cells_equal_total_units"] == 0 and abs(nat_hh9 - nat_hh32) <= 1 and abs(nat_sum - nat_hh9) <= 1
                       and abs(bg_hh / nat_sum - 1) <= 1e-3 and 2.3 <= nat_ratio <= 2.8)
     log["G0"] = g0
     print("G0:", g0)

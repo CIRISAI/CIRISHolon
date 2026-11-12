@@ -1,0 +1,1114 @@
+{
+ "keys": {
+  "tract": {
+   "exclusions": {
+    "coded": 0,
+    "zero_land": 320,
+    "zero_households": 1042,
+    "group_quarters": 2322,
+    "no_area_on_file": 0,
+    "under_floor": 578,
+    "units_total": 84401,
+    "households_kept_share": 0.9806612810766109
+   },
+   "rows": {
+    "nation": {
+     "units": 80708,
+     "households": 126710135.0,
+     "shares_ppm": [
+      286139,
+      337922,
+      153881,
+      126186,
+      58780,
+      22575,
+      14516
+     ],
+     "persons_per_household": 2.5323307010919054,
+     "one_person_share": 0.286139439437895,
+     "top_band_residual_mean": 12.028777393028074,
+     "top_band_residual_mean_pop_plus_1pct": 13.773318985413388,
+     "top_band_residual_mean_pop_minus_1pct": 10.28423580064276,
+     "by_tenure": {
+      "owner": {
+       "households": 82866966.0,
+       "persons_per_household": 2.646252910960925,
+       "one_person_share": 0.2293687692149849
+      },
+      "renter": {
+       "households": 43843169.0,
+       "persons_per_household": 2.3170089506987965,
+       "one_person_share": 0.39344037836316076
+      }
+     },
+     "by_structure": {
+      "1, detached or attached": {
+       "households": 87375813.0,
+       "persons_per_household": 2.7325167778410258
+      },
+      "2 to 4": {
+       "households": 9432022.0,
+       "persons_per_household": 2.2753958801198726
+      },
+      "5 or more": {
+       "households": 23347309.0,
+       "persons_per_household": 1.8908669945645555
+      },
+      "mobile home": {
+       "households": 6375688.0,
+       "persons_per_household": 2.5379855475989417
+      },
+      "boat, RV, van, etc.": {
+       "households": 179303.0,
+       "persons_per_household": 1.8206388069357455
+      }
+     },
+     "by_structure_units": 80708
+    },
+    "village": {
+     "units": 24543,
+     "households": 35450718.0,
+     "shares_ppm": [
+      255238,
+      377663,
+      149835,
+      124017,
+      57864,
+      21849,
+      13534
+     ],
+     "persons_per_household": 2.536721089823907,
+     "one_person_share": 0.25523801802829493,
+     "top_band_residual_mean": 11.834635641917593,
+     "top_band_residual_mean_pop_plus_1pct": 13.708971735492067,
+     "top_band_residual_mean_pop_minus_1pct": 9.960299548343118,
+     "by_tenure": {
+      "owner": {
+       "households": 28200981.0,
+       "persons_per_household": 2.588474989575717,
+       "one_person_share": 0.22174434286523578
+      },
+      "renter": {
+       "households": 7249737.0,
+       "persons_per_household": 2.3354019600986904,
+       "one_person_share": 0.38552612322350455
+      }
+     },
+     "by_structure": {
+      "1, detached or attached": {
+       "households": 28125197.0,
+       "persons_per_household": 2.613286868710644
+      },
+      "2 to 4": {
+       "households": 1258359.0,
+       "persons_per_household": 1.9820893719518833
+      },
+      "5 or more": {
+       "households": 1688733.0,
+       "persons_per_household": 1.7422724610699263
+      },
+      "mobile home": {
+       "households": 4277108.0,
+       "persons_per_household": 2.528943388850597
+      },
+      "boat, RV, van, etc.": {
+       "households": 101321.0,
+       "persons_per_household": 1.7409915022552087
+      }
+     },
+     "by_structure_units": 24543,
+     "n_eff_counties": 1534.5154683171834,
+     "split_half_gap_95": {
+      "mean": 0.020963964441497018,
+      "p1": 0.00435481284239452
+     }
+    },
+    "suburban": {
+     "units": 28145,
+     "households": 46875210.0,
+     "shares_ppm": [
+      285493,
+      340975,
+      154633,
+      128882,
+      57497,
+      20756,
+      11763
+     ],
+     "persons_per_household": 2.5067834149436345,
+     "one_person_share": 0.285493206323769,
+     "top_band_residual_mean": 12.572415931867726,
+     "top_band_residual_mean_pop_plus_1pct": 14.703471884192533,
+     "top_band_residual_mean_pop_minus_1pct": 10.441359979542916,
+     "by_tenure": {
+      "owner": {
+       "households": 32115571.0,
+       "persons_per_household": 2.634954645520704,
+       "one_person_share": 0.22703535303793915
+      },
+      "renter": {
+       "households": 14759639.0,
+       "persons_per_household": 2.2278950047491,
+       "one_person_share": 0.4126919364355727
+      }
+     },
+     "by_structure": {
+      "1, detached or attached": {
+       "households": 35004307.0,
+       "persons_per_household": 2.7036412976266035
+      },
+      "2 to 4": {
+       "households": 2829242.0,
+       "persons_per_household": 2.047620882200957
+      },
+      "5 or more": {
+       "households": 7525708.0,
+       "persons_per_household": 1.772104498340887
+      },
+      "mobile home": {
+       "households": 1468734.0,
+       "persons_per_household": 2.4855794173757806
+      },
+      "boat, RV, van, etc.": {
+       "households": 47219.0,
+       "persons_per_household": 1.836082932717762
+      }
+     },
+     "by_structure_units": 28145,
+     "n_eff_counties": 368.11952471652535,
+     "split_half_gap_95": {
+      "mean": 0.04580755176766269,
+      "p1": 0.010379803217874066
+     }
+    },
+    "terraced": {
+     "units": 22571,
+     "households": 35804315.0,
+     "shares_ppm": [
+      299563,
+      306221,
+      158932,
+      129482,
+      62651,
+      25455,
+      17696
+     ],
+     "persons_per_household": 2.5860926539161553,
+     "one_person_share": 0.29956311131772806,
+     "top_band_residual_mean": 12.058183287456753,
+     "top_band_residual_mean_pop_plus_1pct": 13.519603967271909,
+     "top_band_residual_mean_pop_minus_1pct": 10.5967626076416,
+     "by_tenure": {
+      "owner": {
+       "households": 19909013.0,
+       "persons_per_household": 2.7461127781673556,
+       "one_person_share": 0.23559590824517518
+      },
+      "renter": {
+       "households": 15895302.0,
+       "persons_per_household": 2.385665965956482,
+       "one_person_share": 0.3796826257217384
+      }
+     },
+     "by_structure": {
+      "1, detached or attached": {
+       "households": 22362343.0,
+       "persons_per_household": 2.8934831649796267
+      },
+      "2 to 4": {
+       "households": 3627781.0,
+       "persons_per_household": 2.3215943851075904
+      },
+      "5 or more": {
+       "households": 9191060.0,
+       "persons_per_household": 1.936174500003264
+      },
+      "mobile home": {
+       "households": 596612.0,
+       "persons_per_household": 2.7120758549945356
+      },
+      "boat, RV, van, etc.": {
+       "households": 26519.0,
+       "persons_per_household": 1.9768467890946113
+      }
+     },
+     "by_structure_units": 22571,
+     "n_eff_counties": 89.76983125086976,
+     "split_half_gap_95": {
+      "mean": 0.10348940055558975,
+      "p1": 0.022837793691301816
+     }
+    },
+    "apartment blocks": {
+     "units": 3177,
+     "households": 4666448.0,
+     "shares_ppm": [
+      344038,
+      283416,
+      148764,
+      113994,
+      60032,
+      26560,
+      23197
+     ],
+     "persons_per_household": 2.51999422258643,
+     "one_person_share": 0.3440381206433673,
+     "top_band_residual_mean": 10.662598847091862,
+     "top_band_residual_mean_pop_plus_1pct": 11.74893965708374,
+     "top_band_residual_mean_pop_minus_1pct": 9.576258037099986,
+     "by_tenure": {
+      "owner": {
+       "households": 1639129.0,
+       "persons_per_household": 2.760497800966245,
+       "one_person_share": 0.27286687014871924
+      },
+      "renter": {
+       "households": 3027319.0,
+       "persons_per_household": 2.3897745827248467,
+       "one_person_share": 0.38257349159437776
+      }
+     },
+     "by_structure": {
+      "1, detached or attached": {
+       "households": 1478481.0,
+       "persons_per_household": 3.1490550098377996
+      },
+      "2 to 4": {
+       "households": 1016590.0,
+       "persons_per_household": 2.7000855802240826
+      },
+      "5 or more": {
+       "households": 2142048.0,
+       "persons_per_household": 1.995355379524642
+      },
+      "mobile home": {
+       "households": 26961.0,
+       "persons_per_household": 2.9264122250658358
+      },
+      "boat, RV, van, etc.": {
+       "households": 2368.0,
+       "persons_per_household": 2.397804054054054
+      }
+     },
+     "by_structure_units": 3177,
+     "n_eff_counties": 17.085377175540568,
+     "split_half_gap_95": null
+    },
+    "dense fabric": {
+     "units": 2272,
+     "households": 3913444.0,
+     "shares_ppm": [
+      381954,
+      296377,
+      141412,
+      97934,
+      45544,
+      19845,
+      16934
+     ],
+     "persons_per_household": 2.3214038580851035,
+     "one_person_share": 0.3819535938165973,
+     "top_band_residual_mean": 10.861479961371318,
+     "top_band_residual_mean_pop_plus_1pct": 12.23229780299372,
+     "top_band_residual_mean_pop_minus_1pct": 9.490662119748915,
+     "by_tenure": {
+      "owner": {
+       "households": 1002272.0,
+       "persons_per_household": 2.4635388397560742,
+       "one_person_share": 0.3238342485872099
+      },
+      "renter": {
+       "households": 2911172.0,
+       "persons_per_household": 2.2724689575195143,
+       "one_person_share": 0.4019631955789627
+      }
+     },
+     "by_structure": {
+      "1, detached or attached": {
+       "households": 405485.0,
+       "persons_per_household": 3.0992416488896013
+      },
+      "2 to 4": {
+       "households": 700050.0,
+       "persons_per_household": 2.867042354117563
+      },
+      "5 or more": {
+       "households": 2799760.0,
+       "persons_per_household": 2.0710485898791324
+      },
+      "mobile home": {
+       "households": 6273.0,
+       "persons_per_household": 2.7465327594452416
+      },
+      "boat, RV, van, etc.": {
+       "households": 1876.0,
+       "persons_per_household": 2.796908315565032
+      }
+     },
+     "by_structure_units": 2272,
+     "n_eff_counties": 8.108742787447172,
+     "split_half_gap_95": null
+    }
+   }
+  },
+  "block group": {
+   "exclusions": {
+    "coded": 0,
+    "zero_land": 603,
+    "zero_households": 2678,
+    "group_quarters": 5548,
+    "no_area_on_file": 401,
+    "under_floor": 1454,
+    "units_total": 239742,
+    "households_kept_share": 0.980641329199308
+   },
+   "rows": {
+    "nation": {
+     "units": 230657,
+     "households": 126708015.0,
+     "shares_ppm": [
+      286163,
+      337852,
+      153895,
+      126197,
+      58788,
+      22583,
+      14524
+     ],
+     "persons_per_household": 2.532457784931758,
+     "one_person_share": 0.2861625446503917,
+     "top_band_residual_mean": 12.027611829185192,
+     "top_band_residual_mean_pop_plus_1pct": 13.77129125635372,
+     "top_band_residual_mean_pop_minus_1pct": 10.283932402016664,
+     "by_tenure": {
+      "owner": {
+       "households": 82858473.0,
+       "persons_per_household": 2.6465146660378354,
+       "one_person_share": 0.2293646299757419
+      },
+      "renter": {
+       "households": 43849542.0,
+       "persons_per_household": 2.3169349180431578,
+       "one_person_share": 0.39348837440537004
+      }
+     },
+     "by_structure": {
+      "1, detached or attached": {
+       "households": 87365085.0,
+       "persons_per_household": 2.7327445397666583
+      },
+      "2 to 4": {
+       "households": 9435565.0,
+       "persons_per_household": 2.2752121362101794
+      },
+      "5 or more": {
+       "households": 23349789.0,
+       "persons_per_household": 1.8908113902014274
+      },
+      "mobile home": {
+       "households": 6379048.0,
+       "persons_per_household": 2.5384480568260344
+      },
+      "boat, RV, van, etc.": {
+       "households": 178528.0,
+       "persons_per_household": 1.8226776752106113
+      }
+     },
+     "by_structure_units": 230657
+    },
+    "village": {
+     "units": 64404,
+     "households": 32000670.0,
+     "shares_ppm": [
+      253567,
+      383094,
+      149217,
+      122339,
+      56928,
+      21417,
+      13437
+     ],
+     "persons_per_household": 2.52998690339921,
+     "one_person_share": 0.2535666596980626,
+     "top_band_residual_mean": 11.913412855857093,
+     "top_band_residual_mean_pop_plus_1pct": 13.796307667977583,
+     "top_band_residual_mean_pop_minus_1pct": 10.0305180437366,
+     "by_tenure": {
+      "owner": {
+       "households": 25852747.0,
+       "persons_per_household": 2.578289881535606,
+       "one_person_share": 0.22185023510267593
+      },
+      "renter": {
+       "households": 6147923.0,
+       "persons_per_household": 2.3268671387068447,
+       "one_person_share": 0.3869379951570636
+      }
+     },
+     "by_structure": {
+      "1, detached or attached": {
+       "households": 25467284.0,
+       "persons_per_household": 2.600553007537042
+      },
+      "2 to 4": {
+       "households": 982329.0,
+       "persons_per_household": 1.9673347727696118
+      },
+      "5 or more": {
+       "households": 1382449.0,
+       "persons_per_household": 1.720441766748719
+      },
+      "mobile home": {
+       "households": 4073426.0,
+       "persons_per_household": 2.5178834720453986
+      },
+      "boat, RV, van, etc.": {
+       "households": 95182.0,
+       "persons_per_household": 1.7319346094849866
+      }
+     },
+     "by_structure_units": 64404,
+     "n_eff_counties": 1541.8651454455423,
+     "split_half_gap_95": {
+      "mean": 0.02050495315646108,
+      "p1": 0.004340508438660234
+     }
+    },
+    "suburban": {
+     "units": 77962,
+     "households": 44520980.0,
+     "shares_ppm": [
+      287110,
+      345767,
+      153013,
+      126944,
+      56080,
+      20055,
+      11032
+     ],
+     "persons_per_household": 2.486659839922661,
+     "one_person_share": 0.28710994232382125,
+     "top_band_residual_mean": 12.73341246701632,
+     "top_band_residual_mean_pop_plus_1pct": 14.987470945857897,
+     "top_band_residual_mean_pop_minus_1pct": 10.479353988174744,
+     "by_tenure": {
+      "owner": {
+       "households": 31111793.0,
+       "persons_per_household": 2.6125344816995923,
+       "one_person_share": 0.2289143219743073
+      },
+      "renter": {
+       "households": 13409187.0,
+       "persons_per_household": 2.19460739864393,
+       "one_person_share": 0.42213454104264486
+      }
+     },
+     "by_structure": {
+      "1, detached or attached": {
+       "households": 33768125.0,
+       "persons_per_household": 2.6707142608599086
+      },
+      "2 to 4": {
+       "households": 2614155.0,
+       "persons_per_household": 2.0054518572923183
+      },
+      "5 or more": {
+       "households": 6566294.0,
+       "persons_per_household": 1.7353304619013403
+      },
+      "mobile home": {
+       "households": 1523957.0,
+       "persons_per_household": 2.492007320416521
+      },
+      "boat, RV, van, etc.": {
+       "households": 48449.0,
+       "persons_per_household": 1.8278189436314476
+      }
+     },
+     "by_structure_units": 77962,
+     "n_eff_counties": 402.3463499045806,
+     "split_half_gap_95": {
+      "mean": 0.04208066695797085,
+      "p1": 0.009917735363340932
+     }
+    },
+    "terraced": {
+     "units": 70175,
+     "households": 39369197.0,
+     "shares_ppm": [
+      294372,
+      306145,
+      160046,
+      132577,
+      63800,
+      25692,
+      17369
+     ],
+     "persons_per_household": 2.5982604369603983,
+     "one_person_share": 0.2943723236214343,
+     "top_band_residual_mean": 11.975895896949915,
+     "top_band_residual_mean_pop_plus_1pct": 13.471857004551138,
+     "top_band_residual_mean_pop_minus_1pct": 10.47993478934869,
+     "by_tenure": {
+      "owner": {
+       "households": 22594018.0,
+       "persons_per_household": 2.7597224185622937,
+       "one_person_share": 0.23107890770025943
+      },
+      "renter": {
+       "households": 16775179.0,
+       "persons_per_household": 2.3807918234434338,
+       "one_person_share": 0.3796204499516816
+      }
+     },
+     "by_structure": {
+      "1, detached or attached": {
+       "households": 25540819.0,
+       "persons_per_household": 2.8969640715123504
+      },
+      "2 to 4": {
+       "households": 3775137.0,
+       "persons_per_household": 2.269087717876199
+      },
+      "5 or more": {
+       "households": 9302134.0,
+       "persons_per_household": 1.905805162557323
+      },
+      "mobile home": {
+       "households": 722415.0,
+       "persons_per_household": 2.6985057065537124
+      },
+      "boat, RV, van, etc.": {
+       "households": 28692.0,
+       "persons_per_household": 1.9858845671267251
+      }
+     },
+     "by_structure_units": 70175,
+     "n_eff_counties": 115.83236645980598,
+     "split_half_gap_95": {
+      "mean": 0.09442113990650318,
+      "p1": 0.019972090774793366
+     }
+    },
+    "apartment blocks": {
+     "units": 10446,
+     "households": 5976281.0,
+     "shares_ppm": [
+      329263,
+      281543,
+      154059,
+      119295,
+      63684,
+      28036,
+      24120
+     ],
+     "persons_per_household": 2.581938165223489,
+     "one_person_share": 0.3292626300537073,
+     "top_band_residual_mean": 10.928669048527524,
+     "top_band_residual_mean_pop_plus_1pct": 11.999145860071462,
+     "top_band_residual_mean_pop_minus_1pct": 9.858192236983587,
+     "by_tenure": {
+      "owner": {
+       "households": 2055179.0,
+       "persons_per_household": 2.8512810806260673,
+       "one_person_share": 0.25614946435322666
+      },
+      "renter": {
+       "households": 3921102.0,
+       "persons_per_household": 2.4407666518239006,
+       "one_person_share": 0.3675836537789632
+      }
+     },
+     "by_structure": {
+      "1, detached or attached": {
+       "households": 1992151.0,
+       "persons_per_household": 3.2311621960383525
+      },
+      "2 to 4": {
+       "households": 1203771.0,
+       "persons_per_household": 2.673604032660697
+      },
+      "5 or more": {
+       "households": 2727334.0,
+       "persons_per_household": 2.054794902274529
+      },
+      "mobile home": {
+       "households": 49493.0,
+       "persons_per_household": 3.2890711817832825
+      },
+      "boat, RV, van, etc.": {
+       "households": 3532.0,
+       "persons_per_household": 2.2989807474518686
+      }
+     },
+     "by_structure_units": 10446,
+     "n_eff_counties": 25.311165194804104,
+     "split_half_gap_95": null
+    },
+    "dense fabric": {
+     "units": 7670,
+     "households": 4840887.0,
+     "shares_ppm": [
+      372948,
+      293358,
+      142694,
+      101461,
+      49182,
+      21517,
+      18839
+     ],
+     "persons_per_household": 2.3737540248305735,
+     "one_person_share": 0.3729483873513263,
+     "top_band_residual_mean": 10.88962477247308,
+     "top_band_residual_mean_pop_plus_1pct": 12.149638698217066,
+     "top_band_residual_mean_pop_minus_1pct": 9.629610846729095,
+     "by_tenure": {
+      "owner": {
+       "households": 1244736.0,
+       "persons_per_household": 2.519847582137899,
+       "one_person_share": 0.3213500694123091
+      },
+      "renter": {
+       "households": 3596151.0,
+       "persons_per_household": 2.323186651506013,
+       "one_person_share": 0.3908081167893117
+      }
+     },
+     "by_structure": {
+      "1, detached or attached": {
+       "households": 596706.0,
+       "persons_per_household": 3.191900198757847
+      },
+      "2 to 4": {
+       "households": 860173.0,
+       "persons_per_household": 2.9159901554687253
+      },
+      "5 or more": {
+       "households": 3371578.0,
+       "persons_per_household": 2.08945692491765
+      },
+      "mobile home": {
+       "households": 9757.0,
+       "persons_per_household": 2.7191759762221994
+      },
+      "boat, RV, van, etc.": {
+       "households": 2673.0,
+       "persons_per_household": 2.579498690609802
+      }
+     },
+     "by_structure_units": 7670,
+     "n_eff_counties": 11.47882622186855,
+     "split_half_gap_95": null
+    }
+   }
+  }
+ },
+ "budgets": {
+  "mean": 0.12,
+  "p1": 0.03
+ },
+ "class_lower_bounds_per_km2": [
+  0.0,
+  250.0,
+  1500.0,
+  6000.0,
+  12000.0
+ ],
+ "generator": {
+  "final": {
+   "mean": 2.5,
+   "p1": 0.18241935161296774,
+   "shares": [
+    0.0,
+    0.18241935161296774,
+    0.3211295774084518,
+    0.3547509049819004,
+    0.10625187496250076,
+    0.02733645327093458,
+    0.007403851922961541,
+    0.0007079858402831943
+   ]
+  },
+  "drawn": {
+   "mean": 2.5375392492150155,
+   "p1": 0.18241935161296774,
+   "shares": [
+    0.0,
+    0.18241935161296774,
+    0.31718465630687387,
+    0.31873362532749344,
+    0.14701205975880483,
+    0.03140037199256015,
+    0.003249935001299974,
+    0.0
+   ]
+  }
+ },
+ "verdicts": {
+  "tract": {
+   "nation": {
+    "n_eff": 304.0473532116581,
+    "counties": 2978,
+    "households": 126710135.0,
+    "mean": {
+     "generator": 2.5,
+     "reference": 2.5323307010919054,
+     "difference": -0.03233070109190539,
+     "budget": 0.12,
+     "split_half_gap_95": 0.05305702846435404,
+     "verdict": "certified",
+     "reason": "within budget"
+    },
+    "p1": {
+     "generator": 0.18241935161296774,
+     "reference": 0.286139439437895,
+     "difference": -0.10372008782492725,
+     "budget": 0.03,
+     "split_half_gap_95": 0.010721564212377015,
+     "verdict": "refused",
+     "reason": "outside budget",
+     "witness": "one-person share"
+    },
+    "w1_top_at_8": 0.42160717158731964
+   },
+   "village": {
+    "n_eff": 1534.5154683171834,
+    "counties": 2934,
+    "households": 35450718.0,
+    "mean": {
+     "generator": 2.5,
+     "reference": 2.536721089823907,
+     "difference": -0.03672108982390698,
+     "budget": 0.12,
+     "split_half_gap_95": 0.020963964441497018,
+     "verdict": "certified",
+     "reason": "within budget"
+    },
+    "p1": {
+     "generator": 0.18241935161296774,
+     "reference": 0.25523801802829493,
+     "difference": -0.0728186664153272,
+     "budget": 0.03,
+     "split_half_gap_95": 0.00435481284239452,
+     "verdict": "refused",
+     "reason": "outside budget",
+     "witness": "one-person share"
+    },
+    "w1_top_at_8": 0.38845690646375874
+   },
+   "suburban": {
+    "n_eff": 368.11952471652535,
+    "counties": 1611,
+    "households": 46875210.0,
+    "mean": {
+     "generator": 2.5,
+     "reference": 2.5067834149436345,
+     "difference": -0.006783414943634547,
+     "budget": 0.12,
+     "split_half_gap_95": 0.04580755176766269,
+     "verdict": "certified",
+     "reason": "within budget"
+    },
+    "p1": {
+     "generator": 0.18241935161296774,
+     "reference": 0.285493206323769,
+     "difference": -0.10307385471080127,
+     "budget": 0.03,
+     "split_half_gap_95": 0.010379803217874066,
+     "verdict": "refused",
+     "reason": "outside budget",
+     "witness": "one-person share"
+    },
+    "w1_top_at_8": 0.4042762816189624
+   },
+   "terraced": {
+    "n_eff": 89.76983125086976,
+    "counties": 724,
+    "households": 35804315.0,
+    "mean": {
+     "generator": 2.5,
+     "reference": 2.5860926539161553,
+     "difference": -0.08609265391615528,
+     "budget": 0.12,
+     "split_half_gap_95": 0.10348940055558975,
+     "verdict": "unresolved",
+     "reason": "reference's own split-half gap exceeds half the budget"
+    },
+    "p1": {
+     "generator": 0.18241935161296774,
+     "reference": 0.29956311131772806,
+     "difference": -0.11714375970476032,
+     "budget": 0.03,
+     "split_half_gap_95": 0.022837793691301816,
+     "verdict": "unresolved",
+     "reason": "reference's own split-half gap exceeds half the budget"
+    },
+    "w1_top_at_8": 0.45232980304957526
+   },
+   "apartment blocks": {
+    "n_eff": 17.085377175540568,
+    "counties": 135,
+    "households": 4666448.0,
+    "mean": {
+     "verdict": "unresolved",
+     "reason": "effective counties under 30"
+    },
+    "p1": {
+     "verdict": "unresolved",
+     "reason": "effective counties under 30"
+    },
+    "w1_top_at_8": 0.5285687525998428
+   },
+   "dense fabric": {
+    "n_eff": 8.108742787447172,
+    "counties": 62,
+    "households": 3913444.0,
+    "mean": {
+     "verdict": "unresolved",
+     "reason": "effective counties under 30"
+    },
+    "p1": {
+     "verdict": "unresolved",
+     "reason": "effective counties under 30"
+    },
+    "w1_top_at_8": 0.5208691967952881
+   }
+  },
+  "block group": {
+   "nation": {
+    "n_eff": 304.0595649086314,
+    "counties": 3058,
+    "households": 126708015.0,
+    "mean": {
+     "generator": 2.5,
+     "reference": 2.532457784931758,
+     "difference": -0.032457784931758216,
+     "budget": 0.12,
+     "split_half_gap_95": 0.05271995165404004,
+     "verdict": "certified",
+     "reason": "within budget"
+    },
+    "p1": {
+     "generator": 0.18241935161296774,
+     "reference": 0.2861625446503917,
+     "difference": -0.10374319303742396,
+     "budget": 0.03,
+     "split_half_gap_95": 0.010876366778337808,
+     "verdict": "refused",
+     "reason": "outside budget",
+     "witness": "one-person share"
+    },
+    "w1_top_at_8": 0.4216709308818176
+   },
+   "village": {
+    "n_eff": 1541.8651454455423,
+    "counties": 3033,
+    "households": 32000670.0,
+    "mean": {
+     "generator": 2.5,
+     "reference": 2.52998690339921,
+     "difference": -0.029986903399210174,
+     "budget": 0.12,
+     "split_half_gap_95": 0.02050495315646108,
+     "verdict": "certified",
+     "reason": "within budget"
+    },
+    "p1": {
+     "generator": 0.18241935161296774,
+     "reference": 0.2535666596980626,
+     "difference": -0.07114730808509484,
+     "budget": 0.03,
+     "split_half_gap_95": 0.004340508438660234,
+     "verdict": "refused",
+     "reason": "outside budget",
+     "witness": "one-person share"
+    },
+    "w1_top_at_8": 0.38521408522582756
+   },
+   "suburban": {
+    "n_eff": 402.3463499045806,
+    "counties": 2327,
+    "households": 44520980.0,
+    "mean": {
+     "generator": 2.5,
+     "reference": 2.486659839922661,
+     "difference": 0.013340160077338847,
+     "budget": 0.12,
+     "split_half_gap_95": 0.04208066695797085,
+     "verdict": "certified",
+     "reason": "within budget"
+    },
+    "p1": {
+     "generator": 0.18241935161296774,
+     "reference": 0.28710994232382125,
+     "difference": -0.10469059071085351,
+     "budget": 0.03,
+     "split_half_gap_95": 0.009917735363340932,
+     "verdict": "refused",
+     "reason": "outside budget",
+     "witness": "one-person share"
+    },
+    "w1_top_at_8": 0.40176962796076365
+   },
+   "terraced": {
+    "n_eff": 115.83236645980598,
+    "counties": 1293,
+    "households": 39369197.0,
+    "mean": {
+     "generator": 2.5,
+     "reference": 2.5982604369603983,
+     "difference": -0.09826043696039832,
+     "budget": 0.12,
+     "split_half_gap_95": 0.09442113990650318,
+     "verdict": "unresolved",
+     "reason": "reference's own split-half gap exceeds half the budget"
+    },
+    "p1": {
+     "generator": 0.18241935161296774,
+     "reference": 0.2943723236214343,
+     "difference": -0.11195297200846654,
+     "budget": 0.03,
+     "split_half_gap_95": 0.019972090774793366,
+     "verdict": "unresolved",
+     "reason": "reference's own split-half gap exceeds half the budget"
+    },
+    "w1_top_at_8": 0.4463388703073552
+   },
+   "apartment blocks": {
+    "n_eff": 25.311165194804104,
+    "counties": 281,
+    "households": 5976281.0,
+    "mean": {
+     "verdict": "unresolved",
+     "reason": "effective counties under 30"
+    },
+    "p1": {
+     "verdict": "unresolved",
+     "reason": "effective counties under 30"
+    },
+    "w1_top_at_8": 0.518793037569441
+   },
+   "dense fabric": {
+    "n_eff": 11.47882622186855,
+    "counties": 130,
+    "households": 4840887.0,
+    "mean": {
+     "verdict": "unresolved",
+     "reason": "effective counties under 30"
+    },
+    "p1": {
+     "verdict": "unresolved",
+     "reason": "effective counties under 30"
+    },
+    "w1_top_at_8": 0.5251815124539937
+   }
+  }
+ },
+ "S2": {
+  "FIT-NATION-1": {
+   "mean": 2.509770816247405,
+   "p1": 0.290175833973634
+  },
+  "FIT-CLASS-1": {
+   "village": {
+    "mean": 2.5261676696986646,
+    "p1": 0.2546000014555849,
+    "n_eff_fit": 686.9168955527555,
+    "n_eff_score": 891.9663334647292
+   },
+   "suburban": {
+    "mean": 2.502473019452141,
+    "p1": 0.2857721536786605,
+    "n_eff_fit": 174.8684012372611,
+    "n_eff_score": 198.2357509012659
+   },
+   "terraced": {
+    "mean": 2.5350679025607477,
+    "p1": 0.3106939162022983,
+    "n_eff_fit": 54.9023237091955,
+    "n_eff_score": 38.642146077223444
+   },
+   "apartment blocks": {
+    "mean": 2.464766378259439,
+    "p1": 0.3485011466211633,
+    "n_eff_fit": 13.465949848825765,
+    "n_eff_score": 5.293549349607889
+   },
+   "dense fabric": {
+    "mean": 2.37463777315354,
+    "p1": 0.3667554103275052,
+    "n_eff_fit": 5.859346270952499,
+    "n_eff_score": 5.772796961263833
+   }
+  },
+  "classes_used": [
+   "village",
+   "suburban",
+   "terraced"
+  ],
+  "classes_left_out": [
+   "apartment blocks",
+   "dense fabric"
+  ],
+  "per_class": {
+   "village": {
+    "units": 212,
+    "households": 6246201.0,
+    "within_class_rule": 0.26572327723683564,
+    "within_national_rule": 0.12881782062408814,
+    "within_mean_only_class": 0.45388965228624567,
+    "within_p1_only_class": 0.46048342024216,
+    "within_mean_only_nation": 0.4531636109692916,
+    "within_p1_only_nation": 0.2228476156947239
+   },
+   "suburban": {
+    "units": 245,
+    "households": 18726542.0,
+    "within_class_rule": 0.2131901340888243,
+    "within_national_rule": 0.21694918367737087,
+    "within_mean_only_class": 0.3546451341630505,
+    "within_p1_only_class": 0.3248199267115093,
+    "within_mean_only_nation": 0.3500839076429594,
+    "within_p1_only_nation": 0.33734711939876566
+   },
+   "terraced": {
+    "units": 111,
+    "households": 16988055.0,
+    "within_class_rule": 0.11962970451885163,
+    "within_national_rule": 0.13923512727030846,
+    "within_mean_only_class": 0.21139465347857656,
+    "within_p1_only_class": 0.17096501041467077,
+    "within_mean_only_nation": 0.2166783071987935,
+    "within_p1_only_nation": 0.2500458116011515
+   }
+  },
+  "units": 568,
+  "coverage_of_score_households": 0.6963941889234039,
+  "share_within_class_rule": 0.18313166970752082,
+  "share_within_national_rule": 0.17236716994753054,
+  "difference": 0.010764499759990276,
+  "outcome": "neither"
+ },
+ "S2b": {
+  "village": {
+   "mean_tract_minus_block_group": 0.006734186424696809,
+   "p1_tract_minus_block_group": 0.0016713583302323531,
+   "transfers": true
+  },
+  "suburban": {
+   "mean_tract_minus_block_group": 0.020123575020973394,
+   "p1_tract_minus_block_group": -0.0016167360000522435,
+   "transfers": true
+  },
+  "terraced": {
+   "mean_tract_minus_block_group": -0.012167783044243041,
+   "p1_tract_minus_block_group": 0.005190787696293775,
+   "transfers": true
+  }
+ },
+ "S3": {
+  "largest_mean_difference": 0.07930923897252073,
+  "largest_p1_difference": 0.044325093289433126,
+  "outcome": "met"
+ }
+}

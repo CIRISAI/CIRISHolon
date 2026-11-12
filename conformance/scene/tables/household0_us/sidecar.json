@@ -1,0 +1,51 @@
+{
+ "reference": "HOUSEHOLD-0 (United States)",
+ "version": 1,
+ "table": "household_table.json",
+ "bytes": 30105,
+ "sha256": "4d37f0720dca455780bfbbe0b94b4e66d6fec0f755bbcc6de8f8c68e3e71cc2e",
+ "serves_registry_rows": [
+  "persons per household (the size distribution of households, by density class of the census unit, by tenure and by structure band)"
+ ],
+ "preregistration": "conformance/scene/HOUSEHOLD0_PREREG.md at 3297bff",
+ "extractor": "conformance/scene/household0/household0.py",
+ "results": "conformance/scene/HOUSEHOLD0_RESULTS.md",
+ "sources": [
+  {
+   "name": "American Community Survey 5-year estimates 2020-2024, table-based summary file: B25008, B25009, B25032, B25033, B26001, at census tract and block group; 2024 tract gazetteer; 2024 cartographic boundary file for block groups (land area only)",
+   "publisher": "U.S. Census Bureau",
+   "licence": "no licence text attached; the Bureau asks to be cited as the source",
+   "file_sha256": "conformance/scene/household0/raw_file_sha256.txt",
+   "notice": "Source: U.S. Census Bureau, 2020-2024 American Community Survey 5-Year Estimates, Tables B25008, B25009, B25032, B25033 and B26001. This table is a derived work; it is not endorsed or certified by the Census Bureau. (The conventional source line; the Bureau's citation page was not re-read for this build.)"
+  }
+ ],
+ "keys": {
+  "unit": "census tract, and separately block group, of the 50 states and DC; Puerto Rico not read",
+  "class": "1 village, 2 suburban, 3 terraced, 4 apartment blocks, 5 dense fabric: lower bounds 0, 250, 1500, 6000, 12000 people in households per km2 of the UNIT's own land area; units under 1 per km2 not read (twin/globe classes.json)",
+  "blocks": "county; hold-out by state, seed 20261111"
+ },
+ "envelope": {
+  "country": "United States",
+  "window": "2020-2024",
+  "population": "households only; group quarters (2.4 % of people) are outside it",
+  "key": "density of a census unit, not of a 1 km tile and not of a twin leaf; the two census keys agree within both budgets in the three resolved classes",
+  "classes_resolved": "village, suburban, terraced by county count; apartment blocks and dense fabric are unresolved (effective counties 17 and 8) and their rows are readings only"
+ },
+ "budgets": {"persons_per_household": 0.12, "one_person_share": 0.03, "whose": "the campaign author's, on the consumer's behalf, stated before any file was read"},
+ "law": "each row's seven shares sum to 1,000,000 within 4 parts (rounding); persons_per_household is the published household population over households and is NOT the mean of the banded shares (the open top band's residual mean is about 12, not 8)",
+ "checker": "python3 -c \"import json;d=json.load(open('household_table.json'));assert all(abs(sum(r['shares_ppm'])-10**6)<=4 for k in d['keys'].values() for r in k['rows'].values())\"",
+ "verdict": {
+  "generator": "TWIN-SIZE-0: the twin's own emitted histogram, twin/hhsize b939214, sha256 438568abd0258d56bad0d2e286c98e3e03d855848969465af79914971bb0a418",
+  "households_per_leaf": "certified nationally and in village and suburban; unresolved in terraced (the reference's own split-half gap, 0.10, exceeds half the budget) and in the two densest classes",
+  "household_composition": "refused nationally (one-person share 0.182 against 0.286) and in village and suburban; unresolved in terraced by the frozen error floor although the miss (0.117) is five times that gap; unresolved in the two densest classes",
+  "for_the_twins_own_leaves": "outside the envelope: a leaf has no census unit. The verdicts are about the rule as a description of US households pooled by census-unit density."
+ },
+ "limits": [
+  "density class is a weak key: a rule keyed by class puts 18.3 % of large county-classes' households within both budgets, one national rule 17.2 %",
+  "structure band and tenure are strong keys and are published as readings with no verdict",
+  "one-person share by structure band does not exist in these tables (two margins, no joint)",
+  "the window includes 2020, collected at about two thirds of the usual responses",
+  "2.0 % of households sit in excluded units (heavy group quarters, no land, under the floor)"
+ ],
+ "holds_no_real_feature": "This table holds no coordinate, id, name or tag of any real feature, tract, block group, county or state. It holds rows of counts and shares by class."
+}

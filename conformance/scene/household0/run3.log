@@ -1,0 +1,104 @@
+plants: {'P-EQUAL': True, 'P-SHIFT': True, 'P-MEAN': True, 'P-TOP': True, 'P-THIN': True, 'P-NEFF': True, 'P-NOISY': True, 'P-GQ': True, 'P-ZEROLAND': True, 'P-SENTINEL': True, 'P-PORT': True}
+twin file sha256 438568abd0258d56bad0d2e286c98e3e03d855848969465af79914971bb0a418 scored: final mean 2.5000 p1 0.1824
+port agrees to 0.0013919721605568092
+states read: 51 FIT [1, 2, 4, 8, 9, 10, 17, 22, 23, 24, 25, 26, 27, 29, 33, 34, 36, 37, 38, 42, 44, 45, 46, 48, 49, 50] SCORE [5, 6, 11, 12, 13, 15, 16, 18, 19, 20, 21, 28, 30, 31, 32, 35, 39, 40, 41, 47, 51, 53, 54, 55, 56]
+G0: {'headers': True, 'labels': True, 'labels_read': {'B25008_002': 'Owner occupied', 'B25009_003': '1-person household', 'B25009_009': '7-or-more person household', 'B25009_010': 'Renter occupied:', 'B25009_011': '1-person household', 'B25009_017': '7-or-more person household', 'B25032_003': '1, detached', 'B25032_013': 'Renter-occupied housing units:', 'B25032_014': '1, detached', 'B25033_003': '1, detached or attached', 'B25033_008': 'Renter occupied:'}, 'cells_equal_total_units': 0, 'households_B25009_total': 129208869.0, 'households_B25009_cells': 129208869.0, 'households_B25032': 129208869.0, 'block_group_households': 129209336.0, 'persons_per_household': 2.5280472968152057, 'counties': 3144, 'pass': True}
+{
+ "S1_summary": {
+  "mean_nation": "certified",
+  "composition_by_class": {
+   "village": "refused",
+   "suburban": "refused",
+   "terraced": "unresolved"
+  },
+  "expectation": "stands"
+ },
+ "S3": {
+  "largest_mean_difference": 0.07930923897252073,
+  "largest_p1_difference": 0.044325093289433126,
+  "outcome": "met"
+ },
+ "S2b": {
+  "village": {
+   "mean_tract_minus_block_group": 0.006734186424696809,
+   "p1_tract_minus_block_group": 0.0016713583302323531,
+   "transfers": true
+  },
+  "suburban": {
+   "mean_tract_minus_block_group": 0.020123575020973394,
+   "p1_tract_minus_block_group": -0.0016167360000522435,
+   "transfers": true
+  },
+  "terraced": {
+   "mean_tract_minus_block_group": -0.012167783044243041,
+   "p1_tract_minus_block_group": 0.005190787696293775,
+   "transfers": true
+  }
+ },
+ "branch": "(a)",
+ "resolved": {
+  "tract": [
+   "village",
+   "suburban",
+   "terraced"
+  ],
+  "block group": [
+   "village",
+   "suburban",
+   "terraced"
+  ]
+ }
+}
+S2: {
+ "FIT-NATION-1": {
+  "mean": 2.509770816247405,
+  "p1": 0.290175833973634
+ },
+ "FIT-CLASS-1": {
+  "village": {
+   "mean": 2.5261676696986646,
+   "p1": 0.2546000014555849,
+   "n_eff_fit": 686.9168955527555,
+   "n_eff_score": 891.9663334647292
+  },
+  "suburban": {
+   "mean": 2.502473019452141,
+   "p1": 0.2857721536786605,
+   "n_eff_fit": 174.8684012372611,
+   "n_eff_score": 198.2357509012659
+  },
+  "terraced": {
+   "mean": 2.5350679025607477,
+   "p1": 0.3106939162022983,
+   "n_eff_fit": 54.9023237091955,
+   "n_eff_score": 38.642146077223444
+  },
+  "apartment blocks": {
+   "mean": 2.464766378259439,
+   "p1": 0.3485011466211633,
+   "n_eff_fit": 13.465949848825765,
+   "n_eff_score": 5.293549349607889
+  },
+  "dense fabric": {
+   "mean": 2.37463777315354,
+   "p1": 0.3667554103275052,
+   "n_eff_fit": 5.859346270952499,
+   "n_eff_score": 5.772796961263833
+  }
+ },
+ "classes_used": [
+  "village",
+  "suburban",
+  "terraced"
+ ],
+ "classes_left_out": [
+  "apartment blocks",
+  "dense fabric"
+ ],
+ "units": 568,
+ "coverage_of_score_households": 0.6963941889234039,
+ "share_within_class_rule": 0.18313166970752082,
+ "share_within_national_rule": 0.17236716994753054,
+ "difference": 0.010764499759990276,
+ "outcome": "neither"
+}

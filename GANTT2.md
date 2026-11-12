@@ -1526,3 +1526,25 @@ Records cited; nothing below changes a tier's status.*
 
 *(Placed at the end, not near the top, so that no earlier line number in this file moves:
 `conformance/record/record1.py` cites this file by line.)*
+
+### 2026-11-11, later — HOUSEHOLD-0 (United States): the first scene certificate verdicts
+
+- **Issued** (`conformance/scene/HOUSEHOLD0_RESULTS.md`, table and sidecar under
+  `conformance/scene/tables/household0_us/`): the twin's own emitted household-size
+  histogram against the US census household tables, under two budgets stated before any
+  file was read. Households per leaf: certified (2.500 against 2.532). Composition: refused
+  (one-person share 0.182 against 0.286). One pooled distance would have hidden both.
+- **Not forecast, and the finding:** density class is a weak key. A rule per class puts
+  18.3 % of large county-classes' households within both budgets; one national rule,
+  17.2 %. Building type moves persons per household by 0.84 and tenure moves the one-person
+  share by 0.16; density class moves them by 0.08 and 0.04.
+- **The review** (`HOUSEHOLD0_REVIEW.md`) found three faults in the draft before the freeze
+  (an inverted error floor, a budget no consumer reads, an unstable top band). The top
+  band's residual mean read about 12 where 8 is expected.
+- **Faults of this session:** G0 stopped the run twice on the author's reader (a column
+  slice one place early; a guessed label). No reading came out of either. The frozen error
+  floor withholds a plain refusal in one class and is left as frozen.
+- **Owed:** the same campaign for one European country; a split error floor; a generator
+  keyed on building type and tenure, stated and scored on its own freeze.
+
+*(Placed at the end, as above.)*

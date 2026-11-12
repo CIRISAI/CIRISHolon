@@ -1,5 +1,7 @@
 # PRESENCE-0 (United States) — who is at home, awake, at work or travelling in each hour of the week, from time diaries; the twin's flat duty cycles scored. PREREGISTRATION (DRAFT)
 
+*REVIEWED 2026-11-11 (`PRESENCE0_REVIEW.md`): fixed in `PRESENCE0_PREREG.md`, which replaces this text. Kept as written.*
+
 *DRAFT of 2026-11-11. NOT FROZEN; to be attacked by a second reader first. The dataset was
 approved by the lead ("approved all data sources"). Nothing has been fetched or computed.
 Data facts are from `SCOUT_RHYTHM_TIES.md` (documentation only, partly from archived

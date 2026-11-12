@@ -353,3 +353,23 @@ to 0.69 at layer 19 (item accuracy 0.875) and stays at 0.61 to 0.69 through laye
 And on four fit items Gemma chose a different verb on each (ponder, observe, speak,
 recall) where the deployed model mostly chose speak: the two models' habits at this bare
 step differ a lot.
+
+## The block annotation may start, 2026-11-12
+
+- **The lead's ruling, as the CIRISAgent session relays it:** "Yes" to the question put to
+  him in these words: do two independent model readers, blind to the existing labels and
+  to each other, satisfy the harness's two-independent-annotators rule for the block
+  classification. Conditions as that session states them: each briefed with the
+  harness's operational tests alone; neither sees the labels in the code; neither sees
+  the other's sheet; recorded as model readers. The bar is unchanged (kappa 0.8 overall
+  and on each boundary whose handling differs; disagreements adjudicated and logged). If
+  it is not reached, the classification stays uncitable and that is the result.
+- **Asked:** the Constitution session to run its two fresh readers, and the two sessions
+  to settle the hand-over of sheets directly, since the tool is in the agent's tree. The
+  RATCHET session's preference (two different models, or at least not two instances of
+  one model under one brief) is passed on as a preference, with what the readers were to
+  be stated in the record. Asked of the agent session: whether a sheet shows a reader
+  anything (a key name, a file name) that gives the class away.
+- **The pin is no longer local:** the agent's research branch is pushed (CIRISAgent
+  `research/render-stage1` at `e2311193b`) with the renderer and runner commits the
+  manifests cite in its history.

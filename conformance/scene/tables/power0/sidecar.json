@@ -1,9 +1,9 @@
 {
  "reference": "POWER-0 (a table of priors)",
- "version": 2,
+ "version": 3,
  "table": "power_table.json",
- "bytes": 14343,
- "sha256": "9689d96c06ec38a7a36d540d43c18f3473c7a74b8b336eaa32cc5fda27347e56",
+ "bytes": 19772,
+ "sha256": "d103390ab4f7ae9c8bf45f2a071cc3b87159f5cf84796f1e65f3facd7fa58b5f",
  "serves_registry_rows": [
   "device.energy (the twin's energy delta: per class and state, with a would-be-on-anyway flag and a year)"
  ],
@@ -16,5 +16,5 @@
  "warning": "network energy is mostly baseload per line. Pricing traffic kept local at an average kWh per GB would overstate the saving by a large factor; use the baseload and traffic-dependent rows, in a short-run and a long-run regime.",
  "licences": "values are facts quoted with their sources; the EU Code of Conduct is CC BY 4.0 (European Commission, Joint Research Centre)",
  "holds_no_real_feature": "no person, household or place",
- "changes": "version 2 (2026-11-11): four measured rows added from the US small-network-equipment report, read in a browser with the lead's leave after the site refused automated reading"
+ "changes": "version 2 (2026-11-11): four measured rows added from the US small-network-equipment report, read in a browser with the lead's leave after the site refused automated reading; version 3 (2026-11-11): ten rows added (measured gateways, repeater, decoder and per-subscription network energy from the French regulator; measured radio energy per wake-up; a whole-home always-on floor), and a dated correction to the fixed-network baseload"
 }

@@ -2,6 +2,126 @@
  "what": "a table of device, network and data-centre power figures gathered from documentation by a scout, for the twin's energy delta; priors, not a certificate",
  "rows": [
   {
+   "device_class": "home gateway (operator box)",
+   "state": "idle, Wi-Fi on",
+   "value": 9.1,
+   "unit": "W",
+   "would_be_on_anyway": "yes (declared)",
+   "year": 2024,
+   "source": "Arcep, Enquete annuelle 'Pour un numerique soutenable', 2026 edition (2024 data)",
+   "basis": "MEASURED on 36 box models by the French regulator; range 3.3 to 25.0 W",
+   "how_read": "scout's reading of the source",
+   "note": "traffic adds 0.1 W at 5 Mbit/s and 0.3 to 0.8 W at 50 Mbit/s"
+  },
+  {
+   "device_class": "home gateway with built-in disk",
+   "state": "idle",
+   "value": 19.4,
+   "unit": "W",
+   "would_be_on_anyway": "yes (declared)",
+   "year": 2024,
+   "source": "Arcep, Enquete annuelle 'Pour un numerique soutenable', 2026 edition (2024 data)",
+   "basis": "MEASURED",
+   "how_read": "scout's reading of the source",
+   "note": ""
+  },
+  {
+   "device_class": "Wi-Fi repeater",
+   "state": "idle",
+   "value": 5.6,
+   "unit": "W",
+   "would_be_on_anyway": "yes (declared)",
+   "year": 2024,
+   "source": "Arcep, Enquete annuelle 'Pour un numerique soutenable', 2026 edition (2024 data)",
+   "basis": "MEASURED",
+   "how_read": "scout's reading of the source",
+   "note": ""
+  },
+  {
+   "device_class": "TV decoder (operator set-top box)",
+   "state": "standby",
+   "value": 4.1,
+   "unit": "W",
+   "would_be_on_anyway": "yes (declared)",
+   "year": 2024,
+   "source": "Arcep, Enquete annuelle 'Pour un numerique soutenable', 2026 edition (2024 data)",
+   "basis": "MEASURED; 7.4 W in use; 77 % of French subscriptions have one",
+   "how_read": "scout's reading of the source",
+   "note": ""
+  },
+  {
+   "device_class": "fixed network, all technologies",
+   "state": "per subscription, annual",
+   "value": 20,
+   "unit": "kWh/year",
+   "would_be_on_anyway": "yes: about 2.3 W per line",
+   "year": 2024,
+   "source": "Arcep, Enquete annuelle 'Pour un numerique soutenable', 2026 edition (2024 data)",
+   "basis": "operators' reported consumption over subscriptions",
+   "how_read": "scout's reading of the source",
+   "note": "under 10 kWh on fibre, about 40 kWh on copper; French networks were flat at 4.1 TWh for 2022-2024 while traffic grew"
+  },
+  {
+   "device_class": "mobile network",
+   "state": "per SIM, annual",
+   "value": 40,
+   "unit": "kWh/year",
+   "would_be_on_anyway": "yes",
+   "year": 2024,
+   "source": "Arcep, Enquete annuelle 'Pour un numerique soutenable', 2026 edition (2024 data)",
+   "basis": "operators' reported consumption over SIMs",
+   "how_read": "scout's reading of the source",
+   "note": "0.19 kWh/GB on mobile access: cellular access is where traffic does cost energy"
+  },
+  {
+   "device_class": "phone radio, LTE",
+   "state": "one small packet including wake-up and tail",
+   "value": 12.76,
+   "unit": "J",
+   "would_be_on_anyway": "no: this is the ADDED cost of a wake-up",
+   "year": 2012,
+   "source": "Huang et al. 2012 (MobiSys), one LTE phone on a US carrier",
+   "basis": "MEASURED on one handset; tail 11.6 s at 1060 mW",
+   "how_read": "scout's reading of the source",
+   "note": "a 2021 study of two 5G phones found tail timers still about 10 s"
+  },
+  {
+   "device_class": "phone radio, 3G",
+   "state": "one small packet including wake-up and tail",
+   "value": 7.38,
+   "unit": "J",
+   "would_be_on_anyway": "no",
+   "year": 2012,
+   "source": "Huang et al. 2012 (MobiSys), one LTE phone on a US carrier",
+   "basis": "MEASURED on one handset",
+   "how_read": "scout's reading of the source",
+   "note": ""
+  },
+  {
+   "device_class": "phone radio, Wi-Fi",
+   "state": "one small packet including wake-up and tail",
+   "value": 0.04,
+   "unit": "J",
+   "would_be_on_anyway": "no",
+   "year": 2012,
+   "source": "Huang et al. 2012 (MobiSys), one LTE phone on a US carrier",
+   "basis": "MEASURED on one handset; tail 0.24 s at 119 mW",
+   "how_read": "scout's reading of the source",
+   "note": ""
+  },
+  {
+   "device_class": "whole home",
+   "state": "always-on load, every appliance",
+   "value": 164,
+   "unit": "W",
+   "would_be_on_anyway": "yes",
+   "year": 2015,
+   "source": "NRDC 2015, 70,000 California smart meters",
+   "basis": "MEASURED floor of the whole home, not only electronics; 23 % of use",
+   "how_read": "scout's reading of the source",
+   "note": ""
+  },
+  {
    "device_class": "integrated access device (modem with router and Wi-Fi: the usual home gateway)",
    "state": "ready (on, idle, no traffic)",
    "value": 13.77,
@@ -415,7 +535,14 @@
   "which devices in a home are actually on: no survey measures it; the flag here is a declared class",
   "data-centre energy attributable to messaging or social workloads alone",
   "the installed stock's draw (the measured rows are for new units of each year)",
-  "per-model values: the report's appendix lists 407 models and was not transcribed"
+  "per-model values: the report's appendix lists 407 models and was not transcribed",
+  "a current phone relaying on Wi-Fi, and anything equivalent for laptops: no measurement found",
+  "data-centre energy per user or per GB for messaging, feeds or file sync: no published figure; only a stated bound is possible",
+  "console standby, smart-speaker and network-storage watts: press summaries or the scout's own estimates only, left out"
  ],
- "finding": "Measured home gateways draw about twice the EU target: 13.8 W for a new US integrated gateway in 2025 against 6 to 8 W in the EU Code of Conduct, and the weighted average has stayed between 10 and 12.6 W for eleven years while speeds rose elevenfold. Routers and access points rose 20 % in one year (8.45 to 10.15 W) with Wi-Fi 7."
+ "finding": "Measured home gateways draw about twice the EU target: 13.8 W for a new US integrated gateway in 2025 against 6 to 8 W in the EU Code of Conduct, and the weighted average has stayed between 10 and 12.6 W for eleven years while speeds rose elevenfold. Routers and access points rose 20 % in one year (8.45 to 10.15 W) with Wi-Fi 7.",
+ "corrections": [
+  "CORRECTION 2026-11-11 (same day as version 1): the fixed-network baseload rows from Carbon Trust 2021 (5 W access + 1.5 W core per line) are about right for copper and several times too high for fibre. The French regulator's reported figure is 20 kWh per subscription a year (about 2.3 W), under 10 kWh on fibre. Both are kept; use the regulator's for a status quo and say which technology."
+ ],
+ "arithmetic_for_the_consumer": "From the 2012 LTE measurement: a small exchange every 5 minutes costs about 1 Wh a day on LTE and about 0.003 Wh on Wi-Fi. An exchange every 30 seconds with an 11.6 s tail keeps the radio in its high-power tail about 39 % of the time, about 0.4 W, about 10 Wh a day: most of a phone battery. This is arithmetic on one old handset, not a measurement of any current phone or of the mesh."
 }

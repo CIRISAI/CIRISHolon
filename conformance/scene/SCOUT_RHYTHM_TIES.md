@@ -365,3 +365,196 @@ Three cautions on using these as priors:
 - Registration for the ZVE 2022 PUF is the one action that would most improve A for Germany. It is a sign-up, so it is the user's call.
 - Licence wording for derived statistics is unconfirmed for: ZVE PUF, MiD 2023 publications, NHTS 2022, LODES (assumed public domain).
 - Not checked: German Zensus 2022 commuting outputs, US ACS/CTPP commuting flows (lead said ACS is known), UK and other national time-use microdata beyond a note.
+
+---
+---
+
+# B-ADDENDUM (2026-11-11): the tie-kind × distance-band table, source by source
+
+Written against the lead's sharper specification. Same rules and tags as above. New documentation fetched for this part: SHARE wave 7 generic showcards PDF, SHARE conditions of use and registration pages, POLYMOD data dictionary (42 KB xls, read as strings), Pew 2009 report pages and Pew terms, HDX metadata for the Social Capital Atlas, DIW/SOEP data-access page, GGP data page, GSS download page. gesis.org and understandingsociety.ac.uk returned nothing to my reader ("You are unable to access gesis.org"), so ISSP and Understanding Society facts are search summaries.
+
+## What the table can and cannot be filled with
+
+**No single source fills the table.** The honest state, kind by kind:
+
+| Kind of tie | Best source for share by distance band | Best source for contact frequency by mode | State |
+|---|---|---|---|
+| Own devices (self) | none found | none found | **Gap.** Distance is zero by definition; the open question is count of devices, which the ZVE PUF household file has (`hb132bx` computers, `hb133bx` smartphones/tablets) |
+| Same household | by definition; household generator already built | Pew 2009: in person 359 of 365 days, mobile voice 276 of 365 days for core ties in the same home | Filled for core ties, US 2008 |
+| Kin in other households, incl. abroad | SOEP (7 bands, by kin type, Germany); SHARE (8 bands, children and network members, age 50+); GSS 1986 (travel time to mother etc., US) | SHARE (frequency, modes lumped); GSS 1986 (visits and phone/letter separately); Pew 2009 (by mode and distance) | Best-covered kind. German sources need a contract |
+| Close friends | Understanding Society (4-5 bands, 3 closest friends, UK); Bailey 2020 (NYC, all Facebook friends); SCI (all Facebook friends, area pairs) | Pew 2009; Understanding Society (how often see) | Covered for UK and US; Germany only through SCI |
+| Work colleagues | no tie-level source; proxy is the commuting-distance distribution (LODES, Pendlerrechnung), since colleagues are met at the workplace | ATUS who-present (in person only); CoMix/POLYMOD "contact at work" | **Proxy only** |
+| School class | none found; proxy is school catchment size | CoMix/POLYMOD "contact at school" | **Gap, proxy only** |
+| Neighbours | by definition within the tile | Pew 2009: 61 % talk face to face with neighbours at least monthly, 25 % phone, 10 % of internet users email | Frequency filled, US 2008 |
+| Interest / community groups | none found on where fellow members live | none found | **Gap.** The Social Capital Atlas has civic-engagement rates by ZIP but not member distances |
+| Public / broadcast follows | none found as a table; literature only (see constants) | n/a | **Gap** |
+
+Every source lumps at least two of the lead's kinds. The usual lumps: "friends" without separating close from other; "other relative"; colleagues folded into "non-kin"; groups and follows absent.
+
+## Band mapping at a glance
+
+Lead's bands: same household | same building | within about 1 km | same city (under 25 km) | same region (under about 200 km) | elsewhere in country | abroad.
+
+| Source | Its own bands | Maps to ours? |
+|---|---|---|
+| **SHARE** | 1 In the same household; 2 In the same building; 3 Less than 1 kilometre away; 4 Between 1 and 5 kilometres away; 5 Between 5 and 25 kilometres away; 6 Between 25 and 100 kilometres away; 7 Between 100 and 500 kilometres away; 8 More than 500 kilometres away (showcard, read today) | **Nearly exact.** First four of ours map one to one (4 + 5 = same city). 100-500 km straddles our 200 km line. Abroad is a separate code only in some waves [search summary] |
+| **SOEP** | In the same household; In the same house; In the same neighborhood; In the same town, but more than 15 minutes away by foot; In another town, but within a one hour drive; Farther away (but in Germany); Abroad [search summary of paneldata.org] | **Good.** Household, building, neighbourhood (about 1 km), town, region (one-hour drive), country, abroad. Bands are verbal, not kilometres |
+| **pairfam** | same house; under 10 minutes; 10 to under 30 minutes; 30 minutes to under 1 hour; 1 to under 3 hours; 3 hours or more [search summary] | Travel time; needs a speed assumption. No "abroad" |
+| **GSS 1986 (ISSP 1986)** | travel time door to door, first band "LT 15 MIN" [search summary]; remaining bands [not confirmed; by my recollection 15-30 min, 30-60 min, 1-2 h, 2-3 h, 3-5 h, 5-12 h, over 12 h] | Travel time; coarse below 15 minutes, so no building or 1 km band |
+| **Understanding Society** | closest friends: less than 1 mile; less than 5 miles; 5 to 50 miles; over 50 miles; a later version adds "over fifty miles but still within the UK" and another country [search summary] | **Fair.** 1 mile ≈ our 1 km band (too wide by 60 %); under 5 miles ≈ city; 5-50 miles ≈ region; rest of UK; abroad. No building band |
+| **Pew 2009** | same home; same block or street; 1-5 miles; …; 50-100 miles; 50-500 miles; 500-3000 miles; more than 3,000 miles (bands as they appear in the report text; the full list is [not confirmed]) | **Fair.** "Same block or street" is the only source with a sub-1-km band other than SHARE and SOEP |
+| **Bailey 2020** | within 5 miles; within 10 miles; nearest 1 million people | City band only |
+| **Bailey 2018** | within 50, 100, 200 miles | Region band only |
+| **SCI 2026** | area pairs: ZCTA (US), NUTS3 (EU), GADM2 | Bands are built by us from centroid distances; floor is the area's own size |
+| **CoMix / POLYMOD** | place type: home, work, school, transport, leisure, other | **No distance.** Home = same household or visitors |
+| **ATUS who-present** | place type (TEWHERE) | **No distance** |
+
+---
+
+## Tier 1: open, no application
+
+### T1-a. General Social Survey (US), network modules
+
+- **Distance or travel time to named contacts?** Yes in 1986 only. `MATIME` is door-to-door travel time to where the respondent's mother lives; first band "LT 15 MIN" (27.3 %, 215 cases in the codebook frequency) [search summary of the SDA codebook mirror and gssrdoc]. The 1986 ISSP module asks the same for other relatives and for the best friend [my reading; the best-friend mnemonics were not found by the search].
+- **Frequency by mode?** 1986: `MAVISIT` (how often sees or visits; includes "lives in the same household", daily, several times a week …) and `MACALL` (contact "by telephone or letter", daily = 14.9 %) as separate items [search summary]. 1985 and 2004: `TALKTO1-5`, "Do you talk to (him/her) almost every day, at least once a week, at least once a month, or less than once a month?" for up to five confidants; all modes lumped [search summary].
+- **Kinds separated.** 1985/2004 name generator: spouse, parent, sibling, child, other family, co-worker, member of group, neighbour, friend, adviser, other [my reading; the search did not return the relationship codes]. This is the only source I found that has **"member of a group"** and **co-worker** as tie kinds, but it records no distance for them.
+- **Access.** gss.norc.org "Download the Data" in Stata and other formats; no registration mentioned on the page read today. Licence wording [not confirmed].
+- **Traps.** 1986 is forty years old and predates mobile phones; phone and letter are one category. Confidants ("discuss important matters") are a mean of about two people, not a person's whole tie set. The 2004 wave has a known interviewer/coding dispute about the share with zero confidants [my reading].
+- **Verdict: usable now** for kin and best-friend travel time and visit/call frequency as a dated US prior, and for the kind mix of the core network.
+
+### T1-b. Pew "Personal Networks and Community" survey, published report (US, 2008 fieldwork)
+
+- Report: Hampton, Sessions, Her, Rainie, "Social Isolation and New Technology", 4 Nov 2009, https://www.pewresearch.org/internet/2009/11/04/social-isolation-and-new-technology/ and its part 2 page.
+- **Distance to named contacts?** Yes: each core tie has a distance band (see mapping). The report states frequencies by band, not the share of ties per band; that share needs the dataset (tier 2).
+- **Frequency by mode? Yes, and this is the bridge to messages.** "we asked participants how many days per month they were in contact with each of their core ties using a variety of media, including face-to-face". Read today:
+  - All core ties, mean days per year: in person 210; mobile phone 195; text messaging 125 (tied with landline); email 72; instant messaging 55; social networking sites 39.
+  - In person by distance: "from nearly daily contact for those with whom a person shares a home (359/365 days), to less than one-third as often for core ties who live 50-100 miles away (107/365 days)".
+  - Landline: 173 days for ties "on the same block or street", 82 for 50-100 miles.
+  - Text: "137/365 days for those who live 1-5 miles away; it drops sharply ... 69/365 days for those 50-500 miles away".
+  - Mobile voice: 276 days within the same home, 138 at 50-100 miles.
+  - Email: "81/365 days per year for core ties within 1-5 miles, and 73/365 days for core ties who are 500-3000 miles away". Social networking sites: 48 and 43. IM: 72 and 55.
+  - Neighbours: 61 % talk face to face at least monthly, 25 % phone, 10 % of internet users email; 40 % know all or most neighbours, 31 % know none.
+- **Kinds.** Core ties "may include spouses and household members, extended family, workmates, neighbors, and other friends"; the report separates kin from non-kin (70 % have a kin confidant, 45 % a non-kin one).
+- **Reading for us:** texting falls by half between 1-5 miles and 50-500 miles; email, IM and social-network contact are nearly flat in distance. **A message weight is therefore mode-specific**, and a single distance law for "messages" would be wrong.
+- **Traps.** 2008: before smartphones and messaging apps were common, so the mode mix is obsolete even if the distance gradients are informative. Core ties only (a handful per person). Days of contact, not message counts. Sample size [not confirmed].
+- **Verdict: usable now as published constants**; the only source found with frequency by mode by distance.
+
+### T1-c. Meta Social Connectedness Index 2026 (tie-level proxy by area)
+
+- **Smallest grain:** US ZCTA pairs; EU NUTS3 pairs; GADM level 2 elsewhere.
+- **Licence:** "Public Domain / No restrictions (CC0)" (HDX field).
+- **Noise:** "Geographic units with fewer than 500 users are excluded ... all published statistics are protected using µ-Gaussian Differential Privacy"; noise scale not stated.
+- **Kinds:** none separated. All Facebook friendships, each weighted equally, among users with more than 20 friends. Kin, colleagues, classmates, group co-members and acquaintances are lumped.
+- **Distance to named contacts / frequency:** neither.
+- **Verdict: usable now** as the all-ties distance profile from about 5 km upward in both countries; it cannot separate kinds and cannot see inside a ZCTA or Kreis.
+
+### T1-d. Social Capital Atlas (Meta / Opportunity Insights), US
+
+- HDX metadata: counties CSV 0.72 MB, **ZIP codes CSV 4.05 MB**, high schools CSV 2.9 MB, colleges CSV 0.52 MB, README.pdf, LICENSE.pdf; data date 2022-08-01. Three families of measures: connectedness, cohesiveness (clustering, support ratio), "Civic Engagement - Indices of trust or participation in civic organizations. This includes our volunteering rate measure." Noise: "methods from the differential privacy literature". Users aged 25-44 [search summary].
+- Licence field on HDX: "Other" (see LICENSE.pdf, **not read**). So commercial use is [not confirmed].
+- **Does it say whether group members live near each other?** No. It gives rates of group participation and how clustered friendships are **within a ZIP**, plus per-high-school measures. The high-school file is the nearest thing to a "school class" source, but it has no distance.
+- **Verdict: usable with caveats** as a per-ZIP covariate (how locally clustered ties are); not a distance table.
+
+### T1-e. CoMix / POLYMOD contact surveys
+
+- POLYMOD dictionary (read today): per contact, `cnt_home`, `cnt_work`, `cnt_school`, `cnt_transport`, `cnt_leisure`, `cnt_otherplace` (place flags), `phys_contact`, `duration_multi` ("Total duration of contact with reported person during the whole day"), `frequency_multi` ("Frequency of contacting the reported contact": 1 daily, 2 weekly, 3 monthly, further codes), contact age and gender; `hh_size`.
+- **Distance to contacts?** No. **Kind of tie?** No relationship field in POLYMOD; kind must be inferred from place (home ≈ household, work ≈ colleague, school ≈ classmate). CoMix adds a household-member flag [my reading].
+- **Frequency by mode?** In-person conversation or touch only.
+- Licence: POLYMOD CC BY-NC 4.0; CoMix and Reconnect CC BY 4.0.
+- **Verdict: usable with caveats** for the in-person side of colleagues and classmates, where nothing else exists: number of distinct people met at work and at school per day, and how often each recurs.
+
+### T1-f. ATUS who-present
+
+- `TUWHO_CODE` (dictionary read earlier): alone; spouse; unmarried partner; own household child; grandchild; parent; brother/sister; other related person; housemate; parents not in household; other non-household family under 18 / 18 and older; **friends; neighbours/acquaintances;** co-workers/colleagues/clients (to 2009), then boss or manager, people whom I supervise, co-workers, customers (from 2010).
+- **Distance?** No; only the place type of the activity. **Frequency by mode?** In-person minutes; phone calls appear as an activity without the other party's kind [my reading].
+- **Verdict: usable now** for minutes per day in the presence of each kind, by hour. It is the best open separation of household / kin / friends / neighbours / colleagues, in person only.
+
+### T1-g. Published constants from area data (Bailey 2018, 2020)
+
+Already in the constants table: 55.4 % of friends within 50 miles (US counties); 29.0 % within 5 miles (NYC ZIPs). All friends lumped.
+
+---
+
+## Tier 2: free, but needs registration or an agreement (the project lead decides)
+
+Listed with exactly what each asks.
+
+### T2-a. Pew 2009 survey dataset
+- **Asks:** a free Pew account. Dataset terms (read today, https://www.pewresearch.org/about/terms-and-conditions/): "a nonexclusive, non-sublicensable, non-transferable, revocable, worldwide, and royalty-free license to access, copy, reproduce, cite, link, display, download, distribute, broadcast, transmit, publish, modify, create derivatives of, or otherwise exploit the survey datasets". Commercial use is not excluded in the passage read; the full clause was truncated in my extract.
+- **Gives:** share of core ties per distance band by kind, and days of contact per mode per tie. Whether this particular 2008 dataset is still downloadable: [not confirmed].
+- **Verdict:** lowest-friction registration, and it would turn T1-b from constants into a table.
+
+### T2-b. SHARE (Survey of Health, Ageing and Retirement in Europe), incl. Germany
+- **Distance:** the eight-band card above, for each child (`ch007` [search summary]) and for each social-network member (`sn006` in the SN module [search summary]).
+- **Frequency:** contact with each child and network member on a seven-step scale from daily to never, all modes lumped ("in person, by phone, mail, email ..." [my reading]); parents are assumed in daily contact with co-resident children [search summary].
+- **Kinds:** SN module records the relationship of up to seven confidants (spouse, child, sibling, friend, neighbour, colleague and more) [my reading].
+- **Asks (read today):** registration plus a **signed SHARE User Statement** sent to the data centre. "the SHARE data may be used for scientific purposes only". Applicants must show "an affiliation with a scientific institution" or, "in justified cases", details of "the specific scientific project". "Users are not allowed to make copies of the data available to others". Free of charge.
+- **Traps:** respondents are aged 50 and over. Scientific-use-only is likely incompatible with a commercial product; derived aggregates may be publishable, but that is for the lead to judge against the conditions.
+- **Verdict:** the best band match of any source, and it covers Germany; usable only if the scientific-purpose condition can be met.
+
+### T2-c. SOEP (German Socio-Economic Panel)
+- **Distance:** for each kind of relative (partner, parents, step-parents, children, siblings, grandparents, aunts/uncles/nieces/nephews, other relatives): "how many such relatives you have, whether they live in your household, and if not, how far away they reside", seven verbal bands ending in "Abroad" [search summary of paneldata.org]. Asked in several waves including 2011 and 2016.
+- **Frequency by mode:** [not confirmed].
+- **Friends:** SOEP has asked about closest friends in some waves [my reading, not confirmed].
+- **Asks (DIW page read today):** a signed **data distribution contract**, checked by DIW; applications come from a professor or project head at a research institution; each participating institute signs its own. Fees and commercial terms [not confirmed].
+- **Verdict:** the best German kin-by-distance source, including relatives abroad, but the heaviest access route.
+
+### T2-d. ISSP "Social Networks" modules (2017, ZA6980; 2001; 1986)
+- **Asks:** GESIS registration ("registration is required for data download"; "free data download") [search summary].
+- **2017:** 30 countries; position generator and resource generator; a section on "Social interaction in the social media era" (5 items in the drafting report) [search summary]. **Whether 2017 has a distance or travel-time item: [not confirmed]; I believe it does not** [my reading].
+- **2001 and 1986:** travel time to mother, father, sibling, child, best friend, and frequency of visits and of other contact [my reading for 2001; 1986 confirmed through the GSS variables above]. Germany took part in 2001 (ZUMA report exists) [search summary].
+- **Verdict:** 2001 is the most recent cross-national travel-time source with Germany and the US in one file; check the questionnaire before registering.
+
+### T2-e. Understanding Society (UK)
+- **Distance:** three closest friends, bands above; in the public variable pages, "under 1 mile is roughly 27–30 % of valid answers and under 5 miles about 25–26 %" for the first closest friend [search summary]. A family-network module records relatives outside the household and travel time [not confirmed].
+- **Frequency:** "How often see 1st closest friend" exists [search summary]; phone/message frequency [not confirmed].
+- **Asks:** UK Data Service registration and End User Licence [my reading; the access page returned nothing].
+- **Trap:** filter on the close-friend items is an AND condition [search summary].
+- **Verdict:** best close-friend distance bands; UK only. The published frequencies on the variable pages are usable as constants without registering.
+
+### T2-f. pairfam (Germany) and Generations and Gender Survey
+- pairfam: travel time to each parent and between parents and children, six bands [search summary]; contact frequency items exist [my reading]. Anchors were born 1971-73, 1981-83, 1991-93 [my reading], so it is not the whole population. Access through GESIS under a scientific-use agreement [my reading, not confirmed].
+- GGS: "All datasets are freely available for scientific, non-commercial use via the Data Portal" (ggp-i.org, read today); registration "with an institutional email" and a signed data agreement [search summary]. Travel time to parents and meeting frequency [my reading; items not confirmed].
+- **Verdict:** both are redundant with SOEP and SHARE for our purpose and both are non-commercial.
+
+## Tier 3: paid
+
+None needed. SOEP may charge outside academic use [not confirmed]. No paid source would fill the gaps (groups, follows, school class).
+
+---
+
+## Published distance-decay results for calls and messages
+
+| Result | Paper | Population, year | Range over which it holds | Volume or ties? |
+|---|---|---|---|---|
+| Exponent 1.20 (email), 1.12 (Facebook), by maximum likelihood; cumulative email distances fit Zipf, R = −0.989 | Goldenberg and Levy 2009, arXiv 0906.3202 [search summary] | email and Facebook samples; sizes and country [not confirmed] | [not confirmed] | **Volume** of electronic communication |
+| Link probability ∝ d^−2 | Levy and Goldenberg, Physica A 393 (2014), "The gravitational law of social interaction" [search summary] | Facebook, small-world experiment, email, interviews | [not confirmed] | Ties. **Same authors, exponent 2 versus 1.1-1.2 five years earlier**: different quantity (pair probability against volume by distance) |
+| Number of conversations falls with distance with a bump near 500 km; "the number of exchanged messages remains constant before decreasing slowly"; longer links "carry more and longer conversations" | Leskovec and Horvitz, WWW 2008, "Planetary-scale views on an instant-messaging network" [search summary] | Microsoft Messenger, June 2006, world | world scale; no small-distance detail | **Messages per conversation**: the one direct look at message weight by distance, and it says weight per tie does not fall with distance |
+| α ≈ 1.58 voice, 1.49 text; tie strength nearly flat in distance | Onnela et al. 2011 [search summary] | mobile operator, one European country | 1 km to below 800 km | Ties; strength separately |
+| d^−2 | Lambiotte et al. 2008 [search summary] | Belgian mobile operator, 2.5 million customers, 6 months | [not confirmed]; commune-level billing addresses | Ties |
+| ε + 1/d; one third geography-independent | Liben-Nowell et al. 2005 (read) | 495,836 US LiveJournal users, 2004 | 10 km buckets up to about 1,000 km, beyond which ε dominates | Ties |
+| a(b + d)^−c, c ≈ 1; flatter at short scale | Backstrom, Sun, Marlow 2010 (read) | 2.9 million US Facebook users with addresses | 0.1 mile to continental; "medium to long-range" for the −1 | Ties |
+| Texting 137 days/yr at 1-5 miles, 69 at 50-500 miles; email 81 and 73 | Pew 2009 (read) | US adults, 2008, core ties | same home to over 3,000 miles | **Frequency by mode** |
+| Spatial distance constrains who interacts, "not the intensity" | Laniado et al. 2018 [search summary] | Tuenti, Spain, about 10 million users | city pairs | Both |
+
+**No messaging-app study from 2018 onward with a fitted distance exponent was found.** A 2024 arXiv study of a global mobile social app reports that proximity still shapes link formation; details not read [search summary].
+
+**The one consistent finding across the volume studies** (Onnela, Leskovec and Horvitz, Laniado, Pew for email and IM): distance decides *who* is a tie far more than *how much* is exchanged per tie, except for texting and voice, which Pew found do fall with distance. So the defensible construction is: ties by kind and band from the survey sources, then a per-mode weight, not one exponent applied to messages.
+
+---
+
+## Ranked recommendation for the part-B table
+
+1. **Open now, no application.** Build the frame from:
+   - ATUS who-present for the in-person minutes per kind (household, kin, friends, neighbours, colleagues);
+   - GSS 1985/2004 for the kind mix of core ties and GSS 1986 for kin and best-friend travel time;
+   - Pew 2009 published figures for frequency by mode by distance;
+   - SCI 2026 (`nuts_2024.zip` 14.2 MB; US ZCTA shards) for the all-ties share by band from city scale outward;
+   - commuting distance (LODES, Pendlerrechnung) as the colleague proxy;
+   - CoMix for people met at work and school.
+   Smallest set: GSS cumulative file (size not checked), ATUS who + activity + respondent (110 MB), `nuts_2024.zip`.
+2. **One free registration that pays most:** the Pew 2009 dataset (account only, permissive licence). It yields ties per band by kind and days of contact per mode per tie in one file.
+3. **For Germany, by kin and band:** SOEP (contract) or SHARE (signed statement, scientific use only, age 50+). Either needs the lead's decision; SHARE's bands match ours almost exactly, SOEP covers all ages and all kin types.
+4. **Carry as stated assumptions**, because nothing measures them: own devices; school class; group co-members; broadcast follows; and the building band for non-kin.
+
+Runner-up for close friends specifically: Understanding Society's published variable frequencies (UK), usable as constants without registration.

@@ -1,5 +1,7 @@
 # HOUSEHOLD-0 (Germany) — household size and buildings by number of dwellings per 1 km cell, by the cell's own density; the twin's rule scored, and a test of whether the US table's shape carries across. PREREGISTRATION (DRAFT)
 
+*REVIEWED 2026-11-11 (`HOUSEHOLD0_DE_REVIEW.md`): three faults, fixed in `HOUSEHOLD0_DE_PREREG.md`, which replaces this text. Kept as written.*
+
 *DRAFT of 2026-11-11. NOT FROZEN; to be attacked by a second reader first. The lead approved
 a European country by its data ("whatever european country has the most data available");
 the scout named Germany (`EUROPE_SCOUT.md`). Nothing has been fetched or computed. Data

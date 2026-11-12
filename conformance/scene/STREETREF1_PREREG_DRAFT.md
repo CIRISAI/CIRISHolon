@@ -1,5 +1,7 @@
 # STREETREF-1 — a reference sample of real streets and buildings, held as statistics, for the scene certificate. PREREGISTRATION (DRAFT)
 
+**REVIEWED 2026-11-11: REDESIGN. See `STREETREF1_REVIEW.md`. A reference keyed only by a 14 km cell's class cannot referee street form; two stakes cannot fail; three plants fail as written; the top two density classes are nearly empty. This text is kept as drafted and is not a candidate for a freeze. A population-grid-only campaign (UNEVEN-0) comes first.**
+
 *DRAFT of 2026-11-11, revised the same day with the twin's class rules. NOT FROZEN. The lead approved a road and building reference on
 2026-11-11 ("yes, approved, please proceed"). Nothing has been fetched. No place has been
 drawn. No generated street has been looked at for this purpose. Nothing here is a freeze

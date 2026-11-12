@@ -1,5 +1,7 @@
 # KINK-0 — a charge that exists in the bulk only where the vacuum is doubled: the massive Schwinger model at half a unit of background field. PREREGISTRATION (DRAFT)
 
+**REVIEWED 2026-11-11: DO NOT FREEZE AS WRITTEN. See `KINK0_ANOMALY0_REVIEW.md`. The parameter point below (`x = 4`, `m/g ∈ {1, 0.1}`) has been SEEN at `N = 8, 10, 12` and cannot be staked blind; S3, S4 and two plants are wrong as worded. This text is kept as drafted, for the record of what was reviewed.**
+
 *DRAFT of 2026-11-11. NOT FROZEN, and not to be frozen on the author's word alone: FERMION-0's
 freeze carried two definitional errors of the author's, both caught before a circuit existed
 (`FERMION0_AMENDMENT_1.md`, `FERMION0_AMENDMENT_2.md`). This draft has had one pass. §"Open

@@ -1,5 +1,7 @@
 # ANOMALY-0 — the continuity law with a source: the axial anomaly of the Schwinger model read in real time on the engine's own evolver. PREREGISTRATION (DRAFT)
 
+**REVIEWED 2026-11-11: REDESIGN. See `KINK0_ANOMALY0_REVIEW.md`. S3 is a sum rule and not an anomaly reading, S4 named the wrong referee, and the engine cannot yet read a current. This text is kept as drafted, for the record of what was reviewed; it is not a candidate for a freeze.**
+
 *DRAFT of 2026-11-11. NOT FROZEN, and not to be frozen before a second reader has attacked
 it (the author's FERMION-0 freeze carried two definitional errors). Nothing here has been
 computed. §"Open design questions" is written for that reader.*

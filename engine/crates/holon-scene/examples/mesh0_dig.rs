@@ -58,6 +58,8 @@ fn main() {
     let mut hh_by = [0u64; 7];
     let mut hh_short = [0u64; 7];
     let (mut phones_adults, mut phones_children, mut adults_total, mut seniors_alone, mut seniors_alone_without) = (0u64, 0u64, 0u64, 0u64, 0u64);
+    // by household size (1..=7, 7 = 7 or more), as the device reference counts: households, those with no smartphone at all, smartphones
+    let (mut size_hh, mut size_none, mut size_phones) = ([0u64; 8], [0u64; 8], [0u64; 8]);
     for class in 1..=5u8 {
         let mut made = 0u32;
         let mut block = 0u64;
@@ -69,6 +71,9 @@ fn main() {
                 let hseed = child_seed(seed, (class as u64) << 40 | (made as u64));
                 made += 1;
                 let (d, _, _) = devices::generate(hseed, size as u32, devices::BUILDING_UNKNOWN, true);
+                let sz = (size as usize).min(7);
+                let all = d.phones[0] as u64 + d.phones[1] as u64 + d.phones[2] as u64;
+                size_hh[sz] += 1; size_none[sz] += (all == 0) as u64; size_phones[sz] += all;
                 let ad = (d.adults + d.seniors) as usize;
                 let b = ad.min(6);
                 let have = (d.adults.min(d.phones[0]) + d.seniors.min(d.phones[1])) as u64;
@@ -83,6 +88,7 @@ fn main() {
             }
         }
     }
+    println!("{{\"kind\":\"smartphones_by_household_size\",\"households\":{},\"with_none\":{},\"smartphones\":{}}}", arr(&size_hh), arr(&size_none), arr(&size_phones));
     println!("{{\"kind\":\"phones\",\"adults_by_adults_in_household\":{},\"adults_without_by\":{},\"households_by\":{},\"households_with_fewer_phones_than_adults\":{},\"phones_held_by_adults\":{},\"phones_held_by_children\":{},\"adults\":{},\"seniors_living_alone\":{},\"of_them_without\":{}}}",
         arr(&adults_by), arr(&without_by), arr(&hh_by), arr(&hh_short), phones_adults, phones_children, adults_total, seniors_alone, seniors_alone_without);
 }

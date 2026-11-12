@@ -184,3 +184,41 @@ output in `tables/mesh0/mesh0_dig.jsonl`). Exploratory: no stake was set on any 
 - **Still open against the twin:** its median of 2.1 hours against 4 here. Untested
   guesses: this campaign counts whole hours, and the chain's nights run long in the tail
   (hours asleep at quartiles 7, 9, 11 against the diaries' 8, 9, 10).
+
+## CORRECTION 2026-11-12, later the same day: "adults with no phone is a confirmed defect" was wrong in kind and overstated
+
+The note above called 0.196 "a confirmed defect", set it against "what a survey of
+ownership would give", and asked for a fetch. Preparing that fetch showed three faults in
+the note. Its diagnosis of the waits is not touched.
+
+- **Wrong kind.** The surveys I had in mind count any telephone (a scout of published
+  pages today: about 1 % of US adults have no phone at all, about 2.6 % no mobile). This
+  campaign's phone is a SMARTPHONE, the only kind that can run the mesh. For that kind
+  the reference is already in this repository (`tables/devices0_us/device_table.json`,
+  the 2020 household energy survey read by DEVICES-0): 0.230 (se 0.007) of one-person
+  households have no smartphone. No fetch was needed to see it.
+- **Overstated.** Against that reference the generator is wrong, by less than the note
+  implied and in both directions (`examples/mesh0_dig.rs`, 100,000 households):
+
+| persons in household | no smartphone, generated | reference (se) | smartphones, generated | reference |
+|---|---|---|---|---|
+| 1 | 0.297 | 0.230 (0.007) | 0.76 | 0.88 |
+| 2 | 0.076 | 0.105 (0.005) | 1.63 | 1.73 |
+| 3 | 0.018 | 0.060 (0.007) | 2.45 | 2.48 |
+| 4 | 0.006 | 0.037 (0.004) | 3.10 | 3.03 |
+| 5 | 0.007 | 0.039 (0.007) | 3.68 | 3.58 |
+| 6 | 0.003 | 0.068 (0.016) | 4.38 | 3.79 |
+| 7 or more | 0.000 | 0.094 (0.021) | 6.04 | 4.24 |
+
+- **What the defect is.** Phones are drawn for each person independently. That gives too
+  many one-person households with none (+0.067) and too few larger households with none
+  (0.018 against 0.060 at 3 persons): in the reference, going without clusters by
+  household. DEVICEGEN-1 had already reported the one-person miss (0.74 against 0.86).
+  Whether the generated share of ADULTS without a smartphone (0.196) is high or low is
+  not known: the reference counts households, and no person-level figure for 2020 is held.
+- **The regime.** The table is 2020. The same survey's 2024 reading has 8.4 % more
+  smartphones per household, and a 2026 poll read on its page today gives 91 % of adults
+  owning one (79 % of those over 64). A delivery share for "now" needs the year stated.
+- **What follows.** The fix is an amendment to the device generator scored against the
+  none-by-size column already held, with the year named; it is not a fetch. Each share in
+  this file stays as measured, on smartphone holders as generated for 2020.

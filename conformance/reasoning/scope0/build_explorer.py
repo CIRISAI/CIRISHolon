@@ -103,7 +103,7 @@ details.more > .inner { display: flex; flex-direction: column; gap: 16px; margin
 <div class="wrap">
   <header>
     <h1>Kindscope</h1>
-    <p class="lede">A small language model reading a story, drawn so you can walk around it. The model reads one letter at a time and passes it up through 13 stages; each stage adds something. Drag to turn it. Click a block to see which earlier characters the looking-back stages draw on there. Switch what the height shows: how much each stage adds, or how much breaks if you take that stage out. They are not the same, and that is the first thing this model teaches. Pick a finding below to see where in the model it lives.</p>
+    <p class="lede">A small language model reading a story, drawn so you can walk around it. The model reads one letter at a time and passes it up through 13 stages; each stage adds something. Drag to turn it. Click a block to see which earlier characters each looking-back stage reads from there. Switch what the height shows: how much each stage adds, or how much breaks if you take that stage out. They are not the same, and that is the first thing this model teaches. Pick a finding below to see where in the model it lives.</p>
   </header>
   <section class="panel">
     <canvas id="scene" aria-label="the model reading a story, in three dimensions: letters left to right, stages front to back, height is how much each stage added"></canvas>
@@ -291,6 +291,8 @@ const FOUND = [
   { t: "What an outside reader finds is not what the model uses", s: "A reader trained from outside finds “an adjective comes next” along one direction. The direction that actually moves it is as unrelated as two random directions (82 to 90 degrees), and removing the reader’s direction costs the model nothing.", st: [2, 4, 6, 8, 10, 12], how: "measured as planned, no prediction staked" },
 ];
 const S3 = { item: 0, win: 13, yaw: -0.62, pitch: 0.52, hi: null, spin: false, hover: null, tops: [], mode: "adds" };
+const DASH = [[], [7, 4], [2, 4], [9, 3, 2, 3]];
+const NAMED = { "attn0/3": "the character just before", "attn2/3": "the first letter of the current word", "attn3/1": "the space before the current word, where the word began" };
 const COST = n => (TR.knock_out_cost[n] ? TR.knock_out_cost[n].realised : null), COSTMAX = Math.max(...Object.values(TR.knock_out_cost).map(v => v.realised));
 const NAMES = { embed: "takes in the letter", attn: "looks back", mlp: "rewrites" };
 function stageWord(n) { return n === "embed" ? "stage 1, the letter" : (n.startsWith("attn") ? "looking back, round " : "rewriting, round ") + (n === "embed" ? "" : (+n.slice(-1) + 1)); }
@@ -330,17 +332,19 @@ function scene() {
     for (let k = 0; k < K; k++) {
       const n = it.writes[k]; if (!n.startsWith("attn")) continue;
       const z = (k - K / 2) * dz + .75, hk = S3.mode === "adds" ? HH * it.write_norm[S3.pick][k] / mx : 0.3;
-      for (const [j, wgt] of it.looks_back_at[n][S3.pick]) {
-        if (j === S3.pick) continue;
-        if (j < win) { arcsOut++; continue; }
+      const row = it.each_head_looks_at[n][S3.pick];
+      row.forEach(([j, wgt], hd) => {
+        if (j === S3.pick) return;
+        if (j < win) { arcsOut++; return; }
         arcsIn++;
-        const a = P((pi - NX / 2) * dx + .4, hk, z), b = P((j - win - NX / 2) * dx + .4, 0.2, z), m = P(((pi + j - win) / 2 - NX / 2) * dx + .4, hk + 2 + Math.abs(pi - (j - win)) * 0.22, z);
+        const named = NAMED[n + "/" + hd], rest = j < 13;
+        const a = P((pi - NX / 2) * dx + .4, hk, z), b = P((j - win - NX / 2) * dx + .4, 0.2, z), m = P(((pi + j - win) / 2 - NX / 2) * dx + .4, hk + 1.6 + hd * 0.7 + Math.abs(pi - (j - win)) * 0.2, z);
         g.beginPath(); g.moveTo(a[0], a[1]); g.quadraticCurveTo(m[0], m[1], b[0], b[1]);
-        g.strokeStyle = css("--ink"); g.globalAlpha = Math.min(1, 0.25 + wgt * 2.2); g.lineWidth = 1 + wgt * 9; g.stroke(); g.globalAlpha = 1;
-      }
+        g.setLineDash(DASH[hd]); g.strokeStyle = named ? css("--ink") : css("--ink2"); g.globalAlpha = rest ? 0.18 : Math.min(1, 0.3 + wgt * 1.4); g.lineWidth = named ? 2.6 : 1.3; g.stroke(); g.globalAlpha = 1; g.setLineDash([]);
+      });
     }
   }
-  S3.arcNote = S3.pick == null ? "" : " Lines show, for the picked character, the earlier characters each looking-back stage draws on most (thicker is more)." + (arcsOut ? " " + arcsOut + " of them reach back before this window." : "");
+  S3.arcNote = S3.pick == null ? "" : " Each looking-back stage has four readers; each line is one reader and the earlier character it draws on most (a different dash for each). Three readers have been seen, while exploring, to do something nameable, and are drawn heavier: in the first looking-back stage one reads the character just before; in the third, one reads the first letter of the current word; in the fourth, one reads the space where the word began. Where a line points says where a stage reads from, not how much that matters." + (arcsOut ? " " + arcsOut + " of them reach back before this window." : "");
   g.font = "11px " + css("--mono"); g.fillStyle = css("--ink2"); g.textBaseline = "middle";
   const front = cy0 > 0 ? -K / 2 * dz - 1.2 : (K / 2) * dz + 0.6;
   g.textAlign = "center";

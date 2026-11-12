@@ -1,5 +1,7 @@
 # UNEVEN-0 — how unevenly people sit within a 14 km cell, measured for every cell from the population grid alone. PREREGISTRATION (DRAFT)
 
+**REVIEWED 2026-11-11: freeze only after the named fixes in `UNEVEN0_REVIEW.md` (the class of an empty pixel, the grid's edge counts, a gate that gates). Kept as drafted.**
+
 *DRAFT of 2026-11-11. NOT FROZEN, and not to be frozen before a second reader has attacked it.
 Nothing has been fetched or computed. It needs one file, the same GHS-POP 2020 grid the CEWP
 twin already ships a reduction of, at its native 30 arc-second resolution (482 MB compressed,

@@ -211,3 +211,9 @@ call never changes. On a desktop GPU a single pass over it without a cache did n
 memory; with the prefix cached once an item took half a second. A phone cannot hold what
 that GPU could not. Whatever else is folded, the prefix is the first thing a purpose-built
 model has to stop reading.
+
+**The datum above, measured again under the deployed template (2026-11-12, the RATCHET
+session):** the prefix is 20,438 tokens of an item's roughly 22,840, so about 89 % of
+what the step reads on each call never changes under the default template, not the 96 %
+of the base prompt. It fits that desktop GPU with about 0.3 of 15.6 GB to spare, with
+the prefix cached. The conclusion stands at the smaller figure.

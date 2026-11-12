@@ -479,3 +479,11 @@ pair score is immune; what the template changes is the full model's behaviour in
 template-touched domains, which are named in advance and scored as floor in their own
 column. The held-back split has no hospital setting, so it tests the rule away from the
 template's push and does not cover the pushed case; the preregistration is to say so.
+
+- **2026-11-12, the RATCHET session:** its draft now says the held-back split covers the
+  template-pushed case in housing and weakly in shipping, and not for medical settings;
+  the template-touched list is drawn from `stop_scenario_domains.tsv` and the
+  cross-cutting pairs. Its calibration passes on the templated render too (prefix 20,438
+  tokens, items about 22,840). Left before the freeze: the rule for reading the model's
+  own verb at the answer position, and the agent session's comparison of the render with
+  a real captured call.

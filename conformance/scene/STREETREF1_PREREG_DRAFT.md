@@ -1,26 +1,35 @@
 # STREETREF-1 — a reference sample of real streets and buildings, held as statistics, for the scene certificate. PREREGISTRATION (DRAFT)
 
-*DRAFT of 2026-11-11. NOT FROZEN. The lead approved a road and building reference on
+*DRAFT of 2026-11-11, revised the same day with the twin's class rules. NOT FROZEN. The lead approved a road and building reference on
 2026-11-11 ("yes, approved, please proceed"). Nothing has been fetched. No place has been
 drawn. No generated street has been looked at for this purpose. Nothing here is a freeze
 until the lead strikes this line and the file is committed alone as `STREETREF1_PREREG.md`.*
 
-## HOLD (2026-11-11, from the twin's lead): do not freeze on these classes yet
+## The class rules, received 2026-11-11 (the hold of the same day is lifted)
 
-The twin is changing the rules this draw depends on, within its current round:
+From the twin's lead, at twin/globe `a29e87d` (`FSD/twin/globe.md` §"Street classes, the floor
+and the region rule"; `docs/geo/classes.json`, schema `cewp-twin-street-classes/v1`). Written
+here by value; all are the twin's MODEL choices and this reference takes them as given.
 
-- a density class is being added above 6,000 per km² (today a 40,000 per km² core and a
-  6,000 per km² block share a class), so the thresholds `6,000 / 1,500 / 250 / floor 1`
-  below are PROVISIONAL and the class count will not be 36;
-- the split of a 1/8 degree cell's people over its tiles may become weighted by land cover.
-  If it does, a tile chosen uniformly is no longer the fair comparison to what the twin
-  generates, and the tile rule below must draw by the twin's own weights instead;
-- the region rule (9 regions, 181 localities) may be restated when the twin unifies its
-  root population.
+- **Density classes**, lower bound in people per km²: village `0`; suburban streets `250`;
+  terraced streets `1,500`; apartment blocks `6,000`; dense fabric `12,000`. FIVE classes.
+- **Floor.** A 1/8 degree cell under `1` person per km² of the cell's WHOLE area (not its
+  land area) contributes nobody and is not drawn.
+- **Where the class is judged.** On a street leaf. Today a leaf's density equals its cell's,
+  because a cell's people are spread evenly over it, so the class of a 1/8 degree cell is
+  computed here from GHS-POP people over the cell's whole area.
+- **Region rule.** A 1/8 degree cell takes the region of the 1.5 degree cell holding it;
+  each of those belongs to one of 181 localities and each locality to one of 9 regions.
+- **In-cell weights.** None. A tile drawn uniformly within its cell IS the fair comparison.
 
-This draft is frozen only after the twin's lead sends the final thresholds, the region
-rule, the tile weights and the commit that carries them. Those are then written here by
-value, with that commit named.
+Two things the twin says may still move, and what this reference does about each:
+(1) the cell-to-locality assignment could change at region edges when the twin unifies its
+root population: the draw records each cell's region AS ASSIGNED on the day, and a cell
+later reassigned is re-labelled, not re-fetched; (2) persons per household enters the leaf
+density and cancels today: it does not enter this reference, which reads people per km².
+
+**Owed from the twin before the draw:** the region partition as a table (1.5 degree cell →
+region), which `classes.json` describes in words but does not carry.
 
 ## Purpose (the lead's, 2026-11-11, as relayed by the twin's lead)
 
@@ -55,10 +64,9 @@ It is a reference, not a test of a generator. The two cautions it is built aroun
 - **The class of a parent.** Two labels, both computed by the twin's own rules so that a
   class means what the generator sees:
   - region: the twin's 9 regions;
-  - density class: the twin's four, from the cell's people per km²: apartment blocks at
-    6,000 and above, terraced at 1,500 and above, suburban at 250 and above, village below,
-    down to the twin's floor of 1 person per km².
-  That is 36 classes.
+  - density class: the twin's five, from the cell's people per km² of whole cell area
+    (thresholds in §"The class rules" above), down to the twin's floor.
+  That is 45 classes.
 - **The draw.** Within each class, 40 parent cells are drawn without replacement by a
   seeded hash of the cell index (seed 20261111), with probability proportional to the
   cell's people. A class with fewer than 40 cells contributes all it has. 40 is the floor
@@ -67,7 +75,7 @@ It is a reference, not a test of a generator. The two cautions it is built aroun
   same hash. The twin spreads a cell's people evenly over its tiles, so a tile chosen at
   random is the fair comparison to what it generates. Three tiles per parent measure how
   uneven a real cell is inside.
-- **Total.** At most 36 × 40 × 3 = 4,320 tiles of about 2.2 km.
+- **Total.** At most 45 × 40 × 3 = 5,400 tiles of about 2.2 km.
 - **The block.** The parent cell. Three tiles of one cell are one block, never three
   samples.
 
@@ -123,7 +131,7 @@ those pages governs.
 
 **The reading taken.**
 
-1. **The extraction is Substantial.** Up to 4,320 tiles, systematic, each holding more than
+1. **The extraction is Substantial.** Up to 5,400 tiles, systematic, each holding more than
    100 features in any town. The insubstantial-use exemption does not apply and is not
    relied on.
 2. **The fetched tiles are treated as a Derivative Database, used internally.** They are a
@@ -174,6 +182,7 @@ A segment is a stretch of street between two intersections or ends.
 | `sin` | segment length over the straight distance between its ends | quantile function | issue #3's circuity, per segment |
 | `bld` | buildings per km² | scalar | building density |
 | `area` | building footprint area | quantile function | footprint size |
+| `btw` | the Gini coefficient of length-weighted shortest-path betweenness over a tile's segments | scalar | owed by the prior-art screen: street models fail on the heterogeneity of betweenness (Barthelemy and Boeing 2025), and orientation alone would pass them. Computed within the tile, so paths that would leave it are missing: a tile-edge artefact, the same for every tile |
 | `bps` | buildings fronting each segment (within 30 m of it) | quantile function | the stand-in for households per street, the first coupling the mesh reads |
 | `nn` | distance from each building to its nearest building | quantile function | the stand-in for distance between neighbours, the second coupling |
 | `clus` | share of a tile's buildings in its largest cluster, linking buildings closer than 30 m, 60 m and 120 m | 3 shares | whether neighbours chain into one mesh: a reading of the wiring, which no count fixes |
@@ -210,7 +219,8 @@ These are stakes about the reference. No generator is scored in this campaign.
   observable, the class's blocks are split into two halves 1,000 times; the budget `β₀` is
   set as in SCENE-1 (each component's median times one common multiplier, all components
   passing together in 95 % of splits). Stake: a held-out 10 blocks of the class pass at
-  `β₀` in at least 30 of the resolved classes. **Kill:** fewer than 18 of 36. Then a class
+  `β₀` in at least 2 of every 3 resolved classes, with at least 12 classes resolved. **Kill:**
+  fewer than 1 in 2 of the resolved classes. Then a class
   of this size is not one population and the class labels are the wrong ones.
 - **S2 (density class is a real envelope dimension).** Within a region, adjacent density
   classes are told apart: the W1 between them on `len` is at least `3 β₀` in at least 7 of
@@ -275,7 +285,7 @@ with at least 1 street.
 
 ## Cost
 
-- At most 4,320 small requests to a public service, sequential, with a pause, under the
+- At most 5,400 small requests to a public service, sequential, with a pause, under the
   daily caps in §"The licence reading". The download size per tile is not known: it is
   measured on the first 20 tiles and printed before the rest are fetched, and the run
   stops if the service asks it to.

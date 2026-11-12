@@ -263,3 +263,15 @@ halt); and "stop" has no verb yet from the agent session.
   satisfies. That template stays facts only and is not scored; a required verb there
   would be an invention. Whether the text means "stops" to differ from "refuses" is the
   Constitution session's to say; the agent does not tell them apart.
+
+## Part A landed, 2026-11-12
+
+CIRISConstitution rc19 `fd462fd` (first version `1932533`): `handoff/items/stop_facts.tsv`,
+17 templates S01 to S17 in 7 pairs over 8 rules, the halt pair dropped at source; 9
+require a stop, 8 do not. Sealed and unopened here: `stop_truth.tsv` and
+`build_stop_items.py`. Truth columns as that session lists them: template,
+required_outcome, defer_label, verb, human_told, speak_declines, rule, cc_ref, quote,
+kind, kind_source. No kind comes from a table now: each is that session's reading, one
+vote. Its three text-against-agent gaps are rows C560 to C562 of its
+`formal/derivation/text_conflicts.tsv`, for the lead. Both sessions hold for his "build
+Part A" or "hold".

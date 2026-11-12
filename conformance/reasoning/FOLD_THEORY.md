@@ -312,3 +312,40 @@ comes next. If that is general, the middle stages are not carrying the change fo
 along the text; the last stages fetch it. Whether changes of different KINDS travel
 differently is the question the lead's correction poses, and these sorts cannot answer
 it until they are labelled by kind.
+
+## The late return checked at the output and by patching, 2026-11-12 (the RATCHET session, exploratory, as it reports)
+
+RATCHET `explore_wake.py` / `explore_wake.json`. 156 real openings differing in one word of
+EQUAL byte length (name 40, thing 40, quality word 40, action word 33, punctuation 2,
+number 1). One small model, nothing predicted first.
+
+- **The return is real at the output.** How different the model's prediction of the next
+  character is between the two versions, by characters after the change (0 to 8): 0.09,
+  0.27, 0.06, 0.02, 0.02, 0.07, 0.02, 0.05, 0.04. It falls to near nothing and comes
+  back. For name pairs: 0.0001 four characters on, then 0.14 at five. For thing pairs:
+  0.004 at four, then 0.17 and 0.11 at seven and eight. It was not an artefact of this
+  session's yardstick.
+- **Which stage carries it there.** At 360 later positions where the prediction differs,
+  one stage's write in one version was replaced by the other version's, and the share of
+  the output difference that closed was measured. Mean share closed: the last
+  looking-back stage 0.48, the last rewriting stage 0.47, the one before 0.21 and 0.10,
+  each earlier stage 0.01 to 0.09. The single stage that closes most is the last
+  looking-back stage at 161 positions, the last rewriting stage at 138, and anything
+  before the last two blocks at 20.
+- **So, at the place where a change matters again, the first four blocks' writes at that
+  place carry almost none of it.** The last block's looking-back stage fetches it and the
+  last rewriting stage turns it into the letter.
+- **Limits it states:** the replacement is at one position, so "early stages carry little"
+  means at the deciding position; the early stages' work at the CHANGED word's own
+  positions is what the last block reads. The last two stages are not additive (one reads
+  the other). A share closed can be negative.
+- It will be frozen as a test on unread pairs before anyone leans on it: at late deciding
+  positions the last block's writes close more of the output difference than the first
+  four blocks together; then the direct follow-up of cutting the last block's read of the
+  changed word.
+
+**For folding, if it survives the test:** to bring a change to bear on a later decision,
+this model does not thread it through each stage at each position. It writes it where it
+happened and reads it back at the end. A network built for that would keep the stages
+that write a change well where it occurs and the one that fetches it, and would not pay
+for carrying it along the text in between.

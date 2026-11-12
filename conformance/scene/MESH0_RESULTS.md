@@ -90,3 +90,27 @@ Share of all messages left to someone outside the household (the twin's seat):
   public rooms (which carry most deliveries in the twin), media, and anything a user
   would call too slow. Every count is `unresolved`; the list of what each rests on is in
   the table.
+
+## NOTE 2026-11-12, from the twin's lead: what "the twin's 0.60" is on its default street
+
+This file compared the seat's share under "the twin's 0.60, placed at random" (0.057) and
+said that draw puts 0.21 of its home nodes on households that declare nothing able to
+host. The twin's lead reports from its code that this describes the twin's OLDER tile
+path alone. On its default street a household must be able to host AND pass the 0.60
+draw; hosting by a gateway is possible on 0.716 of households there, so the home-node
+share is 0.6 × 0.716 = 0.43, not 0.60, and the nearer row of the table above is "the same
+number placed on households that declare one" (0.050). The open reference is unchanged:
+the share of households that offer to host at all.
+
+The twin has taken the three changes in on a candidate build (a phone's reachability from
+its person's generated day; counts of taken at once, held at home, held at the seat; a
+hold histogram; "late" after 12 hours as a readout bound of its own choosing). Its first
+probe reads 0.77 taken at once on one city against this file's 0.858 and 0.729; it has
+not reconciled the difference and claims no agreement.
+
+**Sending by hour: neither side has a reference.** The twin sends on an assumed curve by
+clock hour (peak 1.6 times at 19:30) and keeps the curve's total, so late in the evening,
+with few people awake, the rate per awake person about triples. This campaign drew the
+hour sent evenly over the SENDER'S awake hours. Neither is measured. This campaign's
+choice has no free number and cannot put a message on a sleeping sender; that is all
+that can be said for it. A reference for messaging by hour has not been found.

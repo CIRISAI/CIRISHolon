@@ -1,5 +1,7 @@
 # HOUSEHOLD-0 (United States) — persons per household by neighbourhood density and building type, and the first scene certificate issued: the twin's household-size rule against it. PREREGISTRATION (DRAFT)
 
+*REVIEWED 2026-11-11 (`HOUSEHOLD0_REVIEW.md`): three faults, fixed in `HOUSEHOLD0_PREREG.md`, which replaces this text. Kept as written.*
+
 *DRAFT of 2026-11-11. NOT FROZEN; to be attacked by a second reader first. The lead approved
 the dataset the same day ("yes, run the campaign for the US and for whatever european country
 has the most data available"). Nothing has been fetched or computed. A second campaign of the

@@ -318,14 +318,15 @@ function profile(l, rows, sel) {
 }
 // ---------------------------------------------------------------- a change travelling over the map
 const PV = { sort: null, idx: 0, k: 12, yaw: -0.55, pitch: 0.5, play: false };
-const PSORTS = [...new Set(MM.pairs.map(p => p.sort))];
-const SORT_SAY = { "name": "A name", "quality word": "A describing word", "thing": "The thing itself", "action word": "An action word", "punctuation": "A comma or full stop", "number": "A number" };
-function pvList() { return MM.pairs.filter(p => p.sort === PV.sort); }
+const PSORTS = [...new Set(MM.pairs.map(p => p.sort))].concat(MM.cross ? ["__cross"] : []);
+const SORT_SAY = { "name": "A name", "quality word": "A describing word", "thing": "The thing itself", "action word": "An action word", "punctuation": "A comma or full stop", "number": "A number", "__cross": "The type of word (crossing the map)" };
+function pvList() { return PV.sort === "__cross" ? MM.cross.rows : MM.pairs.filter(p => p.sort === PV.sort); }
 function wake() {
   const list = pvList(), p = list[PV.idx % list.length], cv = $("wake"), dpr = Math.min(2, window.devicePixelRatio || 1), Wp = cv.clientWidth || 900, Hp = cv.clientHeight || 500;
   if (cv.width !== Math.round(Wp * dpr)) { cv.width = Math.round(Wp * dpr); cv.height = Math.round(Hp * dpr); }
   const g = cv.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, Wp, Hp);
   $("pv-count").textContent = "pair " + (PV.idx % list.length + 1) + " of " + list.length;
+  if (PV.sort === "__cross") return crossing(g, p, Wp, Hp);
   const mark = t => esc(t.slice(0, p.at)) + "<b style='background:var(--seq1);padding:1px 3px;border-radius:2px'>" + esc(t.slice(p.at, p.at + p.len)) + "</b>" + esc(t.slice(p.at + p.len));
   $("pv-text").innerHTML = "A: " + mark(p.text[0]) + "<br>B: " + mark(p.text[1]);
   const K = MM.stages.length, C = MM.categories.length, J = p.state[0].length, L = p.len - 1;
@@ -374,6 +375,35 @@ function wake() {
   say += "On the left, the map, on the same floor with one row for each stage. Each tile is a type of word, and a darker tile means that type can be read from the model more reliably there. The orange at the foot of a column is the part of the change that lies inside the map: " + pct(sh) + " here. Ten directions picked at random would hold " + pct(MM.share_random) + ", and two unrelated stories " + pct(MM.share_unrelated_by_stage[kn]) + ". The small posts on the map show how much of this change lies along each type of word; the largest here is “" + MM.plain[best] + "”, at " + pct(Math.abs(p.foot[kn][best]) * Math.abs(p.foot[kn][best])) + " of the change" + (Math.abs(p.foot[kn][best]) > 2 * MM.floor[kn][best] ? ", above what unrelated text gives." : ", no more than unrelated text gives.");
   $("pv-say").textContent = say;
   $("pv-honest").textContent = "Why the map barely registers this change: both words are the same type of word (these pairs were chosen that way), so what the map charts did not change. The change runs alongside the map, not across it. That is the expected result for these pairs and not a discovery. Changes that switch the type of word (263 real pairs) have not been read yet; the RATCHET session will fix its prediction before reading them. One small model, real story openings, exploratory. The labels above are a word tagger's description of what differs, not kinds of change.";
+  $("pv-stage").value = PV.k;
+}
+// a change of word type: an arch from one type's tile to the other's in each stage's row, as tall as the change is aligned with the map's axis between them
+function crossing(g, p, Wp, Hp) {
+  const K = MM.stages.length, C = MM.categories.length, X = MM.cross, mdx = 2.6, dz = 1.5, HH = 9, W = C * mdx, sc = Math.min(Wp / (W * 1.35), Hp / 30);
+  const cy = Math.cos(PV.yaw), sy = Math.sin(PV.yaw), cp = Math.cos(PV.pitch), sp = Math.sin(PV.pitch);
+  const P = (x, y, z) => { const xr = x * cy - z * sy, zr = x * sy + z * cy; return [Wp / 2 + sc * xr, Hp * 0.66 - sc * (y * cp - zr * sp), zr * cp + y * sp]; };
+  const seqc = [0, 1, 2, 3, 4, 5].map(i => hex(css("--seq" + i))), ramp = v => { const u = Math.max(0, Math.min(1, v)) * 5, i = Math.min(4, Math.floor(u)); return seqc[i].map((x, n) => Math.round(x + (seqc[i + 1][n] - x) * (u - i))); };
+  const bg = hex(css("--bg")), onmap = css("--s2"), quiet = css("--ink3");
+  const MX = c => -W / 2 + (c + .5) * mdx, Z = k => (k - (K - 1) / 2) * dz, [ca, cb] = p.types;
+  $("pv-text").innerHTML = "One word changed and its type with it: <b style='background:var(--seq1);padding:1px 3px;border-radius:2px'>" + esc(p.words[0]) + "</b> (" + esc(MM.plain[ca]) + ") / <b style='background:var(--seq1);padding:1px 3px;border-radius:2px'>" + esc(p.words[1]) + "</b> (" + esc(MM.plain[cb]) + ")" + (p.n > 1 ? ", in " + p.n + " story openings" : "") + (p.equal_length ? "" : ". The two words differ in length, so later characters also shift along");
+  const rows = []; for (let k = 0; k < K; k++) rows.push(k); rows.sort((a, b) => P(0, 0, Z(a))[2] - P(0, 0, Z(b))[2]);
+  for (const k of rows) {
+    for (let c = 0; c < C; c++) {
+      const pts = [[MX(c) - mdx * .46, Z(k) - dz * .42], [MX(c) + mdx * .46, Z(k) - dz * .42], [MX(c) + mdx * .46, Z(k) + dz * .42], [MX(c) - mdx * .46, Z(k) + dz * .42]].map(([a, b]) => P(a, 0, b));
+      g.beginPath(); pts.forEach((t, i) => i ? g.lineTo(t[0], t[1]) : g.moveTo(t[0], t[1])); g.closePath(); g.fillStyle = mix(ramp(MM.lift[k][c] / 0.18), bg, (c === ca || c === cb) ? 0 : .55); g.fill();
+    }
+    if (k > Math.ceil(PV.k)) continue;
+    const f = Math.max(0, Math.min(1, PV.k - k + 1)), al = p.align[k] * f, h = Math.abs(al) * HH, seen = p.align[k] > X.floor_p95[k];
+    g.beginPath(); for (let i = 0; i <= 16; i++) { const t = i / 16, q = P(MX(ca) + (MX(cb) - MX(ca)) * t, 4 * h * t * (1 - t), Z(k)); i ? g.lineTo(q[0], q[1]) : g.moveTo(q[0], q[1]); }
+    g.lineWidth = seen ? 3 : 1.5; g.strokeStyle = seen ? onmap : quiet; g.stroke();
+  }
+  g.font = "11px " + css("--sans"); g.fillStyle = css("--ink2"); const fz = cy > 0 ? Z(K - 1) + dz * 1.1 : Z(0) - dz * 1.1;
+  for (let c = 0; c < C; c++) { const q = P(MX(c), 0, fz); g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(MM.plain[c], q[0], q[1] + (c % 2 ? 12 : 0)); }
+  g.font = "12px " + css("--mono"); g.fillStyle = css("--ink3");
+  for (let k = 0; k < K; k++) { const q = P((sy > 0 ? 1 : -1) * (W / 2 + mdx * .5), 0, Z(k)); g.fillText(String(k + 1), q[0], q[1]); }
+  const kn = Math.round(PV.k), a = p.align[kn], pct = v => (100 * v).toFixed(1) + "%", ci = r => r[0].toFixed(2) + " (between " + r[1].toFixed(2) + " and " + r[2].toFixed(2) + ")";
+  $("pv-say").textContent = "Here the change switches the type of word, so it should move ACROSS the map: from the tile for \u201c" + MM.plain[ca] + "\u201d toward the tile for \u201c" + MM.plain[cb] + "\u201d. Each stage's row has an arch between those two tiles. Its height is how well the change lines up with the map's direction between the two types: 0 is not at all, 1 is exactly. At stage " + (kn + 1) + " of 13 this change lines up " + a.toFixed(2) + (a > X.floor_p95[kn] ? ", above" : ", not above") + " what changes that keep the type give (" + X.floor_p95[kn].toFixed(2) + "). Of the whole change, " + pct(p.share[kn]) + " lies inside the map; the rest is the word itself. Across the 36 describing-word / thing changes the figure is " + ci(X.adj_noun[0]) + " at stage 1, " + ci(X.adj_noun[2]) + " at stage 3 and " + ci(X.adj_noun[12]) + " at stage 13: nothing at the first stage, small and real once the first block has run, growing a little with depth.";
+  $("pv-honest").textContent = "This was a test with its prediction fixed before the pairs were read (the RATCHET session's CROSS-1), and by its letter it held at stages 2 to 13. Read it with care: 94 of the 173 pairs read are one word pair, lived / was, which lines up at 0.76 already at stage 1 because that direction is close to the spelling of a few words. So each distinct word pair is shown once here (" + X.distinct_word_pairs + " of them), and the pooled figure is not drawn. For the 21 pairs of equal length, where nothing shifts, the figure is " + ci(X.equal_length[6]) + " at stage 7. The types come from a word tagger and some are wrong (it calls \u201cchubby\u201d a thing and one \u201cLily\u201d a how-word); a mislabelled pair is aimed at the wrong tile. How the change spreads to later characters is not in this table for these pairs. One small model.";
   $("pv-stage").value = PV.k;
 }
 function wakeInit() {

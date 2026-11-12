@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """SCOPE-0: the map and the motion in one table.
 
-  build_mapmotion_table.py RATCHET_CHECKOUT RATCHET_COMMIT OUT_DIR
+  build_mapmotion_table.py RATCHET_CHECKOUT RATCHET_COMMIT OUT_DIR [CROSS_COMMIT]
 
 Reads the RATCHET series' `experiments/kindscope/map_motion.json` (exploratory, GoldWorm)
 and writes `scope_mapmotion.json`, the part the explorer draws:
@@ -16,6 +16,12 @@ and writes `scope_mapmotion.json`, the part the explorer draws:
   inside the map's ten directions;
 - the FOOTPRINT: at the changed word's last byte, the cosine of the difference with each
   category's reading direction, beside the same for unrelated openings (the floor).
+
+With CROSS_COMMIT it adds the CROSS-1 rows (`cross1_result.json`): real pairs whose two
+words are of DIFFERENT parts of speech, grouped by distinct word pair (one word pair
+counted once: 94 of the 173 pairs are "lived" / "was"), with, by stage, the cosine of the
+state difference at the word's last byte with the map's (category A minus category B)
+axis, and that test's same-category floor.
 
 Nothing is fitted here. Divisions and means only. No kind is assigned.
 """
@@ -76,6 +82,31 @@ def main():
         "pairs_are": "real pairs whose two words have the same length AND the same part of speech, so the map's category does not change",
         "pairs": pairs,
     }
+    if len(sys.argv) > 4:
+        cc = sys.argv[4]
+        x = json.loads(subprocess.run(["git", "-C", repo, "show", cc + ":experiments/kindscope/cross1_result.json"], check=True, capture_output=True).stdout)
+        assert x["states"] == S
+        groups = {}
+        for q in x["pairs"]:
+            groups.setdefault((q["a_word"], q["b_word"], q["a_pos"], q["b_pos"]), []).append(q)
+        rows = []
+        for (aw, bw, ap, bp), g in groups.items():
+            if ap not in C or bp not in C:
+                continue
+            rows.append({"words": [aw, bw], "types": [C.index(ap), C.index(bp)], "n": len(g),
+                         "equal_length": all(q["equal_length"] for q in g),
+                         "align": [round(st.mean(q["align_meandiff"][k] for q in g), 3) for k in range(K)],
+                         "share": [round(st.mean(q["share_in_map"][k] for q in g), 3) for k in range(K)]})
+        open_class = {C.index("ADJ"), C.index("NOUN")}
+        rows.sort(key=lambda r: (set(r["types"]) != open_class, not r["equal_length"], r["n"] > 5, r["words"]))
+        doc["cross"] = {
+            "ratchet_commit": cc, "prereg_sha256": x["prereg_sha256"], "pairs_read": x["n_cross"], "distinct_word_pairs": len(rows),
+            "floor_p95": [round(x["by_state"][s]["floor"]["p95_of_draw_means"], 3) for s in S],
+            "adj_noun": [[round(v, 3) for v in [x["by_state"][s]["by_pair"]["ADJ/NOUN"]["mean"]] + x["by_state"][s]["by_pair"]["ADJ/NOUN"]["ci95"]] for s in S],
+            "equal_length": [[round(v, 3) for v in [x["by_state"][s]["equal_length_only"]["mean"]] + x["by_state"][s]["equal_length_only"]["ci95"]] for s in S],
+            "share_by_stage": [round(x["by_state"][s]["share_in_map_cross"], 3) for s in S],
+            "rows": rows,
+        }
     path = os.path.join(out, "scope_mapmotion.json")
     json.dump(doc, open(path, "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
     print(path, os.path.getsize(path), "bytes;", len(pairs), "pairs; largest lift", max(max(r) for r in lift))

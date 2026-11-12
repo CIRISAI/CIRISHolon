@@ -22,7 +22,10 @@ pub const KIND_NONE: u8 = 4;
 
 const ANY: u32 = 4;
 const ANY_SLOT: u32 = 24;
-const NO_FRAME: usize = 12;
+const NO_FRAME: usize = 13;
+const POOLED_SLOT: u32 = 31;
+const GROUP_NONE: u32 = 6;
+const GROUP_AFTER: u32 = 7;
 
 /// Table ids.
 pub const T_KIND: u32 = 1;
@@ -36,6 +39,15 @@ pub const T_INSIDE_INIT: u32 = 8;
 pub const T_INSIDE: u32 = 9;
 pub const T_CHANGES: u32 = 10;
 pub const T_EMPLOYED: u32 = 11;
+// PRESENCEGEN-2: the fill at home keyed on its place in the day (x: 0..5 before the frame,
+// 6 a day with no outing, 7 after the frame), the state on return, six states within the frame.
+pub const T_H2_BAND: u32 = 12;
+pub const T_H2_COUNT: u32 = 13;
+pub const T_H2_INIT_BAND: u32 = 14;
+pub const T_H2_INIT_COUNT: u32 = 15;
+pub const T_RETURN: u32 = 16;
+pub const T_INSIDE6_INIT: u32 = 17;
+pub const T_INSIDE6: u32 = 18;
 
 /// The key of one table row.
 pub fn key(table: u32, employed: u32, x: u32, slot: u32, from: u32) -> u32 {
@@ -46,7 +58,12 @@ pub fn key(table: u32, employed: u32, x: u32, slot: u32, from: u32) -> u32 {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Generator {
     Chain,
+    /// PRESENCEGEN-1's frame: one chain at home for everyone. Kept as a comparator.
     Frame,
+    /// PRESENCEGEN-2's fill, the hours before leaving keyed by the four-hour band of the hour first left.
+    FrameBand,
+    /// PRESENCEGEN-2's fill, the hours before leaving keyed by the hours until leaving.
+    FrameCountdown,
 }
 
 /// One generated day.
@@ -58,6 +75,10 @@ pub struct Day {
     pub place_changes: u8,
     /// A row was borrowed from a coarser table.
     pub fallback: bool,
+    /// Which of the eight groups at home borrowed a row (bit `x`).
+    pub fallback_groups: u8,
+    /// The frame ran past the day's end and was cut.
+    pub clipped: bool,
 }
 
 fn pick(st: &mut Stream, shares: &[u32]) -> usize {
@@ -80,7 +101,42 @@ fn get<'a>(t: &Tables<'a>, k: u32) -> Option<&'a [u32]> {
 }
 
 /// Inside states of a frame, in table order.
-const INSIDE: [u8; 5] = [2, 3, 4, 5, 1];
+const INSIDE: [u8; 6] = [2, 3, 4, 5, 1, 0];
+
+/// A row of the fill at home: the keyed row, or the next by the frozen order (an earlier
+/// band; a longer countdown), or the row over everyone at home. A borrowed row flags the day.
+#[allow(clippy::too_many_arguments)]
+fn home_row<'a>(t: &Tables<'a>, g: Generator, e: u32, table: u32, pooled: u32, x: u32, slot: u32, from: u32, out: &mut Day) -> Option<&'a [u32]> {
+    if g != Generator::Frame {
+        let mut xx = x;
+        loop {
+            if let Some(r) = get(t, key(table, e, xx, slot, from)) {
+                if xx != x {
+                    out.fallback = true;
+                    out.fallback_groups |= 1 << x;
+                }
+                return Some(r);
+            }
+            if x >= GROUP_NONE {
+                break;
+            }
+            if g == Generator::FrameBand {
+                if xx == 0 {
+                    break;
+                }
+                xx -= 1;
+            } else {
+                if xx == 5 {
+                    break;
+                }
+                xx += 1;
+            }
+        }
+        out.fallback = true;
+        out.fallback_groups |= 1 << x;
+    }
+    get(t, key(pooled, e, 0, slot, from))
+}
 
 /// Generate one day. `day_type`: 0 Monday to Thursday, 1 Friday, 2 Saturday, 3 Sunday.
 /// `week_same_kind`: a declared, unmeasured knob; when set, the kind of a working-week day
@@ -89,7 +145,7 @@ pub fn day_with(t: &Tables, g: Generator, seed: u64, employed: bool, day_type: u
     let e = employed as u32;
     let d = (day_type as u32).min(3);
     let mut st = Stream::new(seed);
-    let mut out = Day { states: [0; 24], kind: KIND_NONE, place_changes: 0, fallback: false };
+    let mut out = Day { states: [0; 24], kind: KIND_NONE, place_changes: 0, fallback: false, fallback_groups: 0, clipped: false };
     match g {
         Generator::Chain => {
             let init = get(t, key(T_INIT, e, d, 0, 0)).expect("initial row");
@@ -116,7 +172,8 @@ pub fn day_with(t: &Tables, g: Generator, seed: u64, employed: bool, day_type: u
                 out.states[slot as usize + 1] = s as u8;
             }
         }
-        Generator::Frame => {
+        Generator::Frame | Generator::FrameBand | Generator::FrameCountdown => {
+            let keyed = g != Generator::Frame;
             let kinds = get(t, key(T_KIND, e, d, 0, 0)).expect("kind row");
             let kind = if week_same_kind && d <= 1 {
                 let mut ps = Stream::new(person_seed);
@@ -129,51 +186,89 @@ pub fn day_with(t: &Tables, g: Generator, seed: u64, employed: bool, day_type: u
             let (mut first, mut last) = (24u32, 24u32);
             if kind != KIND_HOME as u32 {
                 let lrow = get(t, key(T_LEFT, e, kind, 0, 0)).expect("first-left row");
-                let lb = pick(&mut st, lrow);
-                if lb != NO_FRAME {
-                    first = (lb as u32) * 2 + st.below(2) as u32;
-                    let arow = match get(t, key(T_AWAY, e, kind, lb as u32, 0)) {
+                let cell = pick(&mut st, lrow);
+                if cell != NO_FRAME {
+                    // the day's first two hours have a cell each; two-hour bins after
+                    first = if cell < 2 { cell as u32 } else { (cell as u32 - 1) * 2 + st.below(2) as u32 };
+                    let arow = match get(t, key(T_AWAY, e, kind, cell as u32, 0)) {
                         Some(r) => r,
                         None => {
                             out.fallback = true;
-                            get(t, key(T_AWAY, e, kind, 12, 0)).expect("pooled away row")
+                            get(t, key(T_AWAY, e, kind, POOLED_SLOT, 0)).expect("pooled away row")
                         }
                     };
-                    // one-hour cells (amendment of 2026-11-12: a two-hour cell straddles the eight-hour line)
+                    // one-hour cells (PRESENCEGEN-1's CORRECTION of 2026-11-12)
                     let dur = pick(&mut st, arow) as u32 + 1;
+                    if first + dur > 24 {
+                        out.clipped = true;
+                    }
                     last = (first + dur).min(24);
                 }
             }
-            // at home before and after
-            let hi = get(t, key(T_HOME_INIT, e, 0, 0, 0)).expect("home initial row");
-            let mut h = pick(&mut st, hi) as u32;
+            // A transition into an hour is keyed on that hour's group.
+            // The group of an hour at home: six before the frame (by band or by countdown),
+            // a day with no outing, after the frame.
+            let group = |slot: u32| -> u32 {
+                if first >= 24 {
+                    GROUP_NONE
+                } else if slot >= last {
+                    GROUP_AFTER
+                } else if g == Generator::FrameBand {
+                    first / 4
+                } else {
+                    (first - slot).min(6) - 1
+                }
+            };
+            let (t_init, t_chain) = match g {
+                Generator::FrameBand => (T_H2_INIT_BAND, T_H2_BAND),
+                _ => (T_H2_INIT_COUNT, T_H2_COUNT),
+            };
+            let mut h = 1u32;
+            if first > 0 {
+                let hi = home_row(t, g, e, t_init, T_HOME_INIT, group(0), 0, 0, &mut out).expect("home initial row");
+                h = pick(&mut st, hi) as u32;
+            }
             let mut inside = 0usize;
             for slot in 0..24u32 {
                 if slot >= first && slot < last {
                     if slot == first {
-                        let ii = get(t, key(T_INSIDE_INIT, e, kind, 0, 0)).expect("inside initial row");
+                        let keyed_init = if keyed { get(t, key(T_INSIDE6_INIT, e, kind, (first != 0) as u32, 0)) } else { None };
+                        let ii = keyed_init.or_else(|| get(t, key(T_INSIDE_INIT, e, kind, 0, 0))).expect("inside initial row");
                         inside = pick(&mut st, ii);
                     } else {
-                        let row = match get(t, key(T_INSIDE, e, kind, slot - 1, inside as u32)) {
+                        let tb = if keyed { T_INSIDE6 } else { T_INSIDE };
+                        let row = match get(t, key(tb, e, kind, slot - 1, inside as u32)) {
                             Some(r) => Some(r),
                             None => {
                                 out.fallback = true;
-                                get(t, key(T_INSIDE, e, kind, ANY_SLOT, inside as u32))
+                                get(t, key(tb, e, kind, ANY_SLOT, inside as u32))
                             }
                         };
                         if let Some(r) = row {
                             inside = pick(&mut st, r);
                         }
                     }
-                    // the frame's last hour is away from home by definition
-                    if slot + 1 == last && INSIDE[inside] == 1 {
+                    // the frame's first and last hours are away from home by definition
+                    if (slot + 1 == last || slot == first) && INSIDE[inside] <= 1 {
                         inside = 3;
                     }
                     out.states[slot as usize] = INSIDE[inside];
                     h = 1;
                 } else {
-                    if slot > 0 && !(slot == last) {
-                        if let Some(r) = get(t, key(T_HOME_CHAIN, e, 0, slot - 1, h)) {
+                    if slot == last {
+                        // the state on return: drawn for the keyed fills, awake for the plain frame
+                        if keyed {
+                            let r = get(t, key(T_RETURN, e, 0, slot / 2, 0)).or_else(|| {
+                                out.fallback = true;
+                                out.fallback_groups |= 1 << GROUP_AFTER;
+                                get(t, key(T_RETURN, e, 0, POOLED_SLOT, 0))
+                            });
+                            if let Some(r) = r {
+                                h = pick(&mut st, r) as u32;
+                            }
+                        }
+                    } else if slot > 0 {
+                        if let Some(r) = home_row(t, g, e, t_chain, T_HOME_CHAIN, group(slot), slot - 1, h, &mut out) {
                             h = pick(&mut st, r) as u32;
                         }
                     }
@@ -208,14 +303,14 @@ mod tests {
                 }
             }
             for kind in 1..4u32 {
-                let mut l = vec![0u32; 13];
-                l[2] = 700_000;
-                l[5] = 200_000;
-                l[12] = 100_000;
+                let mut l = vec![0u32; 14];
+                l[3] = 700_000;
+                l[6] = 200_000;
+                l[13] = 100_000;
                 rows.push((key(T_LEFT, e, kind, 0, 0), l));
                 let mut a = vec![0u32; 24];
                 a[if kind == 3 { 1 } else { 8 }] = 1_000_000;
-                rows.push((key(T_AWAY, e, kind, 12, 0), a));
+                rows.push((key(T_AWAY, e, kind, POOLED_SLOT, 0), a));
                 rows.push((key(T_INSIDE_INIT, e, kind, 0, 0), vec![0, 0, 0, 1_000_000, 0]));
                 for from in 0..5u32 {
                     rows.push((key(T_INSIDE, e, kind, ANY_SLOT, from), vec![600_000, 200_000, 0, 100_000, 100_000]));
@@ -317,5 +412,62 @@ mod tests {
             let d = day_with(t, Generator::Chain, 3, true, 2, 0, false);
             assert!(d.fallback);
         });
+    }
+
+    /// PRESENCEGEN-2: with a countdown row saying "awake in the hour before leaving", nobody
+    /// who leaves after the first hour is asleep in that hour; the plain frame has some.
+    #[test]
+    fn the_countdown_wakes_before_leaving() {
+        let mut owned = toy();
+        for e in 0..2u32 {
+            for slot in 0..24u32 {
+                for from in 0..2u32 {
+                    owned.push((key(T_H2_COUNT, e, 0, slot, from), vec![0, 1_000_000]));
+                }
+            }
+        }
+        owned.sort_by_key(|r| r.0);
+        let rows: Vec<(u32, &[u32])> = owned.iter().map(|r| (r.0, r.1.as_slice())).collect();
+        let t = Tables { rows: &rows };
+        let asleep_before = |g: Generator| {
+            (0..2000u64)
+                .filter(|&i| {
+                    let d = day_with(&t, g, mix(i), true, 0, 0, false);
+                    match (0..24).find(|&s| d.states[s] > 1) {
+                        Some(f) if f >= 2 => d.states[f - 1] == 0,
+                        _ => false,
+                    }
+                })
+                .count()
+        };
+        // the row into the hour before leaving sends everyone awake
+        assert_eq!(asleep_before(Generator::FrameCountdown), 0);
+        assert!(asleep_before(Generator::Frame) > 0);
+    }
+
+    /// PRESENCEGEN-2: the state on return is drawn, and a group with no keyed row is flagged.
+    #[test]
+    fn the_return_is_drawn_and_a_borrowed_group_is_flagged() {
+        let mut owned = toy();
+        for e in 0..2u32 {
+            owned.push((key(T_RETURN, e, 0, POOLED_SLOT, 0), vec![1_000_000, 0]));
+        }
+        owned.sort_by_key(|r| r.0);
+        let rows: Vec<(u32, &[u32])> = owned.iter().map(|r| (r.0, r.1.as_slice())).collect();
+        let t = Tables { rows: &rows };
+        let mut seen = 0;
+        for i in 0..500u64 {
+            let d = day_with(&t, Generator::FrameBand, mix(i), true, 0, 0, false);
+            let away: Vec<usize> = (0..24).filter(|&s| d.states[s] > 1).collect();
+            if let Some(&b) = away.last() {
+                if b + 1 < 24 {
+                    assert_eq!(d.states[b + 1], 0, "asleep on return");
+                    seen += 1;
+                }
+            }
+            assert!(d.fallback && d.fallback_groups != 0);
+            assert_eq!(d.states.len(), 24);
+        }
+        assert!(seen > 100);
     }
 }

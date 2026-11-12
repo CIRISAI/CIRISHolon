@@ -1,0 +1,18 @@
+P-HEAP     PASS
+P-MEAN     PASS
+_mean_spell_truth_chain [5.756555153707052, 5.766280916723394]
+P-LATE     PASS
+_late_8h_truth_and_generators [0.5400268336314848, {"chain": 0.41079930543886184, "frame": 0.5334341397849462, "band": 0.5334341397849462, "countdown": 0.5334341397849462}]
+P-CHAIN    PASS
+P-SELECT   PASS
+_select_awake_generated_minus_planted {"frame": 0.026368055555555547, "band": 0.0027300347222222188, "countdown": 0.0033741319444444695}
+_select_asleep_in_hour_before_leaving_planted_0 {"frame": 0.40419701699618454, "band": 0.1391605966007631, "countdown": 0.0}
+P-RETURN   PASS
+_return_worst_bin_miss {"band": 0.004393138339664593, "countdown": 0.004393138339664593}
+_return_planted_share_asleep_by_bin [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.153, 0.296, 0.45, 0.59, 0.907, 0.0]
+P-NAP      PASS
+_nap_hours_share_and_days_planted_then_generated [[0.016916666666666667, 0.1015], {"band": [0.01684375, 0.1010625], "countdown": [0.01684375, 0.1010625]}]
+P-FIRST    PASS
+_first_elsewhere_asleep_at_4_planted_then_generated [0.10333333333333333, {"frame": 0.026270833333333334, "band": 0.1033125, "countdown": 0.1033125}]
+P-S3-START PASS
+_s3_start_awake_share_of_generated_saturdays_with_no_outing {"band": 1.0, "countdown": 1.0}

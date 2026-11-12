@@ -1,8 +1,8 @@
 //! PRESENCEGEN-1's carrier: generate days read from stdin with tables read from a file.
 //!
-//!   presencegen_draw <tables.txt> <chain|frame>
+//!   presencegen_draw <tables.txt> <chain|frame|band|countdown>
 //!
-//! stdin: `seed employed day_type` per line. stdout per line: 24 states, kind, changes, fallback.
+//! stdin: `seed employed day_type` per line. stdout per line: 24 states, kind, changes, fallback, groups that borrowed (bits), clipped.
 //! Then `DIGEST` and a number folding 1,000 fixed calls.
 use holon_scene::devices::Tables;
 use holon_scene::presence::{day_with, Generator};
@@ -12,7 +12,13 @@ use std::io::{BufRead, Write};
 fn main() {
     let a: Vec<String> = std::env::args().collect();
     let text = std::fs::read_to_string(&a[1]).unwrap();
-    let g = if a[2] == "chain" { Generator::Chain } else { Generator::Frame };
+    let g = match a[2].as_str() {
+        "chain" => Generator::Chain,
+        "frame" => Generator::Frame,
+        "band" => Generator::FrameBand,
+        "countdown" => Generator::FrameCountdown,
+        other => panic!("unknown generator {other}"),
+    };
     let mut owned: Vec<(u32, Vec<u32>)> = text
         .lines()
         .filter(|l| !l.trim().is_empty())
@@ -34,7 +40,7 @@ fn main() {
         }
         let d = day_with(&t, g, v[0], v[1] == 1, v[2] as u8, 0, false);
         let s: Vec<String> = d.states.iter().map(|x| x.to_string()).collect();
-        writeln!(out, "{} {} {} {}", s.join(" "), d.kind, d.place_changes, d.fallback as u8).unwrap();
+        writeln!(out, "{} {} {} {} {} {}", s.join(" "), d.kind, d.place_changes, d.fallback as u8, d.fallback_groups, d.clipped as u8).unwrap();
     }
     let mut dg = 0u64;
     for i in 0..1000u64 {

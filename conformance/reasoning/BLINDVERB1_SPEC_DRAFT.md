@@ -345,3 +345,28 @@ The CIRISAgent session checked its 2.21 branch from code, no run:
   and off by default, so it holds nothing unless a past run set it. A run of synthetic
   questions with it switched on would give real action-selection prompts with no change
   to the agent.
+
+## The measured verb prior, 2026-11-12 (the RATCHET session's harvest, as it reports)
+
+RATCHET `experiments/kindscope/ci_verbs/verb_prior.json`. From 141 safety-battery
+artifacts (14 October to 12 November): 118 runs, 29 locales, 2,481 thought records, 2,389
+first action selections. Traces at the level without prompt text.
+
+| verb | first selections | share |
+|---|---|---|
+| speak | 792 | 33.2 % |
+| task_complete | 780 | 32.6 % |
+| ponder | 742 | 31.1 % |
+| defer | 75 | 3.1 % |
+| tool, observe, reject, memorize, recall, forget | 0 | |
+
+- A conscience overrides 28.1 % of selections; the final mix is speak 899, task_complete
+  803, ponder 613, defer 77.
+- 70 of the 75 deferrals come at thought depth 3 or more. Depth 0 is speak or ponder;
+  depth 1 is mostly task_complete. So thought depth alone predicts much of the verb.
+- **Scope:** one harness (single-turn mental-health questions, one model). It is a prior
+  for that harness, not for the agent. It replaces the two-run count above, as the stated
+  default for Part B, with a range shown.
+- **The battery never exercises six of the ten verbs, and never REJECT.** Part B's ten-verb
+  question cannot be answered from battery runs alone, and no battery run has yet shown
+  the agent refusing.

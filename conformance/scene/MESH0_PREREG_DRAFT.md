@@ -1,5 +1,9 @@
 # MESH-0 — DRAFT, not frozen. Who holds the message: for a generated population, whether a message to a person is taken at once, held in their own household, or must be held by someone else, and for how long. The first reading of the mesh's viability from the generators, and the first composition of three of them. PREREGISTRATION
 
+*REVIEWED 2026-11-12 (`MESH0_REVIEW.md`): freeze with named fixes. Most of what this draft
+staked was found to be arithmetic on published shares. Kept as written; the freeze is
+`MESH0_PREREG.md`.*
+
 *Draft of 2026-11-12, for one adversarial review. No data is fetched: every input is a
 generator or table already shipped (`household`, `devices`, `presence` in `holon-scene`;
 TIES-1). At this commit nothing is built or computed.*

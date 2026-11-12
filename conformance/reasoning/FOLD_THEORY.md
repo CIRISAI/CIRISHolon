@@ -390,3 +390,13 @@ set built as changes: take a story that turns on one change, write its counterpa
 which the change is of another kind (the route was safe and a landslide came, against the
 steward had misread the map), and ask where and how far the difference travels. The
 kinds would be labelled by the Constitution session with the RATCHET series' definitions.
+
+- **Measured, 2026-11-12 (the RATCHET session):** the small model cannot read the website's
+  stories: 3.70 bits a byte on the 240 scenarios against 0.93 on unseen children's
+  stories under the same window (per story 2.42 to 5.09; no family easier; 8.0 would be
+  guessing). Their vocabulary is far outside what it was trained on, so anything it did
+  with them would be a model failing to read, not a model handling a change. They are
+  material for Gemma alone, as a separate, labelled authoring process never mixed with
+  the mined real pairs. Before any model sees them as changes, each needs a before and
+  an after as two texts (or a counterpart in which only the kind of change differs) and
+  its ending cut; the kind labels are the Constitution session's.

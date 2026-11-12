@@ -1,0 +1,686 @@
+{
+ "what": "sourced figures and brackets for the inputs that decide the full-replacement energy test (the data-centre estate and who uses it; what stays; what vanishes against relocates; edge against data-centre efficiency; AI's share and energy per unit of inference), gathered from documentation by a scout; priors, not a certificate",
+ "rows": [
+  {
+   "input": "baseline",
+   "sub-component": "world data-centre electricity",
+   "value_or_range": "415 (text); 416 (table)",
+   "unit": "TWh/year",
+   "basis": "AVG; modelled bottom-up",
+   "year": "2024",
+   "source": "IEA, Energy and AI (2025)",
+   "how_read": "read at source (PDF)",
+   "what_it_is_not": "not crypto (125 TWh, 2023), not networks (280), not devices (440)"
+  },
+  {
+   "input": "baseline",
+   "sub-component": "same, series",
+   "value_or_range": "269 / 361 / 416 / 946",
+   "unit": "TWh/year",
+   "basis": "modelled; 2030 is Base Case",
+   "year": "2020 / 2023 / 2024 / 2030",
+   "source": "IEA, Table A.1",
+   "how_read": "read",
+   "what_it_is_not": "2030 is a scenario"
+  },
+  {
+   "input": "baseline",
+   "sub-component": "internet users, first published",
+   "value_or_range": "5.5 (68 %)",
+   "unit": "billion",
+   "basis": "ITU estimate",
+   "year": "2024",
+   "source": "ITU Facts and Figures 2024",
+   "how_read": "read at source",
+   "what_it_is_not": "revised a year later"
+  },
+  {
+   "input": "baseline",
+   "sub-component": "internet users, revised",
+   "value_or_range": "5.8 (71 %); 6.0 (74 %)",
+   "unit": "billion",
+   "basis": "ITU estimate",
+   "year": "2024; 2025",
+   "source": "ITU Facts and Figures 2025",
+   "how_read": "read at source",
+   "what_it_is_not": "definition of \"using\" not on the pages read"
+  },
+  {
+   "input": "baseline",
+   "sub-component": "per user",
+   "value_or_range": "71.7 (75.5 on the old count)",
+   "unit": "kWh/user-year",
+   "basis": "AVG; 416 / 5.8",
+   "year": "2024",
+   "source": "derived",
+   "how_read": "scout's arithmetic",
+   "what_it_is_not": "a world mean; US per capita by location is 540"
+  },
+  {
+   "input": "1 stay",
+   "sub-component": "electricity by owner type",
+   "value_or_range": "hyperscale 166 (39.9 %); colocation and service provider 144 (34.6 %); enterprise 106 (25.5 %)",
+   "unit": "TWh/year",
+   "basis": "AVG; modelled",
+   "year": "2024",
+   "source": "IEA, Table A.1",
+   "how_read": "read",
+   "what_it_is_not": "by owner, not by consumer vs business"
+  },
+  {
+   "input": "1 stay",
+   "sub-component": "capacity by owner type",
+   "value_or_range": "hyperscale 37 %; colocation 36 %; enterprise 28 % (85 % in 2005)",
+   "unit": "% of capacity",
+   "basis": "CAP; modelled",
+   "year": "2024",
+   "source": "IEA, section 2.1.2",
+   "how_read": "read",
+   "what_it_is_not": ""
+  },
+  {
+   "input": "1 stay",
+   "sub-component": "capacity by owner type, analyst",
+   "value_or_range": "hyperscale 41 / colocation 22 / on-premise 37; then 48 / 20 / 32",
+   "unit": "% of capacity",
+   "basis": "CAP; commercial analyst press release",
+   "year": "2024; end 2025",
+   "source": "Synergy Research Group",
+   "how_read": "read at source",
+   "what_it_is_not": "unit not stated; leased hyperscale counted as hyperscale; data sold"
+  },
+  {
+   "input": "1 stay",
+   "sub-component": "three business clouds' share of hyperscale",
+   "value_or_range": "58",
+   "unit": "% of hyperscale capacity",
+   "basis": "CAP; commercial analyst",
+   "year": "Q3 2025",
+   "source": "Synergy Research Group",
+   "how_read": "read at source",
+   "what_it_is_not": "not a split by use; all three also run consumer services"
+  },
+  {
+   "input": "1 stay",
+   "sub-component": "US server energy in internal data centres",
+   "value_or_range": "about 10 (over 60 in 2014); hyperscale + colocation almost 80",
+   "unit": "% of server energy",
+   "basis": "modelled",
+   "year": "2023",
+   "source": "LBNL 2024",
+   "how_read": "read",
+   "what_it_is_not": "US; values in text, table not given"
+  },
+  {
+   "input": "1 stay",
+   "sub-component": "Germany, connected IT load",
+   "value_or_range": "cloud 1,240 (45 %); traditional 1,310 (48 %); edge 180 (7 %); 20 TWh total",
+   "unit": "MW; TWh",
+   "basis": "industry study",
+   "year": "2024",
+   "source": "Bitkom / Borderstep",
+   "how_read": "read at source",
+   "what_it_is_not": "cloud is not consumer"
+  },
+  {
+   "input": "1 stay",
+   "sub-component": "consumer share of workloads",
+   "value_or_range": "27 (24 in 2016)",
+   "unit": "% of workloads and compute instances",
+   "basis": "FORECAST; vendor white paper",
+   "year": "2021 (written 2018)",
+   "source": "Cisco Global Cloud Index 2016-2021",
+   "how_read": "search summary of a third-party copy",
+   "what_it_is_not": "a count, not energy; withdrawn by the publisher"
+  },
+  {
+   "input": "1 stay",
+   "sub-component": "largest four hyperscalers' data-centre electricity",
+   "value_or_range": "about 90",
+   "unit": "TWh/year",
+   "basis": "IEA statement from company reports",
+   "year": "2023",
+   "source": "IEA, Box 1.3",
+   "how_read": "read",
+   "what_it_is_not": "\"in the order of\""
+  },
+  {
+   "input": "1 stay",
+   "sub-component": "SHARE THAT STAYS",
+   "value_or_range": "0.45 to 0.75; centre 0.6",
+   "unit": "fraction of 416 TWh",
+   "basis": "AUTHOR'S ESTIMATE; two derivations",
+   "year": "2024",
+   "source": "derived",
+   "how_read": "scout's estimate",
+   "what_it_is_not": "no source splits energy by consumer vs business"
+  },
+  {
+   "input": "2 vanish",
+   "sub-component": "fixed downstream bytes by content",
+   "value_or_range": "on-demand streaming 54; live 14; file delivery 13; browsing 3; games 3; video call 2; messaging 0.6",
+   "unit": "% of bytes",
+   "basis": "measured by a vendor on customer networks",
+   "year": "2023",
+   "source": "Sandvine GIPR 2024",
+   "how_read": "read at source",
+   "what_it_is_not": "bytes, not data-centre energy; sample of networks not published"
+  },
+  {
+   "input": "2 vanish",
+   "sub-component": "mobile downstream bytes by content",
+   "value_or_range": "on-demand streaming 57; file delivery 11; live 7",
+   "unit": "% of bytes",
+   "basis": "same",
+   "year": "2023",
+   "source": "same",
+   "how_read": "read",
+   "what_it_is_not": ""
+  },
+  {
+   "input": "2 vanish",
+   "sub-component": "bytes by application category",
+   "value_or_range": "fixed: video 39, social 18, television 11; mobile: social 35, video 31",
+   "unit": "% of bytes",
+   "basis": "same",
+   "year": "2023",
+   "source": "same",
+   "how_read": "read",
+   "what_it_is_not": ""
+  },
+  {
+   "input": "2 vanish",
+   "sub-component": "ad-analytics traffic",
+   "value_or_range": "under 2 % of a subscriber's daily volume; 66 MB/day fixed, 6 MB/day mobile; 93 % of fixed subscribers daily",
+   "unit": "% ; MB",
+   "basis": "measured, vendor",
+   "year": "2024",
+   "source": "GIPR 2025 (AppLogic Networks)",
+   "how_read": "read at source",
+   "what_it_is_not": "analytics beacons, not ad creatives; not energy"
+  },
+  {
+   "input": "2 vanish",
+   "sub-component": "data centre per viewing hour",
+   "value_or_range": "1.3 (about 1 % of the 188 Wh chain)",
+   "unit": "Wh/hour",
+   "basis": "AVG; operator-measured, DIMPACT members",
+   "year": "2020",
+   "source": "Carbon Trust 2021",
+   "how_read": "read at source",
+   "what_it_is_not": "professional video on demand; not user-uploaded video platforms"
+  },
+  {
+   "input": "2 vanish",
+   "sub-component": "data centre per viewing hour, earlier",
+   "value_or_range": "about 3.9 (5 % of 77)",
+   "unit": "Wh/hour",
+   "basis": "AVG; modelled from Netflix's reported total",
+   "year": "2019",
+   "source": "IEA commentary (Kamiya, 2020)",
+   "how_read": "read at source; 5 % x 77 is scout's arithmetic",
+   "what_it_is_not": "includes more than delivery"
+  },
+  {
+   "input": "2 vanish",
+   "sub-component": "video delivery, world data-centre energy",
+   "value_or_range": "3 to 25 (0.7 to 6 % of 416)",
+   "unit": "TWh/year",
+   "basis": "AUTHOR'S ESTIMATE; 1 to 3 hours a day assumed",
+   "year": "2024",
+   "source": "derived",
+   "how_read": "scout's arithmetic",
+   "what_it_is_not": "viewing hours assumed"
+  },
+  {
+   "input": "2 vanish",
+   "sub-component": "data-centre electricity by equipment",
+   "value_or_range": "servers about 60; storage about 5; network up to 5; cooling 7 (hyperscale) to over 30 (enterprise)",
+   "unit": "%",
+   "basis": "AVG; modelled",
+   "year": "2024",
+   "source": "IEA, section 2.1.2",
+   "how_read": "read",
+   "what_it_is_not": "by type only in a chart"
+  },
+  {
+   "input": "2 vanish",
+   "sub-component": "recommendation share of AI inference",
+   "value_or_range": "over 79 (three classes 65)",
+   "unit": "% of AI inference cycles",
+   "basis": "operator-reported",
+   "year": "2019",
+   "source": "Gupta et al., HPCA 2020 (arXiv 1906.03109)",
+   "how_read": "read at source (arXiv)",
+   "what_it_is_not": "cycles on CPUs, inside AI inference; not energy; not the total"
+  },
+  {
+   "input": "2 vanish",
+   "sub-component": "SHARE OF CONSUMER WORK THAT VANISHES",
+   "value_or_range": "0.3 to 0.7; centre 0.5",
+   "unit": "fraction",
+   "basis": "AUTHOR'S ESTIMATE",
+   "year": "2024",
+   "source": "derived",
+   "how_read": "scout's estimate",
+   "what_it_is_not": "no operator publishes it; overlaps input 4a"
+  },
+  {
+   "input": "3 edge",
+   "sub-component": "PUE by type",
+   "value_or_range": "hyperscale 1.14; colocation 1.53; enterprise 1.92; all 1.41",
+   "unit": "ratio",
+   "basis": "AVG; modelled",
+   "year": "2024",
+   "source": "IEA, Table A.1",
+   "how_read": "read",
+   "what_it_is_not": ""
+  },
+  {
+   "input": "3 edge",
+   "sub-component": "utilisation",
+   "value_or_range": "hyperscale up to 50 %; enterprise under 20 %",
+   "unit": "%",
+   "basis": "AVG; IEA statement",
+   "year": "2024",
+   "source": "IEA, section 2.1.2",
+   "how_read": "read",
+   "what_it_is_not": "LBNL model: 45-50 / 21-35 / 11-20"
+  },
+  {
+   "input": "3 edge",
+   "sub-component": "server idle power",
+   "value_or_range": "about 35 (60 in 2010)",
+   "unit": "% of rated power",
+   "basis": "modelled",
+   "year": "2024",
+   "source": "IEA; LBNL (36 % in 2023)",
+   "how_read": "read",
+   "what_it_is_not": ""
+  },
+  {
+   "input": "3 edge",
+   "sub-component": "data-centre overhead per unit of work",
+   "value_or_range": "1.5 (hyperscale); 4.6 (enterprise)",
+   "unit": "ratio to a server at full load",
+   "basis": "derived from the three rows above, linear power model",
+   "year": "2024",
+   "source": "derived",
+   "how_read": "scout's arithmetic",
+   "what_it_is_not": "a model"
+  },
+  {
+   "input": "3 edge",
+   "sub-component": "video on demand from home gateways vs data centre",
+   "value_or_range": "0.4 to 0.8 (saves 20-30 % pessimistic, up to 60 %)",
+   "unit": "ratio edge / data centre",
+   "basis": "modelled with traces; gateway already on; PUE 1.2",
+   "year": "2009",
+   "source": "Valancius et al., CoNEXT 2009",
+   "how_read": "read at source",
+   "what_it_is_not": "2009 data centres; ISP-managed gateways"
+  },
+  {
+   "input": "3 edge",
+   "sub-component": "home nano server vs data centre",
+   "value_or_range": "either wins; depends on access network and idle-to-active time",
+   "unit": "-",
+   "basis": "measured device, modelled network",
+   "year": "2016",
+   "source": "Jalali et al., IEEE JSAC 2016",
+   "how_read": "mirror",
+   "what_it_is_not": "data centre priced at 4-20 microjoule/bit"
+  },
+  {
+   "input": "3 edge",
+   "sub-component": "data-centre energy per bit, model vs measured",
+   "value_or_range": "4 to 20 (2016 model) vs about 0.26 (2020, at an assumed 5 Mbit/s)",
+   "unit": "microjoule/bit",
+   "basis": "modelled vs operator-measured",
+   "year": "2016 vs 2020",
+   "source": "Jalali et al.; Carbon Trust",
+   "how_read": "read; conversion is scout's arithmetic",
+   "what_it_is_not": "bit rate assumed by scout"
+  },
+  {
+   "input": "3 edge",
+   "sub-component": "home gateway idle / maximum",
+   "value_or_range": "Ethernet 2.8 / 4.6; ADSL2+ 4.1 / 6.7; GPON 5.2 / 8.3; 4G 0.5 / 1.75",
+   "unit": "W",
+   "basis": "measured",
+   "year": "about 2014",
+   "source": "Jalali et al., Table IV",
+   "how_read": "mirror",
+   "what_it_is_not": "old hardware"
+  },
+  {
+   "input": "3 edge",
+   "sub-component": "media delivery, gateway already on",
+   "value_or_range": "about 0.1 (0.09 vs 1.3 Wh/hour)",
+   "unit": "ratio",
+   "basis": "MARG; derived",
+   "year": "2014 / 2020",
+   "source": "derived",
+   "how_read": "scout's arithmetic",
+   "what_it_is_not": "excludes encoding; needs upstream capacity"
+  },
+  {
+   "input": "3 edge",
+   "sub-component": "media delivery, gateway's idle charged",
+   "value_or_range": "2 to 4 (2.8 to 5.2 vs 1.3 Wh/hour)",
+   "unit": "ratio",
+   "basis": "AVG; derived",
+   "year": "same",
+   "source": "derived",
+   "how_read": "scout's arithmetic",
+   "what_it_is_not": "one stream per gateway"
+  },
+  {
+   "input": "3 edge",
+   "sub-component": "peer-to-peer vs content-delivery network",
+   "value_or_range": "provider's power falls, total energy rises",
+   "unit": "-",
+   "basis": "modelled",
+   "year": "2010",
+   "source": "Feldmann et al., CTTE 2010",
+   "how_read": "search summary of the abstract",
+   "what_it_is_not": "not read"
+  },
+  {
+   "input": "3 edge",
+   "sub-component": "cloud storage vs local disk",
+   "value_or_range": "cloud more efficient when files are rarely accessed; transport dominates at high access rates",
+   "unit": "-",
+   "basis": "modelled",
+   "year": "2010",
+   "source": "Baliga et al., Proc. IEEE 2011",
+   "how_read": "mirror",
+   "what_it_is_not": "2010 hardware and networks"
+  },
+  {
+   "input": "3 edge",
+   "sub-component": "home storage box",
+   "value_or_range": "14.69 access; 4.41 hibernating (39 to 129 kWh/year)",
+   "unit": "W",
+   "basis": "CAP; vendor specification",
+   "year": "current",
+   "source": "Synology DS224+",
+   "how_read": "read at source",
+   "what_it_is_not": "drives fitted not stated"
+  },
+  {
+   "input": "3 edge",
+   "sub-component": "home storage per TB provisioned",
+   "value_or_range": "4.8 to 16 (ratio 0.3 to 1.0 to the data centre's 15.4)",
+   "unit": "kWh per usable TB-year",
+   "basis": "derived; 8 TB usable assumed",
+   "year": "current",
+   "source": "derived",
+   "how_read": "scout's arithmetic",
+   "what_it_is_not": "per STORED TB it is 2.5 to 40x"
+  },
+  {
+   "input": "3 edge",
+   "sub-component": "small board idle",
+   "value_or_range": "about 3.1 (27 kWh/year)",
+   "unit": "W",
+   "basis": "vendor documentation; with peripherals",
+   "year": "2019 board",
+   "source": "Raspberry Pi documentation",
+   "how_read": "read at source",
+   "what_it_is_not": "not bare-board"
+  },
+  {
+   "input": "3 edge",
+   "sub-component": "server efficiency",
+   "value_or_range": "19,500 to 44,168",
+   "unit": "ssj_ops per watt",
+   "basis": "vendor-run benchmark",
+   "year": "2025",
+   "source": "SPECpower_ssj2008 results",
+   "how_read": "search summary",
+   "what_it_is_not": "no small-board results exist"
+  },
+  {
+   "input": "3 edge",
+   "sub-component": "EFFICIENCY RATIO",
+   "value_or_range": "already on: 0.1 to 1; dedicated device: 2 to 4 or its fixed kWh",
+   "unit": "ratio edge / data centre",
+   "basis": "AUTHOR'S ESTIMATE by kind",
+   "year": "-",
+   "source": "derived",
+   "how_read": "scout's estimate",
+   "what_it_is_not": "general compute not sourced"
+  },
+  {
+   "input": "4a AI share",
+   "sub-component": "accelerated servers, world",
+   "value_or_range": "15 (24 % of server electricity)",
+   "unit": "% of data-centre electricity",
+   "basis": "AVG; modelled proxy",
+   "year": "2024",
+   "source": "IEA, Box 2.1",
+   "how_read": "read",
+   "what_it_is_not": "servers only, no overhead; includes ranking, business AI, science"
+  },
+  {
+   "input": "4a AI share",
+   "sub-component": "same with overhead",
+   "value_or_range": "17 to 21",
+   "unit": "%",
+   "basis": "derived",
+   "year": "2024",
+   "source": "derived",
+   "how_read": "scout's arithmetic",
+   "what_it_is_not": ""
+  },
+  {
+   "input": "4a AI share",
+   "sub-component": "growth",
+   "value_or_range": "accelerated +30 % a year; conventional +9 %",
+   "unit": "% a year",
+   "basis": "scenario",
+   "year": "2024-2030",
+   "source": "IEA",
+   "how_read": "read",
+   "what_it_is_not": ""
+  },
+  {
+   "input": "4a AI share",
+   "sub-component": "implied",
+   "value_or_range": "19 (2026); 32 (2030)",
+   "unit": "%",
+   "basis": "derived from the IEA's rates",
+   "year": "-",
+   "source": "derived",
+   "how_read": "scout's arithmetic",
+   "what_it_is_not": "not an IEA figure"
+  },
+  {
+   "input": "4a AI share",
+   "sub-component": "United States",
+   "value_or_range": "23 (over 40 of 176 TWh)",
+   "unit": "%",
+   "basis": "modelled",
+   "year": "2023",
+   "source": "LBNL 2024",
+   "how_read": "read",
+   "what_it_is_not": "servers only"
+  },
+  {
+   "input": "4a AI share",
+   "sub-component": "Germany",
+   "value_or_range": "15 now; about 40 by 2030",
+   "unit": "% of capacity",
+   "basis": "industry study",
+   "year": "2024",
+   "source": "Bitkom / Borderstep",
+   "how_read": "read",
+   "what_it_is_not": "AI plus scientific computing"
+  },
+  {
+   "input": "4b AI energy",
+   "sub-component": "hosted, median text prompt",
+   "value_or_range": "0.24 (accelerators 0.14; host 0.06; idle 0.02; overhead 0.02); narrow boundary 0.10",
+   "unit": "Wh/prompt",
+   "basis": "AVG; operator-measured",
+   "year": "May 2025",
+   "source": "Google, arXiv 2508.15734",
+   "how_read": "read at source (arXiv)",
+   "what_it_is_not": "one product; median; no training"
+  },
+  {
+   "input": "4b AI energy",
+   "sub-component": "hosted, movement",
+   "value_or_range": "33-fold fall",
+   "unit": "ratio",
+   "basis": "operator-reported",
+   "year": "May 2024 to May 2025",
+   "source": "same",
+   "how_read": "read",
+   "what_it_is_not": ""
+  },
+  {
+   "input": "4b AI energy",
+   "sub-component": "hosted, other operator",
+   "value_or_range": "about 0.34",
+   "unit": "Wh/prompt",
+   "basis": "operator statement, no method",
+   "year": "June 2025",
+   "source": "OpenAI, as quoted by Google's paper",
+   "how_read": "secondary",
+   "what_it_is_not": "no boundary"
+  },
+  {
+   "input": "4b AI energy",
+   "sub-component": "open models on a batched GPU",
+   "value_or_range": "0.15 to 0.21 J/token (32 bn parameters); 0.026 to 0.05 Wh per 627-token reply; 1.3 Wh with reasoning",
+   "unit": "J/token; Wh",
+   "basis": "measured",
+   "year": "2025-2026",
+   "source": "Chung et al., arXiv 2601.22076",
+   "how_read": "read at source (arXiv)",
+   "what_it_is_not": "no PUE or idle capacity"
+  },
+  {
+   "input": "4b AI energy",
+   "sub-component": "laboratory, by model size",
+   "value_or_range": "0.1 (1.7 bn); 0.3 (9 bn); 4 to 5 (70 bn); image 1.7; video 115",
+   "unit": "Wh/task",
+   "basis": "measured, GPU only, unbatched",
+   "year": "2025",
+   "source": "IEA, section 1.4",
+   "how_read": "read",
+   "what_it_is_not": "\"highly controlled experimental results\""
+  },
+  {
+   "input": "4b AI energy",
+   "sub-component": "open models, single GPU",
+   "value_or_range": "0.047 text; 2.9 image",
+   "unit": "Wh/inference",
+   "basis": "measured",
+   "year": "2023",
+   "source": "Luccioni et al., FAccT 2024",
+   "how_read": "read at source (arXiv)",
+   "what_it_is_not": "unbatched; small models"
+  },
+  {
+   "input": "4b AI energy",
+   "sub-component": "phone",
+   "value_or_range": "0.58 to 0.76 (0.16 to 0.21 mWh)",
+   "unit": "J/token",
+   "basis": "measured at the battery",
+   "year": "2022-2023 phones",
+   "source": "Laskaridis et al., MobiCom 2024 (arXiv 2403.12844)",
+   "how_read": "read at source (arXiv)",
+   "what_it_is_not": "3 bn parameters, 4-bit; batch of one"
+  },
+  {
+   "input": "4b AI energy",
+   "sub-component": "laptop",
+   "value_or_range": "0.09 to 0.25",
+   "unit": "J/token",
+   "basis": "measured speed, ASSUMED 10 W system power",
+   "year": "2025-2026",
+   "source": "Kannan et al., arXiv 2608.28667",
+   "how_read": "read (preprint)",
+   "what_it_is_not": "power assumed; its \"30-40x\" headline is not usable"
+  },
+  {
+   "input": "4b AI energy",
+   "sub-component": "small board",
+   "value_or_range": "2.61",
+   "unit": "J/token",
+   "basis": "measured, as cited",
+   "year": "-",
+   "source": "cited in the above",
+   "how_read": "not confirmed",
+   "what_it_is_not": "0.5 bn parameters"
+  },
+  {
+   "input": "4b AI energy",
+   "sub-component": "DEVICE / DATA CENTRE, same model",
+   "value_or_range": "3 to 30 (laptop 3 to 10; phone 10 to 30)",
+   "unit": "ratio",
+   "basis": "AUTHOR'S ESTIMATE from measured endpoints",
+   "year": "2024-2026",
+   "source": "derived",
+   "how_read": "scout's estimate",
+   "what_it_is_not": "no like-for-like measurement exists"
+  },
+  {
+   "input": "4b AI energy",
+   "sub-component": "DEVICE / DATA CENTRE, as served",
+   "value_or_range": "0.3 to 5",
+   "unit": "ratio",
+   "basis": "derived",
+   "year": "2024-2026",
+   "source": "derived",
+   "how_read": "scout's arithmetic",
+   "what_it_is_not": "a small model against a large one"
+  }
+ ],
+ "baseline": {
+  "global_data_centre_electricity_2024_TWh": 416,
+  "by_type": {
+   "hyperscale": 166,
+   "colocation_and_service_provider": 144,
+   "enterprise": 106
+  },
+  "source": "IEA, Energy and AI (2025), Annex Table A.1; modelled; excludes crypto, networks and devices",
+  "internet_users": {
+   "2024_first_published": 5500000000.0,
+   "2024_revised": 5800000000.0,
+   "2025": 6000000000.0,
+   "source": "ITU Facts and Figures"
+  },
+  "kWh_per_user_year": 72
+ },
+ "scout_readings_beside_the_twins_guesses": {
+  "share_of_the_estate_that_stays": {
+   "twin_guess": 0.4,
+   "scout": "0.6 (0.45 to 0.75)",
+   "basis": "the scout's bracket from two derivations; NO source splits energy by consumer against business. Enterprise alone is 25 % and stays. Two large consumer operators counted wholly as consumer are 12 % of the total.",
+   "depends_on": "what 'replace the internet entirely' includes; if enterprise, government and science computing also go, this input is a definition and is near zero"
+  },
+  "of_consumer_work_the_share_that_vanishes": {
+   "twin_guess": 0.5,
+   "scout": "0.5 stands (0.3 to 0.7); unsourceable",
+   "basis": "video is 54 to 57 % of downstream BYTES and relocates, but its data-centre energy is about 1.3 Wh per viewing hour, a few per cent of the estate: bytes are not data-centre energy"
+  },
+  "edge_against_data_centre": {
+   "twin_guess": "one ratio, 1.0",
+   "scout": "two terms: a marginal ratio of 0.1 to 1 on devices ALREADY ON, plus the fixed draw of anything ADDED (a two-bay home storage box is 39 to 129 kWh a year, the order of the whole per-user baseline)",
+   "basis": "each published 'edge wins' result assumed the gateway already on and priced the data centre at 15 to 77 times the 2020 measured cost per bit"
+  },
+  "ai_share_of_the_estate": {
+   "twin_guess": 0.15,
+   "scout": "0.15 is the IEA's 2024 proxy without cooling overhead; 17 to 21 % with it; 23 % in the US in 2023; about 19 % in 2026 and 32 % in 2030 at the IEA's rates (the scout's arithmetic)"
+  },
+  "device_against_data_centre_inference": {
+   "twin_guess": "3 times",
+   "scout": "same model: 3 to 30 (laptop 3 to 10, phone 10 to 30; never measured like for like). As served (a small device model against a hosted frontier model): 0.3 to 5. Frontier models and training cannot move to homes at all."
+  }
+ },
+ "written_before": "the lead's statement that AI in the scenario is a mix across tiers placed by the market; the scout's AI rows compare a device with a data centre and do not yet give energy by tier"
+}

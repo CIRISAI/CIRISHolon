@@ -1,0 +1,17 @@
+{
+ "reference": "ESTATE-0 (a table of priors)",
+ "version": 1,
+ "table": "estate_table.json",
+ "bytes": 23413,
+ "sha256": "183d84beb59b6fd11cc124124ccfb4dfe70f60d2992108821f901b78649da9ea",
+ "serves_registry_rows": [
+  "the inputs of the twin's full-replacement energy test"
+ ],
+ "provenance": "conformance/scene/SCOUT_ESTATE.md (documentation only; each row says how it was read)",
+ "verdict": {
+  "all_rows": "unresolved",
+  "reason": "priors from documents; two of the four inputs have no source at all and carry the scout's own brackets, marked"
+ },
+ "law": "long-run averages are the right kind of number for a full-replacement thought experiment and are still prices in a year and a system",
+ "holds_no_real_feature": "no person, household or place"
+}

@@ -396,6 +396,11 @@ n_closure=$(cargo test -q -p holon-closure -- --list 2>/dev/null | grep -c ': te
 cargo test -q -p holon-closure 2>/dev/null >/dev/null \
   && ok "holon-closure: merge/part inverse, the rent clause, the edge, the winding" \
   || no "holon-closure: merge/part inverse, the rent clause, the edge, the winding"
+# The two file-driven front ends (a carrier that is not the engine's own): their plants live
+# in the examples, which `cargo test -p` builds and does not run, so they are named here.
+cargo test -q -p holon-closure --example admit_file --example edit_ledger 2>/dev/null >/dev/null \
+  && ok "holon-closure front ends: the gate from a file (3 plants), the edit ledger (7 plants)" \
+  || no "holon-closure front ends: the gate from a file (3 plants), the edit ledger (7 plants)"
 
 # holon-scene: the generated world as engine types (issue #3). Exact apportionment, seeded
 # random access, the population and edge section laws on random trees and graphs, the verdict

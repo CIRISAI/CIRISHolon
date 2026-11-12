@@ -454,3 +454,28 @@ sends. The golden check proves the composer, not the template.
 - The prefix length and the "96 % never changes" figure recorded for the constant-prefix
   fold were measured on the base prompt. The templated prompt will differ and must be
   measured again.
+
+## Part A rendered under the default template, 2026-11-12 (the CIRISAgent session, as it reports)
+
+`/home/emoore/blindverb1-rendered-default-template-2026-11-12/` (local). The earlier folder
+is kept unchanged as the arm "base, no template".
+
+- Prefix under the template: 91,303 characters in four system messages (base: 86,072).
+  1,620 items, hashes distinct, reassembly checked, input digests equal to this
+  repository's. Renderer commit `bfe2a7413`; the default template's file and digest are
+  in the manifest, with the template's override text VERBATIM (action selection, the
+  evaluators, permitted verbs, domain knowledge).
+- The unread splits passed through unread; no substring check touched them this time.
+- **The hazard is larger than one block,** that session says: the template is a personal
+  assistant's, and its identity text, its deferral block and its domain knowledge each
+  say to send medical, legal and financial matters to professionals. Splits that differ
+  in domain will differ in how hard the template pushes toward deferral.
+- **Not yet validated against a real call.** It will compare this prefix with the first
+  captured battery call when that run finishes and report what differs.
+
+The RATCHET session judges that no redraw of the items is needed: each scenario is
+rendered under each template of its pair, so a setting cannot predict the label and the
+pair score is immune; what the template changes is the full model's behaviour in the
+template-touched domains, which are named in advance and scored as floor in their own
+column. The held-back split has no hospital setting, so it tests the rule away from the
+template's push and does not cover the pushed case; the preregistration is to say so.

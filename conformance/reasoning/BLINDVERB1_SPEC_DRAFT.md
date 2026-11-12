@@ -414,3 +414,15 @@ first action selections. Traces at the level without prompt text.
   model about inputs it does not get; task and thought are wrapped in quotes with no
   escaping, as deployed; and the battery's real calls will have summaries present and
   depth varying, so they compare with this arm in format alone.
+
+## The instrument holds at the real prompt's length, 2026-11-12 (the RATCHET session's CAL-G-LONG, as it reports)
+
+RATCHET `0452de6`. On 8 fit prompts, no labels read: the prefix is 20,742 tokens and an item
+about 21,680; the scaled frame closes to 1.3e-7 (a plain sum misses by 40); logits rebuild
+to 1.6e-4; runs with the prefix cached are deterministic and match uncached runs to 3.8e-4
+where an uncached run fits (checked at 6,144 tokens; a single uncached pass at 21,000
+tokens does not fit that GPU). With the prefix cached once, an item takes half a second.
+It took four amendments, two of which named the wrong cause first; all are kept.
+
+Next there: freeze the test for the summaries-withheld arm alone, after settling how the
+model's own verb is read at the answer position when several verbs share first tokens.

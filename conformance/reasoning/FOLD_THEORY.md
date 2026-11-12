@@ -202,3 +202,12 @@ regardless. What follows is what was measured, at that strength.
 
 These are costs on predicting the next character of children's stories. For the target
 they are hypotheses to measure again on Gemma, at the real prompt's length.
+
+## A datum for F5 (the constant prefix), 2026-11-12
+
+The RATCHET session's calibration at the real prompt's length: the constant prefix is
+20,742 tokens of an item's roughly 21,680, so about 96 % of what the step reads on each
+call never changes. On a desktop GPU a single pass over it without a cache did not fit in
+memory; with the prefix cached once an item took half a second. A phone cannot hold what
+that GPU could not. Whatever else is folded, the prefix is the first thing a purpose-built
+model has to stop reading.

@@ -117,3 +117,42 @@ only room membership against one of 181 localities, and no energy pass exists.
 Its three least-trusted inputs: room placement and the act mix; the device power table
 and server-tier share; the 181-locality partition itself (the largest holds 8.4 % of the
 grid's population, so "never leaves the locality" is a sub-continental statement).
+
+## The lead's second correction, 2026-11-12: the scenario is FULL REPLACEMENT
+
+In the lead's words: "the whole assumption is if we replaced the internet entirely with
+cewp"; "We do not need massive datacenters"; "or big tech".
+
+**CORRECTION of this session's reading.** After the first correction (a delta from the
+status quo) this session added, on its own, an adoption question: what fraction of
+platform use a person gives up on installing a private messenger. It sourced a prior for
+that (0.005 to 0.16) and concluded that on those priors the mesh costs energy. That
+answers a question the theory does not ask. In the theory's scenario substitution is 1 by
+definition: the data centres are not partly displaced, they are not needed.
+
+**The two corrections together:**
+- Mesh side: only what the mesh ADDS (people use phones and run gateways regardless).
+- Baseline side: the WHOLE data-centre estate the replaced internet no longer needs.
+
+**Arithmetic on priors (this session's; the user count is from memory):**
+- All data centres worldwide, 2024: 415 TWh over about 5.5 billion internet users is
+  about 75 kWh per user per year (8.6 W).
+- Added by the mesh: a home node on the gateway a home already runs, near zero; on its
+  own 5 W box shared by a household of 2.5, about 17 kWh per person per year; the
+  30-second idle round on a carrier network if left as it is, up to about 3.6 kWh a year.
+- On that framing the saving is large and the sign is not close.
+
+**What is still open under full replacement:**
+1. What must still be computed and stored somewhere. The 415 TWh is every workload.
+   Harvesting, ranking and advertising vanish; people's own data, media and the AI they
+   use relocate. No operator publishes the split.
+2. How efficiently the edge does the work that relocates (a hyperscale centre runs near
+   full with 9 % overhead; home hardware is mostly idle and already on).
+3. Whether home nodes ride on hardware a home already runs. A separate always-on box in
+   each home is about a quarter of the baseline on its own.
+4. The networks stay; fixed access is mostly draw per line.
+5. Whether "entirely" includes AI, the fastest-growing part of the baseline.
+
+**The adoption-path question** (how much a person gives up on the way there) is a
+different question. Its priors stay in `tables/upstream0/` under that label and are not
+the theory's test.

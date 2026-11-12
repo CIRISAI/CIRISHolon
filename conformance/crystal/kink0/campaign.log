@@ -1,0 +1,34 @@
+# KINK-0 campaign: x=3.0, heavy m/g=0.8, light m/g=0.15, N in (12, 14, 16, 18)
+G0  N=12 x=4 massless Q=0: -26.1743157050 against the engine's typed referee -26.1743157050: |diff| = 2.6e-11  MET
+G0b N=8 x=6 m/g=1 random background, Q in -1,0,+1: sector spectra against the Kronecker referee differ by at most 8.5e-14; with the mass sign reversed by at least 2.05  MET
+IDENTITY E0(-1; 1/2) - E0(+1; -1/2) at N=12 heavy = -1.1e-13
+P-MASS-SIGN N=8: lowest energy moves by 3.0310  FIRES
+P-BACKGROUND N=12: E0(-1; 1) - E0(+1; 0) = 1.1e-14; E0(-1; 1) - E0(0; 0) = 5.3297  FIRES
+P-PINNED N=18: background 0.55 on links 0..8 moves X by -4.550; 0.45 by +1.545  FIRES
+READ  N=12 x=3.0 m/g=0.8 alpha=0.0: dE-=+3.439364 dE+=+5.329708 gap-=2.896012 dist-=0.4112 dist+=1.4060 Ec=+0.0001 gauss=1.4e-15 resid=3.1e-14
+READ  N=14 x=3.0 m/g=0.8 alpha=0.0: dE-=+3.439359 dE+=+5.329732 gap-=2.895922 dist-=0.4112 dist+=1.4059 Ec=+0.0000 gauss=1.1e-15 resid=6.9e-14
+READ  N=16 x=3.0 m/g=0.8 alpha=0.0: dE-=+3.439359 dE+=+5.329734 gap-=2.895915 dist-=0.4112 dist+=1.4059 Ec=+0.0000 gauss=2.1e-15 resid=9.7e-14
+READ  N=18 x=3.0 m/g=0.8 alpha=0.0: dE-=+3.439359 dE+=+5.329734 gap-=2.895914 dist-=0.4112 dist+=1.4059 Ec=+0.0000 gauss=2.2e-15 resid=7.7e-14
+READ  N=12 x=3.0 m/g=0.8 alpha=0.5: dE-=+2.446764 dE+=+6.574588 gap-=0.662180 dist-=3.4403 dist+=1.1680 Ec=+0.4734 gauss=4.4e-16 resid=6.1e-14
+READ  N=14 x=3.0 m/g=0.8 alpha=0.5: dE-=+2.410027 dE+=+6.574605 gap-=0.527269 dist-=4.1991 dist+=1.1680 Ec=+0.4733 gauss=1.8e-15 resid=6.7e-14
+READ  N=16 x=3.0 m/g=0.8 alpha=0.5: dE-=+2.383605 dE+=+6.574608 gap-=0.429743 dist-=4.9790 dist+=1.1680 Ec=+0.4732 gauss=3.6e-15 resid=7.2e-14
+READ  N=18 x=3.0 m/g=0.8 alpha=0.5: dE-=+2.363866 dE+=+6.574608 gap-=0.357101 dist-=5.7770 dist+=1.1680 Ec=+0.4731 gauss=6.6e-15 resid=9.1e-14
+READ  N=12 x=3.0 m/g=0.15 alpha=0.0: dE-=+1.439541 dE+=+3.764773 gap-=2.906870 dist-=1.1376 dist+=1.8284 Ec=+0.0116 gauss=1.1e-15 resid=3.9e-14
+READ  N=14 x=3.0 m/g=0.15 alpha=0.0: dE-=+1.436718 dE+=+3.769752 gap-=2.896369 dist-=1.1419 dist+=1.8250 Ec=+0.0066 gauss=2.6e-15 resid=6.3e-14
+READ  N=16 x=3.0 m/g=0.15 alpha=0.0: dE-=+1.435800 dE+=+3.771366 gap-=2.892816 dist-=1.1434 dist+=1.8237 Ec=+0.0038 gauss=3.0e-15 resid=4.7e-14
+READ  N=18 x=3.0 m/g=0.15 alpha=0.0: dE-=+1.435501 dE+=+3.771889 gap-=2.891640 dist-=1.1438 dist+=1.8233 Ec=+0.0021 gauss=6.7e-15 resid=5.2e-14
+READ  N=12 x=3.0 m/g=0.15 alpha=0.5: dE-=-0.286983 dE+=+5.431961 gap-=1.645025 dist-=2.9388 dist+=1.7132 Ec=+0.3281 gauss=3.7e-15 resid=5.5e-14
+READ  N=14 x=3.0 m/g=0.15 alpha=0.5: dE-=-0.383522 dE+=+5.449145 gap-=1.479415 dist-=3.3860 dist+=1.7755 Ec=+0.3034 gauss=1.0e-15 resid=4.6e-14
+READ  N=16 x=3.0 m/g=0.15 alpha=0.5: dE-=-0.454900 dE+=+5.460324 gap-=1.352221 dist-=3.8017 dist+=1.8347 Ec=+0.2797 gauss=3.6e-15 resid=1.2e-13
+READ  N=18 x=3.0 m/g=0.15 alpha=0.5: dE-=-0.509110 dE+=+5.468216 gap-=1.252026 dist-=4.1835 dist+=1.8912 Ec=+0.2595 gauss=1.3e-14 resid=7.5e-14
+states solved: 48; void: 0; largest residual |Hv-Ev|: 1.2e-13
+S1  total charge = Q in every state, to 1.3e-14  MET
+S2  heavy: distance from the end changes by 0.0000 at no background and grows by 2.337 at half a unit; dE+ - dE- at no background = 1.890 (reported)  MET
+S3  gap ratio (18 over 12): heavy 0.539, light 0.761, contrast +0.222; change of the closing exponent: heavy +0.094, light -0.035  MET
+S4  dE-(18): heavy +2.3639 (differences shrinking: True), light -0.5091  MET
+    reported, not staked: m/g=0.8 M + b/N: M = +2.1972, worst residual 6.7e-04
+    reported, not staked: m/g=0.8 M + b/N^2: M = +2.2993, worst residual 1.6e-03
+    reported, not staked: m/g=0.15 M + b/N: M = -0.9545, worst residual 7.6e-04
+    reported, not staked: m/g=0.15 M + b/N^2: M = -0.6811, worst residual 5.5e-03
+S5  field at the centre, N=18: heavy 0.4731, light 0.2595, difference +0.2137  MET
+BRANCH (a)

@@ -6,7 +6,7 @@ sections tagged **[proposed]** name a producer, a consumer and a check, or they 
 **Repo**: CIRISHolon. This FSD names *what* is built; [`MISSION.md`](MISSION.md) names *why*.
 **Reads against**: CIRISHolon `0f63e4a` (`lean/CIRISHolon/{SceneCert,ScenePopulation,Ladder}.lean`,
 `engine/crates/holon-scene`); issue #3; the CEWP twin at `twin/globe` `6075f3d` (read-only);
-[`../TIERS.md`](../TIERS.md) of 2026-09-27.
+`TIERS.md` of 2026-09-27.
 **The lead's purpose line** (2026-11-11): *"goal is to enhance the holon engine with our worked
 example to become a better world model."*
 
@@ -267,7 +267,7 @@ Two consequences worth stating once:
 Kinds, relationships, attributes and rhythms are NAMES in a registry, not fields in a
 struct. Each entry carries: name, type, tier, unit, the consumer that reads it (or
 "decoration"), the reference that stands behind it (or none), and its envelope classes. The
-twin's `couplings.json` is the first registry file; this repository keeps the same file
+twin's the twin's couplings registry (a JSON file in its own tree) is the first registry file; this repository keeps the same file
 with the reference and envelope columns filled.
 
 A name with no generator returns `unresolved: no generator`. A name with a generator and no
@@ -368,8 +368,8 @@ scale".*
 
 ### 10.6 What the first consumer actually reads (2026-11-11, from the twin's couplings registry)
 
-The twin generated its couplings from its own code (`FSD/twin/couplings.md`,
-`docs/geo/couplings.json`, twin/globe `c45fe19`): 115 rows in the four types of §10.1; 32
+The twin generated its couplings from its own code (FSD/twin/couplings in its tree,
+docs/geo/couplings there, twin/globe `c45fe19`): 115 rows in the four types of §10.1; 32
 read by a model today, 43 modelled on invented inputs, 40 wanted. Its finding, which orders
 the work:
 

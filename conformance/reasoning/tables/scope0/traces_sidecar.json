@@ -1,0 +1,33 @@
+{
+ "reference": "SCOPE-0 traces (one prompt passing through a model)",
+ "version": 1,
+ "table": "scope_traces.json",
+ "bytes": 448612,
+ "sha256": "709e71111eeb878b3046c6616239d1eb6037b5a5b3eb2bb1354b692084acf133",
+ "items": 8,
+ "refused": [],
+ "provenance": {
+  "ratchet_commit": "ca9f128",
+  "traces": {
+   "0": "db1660644fb5b4b5743e598ed278ef546fd44a230691011dbecb52695868f614",
+   "1": "2919a7af7f87e3c42f60cc14085a9db1f30c42019e54d7348d78dd35596db28b",
+   "2": "744361c55fbddf8661057179af710e1ca486946765116c4c364605c6d35911a6",
+   "3": "1f37bdbd60f27570268d817ff271bfd33d9759cd36f13198ec7c601a819473cc",
+   "4": "a653dc48547fdd4733dbd48edd93e1b13cc5edc55dde60d5d9d84729cfa3ba8c",
+   "5": "f8c9947f16c08bc8bbc20e62ea355f54f1bae48f05f6188024d79bbf62652294",
+   "6": "8438d9047f827cb1173806ec264fb969823ae59a3a37c2f1e7134b8e70fe1585",
+   "7": "1b2ee7ca0d78ea1007e6fbd4376eb83ecea2fa578884968d2dbcb4a2f3953b6f"
+  }
+ },
+ "check": "each item passed holon-closure's trace_check at tolerance 0 before it was written; an item that does not conserve is refused and listed",
+ "verdict": {
+  "all_rows": "unresolved",
+  "reason": "readings of another session's instrument on eight unseen stories; nothing scored here"
+ },
+ "holds_no_real_feature": "no person or place; eight stories from a public corpus of generated children's stories, and aggregate numbers per position",
+ "limits": [
+  "eight items of 256 bytes each",
+  "the readings' directions were fitted by the RATCHET session on other stories",
+  "the full writes (192 numbers each) are not in this table, only their lengths"
+ ]
+}

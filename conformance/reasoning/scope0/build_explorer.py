@@ -18,19 +18,19 @@ PAGE = r"""<title>Kindscope</title>
   --bg: #f6f6f3; --panel: #fcfcfb; --ink: #0b0b0b; --ink2: #52514e; --ink3: #7c7b76; --line: #dcdbd5; --focus: #1c5cab;
   --seq0: #e6effb; --seq1: #cde2fb; --seq2: #86b6ef; --seq3: #3987e5; --seq4: #1c5cab; --seq5: #123f78;
   --divn: #1c5cab; --divmid: #f0efec; --divp: #b8372f;
-  --void: #e7e6e1; --hatch: rgba(11,11,11,.42); --empty: #cfcec8;
+  --void: #e7e6e1; --hatch: rgba(11,11,11,.42); --empty: #cfcec8; --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a;
   --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif; --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
   --bg: #121211; --panel: #1a1a19; --ink: #f0efec; --ink2: #c3c2b7; --ink3: #8f8e86; --line: #34342f; --focus: #86b6ef;
   --seq0: #1d2633; --seq1: #1b3350; --seq2: #184f95; --seq3: #2a78d6; --seq4: #86b6ef; --seq5: #cde2fb;
   --divn: #5a9df0; --divmid: #383835; --divp: #e2695f;
-  --void: #2a2a27; --hatch: rgba(240,239,236,.5); --empty: #45453f; color-scheme: dark } }
+  --void: #2a2a27; --hatch: rgba(240,239,236,.5); --empty: #45453f; --s1: #3987e5; --s2: #d95926; --s3: #199e70; color-scheme: dark } }
 :root[data-theme="dark"] {
   --bg: #121211; --panel: #1a1a19; --ink: #f0efec; --ink2: #c3c2b7; --ink3: #8f8e86; --line: #34342f; --focus: #86b6ef;
   --seq0: #1d2633; --seq1: #1b3350; --seq2: #184f95; --seq3: #2a78d6; --seq4: #86b6ef; --seq5: #cde2fb;
   --divn: #5a9df0; --divmid: #383835; --divp: #e2695f;
-  --void: #2a2a27; --hatch: rgba(240,239,236,.5); --empty: #45453f; color-scheme: dark }
+  --void: #2a2a27; --hatch: rgba(240,239,236,.5); --empty: #45453f; --s1: #3987e5; --s2: #d95926; --s3: #199e70; color-scheme: dark }
 body { background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 14px; line-height: 1.45;
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 40px; }
 .wrap { max-width: 1120px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
@@ -78,6 +78,15 @@ table.rows { border-collapse: collapse; font-size: 12px; font-variant-numeric: t
 table.rows th, table.rows td { text-align: left; padding: 2px 10px 2px 0; border-bottom: 1px solid var(--line); white-space: nowrap; }
 .tip { position: fixed; pointer-events: none; background: var(--ink); color: var(--bg); padding: 4px 8px; border-radius: 3px; font-family: var(--mono); font-size: 11px; z-index: 20; max-width: 260px; }
 .foot { color: var(--ink3); font-size: 12px; max-width: 90ch; }
+.bytes { display: flex; flex-wrap: wrap; gap: 1px; font-family: var(--mono); font-size: 13px; line-height: 1; margin: 8px 0; }
+.bytes button { font: inherit; color: var(--ink); border: 0; border-radius: 2px; padding: 4px 0; width: 1.05em; text-align: center; cursor: pointer; }
+.bytes button.cur { box-shadow: 0 0 0 2px var(--ink); position: relative; z-index: 1; }
+.bytes button:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+.two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
+@media (max-width: 760px) { .two { grid-template-columns: minmax(0, 1fr); } }
+.key { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--ink2); }
+.key i { display: inline-block; width: 14px; height: 3px; vertical-align: middle; margin-right: 5px; border-radius: 2px; }
+.ok { border-left: 3px solid var(--ink); padding: 4px 10px; color: var(--ink2); margin-top: 10px; }
 </style>
 <div class="wrap">
   <header>
@@ -103,11 +112,25 @@ table.rows th, table.rows td { text-align: left; padding: 2px 10px 2px 0; border
     <div class="gridwrap"><svg id="profile" width="720" height="210" viewBox="0 0 720 210" role="img"></svg></div>
     <details><summary>The same cells as a table</summary><div class="gridwrap"><table class="rows" id="rows"></table></div></details>
   </section>
+  <section class="panel" id="pass">
+    <h2>One prompt, passing through GoldWorm</h2>
+    <p class="kind">Stand at one byte of a story and look down the model. Each block adds something to a running state; the lengths below are what each added here. The shading under the text is how hard the next byte was to predict.</p>
+    <div class="row" id="items"><span class="lab">Story</span></div>
+    <div class="bytes" id="bytes" aria-label="the story, one cell a byte"></div>
+    <div class="two">
+      <div><h2 id="wtitle"></h2><p class="kind">How much each block wrote at this byte, in the order the model adds them (depth runs down).</p><svg id="wbars" width="420" height="300" viewBox="0 0 420 300" role="img"></svg></div>
+      <div><h2>Three ways of reading the same site</h2><p class="kind">After each MLP, the state measured along three directions for adjective-or-noun: where a probe reads it, where the model writes it, and the part of the writing that is neither the probe's nor a guess at the next byte.</p>
+        <div class="key"><span><i style="background:var(--s1)"></i>where a probe reads</span><span><i style="background:var(--s2)"></i>where the model writes</span><span><i style="background:var(--s3)"></i>the written part that is neither</span></div>
+        <svg id="rlines" width="420" height="250" viewBox="0 0 420 250" role="img"></svg></div>
+    </div>
+    <div class="ok" id="okline"></div>
+  </section>
   <p class="foot" id="foot"></p>
 </div>
 <div class="tip" id="tip" hidden></div>
 <script>
 const T = __TABLE__;
+const TR = __TRACES__;
 const SIDE = __SIDE__;
 const $ = id => document.getElementById(id);
 const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
@@ -230,14 +253,53 @@ function profile(l, rows, sel) {
   svg.innerHTML = s;
   svg.setAttribute("aria-label", l.title + " by depth for " + sel.site.component);
 }
+let tr = { item: 0, pos: 40 };
+function passView() {
+  const it = TR.items[tr.item], P = it.positions;
+  for (const b of $("items").querySelectorAll("button")) b.setAttribute("aria-pressed", +b.dataset.i === tr.item);
+  const seq = v => { const t = Math.max(0, Math.min(1, v / 6)) * 5, i = Math.min(4, Math.floor(t)); return mix(hex(css("--seq" + i)), hex(css("--seq" + (i + 1))), t - i); };
+  let h = "";
+  for (let p = 0; p < P; p++) {
+    const c = it.bytes[p], ch = c === 10 ? "↵" : c === 32 ? "·" : (c > 32 && c < 127 ? String.fromCharCode(c) : "□");
+    const lp = p < it.next_byte_logprob_true.length ? -it.next_byte_logprob_true[p] : 0;
+    h += "<button data-p='" + p + "' class='" + (p === tr.pos ? "cur" : "") + "' style='background:" + seq(lp) + ";color:" + (lp > 3 ? "var(--bg)" : "var(--ink)") + "' title='byte " + p + ": the next byte cost " + lp.toFixed(2) + " nats'>" + esc(ch) + "</button>";
+  }
+  $("bytes").innerHTML = h;
+  $("bytes").querySelectorAll("button").forEach(b => { b.onclick = () => { tr.pos = +b.dataset.p; passView(); }; });
+  const c = it.bytes[tr.pos];
+  $("wtitle").textContent = "At byte " + tr.pos + " (" + (c === 10 ? "a new line" : c === 32 ? "a space" : "“" + String.fromCharCode(c) + "”") + ")";
+  const w = it.write_norm[tr.pos], mx = Math.max(...it.write_norm.map(r => Math.max(...r)));
+  let s = "";
+  it.writes.forEach((n, k) => {
+    const y = 8 + k * 22, len = 300 * w[k] / mx;
+    s += "<text x='52' y='" + (y + 12) + "' text-anchor='end'>" + n + "</text><rect x='58' y='" + y + "' width='" + Math.max(1, len) + "' height='16' rx='2' fill='" + (n.startsWith("mlp") ? "var(--ink2)" : n === "embed" ? "var(--ink3)" : "var(--seq3)") + "'><title>" + n + ": " + w[k] + "</title></rect><text x='" + (64 + len) + "' y='" + (y + 12) + "'>" + w[k].toFixed(2) + "</text>";
+  });
+  $("wbars").innerHTML = s;
+  $("wbars").setAttribute("aria-label", "length of each block's write at byte " + tr.pos);
+  const R = it.readings_after_mlp, Ls = Object.keys(R.probe).sort(), names = ["probe", "write", "resid"], cols = ["--s1", "--s2", "--s3"];
+  let lo = 0, hi = 0;
+  for (const n of names) for (const L of Ls) { const v = R[n][L][tr.pos]; lo = Math.min(lo, v); hi = Math.max(hi, v); }
+  if (hi - lo < 1e-9) hi = lo + 1;
+  const X = i => 60 + i * (330 / (Ls.length - 1)), Y = v => 215 - 195 * (v - lo) / (hi - lo);
+  let q = "<line x1='60' x2='390' y1='" + Y(0) + "' y2='" + Y(0) + "' stroke='var(--line)'/><text x='54' y='" + (Y(0) + 3) + "' text-anchor='end'>0</text><text x='54' y='" + (Y(hi) + 3) + "' text-anchor='end'>" + hi.toFixed(1) + "</text>" + (lo < 0 ? "<text x='54' y='" + (Y(lo) + 3) + "' text-anchor='end'>" + lo.toFixed(1) + "</text>" : "");
+  Ls.forEach((L, i) => { q += "<text x='" + X(i) + "' y='236' text-anchor='middle'>" + L + "</text>"; });
+  names.forEach((n, j) => {
+    q += "<path d='" + Ls.map((L, i) => (i ? "L" : "M") + X(i) + " " + Y(R[n][L][tr.pos])).join("") + "' fill='none' stroke='var(" + cols[j] + ")' stroke-width='2'/>";
+    Ls.forEach((L, i) => { q += "<circle cx='" + X(i) + "' cy='" + Y(R[n][L][tr.pos]) + "' r='4' fill='var(" + cols[j] + ")' stroke='var(--panel)' stroke-width='2'><title>" + n + " after " + L + ": " + R[n][L][tr.pos] + "</title></circle>"; });
+  });
+  $("rlines").innerHTML = q;
+  $("rlines").setAttribute("aria-label", "three readings after each MLP at byte " + tr.pos);
+  $("okline").innerHTML = "<b>Checked before it was drawn.</b> At each of the " + P + " bytes of this story the 13 writes, added in the model's own order, reproduce the state bit for bit; a story that failed would not be here. Logits rebuilt from the writes differ from the model's by at most " + it.c4_max_abs_logit_residual.toExponential(1) + ". " + esc(it.source) + ".";
+}
+TR.items.forEach((it, i) => { const b = document.createElement("button"); b.className = "chip"; b.dataset.i = i; b.id = "item-" + i; b.textContent = "story " + (i + 1); b.onclick = () => { tr.item = i; passView(); }; $("items").appendChild(b); });
 for (const [id, m] of Object.entries(T.models)) {
   const b = document.createElement("button"); b.className = "chip"; b.dataset.id = id; b.id = "model-" + id; b.textContent = m.title;
   b.onclick = () => { state.model = id; state.sel = null; render(); }; $("models").appendChild(b);
 }
 if (state.layer) state.model = layerOf(state.layer).model;
 $("foot").textContent = "SCOPE-0, version " + SIDE.version + ": " + T.rows.length + " readings copied from result files of the RATCHET kindscope series (commit " + SIDE.ratchet + ") and of the earlier hand-over bundle. Nothing was measured or re-derived to draw this page. Which experiments feed each view was chosen by the CIRISHolon session and corrected once by the session that owns the instrument.";
-render();
-try { matchMedia("(prefers-color-scheme: dark)").addEventListener("change", render); new MutationObserver(render).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] }); } catch (e) {}
+render(); passView();
+try { matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { render(); passView(); }); new MutationObserver(() => { render(); passView(); }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] }); } catch (e) {}
 </script>
 """
 
@@ -252,7 +314,8 @@ def main():
             r["interval"] = [float("%.6g" % v) for v in r["interval"]]
     table = json.dumps(t, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
     side = json.dumps({"version": s["version"], "ratchet": s["provenance"]["ratchet_commit"][:12]})
-    open(out, "w", encoding="utf-8").write(PAGE.replace("__TABLE__", table).replace("__SIDE__", side))
+    traces = open(os.path.join(d, "scope_traces.json"), encoding="utf-8").read().replace("</", "<\\/")
+    open(out, "w", encoding="utf-8").write(PAGE.replace("__TABLE__", table).replace("__TRACES__", traces).replace("__SIDE__", side))
     print(out, os.path.getsize(out), "bytes")
 
 

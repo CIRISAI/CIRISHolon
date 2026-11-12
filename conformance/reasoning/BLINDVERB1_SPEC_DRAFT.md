@@ -320,3 +320,28 @@ two-run count) and hashes that could verify a re-rendered prompt.
 Two ways to get prompt text are with the lead, undecided: wiring the scrubber so full
 traces are delivered, or a local capture file in the battery workflow for synthetic
 questions alone.
+
+## On the lead's point that a local full trace "gets captured and saved, or should be" (2026-11-12)
+
+The CIRISAgent session checked its 2.21 branch from code, no run:
+
+- The mechanism exists: with a local-copy directory set (the QA runner sets it and starts
+  instances at each of the three levels), each sealed batch is also written to a local
+  file.
+- **But the local copy is written AFTER the downgrade.** The level is replaced once, when
+  the instance starts, if the scrubber is not installed; each event is then gated at that
+  level, sealed, and copied. So the instance named for full traces writes the lower
+  level to disk, and the agent's own local store holds no more. "Or should be" is the
+  operative half.
+- **Older runs may differ.** The switch has been off since about version 2.9.23 and the
+  store has refused unscrubbed full batches since its 32.1.0; runs before that could have
+  written true full traces. Three folders on this machine predate or straddle it; by
+  name, date and size only, none opened: one named for production traces (June), one
+  named FULL (June), one small export (October). None is to be opened for this without
+  the lead's word, and production traces of real people are not to be used for it unless
+  he rules otherwise.
+- **A second existing route to prompt text, not a trace:** the agent's LLM bus can write
+  the exact messages and reply of named handlers to a local file. It is opt-in per run
+  and off by default, so it holds nothing unless a past run set it. A run of synthetic
+  questions with it switched on would give real action-selection prompts with no change
+  to the agent.

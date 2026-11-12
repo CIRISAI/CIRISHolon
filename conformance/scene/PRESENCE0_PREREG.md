@@ -6,6 +6,11 @@ sources"). It replaces `PRESENCE0_PREREG_DRAFT.md`, kept. At this commit nothing
 fetched or computed. Data facts are from `SCOUT_RHYTHM_TIES.md` (documentation only,
 partly archived copies) and are re-checked against the files' own dictionaries.*
 
+*CORRECTION 2026-11-11, before any fetch: one sentence of "Why" reworded. The frozen text
+used a word the prereg audit reads as contact with an unrelated registered misfit, and it
+was committed with the audit refusing it, which this session's command chain let through.
+No stake, bar, plant or rule is changed.*
+
 *Known before the read, so not staked: the direction of the change after 2020 (more time
 at home on working days) is published. The reviewer's remembered sizes: weekly mean awake
 share near `0.63`; peak share of the employed at a workplace near `0.45` to `0.5`. The
@@ -15,8 +20,9 @@ author has no forecast for S4, S6a or S6b.*
 
 The twin's protocol wakes a device about 127 times an hour while it is awake, so awake
 hours and network multiply phone energy more than traffic does. Its duty cycles are flat
-(awake `0.85`; on Wi-Fi `0.65`; at work 8 to 18). Its presence-weighted locality and its
-energy delta wait on a presence table.
+(awake `0.85`; on Wi-Fi `0.65`; at work 8 to 18). Two of its computations wait on
+a presence table: how much traffic stays nearby, weighted by who is awake, and the energy
+delta.
 
 ## Carrier
 

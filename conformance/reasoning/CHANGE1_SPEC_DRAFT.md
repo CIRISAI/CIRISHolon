@@ -331,3 +331,25 @@ generation agents; the primitive-prefix rule adds none outside that family.
   itself", with one qualification: that class was written for harnesses that run on the
   same large model, and a small network changes the model as well, so it varies that
   class and the model at once.
+
+## CORRECTION 2026-11-12 (the RATCHET session's own): the "4 to 6 % on the verb tokens" was its instrument, not the model
+
+Revision 1 above says the model puts 4 to 6 % of its probability on the ten verb tokens at
+the answer position. That is withdrawn as a statement about the model. Gemma answers in
+UPPER CASE there, and the read-out counted lower-case first tokens alone; with both cases
+summed the mass on the ten verbs is 0.99 to 1.00 on the four fit items inspected.
+Registered there as a named defect of method: look at the top tokens at the answer
+position before freezing a read-out, and never report low mass as a property of the
+model until that is done. This session had asked that the figure be "kept as a finding
+in its own right"; that was wrong too.
+
+Also from that session: the first early-exit test was void by its letter on a second
+count (its plant's null was staked at the wrong expected value). The held-back split was
+never read. A successor is frozen (RATCHET `dc16e87`) with a case-aware read-out, a
+one-sided null, and the answer stem and layer fixed from the design phase; its single
+read of the held-back split is running. Known from the design phase on the explore
+split, and disclosed in the freeze: the exit head's pair score rises from 0.01 at layer 0
+to 0.69 at layer 19 (item accuracy 0.875) and stays at 0.61 to 0.69 through layer 34.
+And on four fit items Gemma chose a different verb on each (ponder, observe, speak,
+recall) where the deployed model mostly chose speak: the two models' habits at this bare
+step differ a lot.

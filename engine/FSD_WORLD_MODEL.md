@@ -365,3 +365,28 @@ scale".*
    workbench the record already has.
 5. **What this rules out.** A renderer-only path (geometry that no population pays for), an
    instrument-only format (numbers no page can show), and a figure made by hand.
+
+### 10.6 What the first consumer actually reads (2026-11-11, from the twin's couplings registry)
+
+The twin generated its couplings from its own code (`FSD/twin/couplings.md`,
+`docs/geo/couplings.json`, twin/globe `c45fe19`): 115 rows in the four types of §10.1; 32
+read by a model today, 43 modelled on invented inputs, 40 wanted. Its finding, which orders
+the work:
+
+- **No model of the twin reads street geometry today.** Neighbour distance, same-street
+  membership, storeys, arterial crossings and distance to a seat are DECORATION under §3
+  rule 4: they owe a label and no certificate.
+- **What its models do read:** households per leaf and per building, the device mix per
+  household, and the router's NAT class.
+- **So the first certificates owed are at the household and device tiers,** and the street
+  reference (STREETREF-1, in redesign) is the reference for the twin's part C, when a
+  radio-neighbourhood or reach-by-distance model exists to read it.
+- **Sums.** The twin now apportions one population total from its root to the street tile
+  in Rust with the same rule as `holon-scene::apportion`, and `check_sums` exits 0 on its
+  emitted lines. Devices are still drawn and not apportioned, and its tree takes no seed.
+
+This does not change the reference tranche of §10.5; it changes its order. The references
+that bear on what is READ come first: persons per household and the device mix (for which no
+freely licensed source was found: §10.5's named gaps), then access technology and NAT
+behaviour (the same). The placement of people within a cell (UNEVEN-0, frozen) feeds
+households per leaf directly and is the one reference in hand for a coupling that is read.

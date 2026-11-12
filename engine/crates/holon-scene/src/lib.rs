@@ -26,6 +26,7 @@
 pub mod apportion;
 pub mod dist;
 pub mod edges;
+pub mod household;
 pub mod rhythm;
 pub mod seed;
 pub mod sums;

@@ -21,8 +21,8 @@
     "mlp",
     "ple"
    ],
-   "frame": "not closed",
-   "frame_reason": "the hand-over's attribution fails its additivity check (relative error 1.19); the file rescales the stream at each layer; a calibration (CAL-G) is frozen and not run"
+   "frame": "closed with per-layer scales",
+   "frame_reason": "CAL-G (RATCHET bf1cce7): with the file's per-layer scales the writes sum to the state to 1.4e-7 relative; a plain sum misses by a factor of 48. The hand-over's attributions were taken as a plain sum and stay void"
   }
  },
  "layers": [

@@ -103,13 +103,14 @@ details.more > .inner { display: flex; flex-direction: column; gap: 16px; margin
 <div class="wrap">
   <header>
     <h1>Kindscope</h1>
-    <p class="lede">A small language model reading a story, drawn so you can walk around it. The model reads one letter at a time and passes it up through 13 stages; each stage adds something. The height of each block is how much that stage added at that letter. Drag to turn it. Pick a finding below to see where in the model it lives.</p>
+    <p class="lede">A small language model reading a story, drawn so you can walk around it. The model reads one letter at a time and passes it up through 13 stages; each stage adds something. Drag to turn it. Switch what the height shows: how much each stage adds, or how much breaks if you take that stage out. They are not the same, and that is the first thing this model teaches. Pick a finding below to see where in the model it lives.</p>
   </header>
   <section class="panel">
     <canvas id="scene" aria-label="the model reading a story, in three dimensions: letters left to right, stages front to back, height is how much each stage added"></canvas>
     <div class="ctl">
       <span id="s3items" class="row"></span>
       <label>Move along the story <input type="range" id="s3win" min="0" max="208" value="13"></label>
+      <span class="row"><button class="chip" id="s3h-adds" aria-pressed="true">Height: how much it adds</button><button class="chip" id="s3h-cost" aria-pressed="false">Height: what breaks without it</button></span>
       <button class="chip" id="s3spin" aria-pressed="false">Turn slowly</button>
       <span><i style="display:inline-block;width:12px;height:12px;border-radius:2px;background:var(--s1);vertical-align:-2px"></i> a stage that looks back at earlier letters &nbsp; <i style="display:inline-block;width:12px;height:12px;border-radius:2px;background:var(--s2);vertical-align:-2px"></i> a stage that rewrites what it has</span>
     </div>
@@ -143,9 +144,9 @@ details.more > .inner { display: flex; flex-direction: column; gap: 16px; margin
     <div class="row" id="items"><span class="lab">Story</span></div>
     <div class="bytes" id="bytes" aria-label="the story, one cell a byte"></div>
     <div class="two">
-      <div><h2 id="wtitle"></h2><p class="kind">How much each block wrote at this byte, in the order the model adds them (depth runs down).</p><svg id="wbars" width="420" height="300" viewBox="0 0 420 300" role="img"></svg></div>
-      <div><h2>Three ways of reading the same site</h2><p class="kind">After each MLP, the state measured along three directions for adjective-or-noun: where a probe reads it, where the model writes it, and the part of the writing that is neither the probe's nor a guess at the next byte.</p>
-        <div class="key"><span><i style="background:var(--s1)"></i>where a probe reads</span><span><i style="background:var(--s2)"></i>where the model writes</span><span><i style="background:var(--s3)"></i>the written part that is neither</span></div>
+      <div><h2 id="wtitle"></h2><p class="kind">How much each block wrote at this byte, in the order the model adds them (depth runs down). Length is how much a block wrote here, not how much it matters: the last block writes most, and removing the first rewriting block does eight times the damage.</p><svg id="wbars" width="420" height="300" viewBox="0 0 420 300" role="img"></svg></div>
+      <div><h2>Reading the same site four ways</h2><p class="kind">These readings mean something only at one kind of place: the byte just before a word that follows “the” or “a” (outlined in the text above). There, after each rewriting stage, how far the state sits from a typical such place, in standard deviations. Above zero leans toward an adjective coming next.</p>
+        <div class="key"><span><i style="background:var(--s1)"></i>where an outside reader looks</span><span><i style="background:var(--s2)"></i>where the model writes</span><span><i style="background:var(--s3)"></i>the written part that is not a guess at the next letter</span><span><i style="background:var(--ink3)"></i>the guess at the letter that did come next</span></div>
         <svg id="rlines" width="420" height="250" viewBox="0 0 420 250" role="img"></svg></div>
     </div>
     <div class="ok" id="okline"></div>
@@ -286,9 +287,11 @@ const FOUND = [
   { t: "It does that twice", s: "The second pair repeats it: the word blurs again (0.45), then is written back (0.80). The word is rebuilt at each stage, not stored once.", st: [3, 4], how: "tested, and it held" },
   { t: "Early on it decides what kind of word comes next", s: "In the first three rewriting stages the model marks whether an adjective or a noun is coming. Nudging that mark changes what it writes, on stories it had never seen (9 of 9 cases).", st: [2, 4, 6], how: "tested, and it held" },
   { t: "Late on it turns that into a guess at the next letter", s: "The last stages convert what it knows into the next letter. The final stage alone does about half of all the adding.", st: [8, 10, 12], how: "tested, and it held" },
+  { t: "The stage that adds most is not the one that matters most", s: "The last stage adds the most, but take it out and the model loses little (0.5). Take out the first rewriting stage, which adds far less, and it loses eight times as much (4.1); the first looking-back stage, 2.2. Everything later is built on those two. Switch the height to \u201cwhat breaks without it\u201d to see it.", st: [1, 2, 12], how: "measured, with no prediction made first" },
   { t: "What an outside reader finds is not what the model uses", s: "A reader trained to spot the kind of word finds it along one direction. The model writes it along another, about as unrelated as two random directions (82 to 90 degrees). Reading the model from outside can mislead.", st: [2, 4, 6, 8, 10, 12], how: "seen while exploring" },
 ];
-const S3 = { item: 0, win: 13, yaw: -0.62, pitch: 0.52, hi: null, spin: false, hover: null, tops: [] };
+const S3 = { item: 0, win: 13, yaw: -0.62, pitch: 0.52, hi: null, spin: false, hover: null, tops: [], mode: "adds" };
+const COST = n => (TR.knock_out_cost[n] ? TR.knock_out_cost[n].realised : null), COSTMAX = Math.max(...Object.values(TR.knock_out_cost).map(v => v.realised));
 const NAMES = { embed: "takes in the letter", attn: "looks back", mlp: "rewrites" };
 function stageWord(n) { return n === "embed" ? "stage 1, the letter" : (n.startsWith("attn") ? "looking back, round " : "rewriting, round ") + (n === "embed" ? "" : (+n.slice(-1) + 1)); }
 function scene() {
@@ -302,7 +305,8 @@ function scene() {
   const col = { embed: hex(css("--ink3")), attn: hex(css("--s1")), mlp: hex(css("--s2")) }, bg = hex(css("--bg")), ink = hex(css("--ink"));
   const bars = [];
   for (let k = 0; k < K; k++) for (let i = 0; i < NX; i++) {
-    const x = (i - NX / 2) * dx, z = (k - K / 2) * dz, h = Math.max(0.05, HH * it.write_norm[win + i][k] / mx);
+    const cst = COST(it.writes[k]);
+    const x = (i - NX / 2) * dx, z = (k - K / 2) * dz, h = S3.mode === "adds" ? Math.max(0.05, HH * it.write_norm[win + i][k] / mx) : (cst === null ? 0.05 : Math.max(0.05, HH * cst / COSTMAX));
     bars.push({ k, i, x, z, h, d: P(x + .4, h / 2, z + .8)[2] });
   }
   bars.sort((a, b) => b.d - a.d);
@@ -329,14 +333,18 @@ function scene() {
   const share = it.write_norm.reduce((a, r) => a + r[K - 1] * r[K - 1], 0) / it.write_norm.reduce((a, r) => a + r.reduce((u, v) => u + v * v, 0), 0);
   FOUND[4].live = "In this story the final stage does " + Math.round(share * 100) + " % of all the adding.";
   const f = S3.sel != null ? FOUND[S3.sel] : null, hv = S3.hover;
-  $("s3say").textContent = hv ? "Letter “" + (it.bytes[win + hv.i] === 32 ? "space" : it.bytes[win + hv.i] === 10 ? "new line" : String.fromCharCode(it.bytes[win + hv.i])) + "”, stage " + (hv.k + 1) + " (" + stageWord(it.writes[hv.k]) + "): it added " + it.write_norm[win + hv.i][hv.k].toFixed(1) + ", against " + mx.toFixed(1) + " for the largest block in this story."
-    : f ? f.s + (f.live ? " " + f.live : "") : "Letters run left to right, the 13 stages run front to back, and the story is read one letter at a time. Tall blocks are where a stage added a lot. The back row, the last stage, towers over the rest: that is where the next letter is decided.";
+  $("s3say").textContent = hv && S3.mode !== "adds" ? "Stage " + (hv.k + 1) + " (" + stageWord(it.writes[hv.k]) + "): " + (COST(it.writes[hv.k]) === null ? "it was not taken out in the experiment." : "without it the model is " + COST(it.writes[hv.k]).toFixed(2) + " worse at the next letter. Reading its contribution off directly would have predicted " + TR.knock_out_cost[it.writes[hv.k]].direct.toFixed(2) + ".")
+    : hv ? "Letter “" + (it.bytes[win + hv.i] === 32 ? "space" : it.bytes[win + hv.i] === 10 ? "new line" : String.fromCharCode(it.bytes[win + hv.i])) + "”, stage " + (hv.k + 1) + " (" + stageWord(it.writes[hv.k]) + "): it added " + it.write_norm[win + hv.i][hv.k].toFixed(1) + ", against " + mx.toFixed(1) + " for the largest block in this story."
+    : f ? f.s + (f.live ? " " + f.live : "")
+    : S3.mode === "adds" ? "Letters run left to right, the 13 stages run front to back, and the story is read one letter at a time. Tall blocks are where a stage added a lot. The back row, the last stage, towers over the rest. That does not make it the stage that matters most: switch the height to see."
+    : "Now the height is what breaks when a stage is taken out, measured for each stage as a whole (so it is the same along the story). The two stages at the front carry almost everything: without the first rewriting stage the model is 4.1 worse at the next letter, against 0.5 for the last stage. The first stage has no bar because it was not taken out.";
 }
 function s3init() {
   const cv = $("scene");
   TR.items.forEach((it, i) => { const b = document.createElement("button"); b.className = "chip"; b.id = "s3item-" + i; b.textContent = "Story " + (i + 1); b.setAttribute("aria-pressed", i === 0); b.onclick = () => { S3.item = i; $("s3items").querySelectorAll("button").forEach((x, j) => x.setAttribute("aria-pressed", j === i)); scene(); }; $("s3items").appendChild(b); });
   FOUND.forEach((f, i) => { const b = document.createElement("button"); b.id = "found-" + i; b.setAttribute("aria-pressed", "false"); b.innerHTML = "<em>" + esc(f.how) + "</em><b>" + esc(f.t) + "</b>"; b.onclick = () => { const on = S3.sel === i; S3.sel = on ? null : i; S3.hi = on ? null : f.st; $("s3found").querySelectorAll("button").forEach((x, j) => x.setAttribute("aria-pressed", !on && j === i)); scene(); }; $("s3found").appendChild(b); });
   $("s3win").oninput = e => { S3.win = +e.target.value; scene(); };
+  for (const m of ["adds", "cost"]) $("s3h-" + m).onclick = () => { S3.mode = m; $("s3h-adds").setAttribute("aria-pressed", m === "adds"); $("s3h-cost").setAttribute("aria-pressed", m === "cost"); scene(); };
   let drag = null;
   cv.onpointerdown = e => { drag = [e.clientX, e.clientY, S3.yaw, S3.pitch]; try { cv.setPointerCapture(e.pointerId); } catch (x) {} };
   cv.onpointerup = () => { drag = null; };
@@ -355,7 +363,7 @@ function s3init() {
   try { addEventListener("resize", scene); } catch (x) {}
   scene();
 }
-let tr = { item: 0, pos: 40 };
+let tr = { item: 0, pos: Math.max(0, TR.items[0].fitted_site.indexOf(true)) };
 function passView() {
   const it = TR.items[tr.item], P = it.positions;
   for (const b of $("items").querySelectorAll("button")) b.setAttribute("aria-pressed", +b.dataset.i === tr.item);
@@ -364,7 +372,7 @@ function passView() {
   for (let p = 0; p < P; p++) {
     const c = it.bytes[p], ch = c === 10 ? "↵" : c === 32 ? "·" : (c > 32 && c < 127 ? String.fromCharCode(c) : "□");
     const lp = p < it.next_byte_logprob_true.length ? -it.next_byte_logprob_true[p] : 0;
-    h += "<button data-p='" + p + "' class='" + (p === tr.pos ? "cur" : "") + "' style='background:" + seq(lp) + ";color:" + (lp > 3 ? "var(--bg)" : "var(--ink)") + "' title='byte " + p + ": the next byte cost " + lp.toFixed(2) + " nats'>" + esc(ch) + "</button>";
+    h += "<button data-p='" + p + "' class='" + (p === tr.pos ? "cur" : "") + "' style='" + (it.fitted_site[p] ? "outline:2px solid var(--s2);outline-offset:-2px;" : "") + "background:" + seq(lp) + ";color:" + (lp > 3 ? "var(--bg)" : "var(--ink)") + "' title='byte " + p + ": the next byte cost " + lp.toFixed(2) + " nats'>" + esc(ch) + "</button>";
   }
   $("bytes").innerHTML = h;
   $("bytes").querySelectorAll("button").forEach(b => { b.onclick = () => { tr.pos = +b.dataset.p; passView(); }; });
@@ -378,22 +386,27 @@ function passView() {
   });
   $("wbars").innerHTML = s;
   $("wbars").setAttribute("aria-label", "length of each block's write at byte " + tr.pos);
-  const R = it.readings_after_mlp, Ls = Object.keys(R.probe).sort(), names = ["probe", "write", "resid"], cols = ["--s1", "--s2", "--s3"];
-  let lo = 0, hi = 0;
-  for (const n of names) for (const L of Ls) { const v = R[n][L][tr.pos]; lo = Math.min(lo, v); hi = Math.max(hi, v); }
-  if (hi - lo < 1e-9) hi = lo + 1;
-  const X = i => 60 + i * (330 / (Ls.length - 1)), Y = v => 215 - 195 * (v - lo) / (hi - lo);
-  let q = "<line x1='60' x2='390' y1='" + Y(0) + "' y2='" + Y(0) + "' stroke='var(--line)'/><text x='54' y='" + (Y(0) + 3) + "' text-anchor='end'>0</text><text x='54' y='" + (Y(hi) + 3) + "' text-anchor='end'>" + hi.toFixed(1) + "</text>" + (lo < 0 ? "<text x='54' y='" + (Y(lo) + 3) + "' text-anchor='end'>" + lo.toFixed(1) + "</text>" : "");
-  Ls.forEach((L, i) => { q += "<text x='" + X(i) + "' y='236' text-anchor='middle'>" + L + "</text>"; });
-  names.forEach((n, j) => {
-    q += "<path d='" + Ls.map((L, i) => (i ? "L" : "M") + X(i) + " " + Y(R[n][L][tr.pos])).join("") + "' fill='none' stroke='var(" + cols[j] + ")' stroke-width='2'/>";
-    Ls.forEach((L, i) => { q += "<circle cx='" + X(i) + "' cy='" + Y(R[n][L][tr.pos]) + "' r='4' fill='var(" + cols[j] + ")' stroke='var(--panel)' stroke-width='2'><title>" + n + " after " + L + ": " + R[n][L][tr.pos] + "</title></circle>"; });
-  });
-  $("rlines").innerHTML = q;
-  $("rlines").setAttribute("aria-label", "three readings after each MLP at byte " + tr.pos);
+  const R = it.readings_after_mlp, Ls = Object.keys(R.probe).sort(), names = ["probe", "write", "resid", "next_byte_forecast"], cols = ["--s1", "--s2", "--s3", "--ink3"];
+  if (!it.fitted_site[tr.pos]) {
+    $("rlines").innerHTML = "<text x='210' y='110' text-anchor='middle'>These readings do not apply at this byte.</text><text x='210' y='130' text-anchor='middle'>Click an outlined byte in the text above.</text>";
+  } else {
+    let lo = -1, hi = 1;
+    for (const n of names) for (const L of Ls) { const v = R[n][L][tr.pos]; if (v !== null) { lo = Math.min(lo, v); hi = Math.max(hi, v); } }
+    const X = i => 60 + i * (330 / (Ls.length - 1)), Y = v => 215 - 195 * (v - lo) / (hi - lo);
+    let q = "<line x1='60' x2='390' y1='" + Y(0) + "' y2='" + Y(0) + "' stroke='var(--line)'/><text x='54' y='" + (Y(0) + 3) + "' text-anchor='end'>0</text><text x='54' y='" + (Y(hi) + 3) + "' text-anchor='end'>" + hi.toFixed(1) + "</text><text x='54' y='" + (Y(lo) + 3) + "' text-anchor='end'>" + lo.toFixed(1) + "</text>";
+    Ls.forEach((L, i) => { q += "<text x='" + X(i) + "' y='236' text-anchor='middle'>" + L + "</text>"; });
+    names.forEach((n, j) => {
+      const pts = Ls.map((L, i) => [X(i), R[n][L][tr.pos]]).filter(p => p[1] !== null);
+      if (!pts.length) return;
+      q += "<path d='" + pts.map((p, i) => (i ? "L" : "M") + p[0] + " " + Y(p[1])).join("") + "' fill='none' stroke='var(" + cols[j] + ")' stroke-width='2'/>";
+      pts.forEach(p => { q += "<circle cx='" + p[0] + "' cy='" + Y(p[1]) + "' r='4' fill='var(" + cols[j] + ")' stroke='var(--panel)' stroke-width='2'><title>" + p[1] + " standard deviations</title></circle>"; });
+    });
+    $("rlines").innerHTML = q;
+  }
+  $("rlines").setAttribute("aria-label", "four readings after each rewriting stage at byte " + tr.pos);
   $("okline").innerHTML = "<b>Checked before it was drawn.</b> At each of the " + P + " bytes of this story the 13 writes, added in the model's own order, reproduce the state bit for bit; a story that failed would not be here. Logits rebuilt from the writes differ from the model's by at most " + it.c4_max_abs_logit_residual.toExponential(1) + ". " + esc(it.source) + ".";
 }
-TR.items.forEach((it, i) => { const b = document.createElement("button"); b.className = "chip"; b.dataset.i = i; b.id = "item-" + i; b.textContent = "story " + (i + 1); b.onclick = () => { tr.item = i; passView(); }; $("items").appendChild(b); });
+TR.items.forEach((it, i) => { const b = document.createElement("button"); b.className = "chip"; b.dataset.i = i; b.id = "item-" + i; b.textContent = "story " + (i + 1); b.onclick = () => { tr.item = i; tr.pos = Math.max(0, TR.items[i].fitted_site.indexOf(true)); passView(); }; $("items").appendChild(b); });
 for (const [id, m] of Object.entries(T.models)) {
   const b = document.createElement("button"); b.className = "chip"; b.dataset.id = id; b.id = "model-" + id; b.textContent = m.title;
   b.onclick = () => { state.model = id; state.sel = null; render(); }; $("models").appendChild(b);

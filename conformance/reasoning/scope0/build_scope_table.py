@@ -34,7 +34,7 @@ MODELS = {
     },
     "gemma-4-e2b-q4": {
         "title": "Gemma 4 E2B (4-bit file of the hand-over)", "layers": 35, "components": ["state", "attn", "mlp", "ple"],
-        "frame": "not closed", "frame_reason": "the hand-over's attribution fails its additivity check (relative error 1.19); the file rescales the stream at each layer; a calibration (CAL-G) is frozen and not run",
+        "frame": "closed with per-layer scales", "frame_reason": "CAL-G (RATCHET bf1cce7): with the file's per-layer scales the writes sum to the state to 1.4e-7 relative; a plain sum misses by a factor of 48. The hand-over's attributions were taken as a plain sum and stay void",
     },
 }
 
@@ -108,8 +108,8 @@ def check(table):
             raise Refuse("a preregistered row with neither an interval nor a null, and no stated reason, in %s at %s" % (r["layer"], s))
         if r.get("fit", "n/a") not in FITS:
             raise Refuse("a fit that is none of %s in %s at %s" % (FITS, r["layer"], s))
-        if r["standing"] != "void" and m["frame"] != "closed" and l["id"].endswith("attrib"):
-            raise Refuse("an attribution in a frame that does not close must be void")
+        if r["standing"] != "void" and l["id"] == "gm.attrib":
+            raise Refuse("an attribution taken as a plain sum on a model whose frame needs scales must be void")
         k = (r["layer"], s["layer"], s["component"], s["position"], r["category"])
         if k in seen:
             raise Refuse("two rows for one cell: %s" % (k,))
@@ -252,8 +252,8 @@ def main():
     for r in table["rows"]:
         per.setdefault(r["layer"], {}).setdefault(r["standing"], 0)
         per[r["layer"]][r["standing"]] += 1
-    side = {"reference": "SCOPE-0 (what has been measured of two language models, by site)", "version": 2,
-            "changes": "version 2 (2026-11-12), on the corrections of the session that owns the instrument: the part-of-speech probe was paired with a null of a different quantity (novel-word accuracy against an all-word null) and is now accuracy on all words against that null, with a second view for what is readable beyond the surface bytes; VOCAB-1 was called exploratory and is preregistered and UNCONVERGED, carried as a separate field; the push views read the log-probability of the adjective word, not log-odds; the parallax scale cut off its own null band; PARALLAX-2 added. No loop result is imported: every one so far ran on a superseded engine.", "table": "scope_table.json", "bytes": len(body),
+    side = {"reference": "SCOPE-0 (what has been measured of two language models, by site)", "version": 3,
+            "changes": "version 3 (2026-11-12): Gemma's frame is closed with per-layer scales by CAL-G; the hand-over's plain-sum attributions stay void. Version 2 (2026-11-12), on the corrections of the session that owns the instrument: the part-of-speech probe was paired with a null of a different quantity (novel-word accuracy against an all-word null) and is now accuracy on all words against that null, with a second view for what is readable beyond the surface bytes; VOCAB-1 was called exploratory and is preregistered and UNCONVERGED, carried as a separate field; the push views read the log-probability of the adjective word, not log-odds; the parallax scale cut off its own null band; PARALLAX-2 added. No loop result is imported: every one so far ran on a superseded engine.", "table": "scope_table.json", "bytes": len(body),
             "sha256": hashlib.sha256(body).hexdigest(), "rows": n, "rows_by_layer_and_standing": per,
             "serves": ["a model explorer: one exact kind of reading per map; a cell with no row is drawn as not measured"],
             "provenance": {"ratchet_commit": commit, "files": used},

@@ -1,10 +1,10 @@
 {
  "reference": "SCOPE-0 (what has been measured of two language models, by site)",
- "version": 2,
- "changes": "version 2 (2026-11-12), on the corrections of the session that owns the instrument: the part-of-speech probe was paired with a null of a different quantity (novel-word accuracy against an all-word null) and is now accuracy on all words against that null, with a second view for what is readable beyond the surface bytes; VOCAB-1 was called exploratory and is preregistered and UNCONVERGED, carried as a separate field; the push views read the log-probability of the adjective word, not log-odds; the parallax scale cut off its own null band; PARALLAX-2 added. No loop result is imported: every one so far ran on a superseded engine.",
+ "version": 3,
+ "changes": "version 3 (2026-11-12): Gemma's frame is closed with per-layer scales by CAL-G; the hand-over's plain-sum attributions stay void. Version 2 (2026-11-12), on the corrections of the session that owns the instrument: the part-of-speech probe was paired with a null of a different quantity (novel-word accuracy against an all-word null) and is now accuracy on all words against that null, with a second view for what is readable beyond the surface bytes; VOCAB-1 was called exploratory and is preregistered and UNCONVERGED, carried as a separate field; the push views read the log-probability of the adjective word, not log-odds; the parallax scale cut off its own null band; PARALLAX-2 added. No loop result is imported: every one so far ran on a superseded engine.",
  "table": "scope_table.json",
- "bytes": 228466,
- "sha256": "c6f38d6521aa0661ddbd155d9cb67dcf09e18fbb2e8dab18e7d3ee1a3c183a71",
+ "bytes": 228531,
+ "sha256": "7122956dc490b294f0d23f5c55dd95f689de05b05b49b0d464ac08e2fb1c8f54",
  "rows": 338,
  "rows_by_layer_and_standing": {
   "gw.identity": {

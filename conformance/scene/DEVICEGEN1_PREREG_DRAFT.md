@@ -1,5 +1,7 @@
 # DEVICEGEN-1 — the second generator Holon ships for the twin to call: who lives in a household of a given size, and the devices it holds, drawn jointly, with what is already on all day and could host. PREREGISTRATION (DRAFT)
 
+*REVIEWED 2026-11-12 (`DEVICEGEN1_REVIEW.md`): fixed in `DEVICEGEN1_PREREG.md`, which replaces this text. Kept as written.*
+
 *DRAFT of 2026-11-12. NOT FROZEN; to be attacked by a second reader first. It builds on
 `DEVICES0_RESULTS.md`. Nothing below is built or computed. It needs the approved US
 residential energy survey files fetched again (2020 and 2024), because the generator's

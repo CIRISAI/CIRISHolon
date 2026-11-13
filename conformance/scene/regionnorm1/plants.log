@@ -1,0 +1,10 @@
+P-NULL         PASS
+_P-NULL        [0.5197, 'neither', 0.0437]
+P-DIV          PASS
+_P-DIV         [1.0, 0.0]
+P-ZONE         PASS
+_P-ZONE        [0.0, 0.0]
+P-STATE        PASS
+_P-STATE       [0.525, 0.0363]
+P-HASH         PASS
+_P-HASH_share  0.4995

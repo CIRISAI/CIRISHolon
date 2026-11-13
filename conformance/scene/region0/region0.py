@@ -244,7 +244,8 @@ def run(path, out, frozen):
             if r["postal"] not in CODES:
                 raise Stop("a US shape whose postal code is not a state's: %r" % r["postal"])
             code = CODES[r["postal"]]
-            if fedcol and r[fedcol].strip() and r[fedcol].strip().upper() != "US%02d" % code:
+            digits = "".join(ch for ch in r[fedcol] if ch.isdigit()) if fedcol else ""
+            if digits and int(digits) != code:        # the format of the column is not known before the read; its digits are compared
                 raise Stop("the file's federal code %r disagrees with the table's %d for %s" % (r[fedcol], code, r["postal"]))
             if code in by:
                 raise Stop("a state twice: %s" % r["postal"])

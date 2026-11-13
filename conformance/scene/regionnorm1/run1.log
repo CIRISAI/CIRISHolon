@@ -1,0 +1,228 @@
+{
+ "plants": {
+  "P-NULL": true,
+  "_P-NULL": [
+   0.5197,
+   "neither",
+   0.0437
+  ],
+  "P-DIV": true,
+  "_P-DIV": [
+   1.0,
+   0.0
+  ],
+  "P-ZONE": true,
+  "_P-ZONE": [
+   0.0,
+   0.0
+  ],
+  "P-STATE": true,
+  "_P-STATE": [
+   0.525,
+   0.0363
+  ],
+  "P-HASH": true,
+  "_P-HASH_share": 0.4995
+ },
+ "households": {
+  "in_the_file": 18496,
+  "fit": 9238,
+  "fit_share": 0.4995
+ },
+ "L1": {
+  "rival": "zone",
+  "pairs": 152,
+  "share_division_nearer": 0.6776,
+  "states_for_division": 23,
+  "states_for_rival": 7,
+  "states_tied": 8,
+  "sign_test_p_for_division": 0.00261,
+  "sign_test_p_for_rival": 0.99928,
+  "states_not_scored": [
+   "AK",
+   "ND",
+   "OR",
+   "WA"
+  ],
+  "reading": "met",
+  "share_by_table": {
+   "heating fuel by type": 0.7368,
+   "wall material by era": 0.6842,
+   "roof material": 0.5789,
+   "type given urban type": 0.7105
+  }
+ },
+ "L1b": {
+  "rival": "like climate",
+  "pairs": 168,
+  "share_division_nearer": 0.619,
+  "states_for_division": 21,
+  "states_for_rival": 11,
+  "states_tied": 10,
+  "sign_test_p_for_division": 0.05509,
+  "sign_test_p_for_rival": 0.97495,
+  "states_not_scored": [],
+  "reading": "neither",
+  "share_by_table": {
+   "heating fuel by type": 0.6667,
+   "wall material by era": 0.6667,
+   "roof material": 0.5238,
+   "type given urban type": 0.619
+  }
+ },
+ "L2": {
+  "pairs": 168,
+  "share_rejecting_at_5pct": 0.5238,
+  "median_distance_less_permutation_mean": 0.0489,
+  "reading": "met",
+  "share_rejecting_by_table": {
+   "heating fuel by type": 0.6905,
+   "wall material by era": 0.7381,
+   "roof material": 0.4762,
+   "type given urban type": 0.1905
+  }
+ },
+ "L3": {
+  "pairs": {
+   "area~total": {
+    "by_division": [
+     0.378,
+     0.424,
+     0.291,
+     0.537,
+     0.496,
+     0.376,
+     0.413,
+     0.527,
+     0.322,
+     0.412
+    ],
+    "p": 0.001
+   },
+   "vint~storeys": {
+    "by_division": [
+     -0.025,
+     0.181,
+     -0.175,
+     0.137,
+     0.206,
+     -0.096,
+     0.284,
+     0.072,
+     -0.091,
+     0.271
+    ],
+    "p": 0.001
+   },
+   "area~kwh": {
+    "by_division": [
+     0.28,
+     0.428,
+     0.321,
+     0.289,
+     0.374,
+     0.308,
+     0.332,
+     0.281,
+     0.277,
+     0.352
+    ],
+    "p": 0.378
+   }
+  },
+  "rejecting": 2,
+  "reading": "met"
+ },
+ "four_pools_on_one_footing": {
+  "share_of_pairs_won": {
+   "division": 0.5395,
+   "zone": 0.1447,
+   "like climate": 0.2697,
+   "nation": 0.0461
+  },
+  "median_distance": {
+   "division": 0.1489,
+   "zone": 0.1934,
+   "like climate": 0.1806,
+   "nation": 0.2467
+  },
+  "states": 38
+ },
+ "data_driven_groups_upper_reference": {
+  "groups": [
+   [
+    "AK",
+    "NJ"
+   ],
+   [
+    "AL",
+    "AZ",
+    "TN",
+    "LA",
+    "NC",
+    "SC",
+    "MS",
+    "AR",
+    "OK",
+    "OR",
+    "TX",
+    "WA",
+    "GA",
+    "KY",
+    "WV"
+   ],
+   [
+    "CA",
+    "CO",
+    "MI",
+    "IL",
+    "NE",
+    "WI",
+    "IN",
+    "OH",
+    "MO",
+    "KS",
+    "NV",
+    "WY",
+    "ID",
+    "MT",
+    "NM",
+    "IA",
+    "MN",
+    "SD",
+    "UT"
+   ],
+   [
+    "CT",
+    "MA",
+    "RI"
+   ],
+   [
+    "DC"
+   ],
+   [
+    "DE",
+    "VA",
+    "ND",
+    "MD",
+    "PA"
+   ],
+   [
+    "FL"
+   ],
+   [
+    "HI"
+   ],
+   [
+    "ME",
+    "VT",
+    "NH"
+   ],
+   [
+    "NY"
+   ]
+  ],
+  "median_distance_of_a_state_to_its_group_fuel_by_type": 0.1825
+ },
+ "branch": "(a): written"
+}

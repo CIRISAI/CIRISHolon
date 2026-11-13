@@ -1,0 +1,148 @@
+{
+ "reference": "REGIONNORM-1 (a reading of a survey; which key carries a dwelling's make-up)",
+ "version": 1,
+ "table": "regionnorm_table.json",
+ "bytes": 42776,
+ "sha256": "186a895ae375f40365290db3078cffc620b94d55961e42befb6f3e9e353c3dcf",
+ "rows": 51,
+ "source": {
+  "publisher": "U.S. Energy Information Administration",
+  "title": "Residential Energy Consumption Survey 2020, public-use microdata (version 7)",
+  "terms": "U.S. government publications are in the public domain (https://www.eia.gov/about/copyrights_reuse.php)",
+  "file_sha256": "8d5f6d3120d2cbc2535151c7d455e7a536ca9768f773e15edd45932ec38b3592",
+  "changed": "state-level summaries computed from 9,238 households (a named half); no household is in this table"
+ },
+ "holds_no_real_feature": true,
+ "readings": {
+  "L1": {
+   "rival": "zone",
+   "pairs": 152,
+   "share_division_nearer": 0.6776,
+   "states_for_division": 23,
+   "states_for_rival": 7,
+   "states_tied": 8,
+   "sign_test_p_for_division": 0.00261,
+   "sign_test_p_for_rival": 0.99928,
+   "states_not_scored": [
+    "AK",
+    "ND",
+    "OR",
+    "WA"
+   ],
+   "reading": "met",
+   "share_by_table": {
+    "heating fuel by type": 0.7368,
+    "wall material by era": 0.6842,
+    "roof material": 0.5789,
+    "type given urban type": 0.7105
+   }
+  },
+  "L1b": {
+   "rival": "like climate",
+   "pairs": 168,
+   "share_division_nearer": 0.619,
+   "states_for_division": 21,
+   "states_for_rival": 11,
+   "states_tied": 10,
+   "sign_test_p_for_division": 0.05509,
+   "sign_test_p_for_rival": 0.97495,
+   "states_not_scored": [],
+   "reading": "neither",
+   "share_by_table": {
+    "heating fuel by type": 0.6667,
+    "wall material by era": 0.6667,
+    "roof material": 0.5238,
+    "type given urban type": 0.619
+   }
+  },
+  "L2": {
+   "pairs": 168,
+   "share_rejecting_at_5pct": 0.5238,
+   "median_distance_less_permutation_mean": 0.0489,
+   "reading": "met",
+   "share_rejecting_by_table": {
+    "heating fuel by type": 0.6905,
+    "wall material by era": 0.7381,
+    "roof material": 0.4762,
+    "type given urban type": 0.1905
+   }
+  },
+  "L3": {
+   "pairs": {
+    "area~total": {
+     "by_division": [
+      0.378,
+      0.424,
+      0.291,
+      0.537,
+      0.496,
+      0.376,
+      0.413,
+      0.527,
+      0.322,
+      0.412
+     ],
+     "p": 0.001
+    },
+    "vint~storeys": {
+     "by_division": [
+      -0.025,
+      0.181,
+      -0.175,
+      0.137,
+      0.206,
+      -0.096,
+      0.284,
+      0.072,
+      -0.091,
+      0.271
+     ],
+     "p": 0.001
+    },
+    "area~kwh": {
+     "by_division": [
+      0.28,
+      0.428,
+      0.321,
+      0.289,
+      0.374,
+      0.308,
+      0.332,
+      0.281,
+      0.277,
+      0.352
+     ],
+     "p": 0.378
+    }
+   },
+   "rejecting": 2,
+   "reading": "met"
+  },
+  "four_pools_on_one_footing": {
+   "share_of_pairs_won": {
+    "division": 0.5395,
+    "zone": 0.1447,
+    "like climate": 0.2697,
+    "nation": 0.0461
+   },
+   "median_distance": {
+    "division": 0.1489,
+    "zone": 0.1934,
+    "like climate": 0.1806,
+    "nation": 0.2467
+   },
+   "states": 38
+  }
+ },
+ "what_a_generator_takes": "L1 met: the census division above the climate zone in a pooling ladder. L2 met: the state first, where it has the households. L1b neither: the division is not shown better than states of like degree days.",
+ "limits": [
+  "a better KEY, not a cause: a division is contiguous geography and stands in for climate, the gas grid, prices and the age of the stock",
+  "one survey, one year (2020), 51 areas; households of one design share its clusters",
+  "these columns were read before by BUILDGEN-1 on a split by state; nothing here is 'states never seen'",
+  "4 tables and 3 correlations stand for a dwelling's make-up"
+ ],
+ "verdict": {
+  "all_rows": "unresolved",
+  "reason": "a reading with its stakes stated beforehand; not a certificate of any generator"
+ }
+}

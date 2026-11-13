@@ -1863,3 +1863,16 @@ Records cited; nothing below changes a tier's status.*
   keyed by state needs the caller to know its state.
 
 *(Placed at the end, as above.)*
+
+### REGIONNORM-1 — which key carries a dwelling's make-up (2026-11-12)
+
+- **MET (L1):** a state's tables are nearer its census division's than its climate
+  zone's in 0.678 of 152 pairs; 23 states to 7 (p = 0.003). Pools equalised.
+- **NEITHER (L1b):** against states of like degree days, 0.619 and p = 0.055. Region
+  beats the survey's climate zones; it is not shown to beat climate measured finely.
+- **MET (L2):** a state differs from its own division in 0.524 of pairs (0.05 by chance),
+  most in wall material (0.74) and heating fuel (0.69).
+- **Met (L3):** vintage with storeys runs −0.18 to +0.28 across divisions.
+- **A key, not a cause.** It fixes the ladder for a state-keyed generator, not started.
+
+*(Placed at the end, as above.)*

@@ -1,0 +1,231 @@
+{
+ "plants": {
+  "P-SQUARE": true,
+  "P-HOLE": true,
+  "P-BORDER": true,
+  "P-ORIENT": true,
+  "P-MULTI": true,
+  "P-ANTI": true,
+  "P-OVERLAP": true,
+  "P-AREA": true
+ },
+ "file": {
+  "bytes": 911408,
+  "sha256": "61f79e6705e62a55d6bcf698394295a589af5e24a4b2684c6519dd35c1300bf6",
+  "version": "5.1.1"
+ },
+ "federal_code_column_checked": true,
+ "R1": {
+  "met_of_50": 50,
+  "misses": [],
+  "reading": "met"
+ },
+ "R2": {
+  "met_of_10": 10,
+  "states": [
+   {
+    "state": "AK",
+    "sampled_km2": 1487939,
+    "land_km2_from_memory": 1477953,
+    "difference_pct": 0.68,
+    "bar_pct": [
+     -8,
+     10
+    ],
+    "met": true
+   },
+   {
+    "state": "TX",
+    "sampled_km2": 686046,
+    "land_km2_from_memory": 676587,
+    "difference_pct": 1.4,
+    "bar_pct": [
+     -3,
+     6
+    ],
+    "met": true
+   },
+   {
+    "state": "CA",
+    "sampled_km2": 409373,
+    "land_km2_from_memory": 403466,
+    "difference_pct": 1.46,
+    "bar_pct": [
+     -3,
+     6
+    ],
+    "met": true
+   },
+   {
+    "state": "MT",
+    "sampled_km2": 380155,
+    "land_km2_from_memory": 376962,
+    "difference_pct": 0.85,
+    "bar_pct": [
+     -3,
+     6
+    ],
+    "met": true
+   },
+   {
+    "state": "NM",
+    "sampled_km2": 315419,
+    "land_km2_from_memory": 314161,
+    "difference_pct": 0.4,
+    "bar_pct": [
+     -3,
+     6
+    ],
+    "met": true
+   },
+   {
+    "state": "AZ",
+    "sampled_km2": 294980,
+    "land_km2_from_memory": 294207,
+    "difference_pct": 0.26,
+    "bar_pct": [
+     -3,
+     6
+    ],
+    "met": true
+   },
+   {
+    "state": "NV",
+    "sampled_km2": 286276,
+    "land_km2_from_memory": 284332,
+    "difference_pct": 0.68,
+    "bar_pct": [
+     -3,
+     6
+    ],
+    "met": true
+   },
+   {
+    "state": "CO",
+    "sampled_km2": 269955,
+    "land_km2_from_memory": 268431,
+    "difference_pct": 0.57,
+    "bar_pct": [
+     -3,
+     6
+    ],
+    "met": true
+   },
+   {
+    "state": "OR",
+    "sampled_km2": 251140,
+    "land_km2_from_memory": 248608,
+    "difference_pct": 1.02,
+    "bar_pct": [
+     -3,
+     6
+    ],
+    "met": true
+   },
+   {
+    "state": "WY",
+    "sampled_km2": 254049,
+    "land_km2_from_memory": 251470,
+    "difference_pct": 1.03,
+    "bar_pct": [
+     -3,
+     6
+    ],
+    "met": true
+   }
+  ],
+  "reading": "met"
+ },
+ "R3": {
+  "states_with_no_cell": [],
+  "met": true,
+  "district_of_columbia_cells": 1
+ },
+ "R4": {
+  "coded_cells_outside_the_box": 0,
+  "met": true
+ },
+ "printed": {
+  "us_shapes": 51,
+  "coded_cells": 73425,
+  "cells_by_state": {
+   "AL": 833,
+   "AK": 18936,
+   "AZ": 1893,
+   "AR": 874,
+   "CA": 2758,
+   "CO": 1792,
+   "CT": 90,
+   "DE": 41,
+   "DC": 1,
+   "FL": 980,
+   "GA": 947,
+   "HI": 146,
+   "ID": 1558,
+   "IL": 1023,
+   "IN": 631,
+   "IA": 1005,
+   "KS": 1396,
+   "KY": 682,
+   "LA": 771,
+   "ME": 669,
+   "MD": 205,
+   "MA": 182,
+   "MI": 1870,
+   "MN": 1723,
+   "MS": 767,
+   "MO": 1204,
+   "MT": 2898,
+   "NE": 1378,
+   "NV": 1936,
+   "NH": 174,
+   "NJ": 150,
+   "NM": 1982,
+   "NY": 1008,
+   "NC": 870,
+   "ND": 1360,
+   "OH": 804,
+   "OK": 1145,
+   "OR": 1831,
+   "PA": 808,
+   "RI": 21,
+   "SC": 517,
+   "SD": 1451,
+   "TN": 698,
+   "TX": 4263,
+   "UT": 1472,
+   "VT": 175,
+   "VA": 689,
+   "WA": 1386,
+   "WV": 417,
+   "WI": 1223,
+   "WY": 1792
+  },
+  "share_of_coded_cells_with_winner_under_0.8": 0.0143,
+  "coded_cells_with_a_count_under_13": 2064,
+  "cells_fully_one_state": 67383,
+  "alaska_cells_east_of_172E": 0,
+  "points_in_two_shapes": 0
+ },
+ "files": {
+  "us_state_cell.bin.gz": {
+   "bytes_packed": 8092,
+   "sha256_packed": "3285215421d08eeb071631c4764d5e1eb95a38048120a20f2340f61641613285",
+   "bytes_unpacked": 4147200,
+   "sha256_unpacked": "ee4a112ae9241072f07a0ec18942bc50977057244ced1db06baf220211ca21dd"
+  },
+  "us_state_cell_share.bin.gz": {
+   "bytes_packed": 9288,
+   "sha256_packed": "0d81e6db42147956744bc544e5435636b441ef51059bb940683f0d379b40c40f",
+   "bytes_unpacked": 4147200,
+   "sha256_unpacked": "5a4a3c89ce212ceab00832eb5bf0d3f32d27ae752f76bef6a8e5868a6469dbe5"
+  },
+  "us_state_cell_classed.bin.gz": {
+   "bytes_packed": 10718,
+   "sha256_packed": "dbfd41f8506703c220885836c135a3b155f78acdeb7307e58c1ee4cda504102c",
+   "bytes_unpacked": 4147200,
+   "sha256_unpacked": "7da2e4f51cc3fc8f61a32c3c9e7c9eec01ec22a9f7b4d4bc02bc906c166ee254"
+  }
+ },
+ "branch": "(a): the three grids are written"
+}

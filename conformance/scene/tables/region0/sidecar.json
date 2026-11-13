@@ -1,0 +1,497 @@
+{
+ "reference": "REGION-0 (a US state per cell; a key)",
+ "version": 1,
+ "key": "cell",
+ "grid": {
+  "columns": 2880,
+  "rows": 1440,
+  "cell_degrees": 0.125,
+  "order": "flat index = r * 2880 + c; row 0 northernmost; column 0 at longitude -180",
+  "bytes_per_cell": 1
+ },
+ "files": {
+  "us_state_cell.bin.gz": {
+   "bytes_packed": 8092,
+   "sha256_packed": "3285215421d08eeb071631c4764d5e1eb95a38048120a20f2340f61641613285",
+   "bytes_unpacked": 4147200,
+   "sha256_unpacked": "ee4a112ae9241072f07a0ec18942bc50977057244ced1db06baf220211ca21dd"
+  },
+  "us_state_cell_share.bin.gz": {
+   "bytes_packed": 9288,
+   "sha256_packed": "0d81e6db42147956744bc544e5435636b441ef51059bb940683f0d379b40c40f",
+   "bytes_unpacked": 4147200,
+   "sha256_unpacked": "5a4a3c89ce212ceab00832eb5bf0d3f32d27ae752f76bef6a8e5868a6469dbe5"
+  },
+  "us_state_cell_classed.bin.gz": {
+   "bytes_packed": 10718,
+   "sha256_packed": "dbfd41f8506703c220885836c135a3b155f78acdeb7307e58c1ee4cda504102c",
+   "bytes_unpacked": 4147200,
+   "sha256_unpacked": "7da2e4f51cc3fc8f61a32c3c9e7c9eec01ec22a9f7b4d4bc02bc906c166ee254"
+  }
+ },
+ "meaning": {
+  "us_state_cell.bin.gz": "the state's code (its 2-digit federal code as a number); 0 where none of the cell's 25 sample points lies in a US state. The state with the most points; a tie goes to the lower code",
+  "us_state_cell_share.bin.gz": "the winner's share of the cell's points that lie in any state, round-half-up of 255 * k / n",
+  "us_state_cell_classed.bin.gz": "how many of the 25 sample points lie in any state"
+ },
+ "code_table": [
+  {
+   "code": 1,
+   "postal": "AL",
+   "name": "Alabama\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"
+  },
+  {
+   "code": 2,
+   "postal": "AK",
+   "name": "Alaska\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"
+  },
+  {
+   "code": 4,
+   "postal": "AZ",
+   "name": "Arizona\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"
+  },
+  {
+   "code": 5,
+   "postal": "AR",
+   "name": "Arkansas\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"
+  },
+  {
+   "code": 6,
+   "postal": "CA",
+   "name": "California\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"
+  },
+  {
+   "code": 8,
+   "postal": "CO",
+   "name": "Colorado\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"
+  },
+  {
+   "code": 9,
+   "postal": "CT",
+   "name": "Connecticut\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"
+  },
+  {
+   "code": 10,
+   "postal": "DE",
+   "name": "Delaware\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"
+  },
+  {
+   "code": 11,
+   "postal": "DC",
+   "name": "District of Columbia\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"
+  },
+  {
+   "code": 12,
+   "postal": "FL",
+   "name": "Florida\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"
+  },
+  {
+   "code": 13,
+   "postal": "GA",
+   "name": "Georgia\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"
+  },
+  {
+   "code": 15,
+   "postal": "HI",
+   "name": "Hawaii\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"
+  },
+  {
+   "code": 16,
+   "postal": "ID",
+   "name": "Idaho\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"
+  },
+  {
+   "code": 17,
+   "postal": "IL",
+   "name": "Illinois\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"
+  },
+  {
+   "code": 18,
+   "postal": "IN",
+   "name": "Indiana\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"
+  },
+  {
+   "code": 19,
+   "postal": "IA",
+   "name": "Iowa\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"
+  },
+  {
+   "code": 20,
+   "postal": "KS",
+   "name": "Kansas\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"
+  },
+  {
+   "code": 21,
+   "postal": "KY",
+   "name": "Kentucky\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"
+  },
+  {
+   "code": 22,
+   "postal": "LA",
+   "name": "Louisiana\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"
+  },
+  {
+   "code": 23,
+   "postal": "ME",
+   "name": "Maine\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"
+  },
+  {
+   "code": 24,
+   "postal": "MD",
+   "name": "Maryland\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"
+  },
+  {
+   "code": 25,
+   "postal": "MA",
+   "name": "Massachusetts\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"
+  },
+  {
+   "code": 26,
+   "postal": "MI",
+   "name": "Michigan\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"
+  },
+  {
+   "code": 27,
+   "postal": "MN",
+   "name": "Minnesota\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"
+  },
+  {
+   "code": 28,
+   "postal": "MS",
+   "name": "Mississippi\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"
+  },
+  {
+   "code": 29,
+   "postal": "MO",
+   "name": "Missouri\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"
+  },
+  {
+   "code": 30,
+   "postal": "MT",
+   "name": "Montana\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"
+  },
+  {
+   "code": 31,
+   "postal": "NE",
+   "name": "Nebraska\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"
+  },
+  {
+   "code": 32,
+   "postal": "NV",
+   "name": "Nevada\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"
+  },
+  {
+   "code": 33,
+   "postal": "NH",
+   "name": "New Hampshire\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"
+  },
+  {
+   "code": 34,
+   "postal": "NJ",
+   "name": "New Jersey\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"
+  },
+  {
+   "code": 35,
+   "postal": "NM",
+   "name": "New Mexico\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"
+  },
+  {
+   "code": 36,
+   "postal": "NY",
+   "name": "New York\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"
+  },
+  {
+   "code": 37,
+   "postal": "NC",
+   "name": "North Carolina\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"
+  },
+  {
+   "code": 38,
+   "postal": "ND",
+   "name": "North Dakota\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"
+  },
+  {
+   "code": 39,
+   "postal": "OH",
+   "name": "Ohio\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"
+  },
+  {
+   "code": 40,
+   "postal": "OK",
+   "name": "Oklahoma\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"
+  },
+  {
+   "code": 41,
+   "postal": "OR",
+   "name": "Oregon\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"
+  },
+  {
+   "code": 42,
+   "postal": "PA",
+   "name": "Pennsylvania\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"
+  },
+  {
+   "code": 44,
+   "postal": "RI",
+   "name": "Rhode Island\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"
+  },
+  {
+   "code": 45,
+   "postal": "SC",
+   "name": "South Carolina\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"
+  },
+  {
+   "code": 46,
+   "postal": "SD",
+   "name": "South Dakota\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"
+  },
+  {
+   "code": 47,
+   "postal": "TN",
+   "name": "Tennessee\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"
+  },
+  {
+   "code": 48,
+   "postal": "TX",
+   "name": "Texas\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"
+  },
+  {
+   "code": 49,
+   "postal": "UT",
+   "name": "Utah\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"
+  },
+  {
+   "code": 50,
+   "postal": "VT",
+   "name": "Vermont\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"
+  },
+  {
+   "code": 51,
+   "postal": "VA",
+   "name": "Virginia\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"
+  },
+  {
+   "code": 53,
+   "postal": "WA",
+   "name": "Washington\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"
+  },
+  {
+   "code": 54,
+   "postal": "WV",
+   "name": "West Virginia\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"
+  },
+  {
+   "code": 55,
+   "postal": "WI",
+   "name": "Wisconsin\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"
+  },
+  {
+   "code": 56,
+   "postal": "WY",
+   "name": "Wyoming\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"
+  }
+ ],
+ "notes": [
+  "the share of the WHOLE cell held by the winner is its points over 25, recoverable from the two other grids",
+  "a code with a low count is mostly sea or another country (2,064 coded cells have a count under 13): the consumer's own country and land grids decide, or it may require a count of 13 or more",
+  "lake water inside a state's outline carries the state's code (the default file, not the one without large lakes)",
+  "the District of Columbia holds 1 cell",
+  "at this map scale small islands are dropped and leave US land with code 0; no Alaskan cell lies east of 172 E, so the westernmost Aleutians are absent",
+  "a state is a key; nothing about its dwellings follows from this grid"
+ ],
+ "source": {
+  "credit": "Made with Natural Earth.",
+  "file": "ne_50m_admin_1_states_provinces.zip, version 5.1.1, 911,408 bytes, sha256 61f79e6705e62a55d6bcf698394295a589af5e24a4b2684c6519dd35c1300bf6",
+  "address": "https://naciscdn.org/naturalearth/50m/cultural/ne_50m_admin_1_states_provinces.zip",
+  "terms": "\"All versions of Natural Earth raster + vector map data found on this website are in the public domain.\" (https://www.naturalearthdata.com/about/terms-of-use/)",
+  "changed": "51 US shapes rasterised to 25 sample points per 1/8 degree cell and reduced to a majority code"
+ },
+ "holds_no_real_feature": true,
+ "stakes": {
+  "R1": {
+   "met_of_50": 50
+  },
+  "R2": {
+   "met_of_10": 10,
+   "states": [
+    {
+     "state": "AK",
+     "sampled_km2": 1487939,
+     "land_km2_from_memory": 1477953,
+     "difference_pct": 0.68,
+     "bar_pct": [
+      -8,
+      10
+     ],
+     "met": true
+    },
+    {
+     "state": "TX",
+     "sampled_km2": 686046,
+     "land_km2_from_memory": 676587,
+     "difference_pct": 1.4,
+     "bar_pct": [
+      -3,
+      6
+     ],
+     "met": true
+    },
+    {
+     "state": "CA",
+     "sampled_km2": 409373,
+     "land_km2_from_memory": 403466,
+     "difference_pct": 1.46,
+     "bar_pct": [
+      -3,
+      6
+     ],
+     "met": true
+    },
+    {
+     "state": "MT",
+     "sampled_km2": 380155,
+     "land_km2_from_memory": 376962,
+     "difference_pct": 0.85,
+     "bar_pct": [
+      -3,
+      6
+     ],
+     "met": true
+    },
+    {
+     "state": "NM",
+     "sampled_km2": 315419,
+     "land_km2_from_memory": 314161,
+     "difference_pct": 0.4,
+     "bar_pct": [
+      -3,
+      6
+     ],
+     "met": true
+    },
+    {
+     "state": "AZ",
+     "sampled_km2": 294980,
+     "land_km2_from_memory": 294207,
+     "difference_pct": 0.26,
+     "bar_pct": [
+      -3,
+      6
+     ],
+     "met": true
+    },
+    {
+     "state": "NV",
+     "sampled_km2": 286276,
+     "land_km2_from_memory": 284332,
+     "difference_pct": 0.68,
+     "bar_pct": [
+      -3,
+      6
+     ],
+     "met": true
+    },
+    {
+     "state": "CO",
+     "sampled_km2": 269955,
+     "land_km2_from_memory": 268431,
+     "difference_pct": 0.57,
+     "bar_pct": [
+      -3,
+      6
+     ],
+     "met": true
+    },
+    {
+     "state": "OR",
+     "sampled_km2": 251140,
+     "land_km2_from_memory": 248608,
+     "difference_pct": 1.02,
+     "bar_pct": [
+      -3,
+      6
+     ],
+     "met": true
+    },
+    {
+     "state": "WY",
+     "sampled_km2": 254049,
+     "land_km2_from_memory": 251470,
+     "difference_pct": 1.03,
+     "bar_pct": [
+      -3,
+      6
+     ],
+     "met": true
+    }
+   ],
+   "reading": "met"
+  },
+  "R3": {
+   "states_with_no_cell": [],
+   "met": true,
+   "district_of_columbia_cells": 1
+  },
+  "R4": {
+   "coded_cells_outside_the_box": 0,
+   "met": true
+  }
+ },
+ "cells_by_state": {
+  "AL": 833,
+  "AK": 18936,
+  "AZ": 1893,
+  "AR": 874,
+  "CA": 2758,
+  "CO": 1792,
+  "CT": 90,
+  "DE": 41,
+  "DC": 1,
+  "FL": 980,
+  "GA": 947,
+  "HI": 146,
+  "ID": 1558,
+  "IL": 1023,
+  "IN": 631,
+  "IA": 1005,
+  "KS": 1396,
+  "KY": 682,
+  "LA": 771,
+  "ME": 669,
+  "MD": 205,
+  "MA": 182,
+  "MI": 1870,
+  "MN": 1723,
+  "MS": 767,
+  "MO": 1204,
+  "MT": 2898,
+  "NE": 1378,
+  "NV": 1936,
+  "NH": 174,
+  "NJ": 150,
+  "NM": 1982,
+  "NY": 1008,
+  "NC": 870,
+  "ND": 1360,
+  "OH": 804,
+  "OK": 1145,
+  "OR": 1831,
+  "PA": 808,
+  "RI": 21,
+  "SC": 517,
+  "SD": 1451,
+  "TN": 698,
+  "TX": 4263,
+  "UT": 1472,
+  "VT": 175,
+  "VA": 689,
+  "WA": 1386,
+  "WV": 417,
+  "WI": 1223,
+  "WY": 1792
+ },
+ "verdict": {
+  "all_cells": "unresolved",
+  "reason": "a reduction of a published map; reading checks met"
+ }
+}

@@ -1852,3 +1852,14 @@ Records cited; nothing below changes a tier's status.*
 - **Next:** key by region, hold out states within a region, a heavier-tailed copula.
 
 *(Placed at the end, as above.)*
+
+### REGION-0 — a US state for each cell of the twin's grid (2026-11-12)
+
+- **Built:** `tables/region0`: a state code per 1/8° cell from Natural Earth's states
+  (public domain), with the winner's share and a count of sample points.
+- **MET:** 50 of 50 labelled points; 10 of 10 state areas (+0.3 % to +1.5 % against land
+  area); each state present; nothing outside the box.
+- **Why:** BUILDGEN-1 showed a dwelling's joint is regional below climate; a generator
+  keyed by state needs the caller to know its state.
+
+*(Placed at the end, as above.)*

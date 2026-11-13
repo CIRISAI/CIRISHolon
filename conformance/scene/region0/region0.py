@@ -25,11 +25,6 @@ CODES = {"AL": 1, "AK": 2, "AZ": 4, "AR": 5, "CA": 6, "CO": 8, "CT": 9, "DE": 10
          "KY": 21, "LA": 22, "ME": 23, "MD": 24, "MA": 25, "MI": 26, "MN": 27, "MS": 28, "MO": 29, "MT": 30, "NE": 31, "NV": 32, "NH": 33, "NJ": 34, "NM": 35, "NY": 36,
          "NC": 37, "ND": 38, "OH": 39, "OK": 40, "OR": 41, "PA": 42, "RI": 44, "SC": 45, "SD": 46, "TN": 47, "TX": 48, "UT": 49, "VT": 50, "VA": 51, "WA": 53, "WV": 54,
          "WI": 55, "WY": 56}
-DIVISION = {"New England": "CT ME MA NH RI VT", "Middle Atlantic": "NJ NY PA", "East North Central": "IL IN MI OH WI", "West North Central": "IA KS MN MO NE ND SD",
-            "South Atlantic": "DE DC FL GA MD NC SC VA WV", "East South Central": "AL KY MS TN", "West South Central": "AR LA OK TX",
-            "Mountain North": "CO ID MT UT WY", "Mountain South": "AZ NM NV", "Pacific": "AK CA HI OR WA"}
-CITIES = None      # set from the freeze in `run`
-AREAS = None
 
 
 class Stop(Exception):
@@ -74,11 +69,13 @@ def read_shp(b):
     return shapes
 
 
-def rasterise(shapes_by_code, lat_range=None):
-    """Sample points at sub-cell centres; even-odd fill over all rings of a shape. Returns (code grid, counts dict of fine arrays)."""
+def rasterise(shapes_by_code, stats=None):
+    """Sample points at sub-cell centres; even-odd fill over all rings of one record. Returns the fine grid of codes.
+    A point in two shapes keeps the lower code; `stats["overlap_points"]` counts them."""
     H, Wd = ROWS * SUB, COLS * SUB
     step = 0.125 / SUB
     fine = np.zeros((H, Wd), dtype=np.uint8)
+    overlap = 0
     for code in sorted(shapes_by_code):
         rings = shapes_by_code[code]
         lats = np.concatenate([r[:, 1] for r in rings])
@@ -86,9 +83,11 @@ def rasterise(shapes_by_code, lat_range=None):
         i1 = min(H - 1, int(math.ceil((90 - lats.min()) / step)) + 1)
         segs = []
         for r in rings:
-            lon = r[:, 0].copy()
-            if lon.max() - lon.min() > 180:           # a ring that crosses longitude 180: unwrap it, fill, and wrap the columns
-                lon = np.where(lon < 0, lon + 360, lon)
+            lon = r[:, 0]
+            if np.abs(lon).max() > 180 or np.abs(r[:, 1]).max() > 90:
+                raise Stop("a vertex out of range")
+            if lon.max() - lon.min() > 180:
+                raise Stop("a ring spans over 180 degrees of longitude")
             segs.append((lon[:-1], r[:-1, 1], lon[1:], r[1:, 1]))
         x0, y0, x1, y1 = (np.concatenate([s[i] for s in segs]) for i in range(4))
         for i in range(i0, i1 + 1):
@@ -102,10 +101,13 @@ def rasterise(shapes_by_code, lat_range=None):
                 j1 = int(math.floor((b + 180) / step - 0.5))
                 if b <= a or j1 < j0:
                     continue
-                cols = np.arange(j0, j1 + 1) % Wd
+                cols = np.arange(max(j0, 0), min(j1, Wd - 1) + 1)
                 row = fine[i]
                 free = row[cols] == 0                 # a point already taken keeps the lower code (codes are filled in rising order)
+                overlap += int((~free).sum())
                 row[cols[free]] = code
+    if stats is not None:
+        stats["overlap_points"] = overlap
     return fine
 
 
@@ -174,11 +176,26 @@ def plants():
     fine = rasterise({5: [box(30.0, 0.0, 30.5, 0.5), box(40.0, 0.0, 40.5, 0.5)]})
     cls, _, _ = reduce(fine)
     res["P-MULTI"] = bool(cls[cell(0.25, 30.25)] == 5 and cls[cell(0.25, 40.25)] == 5 and cls[cell(0.25, 35.0)] == 0)
-    # a ring across longitude 180 fills its two ends and nothing between
-    ring = np.array([[179.5, 50.0], [179.5, 51.0], [-179.5, 51.0], [-179.5, 50.0], [179.5, 50.0]])
-    fine = rasterise({2: [ring]})
+    # a state of two parts either side of longitude 180; and a single ring across it stops the run
+    fine = rasterise({2: [box(179.5, 50.0, 180.0, 51.0), box(-180.0, 50.0, -179.5, 51.0)]})
     cls, _, _ = reduce(fine)
-    res["P-ANTIMERIDIAN"] = bool(cls[cell(50.5, 179.8)] == 2 and cls[cell(50.5, -179.8)] == 2 and cls[cell(50.5, 0.0)] == 0 and (cls == 2).sum() == 64)
+    rr = cell(50.5, 179.8)[0]
+    cols = sorted(set(np.nonzero(cls)[1].tolist()))
+    try:
+        rasterise({2: [np.array([[179.5, 50.0], [179.5, 51.0], [-179.5, 51.0], [-179.5, 50.0], [179.5, 50.0]])]})
+        stopped = False
+    except Stop:
+        stopped = True
+    res["P-ANTI"] = bool(cols == [0, 1, 2, 3, 2876, 2877, 2878, 2879] and (cls == 2).sum() == 64 and cls[rr, 1440] == 0 and stopped)
+    st = {}
+    fine = rasterise({4: [box(10.0, 40.0, 11.0, 41.0)], 9: [box(10.5, 40.0, 11.5, 41.0)]}, st)
+    cls, _, _ = reduce(fine)
+    res["P-OVERLAP"] = bool(cls[cell(40.5, 10.75)] == 4 and cls[cell(40.5, 11.25)] == 9 and st["overlap_points"] == 40 * 20)
+    pa = point_area_km2()
+    globe = float(pa.sum() * COLS * SUB)
+    fine = rasterise({1: [box(0.0, 0.0, 1.0, 1.0)]})
+    sq = float(((fine == 1).sum(axis=1) * pa).sum())
+    res["P-AREA"] = bool(abs(globe - 4 * math.pi * RADIUS ** 2) / globe < 1e-9 and round(globe, -5) == 510065600 - 510065600 % 100000 + (100000 if 510065600 % 100000 >= 50000 else 0) and abs(sq - 12364) < 5)
     return res
 
 
@@ -202,13 +219,16 @@ def header(path):
     print(json.dumps(out, indent=1))
 
 
-def run(path, out, cities, areas):
+def run(path, out, frozen):
     os.makedirs(out, exist_ok=True)
     log = {"plants": plants(), "file": {"bytes": os.path.getsize(path), "sha256": hashlib.sha256(open(path, "rb").read()).hexdigest()}}
+    stats = {}
     try:
         if not all(log["plants"].values()):
             raise Stop("a plant failed")
         z, shp, dbf = open_archive(path)
+        ver = [n for n in z.namelist() if "VERSION" in n.upper()]
+        log["file"]["version"] = z.read(ver[0]).decode("ascii", "replace").strip() if ver else "no version file in the archive"
         cols, recs = read_dbf(z.read(dbf))
         for c in ("iso_a2", "postal", "name"):
             if c not in cols:
@@ -217,60 +237,72 @@ def run(path, out, cities, areas):
         if len(shapes) != len(recs):
             raise Stop("shapes and attribute rows differ in number")
         by, names = {}, {}
-        for r, s in zip(recs, shapes):
+        fedcol = next((c for c in cols if c.lower() == "fips"), None)
+        for r, s_ in zip(recs, shapes):
             if r["iso_a2"] != "US":
                 continue
             if r["postal"] not in CODES:
-                raise Stop("a US shape whose postal code is not a state: %r" % r["postal"])
+                raise Stop("a US shape whose postal code is not a state's: %r" % r["postal"])
             code = CODES[r["postal"]]
+            if fedcol and r[fedcol].strip() and r[fedcol].strip().upper() != "US%02d" % code:
+                raise Stop("the file's federal code %r disagrees with the table's %d for %s" % (r[fedcol], code, r["postal"]))
             if code in by:
                 raise Stop("a state twice: %s" % r["postal"])
-            by[code], names[code] = s, r["name"]
-        fine = rasterise(by)
+            by[code], names[code] = s_, r["name"]
+        if len([c for c in by if c != 11]) < 50:
+            raise Stop("fewer than 50 states among the shapes")
+        log["federal_code_column_checked"] = bool(fedcol)
+        fine = rasterise(by, stats)
         cls, share, classed = reduce(fine)
     except Stop as e:
         log["branch"] = "(e): %s" % e
+        json.dump(log, open(os.path.join(out, "results.json"), "w"), indent=1)
         print(json.dumps(log, indent=1))
         return 1
     inv = {v: k for k, v in CODES.items()}
+    packed = {name: gz(arr.astype(np.uint8).tobytes()) for name, arr in (("us_state_cell", cls), ("us_state_cell_share", share), ("us_state_cell_classed", classed))}
+    ship = np.frombuffer(gzip.decompress(packed["us_state_cell"]), dtype=np.uint8).reshape(ROWS, COLS)     # the checks read what would ship
     r1 = []
-    for name, lat, lon, st in cities:
+    for name, lat, lon, code, flat in frozen["points"]:
         r, c = cell(lat, lon)
-        got = inv.get(int(cls[r, c]), "none")
-        r1.append({"place": name, "cell": r * COLS + c, "state": got, "expected": st, "met": got == st})
+        assert r * COLS + c == flat
+        got = int(ship[r, c])
+        r1.append({"point": name, "cell": flat, "byte": got, "expected": code, "met": got == code})
     hits = sum(x["met"] for x in r1)
-    log["R1"] = {"met_of_%d" % len(cities): hits, "misses": [x for x in r1 if not x["met"]], "reading": "met" if hits >= len(cities) - 1 else ("misread" if hits <= 8 else "between")}
+    log["R1"] = {"met_of_50": hits, "misses": [x for x in r1 if not x["met"]], "reading": "met" if hits >= 48 else ("misread" if hits <= 44 else "between")}
     pa = point_area_km2()
     r2 = []
-    for st, ref in areas.items():
+    for st, (ref, lo, hi) in frozen["areas_km2_low_pct_high_pct"].items():
         a = float(((fine == CODES[st]).sum(axis=1) * pa).sum())
-        r2.append({"state": st, "sampled_km2": round(a), "reference_km2": ref, "difference_pct": round(100 * (a - ref) / ref, 2), "met": abs(a - ref) <= 0.05 * ref})
+        d = 100 * (a - ref) / ref
+        r2.append({"state": st, "sampled_km2": round(a), "land_km2_from_memory": ref, "difference_pct": round(d, 2), "bar_pct": [lo, hi], "met": bool(lo <= d <= hi)})
     ok2 = sum(x["met"] for x in r2)
     log["R2"] = {"met_of_10": ok2, "states": r2, "reading": "met" if ok2 >= 9 else ("misread" if ok2 <= 5 else "between")}
-    cells_by = {inv[c]: int((cls == c).sum()) for c in sorted(by)}
-    missing = [s for s, n in cells_by.items() if n == 0 and s != "DC"]
-    log["R3"] = {"states_with_no_cell": missing, "met": not missing and len([c for c in by if inv[c] != "DC"]) == 50, "district_of_columbia_cells": cells_by.get("DC")}
-    coded = cls > 0
-    best_frac = np.zeros(cls.shape)
-    m = classed > 0
-    best_frac[m] = share[m] / 255.0
-    log["printed"] = {"us_shapes": len(by), "coded_cells": int(coded.sum()), "cells_by_state": cells_by, "share_of_coded_cells_with_winner_under_0.8": round(float(((best_frac < 0.8) & coded).sum() / coded.sum()), 4),
-                      "cells_with_under_5_points_in_any_state": int(((classed > 0) & (classed < 5)).sum()), "cells_fully_inside_one_state": int(((classed == 25) & (share == 255)).sum())}
-    if log["R1"]["reading"] == "misread" or log["R2"]["reading"] == "misread" or not log["R3"]["met"]:
+    cells_by = {inv[c]: int((ship == c).sum()) for c in sorted(by)}
+    missing = [s_ for s_, n in cells_by.items() if n == 0 and s_ != "DC"]
+    log["R3"] = {"states_with_no_cell": missing, "met": not missing, "district_of_columbia_cells": cells_by.get("DC")}
+    ys, xs = np.nonzero(ship)
+    lat_c, lon_c = 90 - (ys + 0.5) * 0.125, -180 + (xs + 0.5) * 0.125
+    inside = (lat_c >= 18.5) & (lat_c <= 71.75) & (((lon_c >= -180) & (lon_c <= -66.75)) | ((lon_c >= 172) & (lon_c <= 180)))
+    log["R4"] = {"coded_cells_outside_the_box": int((~inside).sum()), "met": bool(inside.all())}
+    coded = ship > 0
+    log["printed"] = {"us_shapes": len(by), "coded_cells": int(coded.sum()), "cells_by_state": cells_by,
+                      "share_of_coded_cells_with_winner_under_0.8": round(float(((share.astype(float) / 255 < 0.8) & coded).sum() / coded.sum()), 4),
+                      "coded_cells_with_a_count_under_13": int(((classed > 0) & (classed < 13)).sum()), "cells_fully_one_state": int(((classed == 25) & (share == 255)).sum()),
+                      "alaska_cells_east_of_172E": int(((ship == 2) & (np.arange(COLS)[None, :] >= int((172 + 180) / 0.125))).sum()), "points_in_two_shapes": stats.get("overlap_points")}
+    if log["R1"]["reading"] == "misread" or log["R2"]["reading"] == "misread" or not log["R3"]["met"] or not log["R4"]["met"]:
         log["branch"] = "(r): a reading check failed; nothing written"
     else:
         files = {}
-        for name, arr in (("us_state_cell", cls), ("us_state_cell_share", share), ("us_state_cell_classed", classed)):
-            raw = arr.astype(np.uint8).tobytes()
-            packed = gz(raw)
-            open(os.path.join(out, name + ".bin.gz"), "wb").write(packed)
-            files[name + ".bin.gz"] = {"bytes_packed": len(packed), "sha256_packed": hashlib.sha256(packed).hexdigest(), "bytes_unpacked": len(raw), "sha256_unpacked": hashlib.sha256(raw).hexdigest()}
+        for name, b in packed.items():
+            open(os.path.join(out, name + ".bin.gz"), "wb").write(b)
+            raw = gzip.decompress(b)
+            files[name + ".bin.gz"] = {"bytes_packed": len(b), "sha256_packed": hashlib.sha256(b).hexdigest(), "bytes_unpacked": len(raw), "sha256_unpacked": hashlib.sha256(raw).hexdigest()}
         log["files"] = files
-        div = {s: d for d, ss in DIVISION.items() for s in ss.split()}
-        log["code_table"] = [{"code": c, "postal": inv[c], "name": names[c], "census_division_of_the_survey": div[inv[c]]} for c in sorted(by)]
+        log["code_table"] = [{"code": c, "postal": inv[c], "name": names[c]} for c in sorted(by)]
         log["branch"] = "(a): the three grids are written"
     json.dump(log, open(os.path.join(out, "results.json"), "w"), indent=1)
-    print(json.dumps({k: v for k, v in log.items() if k not in ("code_table",)}, indent=1)[:5000])
+    print(json.dumps({k: v for k, v in log.items() if k not in ("code_table",)}, indent=1)[:6000])
     return 0
 
 
@@ -284,4 +316,4 @@ if __name__ == "__main__":
         header(sys.argv[2])
         sys.exit(0)
     frozen = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "frozen_checks.json")))
-    sys.exit(run(sys.argv[2], sys.argv[3], [tuple(c) for c in frozen["cities"]], frozen["areas_km2"]))
+    sys.exit(run(sys.argv[2], sys.argv[3], frozen))

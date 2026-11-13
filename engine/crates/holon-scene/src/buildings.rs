@@ -131,15 +131,26 @@ pub fn uniform_of(z: i32) -> u32 {
     ((lo as u32) << 22) | f as u32
 }
 
-/// A value at the 32-bit uniform `u` on `KNOTS` quantile knots, linear between knots.
+/// A value at the 32-bit uniform `u` on `KNOTS` quantile knots that run from the 1st to the 99th
+/// percentile: linear between knots, and held at the first and last knot below and above them, so
+/// that the share of draws under any quantile is that quantile.
 fn quantile(knots: &[u32], u: u32) -> u32 {
+    const LO: u64 = 42_949_673; // 0.01 of 2^32
+    const SPAN: u64 = 4_209_067_950; // 0.98 of 2^32
     let n = (knots.len() - 1) as u64;
-    let pos = (u as u64) * n; // 32.32 fixed point over the knot index
-    let i = (pos >> 32) as usize;
-    let f = pos & 0xFFFF_FFFF;
+    let u = u as u64;
+    if u <= LO {
+        return knots[0];
+    }
+    if u >= LO + SPAN {
+        return knots[knots.len() - 1];
+    }
+    let pos = (u - LO) * n; // over SPAN, the knot index and its fraction
+    let i = (pos / SPAN) as usize;
+    let f = pos % SPAN;
     let (a, b) = (knots[i] as u64, knots[(i + 1).min(knots.len() - 1)] as u64);
     if b >= a {
-        (a + (((b - a) * f) >> 32)) as u32
+        (a + ((b - a) * f) / SPAN) as u32
     } else {
         a as u32
     }
@@ -303,8 +314,12 @@ mod tests {
     fn quantile_runs_from_the_first_knot_to_the_last() {
         let k: Vec<u32> = (0..KNOTS as u32).map(|i| 100 + 10 * i).collect();
         assert_eq!(quantile(&k, 0), 100);
-        assert_eq!(quantile(&k, u32::MAX), 100 + 10 * 32 - 1);
+        assert_eq!(quantile(&k, 42_949_673), 100, "held at the first knot through the lowest 1 %");
+        assert_eq!(quantile(&k, u32::MAX), 100 + 10 * 32, "held at the last knot through the highest 1 %");
         assert_eq!(quantile(&k, 0x8000_0000), 100 + 10 * 16);
+        // the share of draws under the knot at the 25.5th percentile (knot 8) is 0.255
+        let under = (0..100_000u64).filter(|i| quantile(&k, ((i << 32) / 100_000) as u32) < 100 + 10 * 8).count();
+        assert!((under as i64 - 25_500).abs() <= 2, "{under}");
     }
 
     /// A small planted world: every key present, houses with storeys, big apartments with no roof.

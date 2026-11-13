@@ -1,0 +1,13 @@
+_P-INDEP_largest_latent 0.013
+P-INDEP              PASS
+P-NA                 PASS
+P-LAW                PASS
+P-DET_native_twice   PASS
+P-MARG               PASS
+_P-MARG_worst_excess 0.0
+P-DEP                PASS
+_P-DEP               [0.584, 0.586, -0.004, 0.441, 0.433, -0.004, 0.004, 0.299]
+P-FUEL               PASS
+P-TAIL               PASS
+_P-TAIL              {'survey': 0.0309, 'gap': 0.003, 'generated': 0.0144, 'survey_over_generated': 2.146, 'reading': 'kill: tail understated'}
+P-STRAT              PASS

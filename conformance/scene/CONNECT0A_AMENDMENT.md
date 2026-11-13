@@ -63,3 +63,20 @@ that also matched, and I made it fatal here without cause. Second, I have now se
 bars for this table and both refused it. A third is written as CONNECT-0B, committed
 alone, on statements of the publisher's own article that name countries, which I have
 not compared with the file.
+
+## CORRECTION 2026-11-13 — this file did not pass the prereg audit, and was committed without running it
+
+The verify run on `5bf165e` failed on one gate: the prereg audit refuses this file. It
+names the parent's plants and neither cites the registered misfit nor states the
+carrier sector. I committed it without running `Audit/prereg_audit.py` on it; the rule is
+that the audit runs before a freeze is written, and an amendment is a freeze. Nothing in
+the amendment's stakes or its record changes; the two statements it owed are below.
+
+**misfits:** M-PLANT-OBS, M-PLANT-SECTOR. These are the registered ids this text contacts.
+
+- M-PLANT-OBS: this amendment adds no plant. The plants are CONNECT-0's, each run through
+  the extractor that writes the table (`CONNECT0_PREREG.md`).
+
+**Carrier-sector statement (M-PLANT-SECTOR).** The sector the plant acts on is nonzero in
+its carrier by construction: each synthetic file holds what its plant names, as stated in
+the parent freeze.

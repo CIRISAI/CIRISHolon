@@ -26,6 +26,7 @@
 pub mod apportion;
 pub mod delivery;
 pub mod buildings;
+pub mod keyed;
 pub mod devices;
 pub mod devices_tables;
 pub mod dist;

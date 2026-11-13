@@ -71,7 +71,7 @@ pub fn is_house(kind: u8) -> bool {
     kind == 1 || kind == 2
 }
 
-fn pick(st: &mut Stream, shares: &[u32]) -> usize {
+pub(crate) fn pick(st: &mut Stream, shares: &[u32]) -> usize {
     let total: u64 = shares.iter().map(|&x| x as u64).sum();
     if total == 0 {
         return 0;
@@ -87,7 +87,7 @@ fn pick(st: &mut Stream, shares: &[u32]) -> usize {
 }
 
 /// The category whose cumulative share holds the 32-bit uniform `u`.
-fn pick_by_u(shares: &[u32], u: u32) -> usize {
+pub(crate) fn pick_by_u(shares: &[u32], u: u32) -> usize {
     let total: u64 = shares.iter().map(|&x| x as u64).sum();
     if total == 0 {
         return 0;
@@ -134,7 +134,7 @@ pub fn uniform_of(z: i32) -> u32 {
 /// A value at the 32-bit uniform `u` on `KNOTS` quantile knots that run from the 1st to the 99th
 /// percentile: linear between knots, and held at the first and last knot below and above them, so
 /// that the share of draws under any quantile is that quantile.
-fn quantile(knots: &[u32], u: u32) -> u32 {
+pub(crate) fn quantile(knots: &[u32], u: u32) -> u32 {
     const LO: u64 = 42_949_673; // 0.01 of 2^32
     const SPAN: u64 = 4_209_067_950; // 0.98 of 2^32
     let n = (knots.len() - 1) as u64;

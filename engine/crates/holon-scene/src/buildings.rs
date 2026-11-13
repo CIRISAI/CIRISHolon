@@ -387,4 +387,23 @@ mod tests {
         }
         assert!(kinds.iter().all(|&k| k > 500), "each type is drawn: {kinds:?}");
     }
+
+    /// BUILDGEN-2's P-OLD: the shipped function is pinned before any keyed function is written
+    /// beside it. A fold of 2,000 dwellings on the planted tables; a change to `generate_with`,
+    /// to the stream, to the normal table or to the planted rows changes this number.
+    #[test]
+    fn the_shipped_generator_is_pinned() {
+        let owned = planted();
+        let rows: Vec<(u32, &[u32])> = owned.iter().map(|r| (r.0, r.1.as_slice())).collect();
+        let t = Tables { rows: &rows };
+        let mut dg = 0u64;
+        for i in 0..2000u64 {
+            let d = generate_with(&t, crate::seed::mix(i), (i % 8) as u8, (i % 3) as u8);
+            for x in [d.kind as u64, d.vintage as u64, d.fuel as u64, d.wall as u64, d.roof as u64, d.storeys as u64, d.split_level as u64, d.area_sqft as u64, d.kwh as u64, d.nonelec_kbtu as u64, d.total_kbtu as u64, d.heating_kbtu as u64, d.cooling_kbtu as u64] {
+                dg = crate::seed::mix(dg ^ x);
+            }
+        }
+        assert_eq!(dg, PINNED, "generate_with on the planted tables");
+    }
+    const PINNED: u64 = 8_820_833_828_479_827_982;
 }

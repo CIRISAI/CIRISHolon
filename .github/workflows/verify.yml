@@ -4,6 +4,14 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+
+# One run per branch. A later push supersedes an earlier run: the tree at the newest commit
+# holds each earlier commit, so its run is the one that says whether the branch is green.
+# Added 2026-11-13 when 29 runs of this workflow held the organisation's shared runners and
+# other repositories' deploys and a release sat queued for hours.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   lean:
     name: Object contract (Lean)

@@ -1,0 +1,124 @@
+{
+ "passed": true,
+ "split": {
+  "states": 51,
+  "fit_records": 9948,
+  "score_records": 8548
+ },
+ "plants": {
+  "_P-INDEP_largest_latent": 0.013,
+  "P-INDEP": true,
+  "P-NA": true,
+  "P-LAW": true,
+  "P-DET_native_twice": true,
+  "P-MARG": true,
+  "_P-MARG_worst_excess": 0.0,
+  "P-DEP": true,
+  "_P-DEP": [
+   0.584,
+   0.586,
+   -0.004,
+   0.441,
+   0.433,
+   -0.004,
+   0.004,
+   0.299
+  ],
+  "P-FUEL": true,
+  "P-TAIL": true,
+  "_P-TAIL": {
+   "survey": 0.0309,
+   "gap": 0.003,
+   "generated": 0.0144,
+   "survey_over_generated": 2.146,
+   "reading": "kill: tail understated"
+  },
+  "P-STRAT": true
+ },
+ "levels": {
+  "type": {
+   "0": 13,
+   "1": 2,
+   "2": 9
+  },
+  "vintage": {
+   "0": 15,
+   "1": 13,
+   "2": 12
+  },
+  "area": {
+   "0": 15,
+   "1": 13,
+   "2": 12
+  },
+  "storeys": {
+   "0": 22,
+   "1": 15,
+   "2": 3
+  },
+  "fuel": {
+   "0": 25,
+   "1": 20,
+   "2": 39,
+   "3": 36
+  },
+  "wall": {
+   "0": 25,
+   "1": 20,
+   "2": 39,
+   "3": 36
+  },
+  "electricity": {
+   "0": 21,
+   "1": 32,
+   "2": 43,
+   "8": 64
+  },
+  "enduse": {
+   "0": 21,
+   "1": 32,
+   "2": 43,
+   "8": 64
+  },
+  "zero": {
+   "0": 21,
+   "1": 32,
+   "2": 43,
+   "8": 64
+  },
+  "nonelectric": {
+   "0": 15,
+   "1": 23,
+   "2": 34,
+   "8": 88
+  },
+  "roof": {
+   "0": 20,
+   "1": 22,
+   "2": 36,
+   "3": 66,
+   "8": 48
+  },
+  "split": {
+   "0": 15
+  }
+ },
+ "P-MARG_on_FIT": {
+  "largest_difference_by_attribute": {
+   "kind": 0.0027,
+   "vint": 0.0069,
+   "fuel": 0.0113,
+   "wall": 0.0084,
+   "area": 0.0074,
+   "kwh": 0.0068
+  },
+  "worst_excess_over_3_se": 0.0,
+  "met": true
+ },
+ "section_law_on_FIT": true,
+ "copula_fit_worst_miss": 0.0017,
+ "terciles_detached_area": [
+  1750.0,
+  2600.0
+ ]
+}

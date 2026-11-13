@@ -1,0 +1,486 @@
+{
+ "gate": "...",
+ "score_records": 8548,
+ "D1": {
+  "D1a_pooled": [
+   {
+    "pair": "vint~storeys",
+    "survey": 0.118,
+    "gap": 0.0301,
+    "generated": -0.0465,
+    "records": 6562,
+    "within": false
+   },
+   {
+    "pair": "vint~area",
+    "survey": 0.1223,
+    "gap": 0.0238,
+    "generated": 0.14,
+    "records": 8548,
+    "within": true
+   },
+   {
+    "pair": "storeys~area",
+    "survey": 0.2906,
+    "gap": 0.0249,
+    "generated": 0.262,
+    "records": 6562,
+    "within": true
+   },
+   {
+    "pair": "vint~kwh",
+    "survey": 0.1404,
+    "gap": 0.0198,
+    "generated": 0.2159,
+    "records": 8548,
+    "within": false
+   },
+   {
+    "pair": "storeys~kwh",
+    "survey": 0.0695,
+    "gap": 0.0249,
+    "generated": -0.0319,
+    "records": 6562,
+    "within": false
+   },
+   {
+    "pair": "area~kwh",
+    "survey": 0.4506,
+    "gap": 0.0203,
+    "generated": 0.4529,
+    "records": 8548,
+    "within": true
+   },
+   {
+    "pair": "vint~total",
+    "survey": -0.0738,
+    "gap": 0.0235,
+    "generated": -0.077,
+    "records": 8548,
+    "within": true
+   },
+   {
+    "pair": "storeys~total",
+    "survey": 0.2273,
+    "gap": 0.0276,
+    "generated": 0.2401,
+    "records": 6562,
+    "within": true
+   },
+   {
+    "pair": "area~total",
+    "survey": 0.6102,
+    "gap": 0.0169,
+    "generated": 0.5528,
+    "records": 8548,
+    "within": true
+   },
+   {
+    "pair": "kwh~total",
+    "survey": 0.5296,
+    "gap": 0.0148,
+    "generated": 0.411,
+    "records": 8548,
+    "within": false
+   }
+  ],
+  "D1b_detached": [
+   {
+    "pair": "vint~storeys",
+    "survey": 0.1079,
+    "gap": 0.0299,
+    "generated": -0.0484,
+    "records": 5800,
+    "within": false
+   },
+   {
+    "pair": "vint~area",
+    "survey": 0.2411,
+    "gap": 0.0255,
+    "generated": 0.2193,
+    "records": 5800,
+    "within": true
+   },
+   {
+    "pair": "storeys~area",
+    "survey": 0.3296,
+    "gap": 0.0246,
+    "generated": 0.3177,
+    "records": 5800,
+    "within": true
+   },
+   {
+    "pair": "vint~kwh",
+    "survey": 0.2167,
+    "gap": 0.0208,
+    "generated": 0.2483,
+    "records": 5800,
+    "within": true
+   },
+   {
+    "pair": "storeys~kwh",
+    "survey": 0.0944,
+    "gap": 0.0253,
+    "generated": 0.0147,
+    "records": 5800,
+    "within": false
+   },
+   {
+    "pair": "area~kwh",
+    "survey": 0.2886,
+    "gap": 0.0307,
+    "generated": 0.2248,
+    "records": 5800,
+    "within": true
+   },
+   {
+    "pair": "vint~total",
+    "survey": -0.018,
+    "gap": 0.0278,
+    "generated": -0.0988,
+    "records": 5800,
+    "within": false
+   },
+   {
+    "pair": "storeys~total",
+    "survey": 0.2777,
+    "gap": 0.0278,
+    "generated": 0.2893,
+    "records": 5800,
+    "within": true
+   },
+   {
+    "pair": "area~total",
+    "survey": 0.4202,
+    "gap": 0.0265,
+    "generated": 0.3443,
+    "records": 5800,
+    "within": true
+   },
+   {
+    "pair": "kwh~total",
+    "survey": 0.338,
+    "gap": 0.0289,
+    "generated": 0.1993,
+    "records": 5800,
+    "within": false
+   }
+  ],
+  "D1b_apartments_5_or_more": [
+   {
+    "pair": "vint~area",
+    "survey": 0.2421,
+    "gap": 0.0505,
+    "generated": 0.1182,
+    "records": 1105,
+    "within": false
+   },
+   {
+    "pair": "vint~kwh",
+    "survey": 0.141,
+    "gap": 0.0714,
+    "generated": 0.2011,
+    "records": 1105,
+    "within": true
+   },
+   {
+    "pair": "area~kwh",
+    "survey": 0.3984,
+    "gap": 0.0543,
+    "generated": 0.2834,
+    "records": 1105,
+    "within": false
+   },
+   {
+    "pair": "vint~total",
+    "survey": -0.0176,
+    "gap": 0.053,
+    "generated": -0.0623,
+    "records": 1105,
+    "within": true
+   },
+   {
+    "pair": "area~total",
+    "survey": 0.308,
+    "gap": 0.0695,
+    "generated": 0.2903,
+    "records": 1105,
+    "within": true
+   },
+   {
+    "pair": "kwh~total",
+    "survey": 0.511,
+    "gap": 0.061,
+    "generated": 0.3197,
+    "records": 1105,
+    "within": false
+   }
+  ],
+  "D1a_within": 6,
+  "D1b_within": 9,
+  "reading": "kill"
+ },
+ "D2": {
+  "cells": [
+   {
+    "by": "area tercile",
+    "cell": 0,
+    "measure": "total",
+    "records": 2210,
+    "survey": 69436.0,
+    "gap_pct": 2.43,
+    "generated": 78948.8,
+    "miss_pct": 13.7,
+    "verdict": "unresolved"
+   },
+   {
+    "by": "area tercile",
+    "cell": 0,
+    "measure": "kwh",
+    "records": 2210,
+    "survey": 10445.8,
+    "gap_pct": 2.49,
+    "generated": 11461.9,
+    "miss_pct": 9.73,
+    "verdict": "certified"
+   },
+   {
+    "by": "area tercile",
+    "cell": 1,
+    "measure": "total",
+    "records": 1856,
+    "survey": 84730.5,
+    "gap_pct": 2.25,
+    "generated": 96266.4,
+    "miss_pct": 13.61,
+    "verdict": "unresolved"
+   },
+   {
+    "by": "area tercile",
+    "cell": 1,
+    "measure": "kwh",
+    "records": 1856,
+    "survey": 12458.3,
+    "gap_pct": 2.69,
+    "generated": 13007.7,
+    "miss_pct": 4.41,
+    "verdict": "certified"
+   },
+   {
+    "by": "area tercile",
+    "cell": 2,
+    "measure": "total",
+    "records": 1734,
+    "survey": 114003.2,
+    "gap_pct": 2.06,
+    "generated": 115023.3,
+    "miss_pct": 0.89,
+    "verdict": "certified"
+   },
+   {
+    "by": "area tercile",
+    "cell": 2,
+    "measure": "kwh",
+    "records": 1734,
+    "survey": 15596.8,
+    "gap_pct": 2.71,
+    "generated": 14999.9,
+    "miss_pct": 3.83,
+    "verdict": "certified"
+   },
+   {
+    "by": "era",
+    "cell": 0,
+    "measure": "total",
+    "records": 2971,
+    "survey": 86271.2,
+    "gap_pct": 1.98,
+    "generated": 100325.2,
+    "miss_pct": 16.29,
+    "verdict": "unresolved"
+   },
+   {
+    "by": "era",
+    "cell": 0,
+    "measure": "kwh",
+    "records": 2971,
+    "survey": 11313.0,
+    "gap_pct": 1.94,
+    "generated": 11668.9,
+    "miss_pct": 3.15,
+    "verdict": "certified"
+   },
+   {
+    "by": "era",
+    "cell": 1,
+    "measure": "total",
+    "records": 1445,
+    "survey": 86177.3,
+    "gap_pct": 2.35,
+    "generated": 91716.3,
+    "miss_pct": 6.43,
+    "verdict": "certified"
+   },
+   {
+    "by": "era",
+    "cell": 1,
+    "measure": "kwh",
+    "records": 1445,
+    "survey": 13725.1,
+    "gap_pct": 2.89,
+    "generated": 14137.6,
+    "miss_pct": 3.01,
+    "verdict": "certified"
+   },
+   {
+    "by": "era",
+    "cell": 2,
+    "measure": "total",
+    "records": 1384,
+    "survey": 87714.7,
+    "gap_pct": 3.13,
+    "generated": 91034.8,
+    "miss_pct": 3.79,
+    "verdict": "certified"
+   },
+   {
+    "by": "era",
+    "cell": 2,
+    "measure": "kwh",
+    "records": 1384,
+    "survey": 14017.9,
+    "gap_pct": 2.72,
+    "generated": 15137.9,
+    "miss_pct": 7.99,
+    "verdict": "certified"
+   },
+   {
+    "by": "fuel group",
+    "cell": 0,
+    "measure": "total",
+    "records": 1568,
+    "survey": 64024.5,
+    "gap_pct": 2.61,
+    "generated": 64941.3,
+    "miss_pct": 1.43,
+    "verdict": "certified"
+   },
+   {
+    "by": "fuel group",
+    "cell": 0,
+    "measure": "kwh",
+    "records": 1568,
+    "survey": 17156.0,
+    "gap_pct": 2.41,
+    "generated": 17524.1,
+    "miss_pct": 2.15,
+    "verdict": "certified"
+   },
+   {
+    "by": "fuel group",
+    "cell": 1,
+    "measure": "total",
+    "records": 3386,
+    "survey": 100426.3,
+    "gap_pct": 1.42,
+    "generated": 109100.1,
+    "miss_pct": 8.64,
+    "verdict": "certified"
+   },
+   {
+    "by": "fuel group",
+    "cell": 1,
+    "measure": "kwh",
+    "records": 3386,
+    "survey": 10177.1,
+    "gap_pct": 1.82,
+    "generated": 11362.1,
+    "miss_pct": 11.64,
+    "verdict": "certified"
+   },
+   {
+    "by": "fuel group",
+    "cell": 2,
+    "measure": "total",
+    "records": 543,
+    "survey": 87907.1,
+    "gap_pct": 4.73,
+    "generated": 108800.8,
+    "miss_pct": 23.77,
+    "verdict": "refused"
+   },
+   {
+    "by": "fuel group",
+    "cell": 2,
+    "measure": "kwh",
+    "records": 543,
+    "survey": 11794.3,
+    "gap_pct": 4.72,
+    "generated": 10652.8,
+    "miss_pct": 9.68,
+    "verdict": "certified"
+   }
+  ],
+  "scored": 18,
+  "certified": 14,
+  "refused": 1,
+  "energy_per_area_newest_over_oldest": {
+   "survey": 0.7611,
+   "gap": 0.0331,
+   "generated": 0.7158,
+   "difference": -0.0453
+  },
+  "reading": "neither"
+ },
+ "D3": {
+  "tables": [
+   {
+    "table": "wall by roof",
+    "distance": 0.1954,
+    "gap": 0.0109,
+    "perfect_generator_at_this_size": 0.0222,
+    "within_0.05": false,
+    "over_0.10": true
+   },
+   {
+    "table": "fuel by zone",
+    "distance": 0.1674,
+    "gap": 0.0081,
+    "perfect_generator_at_this_size": 0.0178,
+    "within_0.05": false,
+    "over_0.10": true
+   },
+   {
+    "table": "fuel by era",
+    "distance": 0.0994,
+    "gap": 0.0118,
+    "perfect_generator_at_this_size": 0.0144,
+    "within_0.05": false,
+    "over_0.10": false
+   },
+   {
+    "table": "type by urban type",
+    "distance": 0.0351,
+    "gap": 0.0049,
+    "perfect_generator_at_this_size": 0.0142,
+    "within_0.05": true,
+    "over_0.10": false
+   }
+  ],
+  "reading": "kill"
+ },
+ "S4": {
+  "rival_within_detached": [
+   {
+    "pair": "vint~area",
+    "survey": 0.2411,
+    "gap": 0.0255,
+    "generated": -0.0547,
+    "records": 5800,
+    "within": false
+   },
+   {
+    "pair": "vint~kwh",
+    "survey": 0.2167,
+    "gap": 0.0208,
+    "generate

@@ -1836,3 +1836,19 @@ Records cited; nothing below changes a tier's status.*
 - **It is a key, not an appearance.** The first table the twin's renderer can join on.
 
 *(Placed at the end, as above.)*
+
+### BUILDGEN-1 — a dwelling from the joint: KILLED, and why is the finding (2026-11-12)
+
+- **What it was:** a US dwelling drawn from the joint of type, vintage, storeys, size,
+  materials, fuel and energy (a rank copula and a chain of tables), fitted on half the
+  states and scored on the other half, with a no-dependence rival.
+- **KILL (D1, D3):** 6 of 10 pooled and 9 of 16 within-type rank correlations in their
+  bars; wall by roof and fuel by zone 0.17 to 0.20 from the held-out tables. Nothing ships.
+- **The joint is real:** the rival fails 6 of 6. **Its tail is heavier than normal:** the
+  largest homes with the largest use coincide twice as often (1.6 % against 0.8 %).
+- **It is regional below climate:** the same climate zone is 20 % electric heat in the
+  held-out states and 42 % as fitted. A generator keyed by climate would draw one
+  state's houses in another.
+- **Next:** key by region, hold out states within a region, a heavier-tailed copula.
+
+*(Placed at the end, as above.)*

@@ -266,9 +266,17 @@ cargo build -q -p holon-swarm --release 2>/dev/null \
 # holon: THE recursive data object (planes/ledger/chart/certificate/arena).
 # Its tiers certify against the QASM-suite reference tiers; the recursion,
 # conditioning, and ledger-ring tests are the design lock's standing evidence.
-cargo test -q -p holon --release 2>/dev/null >/dev/null \
-  && ok "holon object: tier conformance, ledger ring, conditioning, recursion" \
-  || no "holon object: tier conformance, ledger ring, conditioning, recursion"
+# This gate failed twice on 2026-11-12 on commits that touched no engine code and passed on
+# rerun; its output was discarded, so the failing test is not known. It now keeps the
+# output and prints the failing lines, so the next intermittent failure names itself.
+holon_log=$(mktemp)
+if cargo test -q -p holon --release >"$holon_log" 2>&1; then
+  ok "holon object: tier conformance, ledger ring, conditioning, recursion"
+else
+  no "holon object: tier conformance, ledger ring, conditioning, recursion"
+  grep -E "panicked|FAILED|failed|error|test result" "$holon_log" | head -40 || true
+fi
+rm -f "$holon_log"
 
 # holon-qasm: the stratified QASM simulator. The in-crate three-way tier
 # conformance (each cheap tier vs the statevector carrier, exact) plus

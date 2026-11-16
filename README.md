@@ -29,7 +29,11 @@ chart in this engine.
 The payoff is engineering, not philosophy:
 
 - **Scaling is correct by construction.** A tier that passes its closure
-  gate may be run *in place of* the tier below it. The budget for the
+  gate may be run *in place of* the tier below it. *(CORRECTION 2026-11-15:
+  closure alone does not license this. A closed view the level above does not carry
+  is a sector, not a tier: `OBJECT.md`, corrections of 2026-09-25 and 2026-11-15. A
+  generated scene, which has no motion to close over, is certified differently:
+  `OBJECT.md` "The scene certificate".)* The budget for the
   approximation (`K ≤ 1` non-expansiveness) is tested, not assumed.
 - **Failures are certificates, not mysteries.** When a coarse view is wrong,
   it is wrong in exactly one way: two fine states the view cannot tell apart

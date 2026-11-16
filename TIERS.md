@@ -30,6 +30,19 @@ its closed view (`closure_determines_dynamics`) and is therefore different on ev
 repeats is search, select by the tier above, price the drop, compose — and the remainder owed
 upward, counted once (the "+1").
 
+**CORRECTION 2026-11-15 — what the gate measures, and who selects.** Two sentences above are
+too strong as written. (i) "a candidate is carried if removing it costs the target more than
+the budget": the gate reads a PRICE, the held-out prediction the target loses when the
+candidate leaves a dictionary. It does not remove anything from the running system. On the
+one carrier where each price was then realised by an intervention (a language model,
+PARALLAX-H, as the RATCHET session reports it) price and realised cost parted in both
+directions (`LESSONS.md` rule 18). Every row below marked carried or not carried is a price
+unless it says otherwise; on the physical tower no realised cost has been taken. (ii) "the
+conservation law of the tier above": the selector is the CONSUMER of the view, of which a
+conservation law is one kind (`OBJECT.md`, CORRECTION 2026-11-15, with the candidate rule in
+compression form and a threshold derived from the null's floor; issue #4). Neither changes a
+number in this file.
+
 ## 1. The physical tower
 
 | tier | carried (the object) | dropped sectors, at a measured price | the remainder owed upward | window | status |
@@ -121,11 +134,14 @@ what no closed view carries — and no instrument on this record measures it. Th
 |---|---|---|
 | fold below the atom | GF2, the hadron box | its own freeze |
 | molecule | orientation on a walk, for the dipole sector (ORDER-1's refused arm) | the gate on the dielectric target |
-| fluid element | whose numbers these are: the fine-model seeds (Amendment 6), ~2026-10-07 | a fine number inside the rigid three-seed range |
+| fluid element | whose numbers these are: the fine-model seeds (Amendment 6), dated ~2026-10-07 when written; that date has passed and this row was not re-read on 2026-11-15 | a fine number inside the rigid three-seed range |
 | the network | a target on which it might be carried: freezing | the gate on a nucleation target |
 | reasoning | text with parent links, for the eleven as a dictionary | the gate with kinds as columns |
 | the eleven | the coding convention (the rule adopted vs the content failed) stated in the definition | a re-coded agreement above κ = 0.7 |
 | the window | measured on a second tier | the sweep of OBJECTIVE-1 on the molecule |
+| the selection rule | SELECT-1 as a freeze: calibration on the read cases, forward on unread ones (issue #4 §4) | one wrong calibration call kills it; a forward call written before computing |
+| every "carried" above | a realised cost beside the price, where an intervention exists | the renderer's frame first (issue #4 §3a): remove the summary, read the frame |
+| the generated scene | a certificate end to end: section law, a frozen reference, the joint a named consumer reads | `OBJECT.md` "The scene certificate"; none exists |
 
 ---
 

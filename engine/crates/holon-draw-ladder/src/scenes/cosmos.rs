@@ -34,7 +34,7 @@
 //! Nothing here was fetched: every catalogue number is entered by hand from the standard
 //! published values named in each scene's `source()`, rounded as written.
 use crate::Scene;
-use holon_draw::ladder::{Status, Z_MAX};
+use holon_draw::ladder::{Status, REF_PX, Z_MAX};
 use holon_draw::{Instance, Kind, Tile, PARAMS_NEUTRAL, PARAM_FLOOR};
 use std::f64::consts::PI;
 
@@ -85,11 +85,11 @@ fn px(z: f64, unit: i32) -> f64 {
 
 /// How far a scene's origin has moved from the thing its rung starts about (0) to the thing
 /// it ends about (1), `gap` apart, when a pixel is `p` (both in the rung's unit). The first
-/// stays within three tenths of a thousand-pixel view of the middle until the second has
+/// stays within three tenths of the reference view ([`REF_PX`] pixels) of the middle until the second has
 /// come into the view, so the zoom never loses sight of where it came from; while the view
 /// is under three hundredths of the gap the origin does not move at all.
 fn slide(p: f64, gap: f64) -> f64 {
-    let g = 1000.0 * p / gap;
+    let g = REF_PX * p / gap;
     (0.3 * g * smooth(0.03, 0.6, g)).min(1.0)
 }
 
@@ -490,13 +490,22 @@ fn emit_dots(out: &mut Vec<Instance>, dots: &[Dot], c: V3, k: f64, q: Option<&M3
     }
 }
 
+/// The eye's distance from the view's focus, in the rung's unit, when a pixel is `px`: the
+/// ladder's camera stands where a view [`REF_PX`] pixels high at a field of view of a
+/// quarter turn's half would put it, on every window (`holon_draw::ladder::rung_camera`).
+pub fn eye_distance(px: f64) -> f64 {
+    0.5 * px * REF_PX / (PI / 8.0).tan()
+}
+
 /// How much smaller a point is drawn for standing `at` from the view's focus (in the rung's
-/// unit; `px` is one pixel). The view is a perspective from about a thousand pixels back, so
-/// a point between the focus and the eye would swell to a blob; a scene does not know where
-/// the eye is, so every point shrinks with its distance from the focus instead: to a quarter
-/// by 800 pixels' worth. (The tile's FLOOR keeps a far point at least a pixel wide.)
+/// unit; `px` is one pixel). A point between the focus and the eye would swell to a blob. A
+/// scene knows how far the eye is ([`eye_distance`]) but not in which direction, so every
+/// point shrinks with its distance from the focus as if it stood toward the eye: by nine
+/// tenths of that distance over the eye's, and never under a quarter. A point straight
+/// toward the eye then keeps its size to within a half until four fifths of the way there.
+/// (The tile's FLOOR keeps a far point at least a pixel wide.)
 fn depth(at: V3, px: f64) -> f64 {
-    (1.0 - 0.75 * norm(at) / (800.0 * px)).max(0.25)
+    (1.0 - 0.9 * norm(at) / eye_distance(px)).max(0.25)
 }
 
 /// A barred spiral galaxy of `n` dots in a disc of radius 1 in the plane z = 0: a bulge and
@@ -1667,7 +1676,7 @@ mod tests {
             let s = slide(p, gap);
             assert!((0.0..=1.0).contains(&s) && s >= last);
             // the thing left behind is within 0.3 of a thousand-pixel view of the middle
-            assert!(s * gap <= 0.3 * 1000.0 * p + 1e-12 || s == 1.0);
+            assert!(s * gap <= 0.3 * REF_PX * p + 1e-12 || s == 1.0);
             last = s;
         }
         assert_eq!(slide(1e-6, gap), 0.0);
@@ -1756,6 +1765,28 @@ mod tests {
         if !cfg!(debug_assertions) {
             assert!(worst.0 < 1.0, "a scene's tiles() took {:.3} ms", worst.0);
         }
+    }
+
+    #[test]
+    fn a_point_toward_the_eye_does_not_swell() {
+        // the eye is where the core's camera puts it: check against the camera itself
+        use holon_draw::ladder::{rung_camera, Rung};
+        let r = Rung { name: "", z_lo: 0.0, z_hi: 30.0, unit: 18, status: Status::Illustration };
+        for (w, h) in [(390.0, 844.0), (2560.0, 1440.0)] {
+            let cam = rung_camera(&r, 17.0, [0.0; 3], 0.0, 0.0, std::f64::consts::FRAC_PI_4, w, h);
+            // at yaw 0, pitch 0 the eye is on +x: a point there projects behind the view
+            let e = eye_distance(px(17.0, 18));
+            assert!(cam.project([e * 1.001, 0.0, 0.0]).is_none() && cam.project([e * 0.9, 0.0, 0.0]).is_some(), "{w}x{h}");
+        }
+        // apparent size toward the eye, against the size at the focus: shrink over (1 - x)
+        let p = 0.1;
+        for k in 0..=80 {
+            let x = k as f64 / 100.0;
+            let seen = depth([x * eye_distance(p), 0.0, 0.0], p) / (1.0 - x);
+            assert!((1.0..=1.5).contains(&seen), "{x}: {seen}");
+        }
+        assert_eq!(depth([0.0; 3], p), 1.0);
+        assert_eq!(depth([1e9, 0.0, 0.0], p), 0.25);
     }
 
     #[test]

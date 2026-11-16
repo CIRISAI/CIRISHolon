@@ -25,11 +25,17 @@ const fn = (() => { // the function's text, by brace matching from its header
   for (; i < src.length; i++) { if (src[i] === "{") depth++; else if (src[i] === "}") { depth--; if (depth === 0) break; } }
   return src.slice(at, i + 1);
 })();
+// the twin's one style array (97 numbers in holon-draw's STYLE_FIELDS order), when its
+// tlBuildLeaf reads its constants from it; optional, so the check runs on either form
+const styleLine = (src.match(/const TL_STYLE = [^\n]*\n/) || [""])[0];
 const consts = [
   grab(/const tlTone = [^\n]*\n/, "tlTone"),
   grab(/const TL_ROAD = [^\n]*\n/, "TL_ROAD"),
   grab(/const TL_ROOF_TONES = [^\n]*\n/, "TL_ROOF_TONES"),
+  styleLine,
 ].join("");
+const TL_STYLE = styleLine ? new Function(styleLine + "return TL_STYLE;")() : null;
+if (TL_STYLE && TL_STYLE.length !== 97) { console.error("TL_STYLE has " + TL_STYLE.length + " numbers, not 97"); process.exit(2); }
 
 // a small deterministic generator (not the twin's hash)
 let s = 0x2545f491;
@@ -86,13 +92,17 @@ for (const L of leaves) {
   theirs.push(tlBuildLeaf(L).data);
   const cT = Math.cos(L.laT * Math.PI / 180), sx = cT / Math.cos(L.laL * Math.PI / 180), ox = (L.loL - L.loT) * 111320 * cT, oy = (L.laL - L.laT) * 111320;
   const g = (a) => a.length ? Array.from(a).map((v) => v.toPrecision(17)).join(",") : "-";
-  lines.push([L.id.toPrecision(17), g([ox, oy, sx]), g(TL_ROAD[L.cls]), g(L.R), g(L.B), g(L.meta), g(L.S), L.tones ? g(L.tones) : "-", String(TL_PPH)].join(" "));
+  lines.push([L.id.toPrecision(17), g([ox, oy, sx]), g(TL_ROAD[L.cls]), g(L.R), g(L.B), g(L.meta), g(L.S), L.tones ? g(L.tones) : "-", String(TL_PPH), TL_STYLE ? g(TL_STYLE) : "-"].join(" "));
 }
 let ours, timing = null;
 if (binary.endsWith(".wasm")) {
   // the browser artifact itself, through its boundary (src/abi.rs), and the time each side takes
   const { instance } = await WebAssembly.instantiate(readFileSync(binary), {});
   const x = instance.exports;
+  if (TL_STYLE) { // hand the wasm the same numbers the twin's builder reads
+    const p = x.hd_in(5, TL_STYLE.length); new Float64Array(x.memory.buffer, p, TL_STYLE.length).set(TL_STYLE);
+    if (x.hd_style() !== 1) { console.error("the wasm refused TL_STYLE"); process.exit(2); }
+  }
   const put = (which, a) => { const p = x.hd_in(which, a.length); new Float64Array(x.memory.buffer, p, a.length).set(a); };
   const build = (L, keep) => {
     const cT = Math.cos(L.laT * Math.PI / 180), sx = cT / Math.cos(L.laL * Math.PI / 180), ox = (L.loL - L.loT) * 111320 * cT, oy = (L.laL - L.laT) * 111320;
@@ -127,5 +137,5 @@ for (let k = 0; k < leaves.length; k++) {
   if (any) leavesDiffering++;
   floats += a.length; verts += a.length / 10;
 }
-console.log(JSON.stringify({ leaves: leaves.length, vertices: verts, floats, floats_differing: differ, leaves_differing: leavesDiffering, worst_difference_in_last_place: worst, leaves_of_another_length: lengthMismatch, timing }));
+console.log(JSON.stringify({ style: TL_STYLE ? "the twin's TL_STYLE, given to both builders" : "the twin's inline constants against holon-draw's defaults", leaves: leaves.length, vertices: verts, floats, floats_differing: differ, leaves_differing: leavesDiffering, worst_difference_in_last_place: worst, leaves_of_another_length: lengthMismatch, timing }));
 process.exit(lengthMismatch === 0 && worst <= 1 ? 0 : 1);

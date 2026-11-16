@@ -48,7 +48,7 @@ pub mod ladder;
 pub mod twin;
 pub mod ui;
 
-pub use alloc::{Allocator, Bits, Candidate, Ring};
+pub use alloc::{Acuity, Allocator, Bits, Candidate, Ring};
 
 /// The kinds of mark, in the order of `INTERFACE.md` §1.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -280,6 +280,17 @@ impl Camera {
         out
     }
 
+    /// The pixels a sphere of radius `r` at world point `p` spans across, at its depth.
+    pub fn pixels(&self, p: [f64; 3], r: f64) -> f64 {
+        let m = &self.m;
+        let w = |q: [f64; 3]| m[12] * q[0] + m[13] * q[1] + m[14] * q[2] + m[15];
+        let (wf, wp) = (w(self.focus), w(p));
+        if wp <= 0.0 {
+            return 0.0;
+        }
+        2.0 * r * self.scale * wf / wp
+    }
+
     /// World to pixels (origin top left) and a depth; `None` behind the view.
     pub fn project(&self, p: [f64; 3]) -> Option<[f64; 3]> {
         let m = &self.m;
@@ -363,6 +374,9 @@ pub struct Frame {
     /// Tiles not drawn because their version is not the one asked for.
     pub stale: u32,
     pub modal: Option<u8>,
+    /// The frame's acuity certificate: the largest number of pixels by which a tile drawn
+    /// coarse differs from its fine drawing (0 when everything is fine).
+    pub remainder_px: f64,
 }
 
 /// A mark under this many pixels across is drawn but not legible.
@@ -394,7 +408,7 @@ impl Scene {
             }
             if t.screen {
                 // always drawn whole; not the allocator's
-                cands.push(Candidate { distance: 0.0, work: 0, read: 0 });
+                cands.push(Candidate { distance: 0.0, work: 0, read: 0, error_px: 0.0 });
                 live.push((t, [t.origin[0], t.origin[1], t.origin[2]]));
                 continue;
             }
@@ -402,11 +416,19 @@ impl Scene {
             // drawing a tile fine adds its detailed decoration and the fine forms of its tagged marks
             let work = t.marks.iter().filter(|m| m.detail > 0 && !m.pin).count() as u64;
             let read = t.marks.iter().filter(|m| m.detail > 0 && !m.pin && m.tag != 0).count() as u64;
-            cands.push(Candidate { distance: (d[0] * d[0] + d[1] * d[1] + d[2] * d[2]).sqrt(), work, read });
+            // the largest on-screen size of anything coarse drawing drops or simplifies
+            let error_px = t
+                .marks
+                .iter()
+                .filter(|m| m.detail > 0 && !m.pin)
+                .map(|m| cam.pixels([t.origin[0] + m.pos[0] as f64, t.origin[1] + m.pos[1] as f64, t.origin[2] + m.pos[2] as f64], m.bound() as f64))
+                .fold(0.0, f64::max);
+            cands.push(Candidate { distance: (d[0] * d[0] + d[1] * d[1] + d[2] * d[2]).sqrt(), work, read, error_px });
             live.push((t, d));
         }
         let fine = alloc.allocate(&cands, budget);
-        let mut frame = Frame { batches: Vec::new(), marks: Vec::new(), fine: 0, coarse: 0, stale, modal: self.modal };
+        let remainder_px = Acuity::remainder(&cands, &fine);
+        let mut frame = Frame { batches: Vec::new(), marks: Vec::new(), fine: 0, coarse: 0, stale, modal: self.modal, remainder_px };
         let mut order: Vec<usize> = (0..live.len()).collect();
         order.sort_by_key(|&k| (live[k].0.screen, live[k].0.layer, k));
         for k in order {
@@ -685,6 +707,26 @@ mod tests {
         let last = &patch.bytes[patch.bytes.len() - INSTANCE_BYTES..];
         assert_eq!(last[51] & 0xC0, COLOUR_RAMP);
         assert_eq!(&last[24..28], &0.37f32.to_le_bytes());
+    }
+
+    #[test]
+    fn under_acuity_the_frame_spends_only_where_a_pixel_would_change_and_says_what_is_left() {
+        // two tiles of buildings, one near the focus and one far; trees are 2 units across
+        let s = scene(vec![tile(1, 0.0, 40, 100), tile(2, 5000.0, 40, 200)]);
+        let c = cam(); // a map at 4 pixels a unit: everything is 4 px a unit, near or far
+        let f = s.frame(&c, 7, &Acuity { eps_px: 1.0 }, u64::MAX).unwrap();
+        assert_eq!((f.fine, f.coarse), (2, 0), "detail spans more than a pixel in both");
+        assert_eq!(f.remainder_px, 0.0);
+        // zoomed out to 0.1 px a unit, nothing detailed spans a pixel: all coarse, at no cost
+        let far = Camera::map([50.0, 50.0, 0.0], 0.1, 800.0, 600.0);
+        let f = s.frame(&far, 7, &Acuity { eps_px: 1.0 }, u64::MAX).unwrap();
+        assert_eq!((f.fine, f.coarse), (0, 2));
+        assert!(f.remainder_px <= 1.0, "{}", f.remainder_px);
+        assert_eq!(f.marks.len(), 80, "the tagged buildings are still drawn, coarse");
+        // the same zoom on a window twice the size: the same choices for the same tiles
+        let big = Camera::map([50.0, 50.0, 0.0], 0.1, 1600.0, 1200.0);
+        let g = s.frame(&big, 7, &Acuity { eps_px: 1.0 }, u64::MAX).unwrap();
+        assert_eq!((g.fine, g.coarse, g.remainder_px), (f.fine, f.coarse, f.remainder_px));
     }
 
     #[test]

@@ -2,7 +2,8 @@
 //!
 //! One leaf per input line, as 9 space-separated groups, numbers within a group separated by
 //! commas (an empty group is `-`): id; ox,oy,sx; road colour; roads; buildings; meta; streets;
-//! tones; persons per household. One output line per leaf. Used by `tools/twin_leaf_check.mjs`.
+//! tones; persons per household; optionally a tenth group, the 97-number style array (`-` or
+//! absent for the defaults). One output line per leaf. Used by `tools/twin_leaf_check.mjs`.
 use holon_draw::twin::{build_leaf, Leaf, Style};
 use std::io::{BufRead, Write};
 
@@ -23,7 +24,11 @@ fn main() {
             continue;
         }
         let (place, road, roads, buildings, meta, streets, tones) = (nums(g[1]), nums(g[2]), nums(g[3]), nums(g[4]), nums(g[5]), nums(g[6]), nums(g[7]));
-        let style = Style { pph: g[8].parse().unwrap(), road: [road[0], road[1], road[2]], ..Style::default() };
+        let base = match g.get(9) {
+            Some(&v) if v != "-" => Style::from_flat(&nums(v)).expect("a style array of 97 numbers"),
+            _ => Style::default(),
+        };
+        let style = Style { pph: g[8].parse().unwrap(), road: [road[0], road[1], road[2]], ..base };
         let leaf = Leaf {
             id: g[0].parse().unwrap(),
             roads: &roads,

@@ -22,6 +22,60 @@ pub struct Candidate {
     pub distance: f64,
     pub work: u64,
     pub read: u64,
+    /// A bound on how many PIXELS the frame is wrong by if this tile is drawn coarse: the
+    /// largest on-screen size of anything coarse drawing drops or simplifies.
+    pub error_px: f64,
+}
+
+/// The holon's acuity rule, with the pixel as the acuity (the lead, 2026-11-15: "Pixels are
+/// our acuity measure, dynamic to the size of the window and resolution").
+///
+/// It is `holon::acuity`'s order, moved from a branch sum to a frame: the demanded accuracy is
+/// a budget ([`Acuity::eps_px`], in device pixels); each tile's error if drawn coarse is a
+/// certified bound ([`Candidate::error_px`]); tiles are drawn fine in DESCENDING order of that
+/// bound, which makes every remainder as small as a remainder of this shape can be (the
+/// greedy optimum, not a heuristic), and the work stops when what is left is within the
+/// budget. What is left is not hidden: [`Acuity::remainder`] is the largest error among the
+/// tiles drawn coarse, the frame's certificate. And as ACUITY-B found for the observer's
+/// frame, this selects ALLOCATION and not what exists: a tagged mark is drawn coarse at
+/// worst, never removed.
+///
+/// Because the bound is in pixels and a pixel spans a fixed number of metres at a given zoom,
+/// the same zoom gives the same choices on a phone and on a large screen; a larger window
+/// only adds tiles.
+pub struct Acuity {
+    pub eps_px: f64,
+}
+
+impl Acuity {
+    /// The certificate of an allocation: the largest error left among tiles drawn coarse.
+    pub fn remainder(cands: &[Candidate], fine: &[bool]) -> f64 {
+        cands.iter().zip(fine).filter(|x| !*x.1).map(|x| x.0.error_px).fold(0.0, f64::max)
+    }
+}
+
+impl Allocator for Acuity {
+    fn allocate(&self, cands: &[Candidate], budget: u64) -> Vec<bool> {
+        let mut order: Vec<usize> = (0..cands.len()).collect();
+        order.sort_by(|&a, &b| cands[b].error_px.total_cmp(&cands[a].error_px).then(cands[a].distance.total_cmp(&cands[b].distance)).then(a.cmp(&b)));
+        let mut out = vec![false; cands.len()];
+        let mut left = budget;
+        for i in order {
+            let c = &cands[i];
+            if c.work == 0 {
+                out[i] = true;
+                continue;
+            }
+            if c.error_px <= self.eps_px {
+                continue; // within the budget: drawing it fine would not change a pixel
+            }
+            if c.work <= left {
+                left -= c.work;
+                out[i] = true;
+            }
+        }
+        out
+    }
 }
 
 pub trait Allocator {
@@ -84,7 +138,7 @@ mod tests {
     use super::*;
 
     fn c(distance: f64, work: u64, read: u64) -> Candidate {
-        Candidate { distance, work, read }
+        Candidate { distance, work, read, error_px: 0.0 }
     }
 
     #[test]
@@ -109,6 +163,28 @@ mod tests {
         assert_eq!(Bits.allocate(&cands, 60), vec![false, true, true]);
         let read = |f: &[bool]| cands.iter().zip(f).filter(|x| *x.1).map(|x| x.0.read).sum::<u64>();
         assert!(read(&Bits.allocate(&cands, 60)) > read(&Ring.allocate(&cands, 60)));
+    }
+
+    fn e(distance: f64, work: u64, error_px: f64) -> Candidate {
+        Candidate { distance, work, read: work, error_px }
+    }
+
+    #[test]
+    fn acuity_spends_on_the_largest_error_first_and_stops_within_the_budget() {
+        let cands = [e(1.0, 10, 0.3), e(5.0, 10, 40.0), e(3.0, 10, 6.0), e(2.0, 10, 0.9), e(4.0, 10, 2.5)];
+        let a = Acuity { eps_px: 1.0 };
+        // unlimited work: only the tiles that would be wrong by more than a pixel go fine
+        let f = a.allocate(&cands, u64::MAX);
+        assert_eq!(f, vec![false, true, true, false, true]);
+        assert!(Acuity::remainder(&cands, &f) <= 1.0, "the certificate is within the budget");
+        // work for two tiles: the two largest errors, wherever they are on screen
+        let f = a.allocate(&cands, 20);
+        assert_eq!(f, vec![false, true, true, false, false]);
+        assert_eq!(Acuity::remainder(&cands, &f), 2.5, "the certificate names what was left");
+        // the ring would have spent the same work on the two nearest, both under a pixel
+        let r = Ring.allocate(&cands, 20);
+        assert_eq!(r, vec![true, false, false, true, false]);
+        assert_eq!(Acuity::remainder(&cands, &r), 40.0);
     }
 
     #[test]

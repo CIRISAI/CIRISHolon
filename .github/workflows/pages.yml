@@ -23,6 +23,9 @@ on:
       - "engine/crates/holon-render-3d/**"
       - "engine/crates/holon-render/**"
       - "engine/crates/holon-chem/**"
+      - "engine/crates/holon-draw/**"
+      - "engine/crates/holon-draw-atoms/**"
+      - "engine/crates/holon-draw-ladder/**"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 permissions:
@@ -87,6 +90,10 @@ jobs:
       # and in the engine workspace, where ci-gates.sh already tests it.
       - name: Build the holon-draw atom world
         run: sh engine/crates/holon-draw-atoms/build-web.sh
+
+      # The ladder: one zoom from the vacuum to the universe (docs/ladder), the same way.
+      - name: Build the holon-draw ladder
+        run: sh engine/crates/holon-draw-ladder/build-web.sh
 
       # THE SWALLOWED FAILURE HAS TO GO OFF SOMEWHERE A READER MEETS IT.
       #

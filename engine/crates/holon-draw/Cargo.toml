@@ -11,3 +11,8 @@ description = "A small generic draw core: tiles of tagged instance records, a pu
 # download added there. The graphics backend is NOT here: the core packs bytes and answers
 # questions; a backend uploads and draws.
 [dependencies]
+
+# `cdylib` for the browser artifact (plain extern "C" exports, `src/abi.rs`); `rlib` for the
+# tests, the examples and any crate that composes marks.
+[lib]
+crate-type = ["cdylib", "rlib"]

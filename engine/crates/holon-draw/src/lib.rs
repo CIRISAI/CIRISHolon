@@ -42,7 +42,9 @@
 //! That is exact for discs and spheres and an over-estimate for the rest; a per-kind test is
 //! owed and the over-estimate is why the nearest centre wins a tie.
 
+pub mod abi;
 pub mod alloc;
+pub mod twin;
 
 pub use alloc::{Allocator, Bits, Candidate, Ring};
 

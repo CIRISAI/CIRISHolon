@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>holon-draw acuity probe</title>
+<style>
+  body { margin: 0; background: #17201d; color: #ede9df; font: 14px/1.4 system-ui, sans-serif; }
+  p { margin: 8px 12px; }
+  canvas { display: block; }
+</style>
+</head>
+<body>
+<p id="note">The acuity probe: driven by <code>tools/acuity_probe.py</code>, which serves this page beside the cases
+written by <code>holon-draw-ladder</code>'s <code>acuity_dump</code> example. Opened by hand it draws nothing.</p>
+<canvas id="c" width="16" height="16"></canvas>
+<script type="module">
+// The pixel half of the acuity gates. It draws a case's FINE frame and its frame UNDER TEST
+// with the real backend (./draw.js, untouched) and measures how far the drawing moved.
+//
+// WHAT IS MEASURED. Coverage: a pixel is covered if anything was drawn on it (alpha > 0 on a
+// buffer cleared to nothing, antialiasing off, every tile's cross-fade weight set to 1 so that
+// a faint tile still covers). Between the fine coverage A and the tested coverage B:
+//
+//   haus    the outline's displacement: the farthest any pixel covered in one drawing and not
+//           in the other lies from the other drawing's coverage (the symmetric Hausdorff
+//           distance of the two covered regions), in pixels. A reading is kept only where the
+//           pixel is at least that far from the image's edge, so a region cut by the edge of a
+//           close look cannot be over-read. This matches the bound on a mark drawn on a
+//           cheaper mesh (its outline falls short).
+//   thick   the width of the wrong region: the diameter of the largest disc that fits inside
+//           the pixels that differ. This matches the bound on a mark that is DROPPED (the
+//           wrong region is the mark), and agrees with `haus` on a moved outline.
+//   n_diff  how many pixels differ. A count, reported, never compared with the bound.
+//
+// A CLOSE LOOK renders a square window of the view, `side` device pixels across, onto an
+// N by N canvas through the same matrix followed by a crop: the same geometry rasterised S =
+// N / side times finer. Distances read there are divided by S, so they are in device pixels
+// with a grain of 1/S. That is how an error under a pixel is read at all.
+//
+// A LOWER BOUND, SAMPLED. Each reading is a distance that some pixel did move. The true
+// error of a tile is at least the largest reading; nothing here bounds it from above.
+import { createDrawer } from './draw.js';
+
+const canvas = document.getElementById('c');
+const gl = canvas.getContext('webgl2', { antialias: false, alpha: true, depth: true, premultipliedAlpha: false, preserveDrawingBuffer: true });
+const drawer = createDrawer(gl);
+const N_CLOSE = 640;
+let index = null, bin = null;
+
+function size(w, h) {
+  if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
+  gl.viewport(0, 0, w, h);
+}
+
+// A case's batches as draw.js takes them; `tile` undefined means every tile.
+function batchesOf(list, tile) {
+  const out = [];
+  for (const b of list) {
+    if (tile !== undefined && b.tile !== tile) continue;
+    const params = Float32Array.from(b.params);
+    params[3] = 1;   // FADE: geometry is measured, not how faint the rung is in a cross-fade
+    out.push({ kind: b.kind, count: b.count, bytes: bin.subarray(b.at, b.at + b.len), offset: b.offset, params, coarse: b.coarse });
+  }
+  return out;
+}
+
+// vp followed by a crop to the window centred on device pixel (px, py), `side` across.
+function cropped(vp, w, h, px, py, side) {
+  const sx = w / side, sy = h / side, cx = 2 * px / w - 1, cy = 1 - 2 * py / h;
+  const m = new Float32Array(vp);
+  for (let c = 0; c < 4; c++) {
+    m[4 * c] = sx * (vp[4 * c] - cx * vp[4 * c + 3]);
+    m[4 * c + 1] = sy * (vp[4 * c + 1] - cy * vp[4 * c + 3]);
+  }
+  return m;
+}
+
+function render(batches, vp, w, h) {
+  size(w, h);
+  gl.disable(gl.SCISSOR_TEST);
+  gl.colorMask(true, true, true, true);
+  gl.depthMask(true);
+  gl.clearColor(0, 0, 0, 0);
+  gl.clearDepth(1);
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  if (batches.length) drawer.draw(batches, vp, { viewport: [0, 0, w, h] });
+  const px = new Uint8Array(4 * w * h);
+  gl.readPixels(0, 0, w, h, gl.RGBA, gl.UNSIGNED_BYTE, px);
+  return px;
+}
+
+function coverage(px) {
+  const n = px.length >> 2, m = new Uint8Array(n);
+  for (let i = 0; i < n; i++) m[i] = px[4 * i + 3] > 0 ? 1 : 0;
+  return m;
+}
+
+// The exact squared Euclidean distance from every pixel to the nearest pixel where `on` is
+// set (Felzenszwalb and Huttenlocher's two passes). With `pad`, the image is taken to be
+// surrounded by set pixels (a distance to the edge counts).
+const INF = 1e20;
+function edt2(on, w, h, pad) {
+  const d = new Float64Array(w * h);
+  const n = Math.max(w, h) + 2;
+  const f = new Float64Array(n), v = new Int32Array(n), z = new Float64Array(n + 1), out = new Float64Array(n);
+  function pass(len) {
+    let k = 0; v[0] = 0; z[0] = -INF; z[1] = INF;
+    for (let q = 1; q < len; q++) {
+      let s;
+      for (;;) {
+        const p = v[k];
+        s = ((f[q] + q * q) - (f[p] + p * p)) / (2 * q - 2 * p);
+        if (s <= z[k] && k > 0) k--; else break;
+      }
+      k++; v[k] = q; z[k] = s; z[k + 1] = INF;
+    }
+    k = 0;
+    for (let q = 0; q < len; q++) {
+      while (z[k + 1] < q) k++;
+      const p = v[k];
+      out[q] = (q - p) * (q - p) + f[p];
+    }
+  }
+  const o = pad ? 1 : 0;
+  for (let x = 0; x < w; x++) {
+    if (pad) { f[0] = 0; f[h + 1] = 0; }
+    for (let y = 0; y < h; y++) f[y + o] = on[y * w + x] ? 0 : INF;
+    pass(h + 2 * o);
+    for (let y = 0; y < h; y++) d[y * w + x] = out[y + o];
+  }
+  for (let y = 0; y < h; y++) {
+    if (pad) { f[0] = 0; f[w + 1] = 0; }
+    for (let x = 0; x < w; x++) f[x + o] = d[y * w + x];
+    pass(w + 2 * o);
+    for (let x = 0; x < w; x++) d[y * w + x] = out[x + o];
+  }
+  return d;
+}
+
+function measure(A, B, w, h) {
+  const n = w * h, D = new Uint8Array(n), notD = new Uint8Array(n);
+  let nDiff = 0, nA = 0, nB = 0;
+  for (let i = 0; i < n; i++) { nA += A[i]; nB += B[i]; D[i] = A[i] ^ B[i]; notD[i] = D[i] ^ 1; nDiff += D[i]; }
+  const r = { n_diff: nDiff, n_fine: nA, n_test: nB, haus: 0, thick: 0, unread: 0 };
+  if (nDiff === 0) return r;
+  const inside = edt2(notD, w, h, true);
+  let t = 0;
+  for (let i = 0; i < n; i++) if (D[i] && inside[i] > t) t = inside[i];
+  r.thick = 2 * Math.sqrt(t) - 1;
+  const toA = nA ? edt2(A, w, h, false) : null, toB = nB ? edt2(B, w, h, false) : null;
+  let hd = 0;
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const i = y * w + x;
+      if (!D[i]) continue;
+      const other = A[i] ? toB : toA;
+      const edge = Math.min(x + 1, w - x, y + 1, h - y);
+      if (!other || other[i] > edge * edge) { r.unread++; continue; }
+      if (other[i] > hd) hd = other[i];
+    }
+  }
+  r.haus = Math.sqrt(hd);
+  return r;
+}
+
+// Where both drawings cover a pixel, how far apart their colours are (the largest channel
+// difference, 0..255): the shading the bound does not price.
+function shading(pa, pb) {
+  let most = 0, over = 0, both = 0;
+  for (let i = 0; i < pa.length; i += 4) {
+    if (!pa[i + 3] || !pb[i + 3]) continue;
+    both++;
+    const d = Math.max(Math.abs(pa[i] - pb[i]), Math.abs(pa[i + 1] - pb[i + 1]), Math.abs(pa[i + 2] - pb[i + 2]));
+    if (d > most) most = d;
+    if (d > 8) over++;
+  }
+  return { both, most, over_8: over };
+}
+
+function pack(m) {
+  let s = '';
+  for (let i = 0; i < m.length; i += 6) {
+    let v = 0;
+    for (let k = 0; k < 6; k++) v |= (m[i + k] || 0) << k;
+    s += String.fromCharCode(48 + v);
+  }
+  return s;
+}
+
+function native(c, tile, keep) {
+  const pa = render(batchesOf(c.fine, tile), c.vp, c.w, c.h), pb = render(batchesOf(c.test, tile), c.vp, c.w, c.h);
+  const A = coverage(pa), B = coverage(pb);
+  const r = measure(A, B, c.w, c.h);
+  r.shading = shading(pa, pb);
+  if (keep) { r.w = c.w; r.h = c.h; r.fine_mask = pack(A); r.test_mask = pack(B); }
+  return r;
+}
+
+function close(c, tile, p) {
+  const vp = cropped(c.vp, c.w, c.h, p.x, p.y, p.side), S = N_CLOSE / p.side;
+  const A = coverage(render(batchesOf(c.fine, tile), vp, N_CLOSE, N_CLOSE)), B = coverage(render(batchesOf(c.test, tile), vp, N_CLOSE, N_CLOSE));
+  const r = measure(A, B, N_CLOSE, N_CLOSE);
+  return { x: p.x, y: p.y, side: p.side, kind: p.kind, mark_bound_px: p.bound_px, scale: S, haus: r.haus / S, thick: r.thick > 0 ? r.thick / S : 0, n_diff: r.n_diff, n_fine: r.n_fine, unread: r.unread };
+}
+
+function run(i, keepMasks) {
+  const c = index.cases[i];
+  const out = { name: c.name, group: c.group, tiles: [] };
+  if (c.measure === 'rgba') {
+    // every batch of the frame, colour and all
+    const pa = render(batchesOf(c.fine), c.vp, c.w, c.h), pb = render(batchesOf(c.test), c.vp, c.w, c.h);
+    let n = 0, drawn = 0;
+    for (let k = 0; k < pa.length; k += 4) {
+      if (pa[k + 3]) drawn++;
+      if (pa[k] !== pb[k] || pa[k + 1] !== pb[k + 1] || pa[k + 2] !== pb[k + 2] || pa[k + 3] !== pb[k + 3]) n++;
+    }
+    out.rgba_diff = n; out.pixels_drawn = drawn;
+    return out;
+  }
+  for (const t of c.tiles) {
+    if (!t.coarse) continue;
+    const r = { id: t.id, bound_px: t.bound_px };
+    if (c.measure === 'native' || c.measure === 'both') r.native = native(c, t.id, !!keepMasks);
+    if (c.measure === 'crop' || c.measure === 'both') r.close = t.probes.map((p) => close(c, t.id, p));
+    out.tiles.push(r);
+  }
+  return out;
+}
+
+async function load(base) {
+  index = await (await fetch(base + 'cases.json')).json();
+  bin = new Uint8Array(await (await fetch(base + 'cases.bin')).arrayBuffer());
+  if (bin.length !== index.bin_bytes) throw new Error('cases.bin is ' + bin.length + ' bytes, the index says ' + index.bin_bytes);
+  return index.cases.length;
+}
+
+window.probe = {
+  load, run, n_close: N_CLOSE,
+  context: () => {
+    const dbg = gl.getExtension('WEBGL_debug_renderer_info');
+    return { renderer: dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER), version: gl.getParameter(gl.VERSION), instancing: drawer.instancing };
+  },
+};
+document.body.dataset.ready = '1';
+</script>
+</body>
+</html>

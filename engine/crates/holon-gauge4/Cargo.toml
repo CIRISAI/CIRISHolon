@@ -1,0 +1,12 @@
+[package]
+name = "holon-gauge4"
+version = "0.1.0"
+edition = "2021"
+license = "AGPL-3.0-or-later"
+publish = false
+description = "Quenched SU(3) lattice gauge theory in 3+1 dimensions: Wilson action, Cabibbo-Marinari heat bath with overrelaxation, Wilson flow, and gauge-invariant observables"
+
+# ZERO dependencies, std only, runtime and dev alike (the isolation profile of q-seam and
+# holon-chem). holon-draw-ladder links this crate into its browser artifact to decode the
+# stored fields, so a dependency added here is a download added there.
+[dependencies]

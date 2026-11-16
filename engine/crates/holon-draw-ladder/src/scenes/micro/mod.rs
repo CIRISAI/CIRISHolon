@@ -11,7 +11,7 @@
 //! | -14.1 .. -10.3 | atom to nucleus       | 1 fm    | declared     |
 //! | -14.6 .. -14.1 | a baryon on a chain   | 0.1 fm  | simulated    |
 //! | -15 .. -14.6   | the sea               | 0.1 fm  | simulated    |
-//! | -15.8 .. -15 (stretched by the ladder to its end) | (the 3+1D gauge field's rung, `gauge4`, another module's, after a CUT; it owns the end of the record) | | |
+//! | (the ladder's end) .. -15 | the gluon field, 3+1D (`gauge4`), after a CUT; it owns the end of the record | 0.1 fm | measured |
 //!
 //! Every rung is centred on ONE point going in: the top of a dew drop on the paving, then a
 //! hydrogen atom of a water molecule at the drop's surface, then that atom's nucleus, then
@@ -26,6 +26,7 @@ use holon_draw::{Instance, Kind, Tile, PARAMS_NEUTRAL};
 
 mod atoms;
 mod drop;
+pub mod gauge4;
 mod ground;
 mod hadron;
 mod nucleus;
@@ -33,6 +34,7 @@ mod water;
 
 pub use atoms::Atoms;
 pub use drop::Drop;
+pub use gauge4::Gluon;
 pub use ground::Ground;
 pub use hadron::{Hadron, Sea};
 pub use nucleus::Nucleus;
@@ -40,7 +42,7 @@ pub use water::Water;
 
 /// Every inward scene.
 pub fn inward() -> Vec<Box<dyn Scene>> {
-    vec![Box::new(Ground::new()), Box::new(Drop::new()), Box::new(Water::new()), Box::new(Atoms::new()), Box::new(Nucleus::new()), Box::new(Hadron::new()), Box::new(Sea::new())]
+    vec![Box::new(Ground::new()), Box::new(Drop::new()), Box::new(Water::new()), Box::new(Atoms::new()), Box::new(Nucleus::new()), Box::new(Hadron::new()), Box::new(Sea::new()), Box::new(Gluon::new())]
 }
 
 /// A scene is handed `z` as log10 of the metres one device pixel spans. The scenes here are

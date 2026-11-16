@@ -9,6 +9,8 @@ description = "One zoom from the vacuum to the universe, drawn by holon-draw: a 
 [dependencies]
 holon-draw = { path = "../holon-draw" }
 holon-draw-atoms = { path = "../holon-draw-atoms" }
+# zero-dependency, std only: decodes the stored gluon field the gauge4 rung draws
+holon-gauge4 = { path = "../holon-gauge4" }
 
 [lib]
 crate-type = ["cdylib", "rlib"]

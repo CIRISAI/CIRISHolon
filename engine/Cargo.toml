@@ -35,6 +35,10 @@ members = [
   # holon-draw-ladder: one zoom from the vacuum to the universe; depends on holon-draw and
   # holon-draw-atoms only.
   "crates/holon-draw-ladder",
+  # holon-gauge4: quenched SU(3) lattice gauge theory in 3+1 dimensions (heat bath, Wilson
+  # flow, gauge-invariant observables). ZERO dependencies, std only, the isolation profile of
+  # q-seam. holon-draw-ladder depends on it to decode the stored gluon field it draws.
+  "crates/holon-gauge4",
   # holon-swarm, holon-mesh: alloc-only (ciris-sim-core { features = ["alloc"] }),
   # holon-swarm has no other deps and holon-mesh's only other dep is holon-swarm — no
   # optional features to unify, so neither can perturb the core's feature resolution or
@@ -171,3 +175,9 @@ exclude = [
 # CARGO_PROFILE_RELEASE_* env vars, which take precedence over the manifest.
 [profile.release]
 debug = true
+
+# holon-gauge4's gates thermalise an 8^4 lattice and flow it; unoptimised that is tens of
+# minutes, optimised it is seconds. A package override in the root manifest is honoured for
+# a member (a member's own [profile.*] is not), and it changes this one crate's code only.
+[profile.dev.package.holon-gauge4]
+opt-level = 3

@@ -14,6 +14,10 @@
 // ?dim=0.62 starts at night; ?tex=0 starts with the ground field off (both are also on the
 // settings panel: drag the slider, press the button); ?nohigh=1 is the twin's no-highp gate
 // (see below), ?nohigh=2 its macro rename alone;
+// ?big=1 is 500 leaves of 400 records (200,000) on a flat map, drawn for ?frames=N frames
+// (default 40) and timed: ?res=0 every batch carries its bytes (uploaded each frame), ?res=1
+// one resident buffer per batch, ?res=2 one resident buffer per leaf with `first` ranges.
+// ?res=1 on the 3D scene makes its sphere and rod batches resident.
 // ?map=1 is a FLAT MAP of the same ground with streets, roofs and canopies on it, as the
 // twin's street tier draws one: top-down, no depth test, ?ppu=N pixels per world unit (CSS),
 // ?floor=H the streets' least half width in px (default 0.5), ?ring=1 the radial fade,
@@ -233,7 +237,58 @@ function ortho(h, aspect, n, f) {
 }
 
 const { OFF, batches, city, pA, pB, pRest, pC } = scene();
-const isMap = q.get('map') === '1';
+const isBig = q.get('big') === '1';
+const isMap = q.get('map') === '1' || isBig;
+const resMode = +(q.get('res') || 0);
+
+// ---- the big scene: 25 x 20 leaves of 10 units, 400 records each ----
+function bigScene() {
+  let seed = 777;
+  const rnd = () => ((seed = (seed * 1103515245 + 12345) >>> 0) / 4294967296);
+  const settings = [0, 1, 2, 3].map((k) => {
+    const p = Float32Array.from(PARAMS_NEUTRAL);
+    p.set([0.14 + 0.03 * k, 0.28, 0.14, 1], PARAM.RAMP0); p.set([0.5, 0.47 - 0.03 * k, 0.44, 1], PARAM.RAMP1);
+    p.set([1, 0.9 - 0.05 * k, 0.75, 1], PARAM.TINT); p.set([0, 0, 2, 2], PARAM.NOISE); p[PARAM.TEX] = 1; p[PARAM.FLOOR] = 0.5 * dpr;
+    return p;
+  });
+  const layers = [[], [], [], []];   // patches, discs, lines, quads: painted in that order, as tiles on layers would be
+  const leaves = [];
+  for (let gy = 0; gy < 20; gy++) for (let gx = 0; gx < 25; gx++) {
+    const off = [OFF[0] + (gx - 12) * 10, OFF[1] + (gy - 9.5) * 10, 0], params = settings[gy >> 2 & 3];
+    const patch = new Batch(KIND.PATCH, off), discs = new Batch(KIND.DISC, off), lines = new Batch(KIND.LINE, off), quads = new Batch(KIND.QUAD, off);
+    patch.add([0, 0, 0], [10, 10, 0], [rnd(), 0, 0], 0, [255, 0, 255, 255], 0, COLOUR.RAMP);
+    for (let k = 0; k < 79; k++) discs.add([-4.6 + 9.2 * rnd(), -4.6 + 9.2 * rnd(), 0], [0.2 + 0.25 * rnd(), 0, 0], null, 0, [28, 51 + Math.round(15 * rnd()), 26, 217], 0, DISC_CASING | DISC_CANOPY_FIELD);
+    const segs = [];
+    for (let k = 0; k < 40; k++) { const v = k % 2, c = -5 + 10 * ((k >> 1) % 5) / 5 + (k < 20 ? 0 : 1), a = -5 + 2.5 * ((k >> 1) % 4); segs.push(v ? [c, a, c, a + 2.5] : [a, c, a + 2.5, c]); }
+    for (const [x0, y0, x1, y1] of segs) lines.add([x0, y0, 0], [0.5, 0, 0], [x1, y1, 0], 0, [18, 20, 24, 230], 0, VARIANT_CASING);
+    for (const [x0, y0, x1, y1] of segs) lines.add([x0, y0, 0], [0.3, 0, 0], [x1, y1, 0], 0, [168, 168, 163, 255]);
+    for (let k = 0; k < 80; k++) {
+      const x = -4.4 + 8.8 * rnd(), y = -4.4 + 8.8 * rnd(), w = 0.5 + 0.3 * rnd(), d = 0.4 + 0.2 * rnd(), g = 150 + Math.round(60 * rnd());
+      quads.add([x + 0.08, y - 0.08, 0], [w, d, 0], null, 0, [5, 6, 8, 128]);
+      quads.add([x, y + d / 4, 0], [w, d / 2, 0], null, 0, [g, g, g, 255], 0, COLOUR.TINT);
+      quads.add([x, y - d / 4, 0], [w, d / 2, 0], null, 0, [g * 0.62, g * 0.62, g * 0.62, 255], 0, COLOUR.TINT);
+    }
+    const four = [patch, discs, lines, quads];
+    for (let k = 0; k < 4; k++) { four[k].params = params; layers[k].push(four[k]); }
+    leaves.push(four);
+  }
+  return { list: layers.flat(), leaves, records: layers.flat().reduce((n, b) => n + b.count, 0) };
+}
+// Turn `bytes` batches into resident ones: one buffer per batch (mode 1), or one per group
+// with `first` ranges (mode 2). The batch objects keep their kind, offset, count and params.
+function makeResident(groups, mode) {
+  for (const g of groups) {
+    if (mode === 2) {
+      const total = g.reduce((n, b) => n + b.bytes.byteLength, 0), all = new Uint8Array(total);
+      let at = 0;
+      for (const b of g) { all.set(b.bytes, at); b.first = at / INSTANCE_BYTES; at += b.bytes.byteLength; }
+      const h = drawer.resident(all);
+      for (const b of g) { b.handle = h; b.bytes = null; }
+    } else {
+      for (const b of g) { b.handle = drawer.resident(b.bytes); b.first = 0; b.bytes = null; }
+    }
+  }
+}
 const state = { dim: Math.min(1, Math.max(0.3, +(q.get('dim') || 1))), tex: q.get('tex') === '0' ? 0 : 1 };
 const hit = { slider: null, button: null };   // device-pixel rectangles [x0, y0, x1, y1] of the two controls
 
@@ -365,6 +420,7 @@ function applyState() {
   }
   pPanel.set(pA.subarray(4, 12), 4); pPanel.set(pB.subarray(12, 16), 12);
 }
+const med = (a) => { const b = a.slice().sort((x, y) => x - y); return b.length ? +b[b.length >> 1].toFixed(2) : 0; };
 let pending = false;
 function invalidate() { if (!pending) { pending = true; requestAnimationFrame(frame); } }
 const inside = (r, x, y) => r && x >= r[0] && x <= r[2] && y >= r[1] && y <= r[3];
@@ -390,8 +446,14 @@ let az = (+(q.get('az') || 35) * Math.PI) / 180;
 const el = (+(q.get('el') || 28) * Math.PI) / 180;
 const dist = 19;
 
-const all = (isMap ? city : batches).slice();
-const showOverlay = q.get('overlay') !== '0';
+const big = isBig ? bigScene() : null;
+const all = (isBig ? big.list : isMap ? city : batches).slice();
+if (isBig && resMode) makeResident(big.leaves, resMode);
+if (!isBig && resMode) makeResident([batches.filter((b) => b.kind === KIND.SPHERE || b.kind === KIND.ROD)], resMode);
+const showOverlay = isBig ? q.get('overlay') === '1' : q.get('overlay') !== '0';
+const nFrames = isBig ? +(q.get('frames') || 40) : 2;
+const times = [], timesFin = [];
+let upFirst = -1, upLaterMax = 0;
 if (showOverlay) for (const p of panels) all.push(...p.batches);
 const viewport = [0, 0, canvas.width, canvas.height];
 const last = { drawCalls: 0, instances: 0, bytesUploaded: 0 };
@@ -407,7 +469,7 @@ function frame(tms) {
   const fov = (38 * Math.PI) / 180 * (aspect < 1 ? 1.9 : 1);
   const proj = q.get('ortho') === '1' ? ortho(6.2, aspect, 0.1, 100) : perspective(fov, aspect, 0.1, 100);
   // The flat map: top-down, x east, y north, mapPpu device pixels to a world unit.
-  const mapPpu = +(q.get('ppu') || 70) * dpr;
+  const mapPpu = +(q.get('ppu') || (isBig ? 4.9 : 70)) * dpr;
   const sx = 2 * mapPpu / canvas.width, sy = 2 * mapPpu / canvas.height;
   const vp = isMap ? new Float32Array([sx, 0, 0, 0, 0, sy, 0, 0, 0, 0, -0.01, 0, -sx * OFF[0], -sy * OFF[1], 0, 1]) : mul(proj, lookAt(eye, at, [0, 0, 1]));
 
@@ -437,15 +499,21 @@ function frame(tms) {
   const t0 = performance.now();
   drawer.draw(all, vp, isMap ? { viewport, depthTest: false, pixelsPerUnit: mapPpu } : { light: [0.35, -0.5, 0.8], ambient: 0.25, viewport });
   const ms = performance.now() - t0;
+  if (isBig) {
+    // draw() alone, and draw() with everything it queued carried out (the upload's cost is partly there)
+    gl.finish();
+    times.push(ms); timesFin.push(performance.now() - t0);
+  }
   const s = drawer.stats(), err = gl.getError();
+  if (frames === 0) upFirst = s.bytesUploaded; else upLaterMax = Math.max(upLaterMax, s.bytesUploaded);
   last.drawCalls = s.drawCalls; last.instances = s.instances; last.bytesUploaded = s.bytesUploaded;
   frames++;
   // Two frames, so the counts the first one measured are the ones the second one shows.
-  if (frames >= 2) {
-    document.body.dataset.stats = JSON.stringify({ ...s, glError: err, version: gl.getParameter(gl.VERSION), instancing: drawer.instancing, vertexArrays: drawer.vertexArrays, screenPrecision: drawer.screenPrecision, macroInVertex, fragHighp, dim: state.dim, tex: state.tex, text: { ...text.stats() }, relayouts: epochs, drawMs: +ms.toFixed(2) });
+  if (frames >= nFrames) {
+    document.body.dataset.stats = JSON.stringify({ ...s, glError: err, version: gl.getParameter(gl.VERSION), instancing: drawer.instancing, vertexArrays: drawer.vertexArrays, screenPrecision: drawer.screenPrecision, macroInVertex, fragHighp, dim: state.dim, tex: state.tex, text: { ...text.stats() }, relayouts: epochs, drawMs: +ms.toFixed(2), ...(isBig ? { records: big.records, batches: all.length, resMode, frames, uploadedFirstFrame: upFirst, uploadedLaterMax: upLaterMax, drawMsMedian: med(times.slice(5)), drawMsMin: +Math.min(...times.slice(5)).toFixed(2), drawFinishMsMedian: med(timesFin.slice(5)) } : {}) });
     document.body.dataset.ready = '1';
   }
-  if (q.get('spin') === '1' || frames < 2) invalidate();
+  if (q.get('spin') === '1' || frames < nFrames) invalidate();
 }
 invalidate();
 </script>

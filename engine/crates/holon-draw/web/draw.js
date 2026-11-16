@@ -36,6 +36,32 @@
 // gl.getParameter(gl.VIEWPORT), which allocates: a host that draws screen batches every
 // frame passes `opts.viewport`.
 //
+// RESIDENT BUFFERS. A batch's records either arrive with it (`bytes`: uploaded on every
+// draw(), into this file's own per-kind buffers) or already live on the GPU:
+//   const h = drawer.resident(bytes)   one GL buffer, STATIC_DRAW, uploaded once; h is a
+//                                      positive integer
+//   drawer.update(h, bytes)            new contents: in place when they fit the buffer's
+//                                      allocation, else the buffer is reallocated (same h)
+//   drawer.release(h)                  deletes it; h may be handed out again later
+//   batch = { kind, handle: h, first, count, offset, params, screen?, coarse? }
+//                                      records first .. first + count - 1 of that buffer,
+//                                      drawn with NO upload. `first` defaults to 0.
+// One handle may hold many batches of any kinds (the batch's `kind` says how its range is
+// drawn). A draw() of resident batches only uploads nothing: stats().bytesUploaded is 0.
+// resident() and update() put back the ARRAY_BUFFER binding they found; release() does not
+// touch it (a host must not have a released buffer bound: it never sees these buffers).
+// WHAT A RESIDENT BATCH COSTS IN GL CALLS, after its first draw:
+//   with vertex array objects (WebGL 2, or WebGL 1 with OES_vertex_array_object):
+//     3 calls: bind its vertex array, set the offset uniform, draw. Each distinct
+//     (handle, kind's mesh, first) gets its own vertex array, made on first use (about 25
+//     calls, once) and deleted with the handle; at most 256 per handle, beyond which that
+//     batch is drawn the bare way below.
+//   bare WebGL 1: 9 calls: bind the buffer, 6 attribute pointers, the offset uniform, draw.
+//   a `bytes` batch, for comparison: 10 calls, one of them the upload.
+// Add 3 uniform calls (and a cull toggle at most) when the kind's mesh changes from the
+// batch before, and 1 when the tile settings differ from the last uploaded. So batches
+// sorted by kind within a layer are cheapest.
+//
 // TILE SETTINGS (`batch.params`, 32 numbers = 8 groups of 4; absent means neutral). Slots:
 //   [0..2]   DIM     rgb multiplier on every colour of the tile, applied last (after lighting)
 //   [3]      FADE    alpha multiplier on every mark of the tile, runs too (the core's DIM.w)
@@ -150,6 +176,7 @@
 //   - ARRAY_BUFFER binding (left null);
 //   - the vertex array object binding, where one exists (WebGL 2 or OES_vertex_array_object):
 //     left null, i.e. the default object, whose own attribute state is NOT touched;
+//   (with vertex array objects, resident batches use this file's own objects: same rule)
 //   - where no vertex array object exists (bare WebGL 1): attribute slots 0..7 (all eight) (pointers,
 //     enabled flags, divisors) and the ELEMENT_ARRAY_BUFFER binding. On return slots 0..7 are
 //     disabled, their divisors are 0, and ELEMENT_ARRAY_BUFFER is null;
@@ -782,7 +809,7 @@ export function createDrawer(gl, options) {
   // slot -> { mesh, kind (whose instance buffer), mode x, mode y, lit, spec, rim, cull, vao }
   const slots = new Array(N_SLOT).fill(null);
   const slot = (i, kind, m, mx, my, lit, spec, rim, cull) => {
-    slots[i] = { mesh: m, kind, mx, my, lit, spec, rim, cull, vao: null, kc: KIND_CODE[i] };
+    slots[i] = { mesh: m, kind, mx, my, lit, spec, rim, cull, vao: null, kc: KIND_CODE[i], id: i };
   };
   slot(KIND.QUAD, KIND.QUAD, mQuad, 2, 0, 0, 0, 0, false);
   slot(KIND.PATCH, KIND.PATCH, mQuad, 2, 0, 0, 0, 0, false);
@@ -854,7 +881,7 @@ export function createDrawer(gl, options) {
   // Scratch, allocated once.
   const light = new Float32Array(3);
   const inv = new Float64Array(16);
-  const st = { drawCalls: 0, instances: 0, bytesUploaded: 0, paramUploads: 0 };
+  const st = { drawCalls: 0, instances: 0, bytesUploaded: 0, paramUploads: 0, residentBuffers: 0, residentBytes: 0 };
   let dead = false;
   let flat = false;   // lines as flat ribbons, for the draw() in progress
 
@@ -918,7 +945,16 @@ export function createDrawer(gl, options) {
     st.paramUploads++;
   }
 
-  // Upload one batch at its kind's cursor and point the instanced attributes at it.
+  function pointers(at) {
+    gl.vertexAttribPointer(I_POS, 3, gl.FLOAT, false, INSTANCE_BYTES, at);
+    gl.vertexAttribPointer(I_SIZE, 3, gl.FLOAT, false, INSTANCE_BYTES, at + 12);
+    gl.vertexAttribPointer(I_AUX, 3, gl.FLOAT, false, INSTANCE_BYTES, at + 24);
+    gl.vertexAttribPointer(I_ANGLE, 1, gl.FLOAT, false, INSTANCE_BYTES, at + 36);
+    gl.vertexAttribPointer(I_COLOR, 4, gl.UNSIGNED_BYTE, true, INSTANCE_BYTES, at + 40);
+    gl.vertexAttribPointer(I_META, 4, gl.UNSIGNED_BYTE, false, INSTANCE_BYTES, at + 48);
+  }
+
+  // Upload one `bytes` batch at its kind's cursor and point the instanced attributes at it.
   function feed(b, k, len) {
     const at = cursor[k];
     cursor[k] = at + len;
@@ -927,19 +963,99 @@ export function createDrawer(gl, options) {
     if (bytes.byteLength === len) gl.bufferSubData(gl.ARRAY_BUFFER, at, bytes);
     else if (isGL2) gl.bufferSubData(gl.ARRAY_BUFFER, at, bytes, 0, len);
     else gl.bufferSubData(gl.ARRAY_BUFFER, at, bytes.subarray(0, len)); // the one view made; pass exact-length bytes to avoid it
-    gl.vertexAttribPointer(I_POS, 3, gl.FLOAT, false, INSTANCE_BYTES, at);
-    gl.vertexAttribPointer(I_SIZE, 3, gl.FLOAT, false, INSTANCE_BYTES, at + 12);
-    gl.vertexAttribPointer(I_AUX, 3, gl.FLOAT, false, INSTANCE_BYTES, at + 24);
-    gl.vertexAttribPointer(I_ANGLE, 1, gl.FLOAT, false, INSTANCE_BYTES, at + 36);
-    gl.vertexAttribPointer(I_COLOR, 4, gl.UNSIGNED_BYTE, true, INSTANCE_BYTES, at + 40);
-    gl.vertexAttribPointer(I_META, 4, gl.UNSIGNED_BYTE, false, INSTANCE_BYTES, at + 48);
-    st.drawCalls++;
-    st.instances += b.count | 0;
+    pointers(at);
     st.bytesUploaded += len;
   }
 
+  // ---- resident buffers ----
+  // handles[h]: { buf, cap (bytes allocated), size (bytes of records), vaos: Map(first * 32 + mesh id -> vertex array) }
+  const handles = [null];
+  const freeHandles = [];
+  const VAO_CAP = 256, SCREEN_ID = 15;
+  function handleOf(h, what) {
+    const r = handles[h];
+    if (!r) throw new Error('holon-draw: ' + what + ': no resident buffer with handle ' + h);
+    return r;
+  }
+  function resident(bytes) {
+    if (dead) throw new Error('holon-draw: resident() after destroy()');
+    const prev = gl.getParameter(gl.ARRAY_BUFFER_BINDING);
+    const r = { buf: gl.createBuffer(), cap: bytes.byteLength, size: bytes.byteLength, vaos: hasVAO ? new Map() : null };
+    gl.bindBuffer(gl.ARRAY_BUFFER, r.buf);
+    gl.bufferData(gl.ARRAY_BUFFER, bytes, gl.STATIC_DRAW);
+    gl.bindBuffer(gl.ARRAY_BUFFER, prev);
+    const h = freeHandles.length ? freeHandles.pop() : handles.length;
+    handles[h] = r;
+    st.residentBuffers++;
+    st.residentBytes += r.cap;
+    return h;
+  }
+  function update(h, bytes) {
+    const r = handleOf(h, 'update()');
+    const prev = gl.getParameter(gl.ARRAY_BUFFER_BINDING);
+    gl.bindBuffer(gl.ARRAY_BUFFER, r.buf);
+    if (bytes.byteLength <= r.cap) {
+      gl.bufferSubData(gl.ARRAY_BUFFER, 0, bytes);
+    } else {
+      // The buffer object is the same one, so the vertex arrays that point into it stay good.
+      gl.bufferData(gl.ARRAY_BUFFER, bytes, gl.STATIC_DRAW);
+      st.residentBytes += bytes.byteLength - r.cap;
+      r.cap = bytes.byteLength;
+    }
+    r.size = bytes.byteLength;
+    gl.bindBuffer(gl.ARRAY_BUFFER, prev);
+  }
+  function release(h) {
+    const r = handleOf(h, 'release()');
+    if (r.vaos) { for (const v of r.vaos.values()) deleteVAO(v); r.vaos.clear(); }
+    gl.deleteBuffer(r.buf);
+    handles[h] = null;
+    freeHandles.push(h);
+    st.residentBuffers--;
+    st.residentBytes -= r.cap;
+  }
+
+  // Make batch b's records the instanced attributes' source, for a draw with `mesh`:
+  // an upload for a `bytes` batch (through `vao`, the mesh's shared vertex array), nothing
+  // but a bind for a resident one. `bound` is the vertex array this draw() last bound.
+  let bound = null;
+  function attach(b, kind, c, mesh, vao, id) {
+    st.drawCalls++;
+    st.instances += c;
+    if (b.handle === undefined) {
+      if (hasVAO && bound !== vao) { bindVAO(vao); bound = vao; }
+      feed(b, kind, c * INSTANCE_BYTES);
+      return;
+    }
+    const r = handles[b.handle], first = b.first | 0, at = first * INSTANCE_BYTES;
+    if (!hasVAO) {
+      gl.bindBuffer(gl.ARRAY_BUFFER, r.buf);
+      pointers(at);
+      return;
+    }
+    const key = first * 32 + id;
+    let v = r.vaos.get(key);
+    if (v !== undefined) {
+      if (bound !== v) { bindVAO(v); bound = v; }
+      return;
+    }
+    if (r.vaos.size < VAO_CAP) {
+      v = createVAO();
+      r.vaos.set(key, v);
+      bindVAO(v);
+      bound = v;
+      meshAttribs(mesh);
+    } else if (bound !== vao) {
+      bindVAO(vao);
+      bound = vao;
+    }
+    gl.bindBuffer(gl.ARRAY_BUFFER, r.buf);
+    pointers(at);
+  }
+
   /**
-   * @param {Array<{kind:number, offset?:ArrayLike<number>, count:number, bytes:Uint8Array, screen?:boolean, coarse?:boolean, params?:ArrayLike<number>}>} batches
+   * @param {Array<{kind:number, offset?:ArrayLike<number>, count:number, bytes?:Uint8Array, handle?:number, first?:number, screen?:boolean, coarse?:boolean, params?:ArrayLike<number>}>} batches
+   *   each batch has `bytes` (uploaded now) or `handle` (a resident buffer; `first` is its first record)
    * @param {Float32Array} vp column-major, 16 (world batches only)
    * @param {{light?:ArrayLike<number>, ambient?:number, flatLit?:boolean, viewport?:ArrayLike<number>, pixelsPerUnit?:number, depthTest?:boolean, flatLines?:boolean}} [opts]
    */
@@ -957,10 +1073,17 @@ export function createDrawer(gl, options) {
       if (c <= 0) continue;
       const s = slotOf(b);
       if (!s) continue;
-      if (b.bytes.byteLength < c * INSTANCE_BYTES) {
-        throw new Error('holon-draw: batch ' + i + ' (kind ' + b.kind + ') has ' + b.bytes.byteLength + ' bytes for ' + c + ' records of ' + INSTANCE_BYTES);
+      if (b.handle !== undefined) {
+        const r = handleOf(b.handle, 'batch ' + i), first = b.first | 0;
+        if (first < 0 || (first + c) * INSTANCE_BYTES > r.size) {
+          throw new Error('holon-draw: batch ' + i + ' (kind ' + b.kind + ') asks for records ' + first + '..' + (first + c - 1) + ' of a resident buffer that holds ' + Math.floor(r.size / INSTANCE_BYTES));
+        }
+      } else {
+        if (b.bytes.byteLength < c * INSTANCE_BYTES) {
+          throw new Error('holon-draw: batch ' + i + ' (kind ' + b.kind + ') has ' + b.bytes.byteLength + ' bytes for ' + c + ' records of ' + INSTANCE_BYTES);
+        }
+        need[s.kind] += c * INSTANCE_BYTES;
       }
-      need[s.kind] += c * INSTANCE_BYTES;
       if (b.screen === true) nScreen++; else nWorld++;
     }
     if (nWorld + nScreen === 0) return;
@@ -977,6 +1100,8 @@ export function createDrawer(gl, options) {
     }
 
     // Frame state.
+    bound = null;
+    if (hasVAO) bindVAO(null);
     gl.enable(gl.BLEND);
     gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
     gl.enable(gl.DEPTH_TEST);
@@ -1018,7 +1143,7 @@ export function createDrawer(gl, options) {
         if (!s) continue;
         if (s !== cur) {
           cur = s;
-          if (hasVAO) bindVAO(s.vao); else meshAttribs(s.mesh);
+          if (!hasVAO) meshAttribs(s.mesh);
           gl.uniform2f(uMode, s.mx, s.my);
           gl.uniform3f(uPix, halfH, ppu, s.kc);
           gl.uniform4f(uShade, s.lit || flatLit ? 1 : 0, ambient, s.spec, s.rim);
@@ -1027,7 +1152,7 @@ export function createDrawer(gl, options) {
             if (culling) gl.enable(gl.CULL_FACE); else gl.disable(gl.CULL_FACE);
           }
         }
-        feed(b, s.kind, c * INSTANCE_BYTES);
+        attach(b, s.kind, c, s.mesh, s.vao, s.id);
         settings(uParams, lastW, b.params);
         const o = b.offset;
         if (o) gl.uniform3f(uOffset, o[0], o[1], o[2]); else gl.uniform3f(uOffset, 0, 0, 0);
@@ -1042,11 +1167,7 @@ export function createDrawer(gl, options) {
       if (culling) { gl.disable(gl.CULL_FACE); culling = false; }
       const V = (opts && opts.viewport) || gl.getParameter(gl.VIEWPORT);
       gl.uniform2f(uView, V[2], V[3]);
-      if (hasVAO) {
-        bindVAO(screenVAO);
-      } else {
-        meshAttribs(mQuad);
-      }
+      if (!hasVAO) meshAttribs(mQuad);
       let smode = -1, textured = false;
       for (let i = 0; i < nb; i++) {
         const b = batches[i], c = b.count | 0;
@@ -1074,7 +1195,7 @@ export function createDrawer(gl, options) {
           }
           gl.activeTexture(gl.TEXTURE0);
         }
-        feed(b, s.kind, c * INSTANCE_BYTES);
+        attach(b, s.kind, c, mQuad, screenVAO, SCREEN_ID);
         settings(uSParams, lastS, b.params);
         const o = b.offset;
         if (o) gl.uniform3f(uSOffset, o[0], o[1], 0); else gl.uniform3f(uSOffset, 0, 0, 0);
@@ -1097,13 +1218,18 @@ export function createDrawer(gl, options) {
     if (!culling) gl.enable(gl.CULL_FACE);
   }
 
-  /** The counts of the last draw(). The SAME object every call (no allocation); copy it to keep it. */
+  /**
+   * drawCalls, instances, bytesUploaded and paramUploads are the last draw()'s (bytesUploaded
+   * counts `bytes` batches only: 0 for a frame of resident batches); residentBuffers and
+   * residentBytes are what is resident now. The SAME object every call; copy it to keep it.
+   */
   function stats() {
     return st;
   }
 
   function destroy() {
     if (dead) return;
+    for (let h = 1; h < handles.length; h++) if (handles[h]) release(h);
     dead = true;
     for (const m of meshes) {
       gl.deleteBuffer(m.vbo);
@@ -1122,5 +1248,5 @@ export function createDrawer(gl, options) {
     gl.deleteProgram(sprogram);
   }
 
-  return { draw, stats, destroy, instancing: isGL2 ? 'webgl2' : 'ANGLE_instanced_arrays', vertexArrays: hasVAO, screenPrecision: PF };
+  return { draw, stats, destroy, resident, update, release, instancing: isGL2 ? 'webgl2' : 'ANGLE_instanced_arrays', vertexArrays: hasVAO, screenPrecision: PF };
 }

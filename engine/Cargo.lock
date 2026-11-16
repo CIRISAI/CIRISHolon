@@ -930,7 +930,12 @@ version = "0.1.0"
 dependencies = [
  "holon-draw",
  "holon-draw-atoms",
+ "holon-gauge4",
 ]
+
+[[package]]
+name = "holon-gauge4"
+version = "0.1.0"
 
 [[package]]
 name = "holon-lattice"

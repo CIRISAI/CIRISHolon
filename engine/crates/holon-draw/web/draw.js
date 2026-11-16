@@ -36,18 +36,49 @@
 // gl.getParameter(gl.VIEWPORT), which allocates: a host that draws screen batches every
 // frame passes `opts.viewport`.
 //
+// TILE SETTINGS (`batch.params`, 32 numbers = 8 groups of 4; absent means neutral):
+//   0 DIM    rgb multiplier on every colour of the tile, applied last (after lighting)
+//   1 RAMP0  2 RAMP1   the two ends of the tile's colour ramp
+//   3 TINT   rgb multiplier for TINT marks
+//   4 NOISE  x0, y0, sx, sy: field position = (x0, y0) + (sx, sy) * (the mark's local xy)
+//   5 TEX    x: the procedural field's strength, 0 off
+//   6, 7     the host's (uploaded, not read)
+// They are uploaded per batch only when their values differ from the last ones uploaded to
+// that program (compared number by number; nothing is allocated).
+// COLOUR MODE, the top two bits of byte 51 (`variant`), for every kind but run:
+//   0x00 LITERAL  rgba as given
+//   0x40 RAMP     rgb = mix(RAMP0, RAMP1, t), t = clamp(aux[0], 0, 1); alpha from rgba
+//   0x80 TINT     rgb = rgba.rgb * TINT
+// then rgb *= DIM in every mode (runs too). NOTE: t is aux[0] for EVERY kind, as the core
+// defines it; on a line, arc or rod aux is the far end, and on a SCREEN quad aux[0] is the
+// corner radius, so RAMP on those reads a number that means something else.
+// THE GROUND FIELD (the twin's FSD/twin/texture.md, as its tiling.js TLF has it), on WORLD
+// quad and patch marks when TEX.x > 0: band-limited value noise on the grid of the field
+// position, octaves of 48, 12 and 3 units with amplitudes 0.10, 0.07 and 0.05, each times
+// (1 - density/2) where density is a RAMP mark's t (0 otherwise), each faded out between 4
+// and 2 pixels a cycle; rgb *= 1 + sum * TEX.x. Luminance only. The lattice repeats every
+// 4096 units. Pixels per field unit come from `opts.pixelsPerUnit` (pixels per WORLD unit,
+// exact for a map) or, without it, are estimated per vertex from `vp`, the clip w and the
+// viewport's height. Canopy and roof octaves are not here yet.
+//
 // PRECISION (INTERFACE.md §7): NO UNIFORM NAME APPEARS IN BOTH SHADER STAGES, in either
-// program. World program: the vertex stage owns u_vp, u_offset, u_eye, u_mode; the fragment
-// stage owns u_light, u_shade. Screen program: the vertex stage owns u_view, u_soffset,
-// u_smode; the fragment stage owns u_fmode, u_t0..u_t3. So there is no pair whose precision
-// could disagree at link. The world fragment stage is `mediump` throughout. The screen
-// fragment stage wants more (pixel distances and atlas coordinates up to a few thousand),
-// so its precision is a word, PF, written into BOTH stages' source by this file: `highp`
-// where gl.getShaderPrecisionFormat says the fragment stage has it, else `mediump`. It
-// never reads GL_FRAGMENT_PRECISION_HIGH; `options.forceMediump` is the no-high-precision
-// test. Varyings are declared with the same explicit precision in both stages. On a device
-// with mediump only, text sampling and large rounded shapes lose accuracy (not seen here:
-// no such device in the test).
+// program. World program: the vertex stage owns u_vp, u_offset, u_eye, u_mode, u_pix,
+// u_params; the fragment stage owns u_light, u_shade. Screen program: the vertex stage owns
+// u_view, u_soffset, u_smode, u_sparams; the fragment stage owns u_fmode, u_t0..u_t3. So
+// there is no pair whose precision could disagree at link. The tile settings are read in
+// the VERTEX stage only; what the fragment stage needs of them arrives as varyings.
+// Lighting is `mediump`. Three things want more where the device has it: the field's
+// position and hash, pixel distances of screen shapes, and atlas coordinates. Their
+// precision is a macro, PF, defined at the top of every shader source. It is `mediump` in
+// BOTH stages when gl.getShaderPrecisionFormat reports no high float for the fragment stage
+// or `options.forceMediump` is set. The fragment stage is `mediump` besides wherever
+// GL_FRAGMENT_PRECISION_HIGH is not defined, and names high precision only inside that
+// #ifdef (the twin's gate renames the macro in fragment sources, hides the query's answer,
+// and fails a fragment source that still says the word). In the mediump path the field's hash is a
+// different one, whose intermediate values stay small; in the highp path it is the twin's
+// own (computed on mod(i, m) / m). Varyings are declared with PF or an explicit precision
+// in both stages. On a true mediump-only device the field's position, text sampling and
+// large rounded shapes lose accuracy (not seen here: no such device in the test).
 //
 // GL STATE. draw() does not clear, does not set the viewport, does not touch the bound
 // framebuffer, scissor, stencil or colour mask. It CHANGES, and leaves changed:
@@ -60,7 +91,7 @@
 //   - ARRAY_BUFFER binding (left null);
 //   - the vertex array object binding, where one exists (WebGL 2 or OES_vertex_array_object):
 //     left null, i.e. the default object, whose own attribute state is NOT touched;
-//   - where no vertex array object exists (bare WebGL 1): attribute slots 0..7 (pointers,
+//   - where no vertex array object exists (bare WebGL 1): attribute slots 0..7 (all eight) (pointers,
 //     enabled flags, divisors) and the ELEMENT_ARRAY_BUFFER binding. On return slots 0..7 are
 //     disabled, their divisors are 0, and ELEMENT_ARRAY_BUFFER is null;
 //   - only when a run batch is drawn: activeTexture (left TEXTURE0) and the TEXTURE_2D
@@ -82,11 +113,38 @@ export const KIND = Object.freeze({
 
 // Attribute slots, bound before link. Slot 0 is a mesh attribute (never instanced), which
 // desktop GL needs.
-// Slot 7 (the record's four trailing bytes) is read by the screen program only, which does
-// not read slot 1: eight slots in all, WebGL 1's guaranteed minimum.
+// Slot 7 is the record's four trailing bytes (kind, detail, flags, variant). Eight slots in
+// all, WebGL 1's guaranteed minimum: there is no room for another attribute.
 const A_P = 0, A_N = 1, I_POS = 2, I_SIZE = 3, I_AUX = 4, I_ANGLE = 5, I_COLOR = 6, I_META = 7;
-const N_ATTR = 7;
+const N_ATTR = 8;
 const MAX_PAGES = 4;
+
+// The top of every shader source: PF, the precision of what wants more than mediump.
+// HD_MEDIUMP is defined above these lines, in BOTH stages, when the device's precision
+// query reports no high float in the fragment stage or `options.forceMediump` is set. The
+// fragment stage also takes the mediump path by itself where GL_FRAGMENT_PRECISION_HIGH is
+// not defined. Its source says the word for high precision once, inside that #ifdef and
+// nowhere else (comments included), so a gate that strips the block finds none left.
+const PF_HEAD_V = `#ifdef HD_MEDIUMP
+#define PF mediump
+#else
+#define PF highp
+#endif
+`;
+const PF_HEAD_F = `#ifdef GL_FRAGMENT_PRECISION_HIGH
+#define HD_HP highp
+#endif
+#if defined(HD_HP) && !defined(HD_MEDIUMP)
+#define PF HD_HP
+#define HD_HIGH 1
+#else
+#define PF mediump
+#endif
+`;
+
+/** Tile settings that leave every colour as its record gives it (the core's PARAMS_NEUTRAL). */
+export const PARAMS_NEUTRAL = Object.freeze([1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+export const COLOUR = Object.freeze({ LITERAL: 0x00, RAMP: 0x40, TINT: 0x80 });
 
 const VS = `
 precision highp float;
@@ -97,13 +155,19 @@ attribute vec3 i_size;
 attribute vec3 i_aux;
 attribute float i_angle;
 attribute vec4 i_color;
+attribute vec4 i_meta;     // kind, detail, flags, variant as 0..255
 uniform mat4 u_vp;
 uniform vec3 u_offset;
-uniform vec4 u_eye;   // homogeneous eye: xyz - p*w points from p to the viewer
-uniform vec2 u_mode;  // x: 0 sphere, 1 tube, 2 scaled-and-turned; y: radius scale
+uniform vec4 u_eye;        // homogeneous eye: xyz - p*w points from p to the viewer
+uniform vec2 u_mode;       // x: 0 sphere, 1 tube, 2 scaled-and-turned; y: radius scale
+uniform vec3 u_pix;        // half the viewport's height; pixels per world unit if given, else 0; 1 if this kind takes the field
+uniform vec4 u_params[8];  // the tile's settings
 varying mediump vec3 v_n;
 varying mediump vec3 v_v;
 varying lowp vec4 v_c;
+varying mediump vec3 v_dim;
+varying PF vec2 v_np;      // the field's position
+varying PF vec2 v_fp;      // pixels per field unit; the field's amplitude (0 off)
 void main() {
   vec3 p;
   vec3 n;
@@ -131,8 +195,29 @@ void main() {
   }
   v_n = n;
   v_v = normalize(u_eye.xyz - p * u_eye.w);
-  v_c = i_color;
+  float cm = floor(i_meta.w / 64.0 + 0.01);
+  vec3 rgb = i_color.rgb;
+  float dens = 0.0;
+  if (cm > 0.5 && cm < 1.5) {
+    dens = clamp(i_aux.x, 0.0, 1.0);
+    rgb = mix(u_params[1].rgb, u_params[2].rgb, dens);
+  } else if (cm > 1.5 && cm < 2.5) {
+    rgb *= u_params[3].rgb;
+  }
+  v_c = vec4(rgb, i_color.a);
+  v_dim = u_params[0].rgb;
   gl_Position = u_vp * vec4(p, 1.0);
+  float amp = u_pix.z * u_params[5].x * (1.0 - 0.5 * dens);
+  if (amp > 0.0) {
+    vec2 pl = (p.xy - o.xy) + i_pos.xy;
+    v_np = u_params[4].xy + u_params[4].zw * pl;
+    float ppu = u_pix.y > 0.0 ? u_pix.y
+      : u_pix.x * length(vec3(u_vp[0][1], u_vp[1][1], u_vp[2][1])) / max(gl_Position.w, 1e-6);
+    v_fp = vec2(ppu / max(abs(u_params[4].z), 1e-6), amp);
+  } else {
+    v_np = vec2(0.0);
+    v_fp = vec2(0.0);
+  }
 }
 `;
 
@@ -143,6 +228,34 @@ uniform vec4 u_shade;  // x lit (0 or 1), y ambient, z specular, w rim
 varying mediump vec3 v_n;
 varying mediump vec3 v_v;
 varying lowp vec4 v_c;
+varying mediump vec3 v_dim;
+varying PF vec2 v_np;
+varying PF vec2 v_fp;
+// Value noise on a lattice that repeats every 4096 units. The hash is taken on
+// mod(i, m) / m, which lies in [0, 1): at PF's better precision it is then the twin's own
+// hash; at mediump, one whose intermediate values stay under a few hundred, inside range.
+PF float h2(PF vec2 i, PF float m) {
+  PF vec2 q = mod(i, m) / m;
+#ifdef HD_HIGH
+  return fract(sin(dot(q, vec2(12.9898, 78.233)) * m) * 43758.5453);
+#else
+  return fract(sin(dot(q, vec2(127.1, 311.7))) * 43.7585);
+#endif
+}
+PF float vn(PF vec2 x, PF float cell) {
+  PF vec2 g = x / cell;
+  PF vec2 i = floor(g);
+  PF vec2 t = fract(g);
+  t = t * t * (3.0 - 2.0 * t);
+  PF float m = 4096.0 / cell;
+  return mix(mix(h2(i, m), h2(i + vec2(1.0, 0.0), m), t.x),
+             mix(h2(i + vec2(0.0, 1.0), m), h2(i + vec2(1.0, 1.0), m), t.x), t.y) * 2.0 - 1.0;
+}
+// An octave, faded out between 4 and 2 pixels a cycle.
+PF float oct(PF vec2 x, PF float cell, PF float amp) {
+  PF float w = 1.0 - smoothstep(0.25, 0.5, 1.0 / (v_fp.x * cell));
+  return w > 0.0 ? amp * w * vn(x, cell) : 0.0;
+}
 void main() {
   vec3 n = normalize(v_n);
   if (!gl_FrontFacing) n = -n;
@@ -153,13 +266,17 @@ void main() {
   vec3 h = normalize(u_light + v);
   float sp = pow(max(dot(n, h), 0.0), 40.0) * u_shade.z * step(0.0001, ndl);
   float rim = pow(1.0 - max(dot(n, v), 0.0), 3.0) * u_shade.w;
-  vec3 shaded = v_c.rgb * (lit + rim) + vec3(sp);
-  gl_FragColor = vec4(mix(v_c.rgb, shaded, u_shade.x), v_c.a);
+  vec3 base = v_c.rgb;
+  if (v_fp.y > 0.0) {
+    PF float s = oct(v_np, 48.0, 0.10) + oct(v_np, 12.0, 0.07) + oct(v_np, 3.0, 0.05);
+    base *= 1.0 + s * v_fp.y;
+  }
+  vec3 shaded = base * (lit + rim) + vec3(sp);
+  gl_FragColor = vec4(mix(base, shaded, u_shade.x) * v_dim, v_c.a);
 }
 `;
 
-// The screen program. PF is replaced by this file with one precision word, the same in both
-// stages (see PRECISION above).
+// The screen program.
 const SVS = `
 precision highp float;
 attribute vec3 a_p;
@@ -172,6 +289,7 @@ attribute vec4 i_meta;   // kind, detail, flags, variant as 0..255
 uniform vec2 u_view;     // viewport width and height in pixels
 uniform vec3 u_soffset;
 uniform float u_smode;   // 0 rectangle, 1 circle, 2 line, 3 run
+uniform vec4 u_sparams[8];
 varying PF vec2 v_a;     // max(v_a, v_b) = |local| - (half - radius): small near every edge
 varying PF vec2 v_b;
 varying PF vec2 v_uv;
@@ -218,7 +336,13 @@ void main() {
     v_uv = vec2(0.0);
     v_page = 0.0;
   }
-  v_c = i_color;
+  vec3 rgb = i_color.rgb;
+  if (u_smode < 2.5) {
+    float cm = floor(i_meta.w / 64.0 + 0.01);
+    if (cm > 0.5 && cm < 1.5) rgb = mix(u_sparams[1].rgb, u_sparams[2].rgb, clamp(i_aux.x, 0.0, 1.0));
+    else if (cm > 1.5 && cm < 2.5) rgb *= u_sparams[3].rgb;
+  }
+  v_c = vec4(rgb * u_sparams[0].rgb, i_color.a);
   gl_Position = vec4(px.x / u_view.x * 2.0 - 1.0, 1.0 - px.y / u_view.y * 2.0, 0.0, 1.0);
 }
 `;
@@ -404,8 +528,13 @@ export function createDrawer(gl, options) {
   const hasVAO = !!createVAO;
 
   // Program.
-  const vs = compile(gl, gl.VERTEX_SHADER, VS);
-  const fs = compile(gl, gl.FRAGMENT_SHADER, FS);
+  // HD_MEDIUMP in every source: the no-high-precision path, forced or found by the query.
+  const hp = gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER, gl.HIGH_FLOAT);
+  const PF = !options.forceMediump && hp && hp.precision > 0 ? 'highp' : 'mediump';
+  const med = PF === 'mediump' ? '#define HD_MEDIUMP 1\n' : '';
+  const headV = med + PF_HEAD_V, headF = med + PF_HEAD_F;
+  const vs = compile(gl, gl.VERTEX_SHADER, headV + VS);
+  const fs = compile(gl, gl.FRAGMENT_SHADER, headF + FS);
   const program = gl.createProgram();
   gl.attachShader(program, vs);
   gl.attachShader(program, fs);
@@ -416,6 +545,7 @@ export function createDrawer(gl, options) {
   gl.bindAttribLocation(program, I_AUX, 'i_aux');
   gl.bindAttribLocation(program, I_ANGLE, 'i_angle');
   gl.bindAttribLocation(program, I_COLOR, 'i_color');
+  gl.bindAttribLocation(program, I_META, 'i_meta');
   gl.linkProgram(program);
   gl.deleteShader(vs);
   gl.deleteShader(fs);
@@ -430,12 +560,12 @@ export function createDrawer(gl, options) {
   const uMode = gl.getUniformLocation(program, 'u_mode');
   const uLight = gl.getUniformLocation(program, 'u_light');
   const uShade = gl.getUniformLocation(program, 'u_shade');
+  const uPix = gl.getUniformLocation(program, 'u_pix');
+  const uParams = gl.getUniformLocation(program, 'u_params[0]');
 
   // The screen program.
-  const hp = gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER, gl.HIGH_FLOAT);
-  const PF = !options.forceMediump && hp && hp.precision > 0 ? 'highp' : 'mediump';
-  const svs = compile(gl, gl.VERTEX_SHADER, SVS.replace(/\bPF\b/g, PF));
-  const sfs = compile(gl, gl.FRAGMENT_SHADER, SFS.replace(/\bPF\b/g, PF));
+  const svs = compile(gl, gl.VERTEX_SHADER, headV + SVS);
+  const sfs = compile(gl, gl.FRAGMENT_SHADER, headF + SFS);
   const sprogram = gl.createProgram();
   gl.attachShader(sprogram, svs);
   gl.attachShader(sprogram, sfs);
@@ -458,6 +588,7 @@ export function createDrawer(gl, options) {
   const uView = gl.getUniformLocation(sprogram, 'u_view');
   const uSOffset = gl.getUniformLocation(sprogram, 'u_soffset');
   const uSMode = gl.getUniformLocation(sprogram, 'u_smode');
+  const uSParams = gl.getUniformLocation(sprogram, 'u_sparams[0]');
   const uFMode = gl.getUniformLocation(sprogram, 'u_fmode');
   const uTex = [0, 1, 2, 3].map((i) => gl.getUniformLocation(sprogram, 'u_t' + i));
   let samplersSet = false;
@@ -490,7 +621,7 @@ export function createDrawer(gl, options) {
   // slot -> { mesh, kind (whose instance buffer), mode x, mode y, lit, spec, rim, cull, vao }
   const slots = new Array(N_SLOT).fill(null);
   const slot = (i, kind, m, mx, my, lit, spec, rim, cull) => {
-    slots[i] = { mesh: m, kind, mx, my, lit, spec, rim, cull, vao: null };
+    slots[i] = { mesh: m, kind, mx, my, lit, spec, rim, cull, vao: null, field: i === KIND.QUAD || i === KIND.PATCH ? 1 : 0 };
   };
   slot(KIND.QUAD, KIND.QUAD, mQuad, 2, 0, 0, 0, 0, false);
   slot(KIND.PATCH, KIND.PATCH, mQuad, 2, 0, 0, 0, 0, false);
@@ -539,8 +670,6 @@ export function createDrawer(gl, options) {
     screenVAO = createVAO();
     bindVAO(screenVAO);
     meshAttribs(mQuad);
-    gl.enableVertexAttribArray(I_META);
-    divisor(I_META, 1);
     bindVAO(prevVAO);
   } else {
     for (const m of meshes) {
@@ -562,7 +691,7 @@ export function createDrawer(gl, options) {
   // Scratch, allocated once.
   const light = new Float32Array(3);
   const inv = new Float64Array(16);
-  const st = { drawCalls: 0, instances: 0, bytesUploaded: 0 };
+  const st = { drawCalls: 0, instances: 0, bytesUploaded: 0, paramUploads: 0 };
   let dead = false;
 
   // The eye, homogeneous, from vp alone: the preimage of clip (0, 0, -1, 0). For a
@@ -605,8 +734,24 @@ export function createDrawer(gl, options) {
     return slots[k];
   }
 
+  // The settings last uploaded to each program (a program keeps its uniforms between
+  // frames, so these do too). NaN at the start: the first batch always uploads.
+  const lastW = new Float32Array(32).fill(NaN);
+  const lastS = new Float32Array(32).fill(NaN);
+  function settings(loc, last, src) {
+    if (!src) src = PARAMS_NEUTRAL;
+    let same = true;
+    for (let i = 0; i < 32; i++) {
+      const v = Math.fround(src[i]);
+      if (last[i] !== v) { last[i] = v; same = false; }   // a NaN never equals: it uploads every time
+    }
+    if (same) return;
+    gl.uniform4fv(loc, last);
+    st.paramUploads++;
+  }
+
   // Upload one batch at its kind's cursor and point the instanced attributes at it.
-  function feed(b, k, len, meta) {
+  function feed(b, k, len) {
     const at = cursor[k];
     cursor[k] = at + len;
     gl.bindBuffer(gl.ARRAY_BUFFER, instBuf[k]);
@@ -619,20 +764,20 @@ export function createDrawer(gl, options) {
     gl.vertexAttribPointer(I_AUX, 3, gl.FLOAT, false, INSTANCE_BYTES, at + 24);
     gl.vertexAttribPointer(I_ANGLE, 1, gl.FLOAT, false, INSTANCE_BYTES, at + 36);
     gl.vertexAttribPointer(I_COLOR, 4, gl.UNSIGNED_BYTE, true, INSTANCE_BYTES, at + 40);
-    if (meta) gl.vertexAttribPointer(I_META, 4, gl.UNSIGNED_BYTE, false, INSTANCE_BYTES, at + 48);
+    gl.vertexAttribPointer(I_META, 4, gl.UNSIGNED_BYTE, false, INSTANCE_BYTES, at + 48);
     st.drawCalls++;
     st.instances += b.count | 0;
     st.bytesUploaded += len;
   }
 
   /**
-   * @param {Array<{kind:number, offset?:ArrayLike<number>, count:number, bytes:Uint8Array, screen?:boolean, coarse?:boolean}>} batches
+   * @param {Array<{kind:number, offset?:ArrayLike<number>, count:number, bytes:Uint8Array, screen?:boolean, coarse?:boolean, params?:ArrayLike<number>}>} batches
    * @param {Float32Array} vp column-major, 16 (world batches only)
-   * @param {{light?:ArrayLike<number>, ambient?:number, flatLit?:boolean, viewport?:ArrayLike<number>}} [opts]
+   * @param {{light?:ArrayLike<number>, ambient?:number, flatLit?:boolean, viewport?:ArrayLike<number>, pixelsPerUnit?:number}} [opts]
    */
   function draw(batches, vp, opts) {
     if (dead) throw new Error('holon-draw: draw() after destroy()');
-    st.drawCalls = 0; st.instances = 0; st.bytesUploaded = 0;
+    st.drawCalls = 0; st.instances = 0; st.bytesUploaded = 0; st.paramUploads = 0;
     const nb = batches.length;
 
     // Pass 1: bytes needed per kind; how many world and screen batches there are.
@@ -689,6 +834,9 @@ export function createDrawer(gl, options) {
       let ambient = opts && typeof opts.ambient === 'number' ? opts.ambient : 0.25;
       ambient = ambient < 0 ? 0 : ambient > 1 ? 1 : ambient;
       const flatLit = !!(opts && opts.flatLit);
+      const V = opts && opts.viewport;
+      const halfH = 0.5 * (V ? V[3] : gl.drawingBufferHeight);
+      const ppu = opts && opts.pixelsPerUnit > 0 ? +opts.pixelsPerUnit : 0;
 
       let cur = null;
       for (let i = 0; i < nb; i++) {
@@ -700,13 +848,15 @@ export function createDrawer(gl, options) {
           cur = s;
           if (hasVAO) bindVAO(s.vao); else meshAttribs(s.mesh);
           gl.uniform2f(uMode, s.mx, s.my);
+          gl.uniform3f(uPix, halfH, ppu, s.field);
           gl.uniform4f(uShade, s.lit || flatLit ? 1 : 0, ambient, s.spec, s.rim);
           if (s.cull !== culling) {
             culling = s.cull;
             if (culling) gl.enable(gl.CULL_FACE); else gl.disable(gl.CULL_FACE);
           }
         }
-        feed(b, s.kind, c * INSTANCE_BYTES, false);
+        feed(b, s.kind, c * INSTANCE_BYTES);
+        settings(uParams, lastW, b.params);
         const o = b.offset;
         if (o) gl.uniform3f(uOffset, o[0], o[1], o[2]); else gl.uniform3f(uOffset, 0, 0, 0);
         drawInstanced(s.mesh.n, c);
@@ -724,8 +874,6 @@ export function createDrawer(gl, options) {
         bindVAO(screenVAO);
       } else {
         meshAttribs(mQuad);
-        gl.enableVertexAttribArray(I_META);
-        divisor(I_META, 1);
       }
       let smode = -1, textured = false;
       for (let i = 0; i < nb; i++) {
@@ -754,7 +902,8 @@ export function createDrawer(gl, options) {
           }
           gl.activeTexture(gl.TEXTURE0);
         }
-        feed(b, s.kind, c * INSTANCE_BYTES, true);
+        feed(b, s.kind, c * INSTANCE_BYTES);
+        settings(uSParams, lastS, b.params);
         const o = b.offset;
         if (o) gl.uniform3f(uSOffset, o[0], o[1], 0); else gl.uniform3f(uSOffset, 0, 0, 0);
         drawInstanced(mQuad.n, c);
@@ -766,7 +915,7 @@ export function createDrawer(gl, options) {
     if (hasVAO) {
       bindVAO(null);
     } else {
-      for (let i = 0; i <= I_META; i++) {
+      for (let i = 0; i < N_ATTR; i++) {
         divisor(i, 0);
         gl.disableVertexAttribArray(i);
       }

@@ -205,7 +205,10 @@ pub const PARAMS_NEUTRAL: [f32; 32] = {
 
 /// A mark's colour mode, in the top two bits of its `variant` byte for every kind but
 /// `Run` (whose `variant` is its atlas page). LITERAL: `rgba`. RAMP: the mix of the tile's
-/// RAMP0 and RAMP1 at `t = aux[0]`, alpha from `rgba`. TINT: `rgba.rgb` times the tile's TINT.
+/// RAMP0 and RAMP1 at `t`, alpha from `rgba`. TINT: `rgba.rgb` times the tile's TINT.
+/// Where `t` is: `aux[0]` for the kinds whose `aux` is otherwise unused (world quad, patch,
+/// disc, glyph, box, prism, sphere); `angle` for the kinds whose `aux` is a second point or a
+/// corner radius and whose `angle` is unused (line, arc, rod, and every SCREEN mark).
 /// In every mode the result is then multiplied by the tile's DIM.
 pub const COLOUR_LITERAL: u8 = 0;
 pub const COLOUR_RAMP: u8 = 1 << 6;

@@ -11,9 +11,12 @@
 // A synthetic scene built in plain script, in the core's 52-byte record, drawn by draw.js.
 // Query: ?gl=1 asks for WebGL 1; ?ortho=1 an orthographic camera; ?az=deg&el=deg the orbit;
 // ?spin=1 keeps drawing; ?novao=1 hides vertex array objects (the bare WebGL 1 path);
+// ?dim=0.62 starts at night; ?tex=0 starts with the ground field off (both are also on the
+// settings panel: drag the slider, press the button); ?nohigh=1 is the twin's no-highp gate
+// (see below), ?nohigh=2 its macro rename alone;
 // ?page=N&pages=M shrinks the text atlas (to see eviction); ?mediump=1 writes mediump for the screen program's fragment precision; ?overlay=0 leaves
 // the panels out. Every word on the page is drawn by the engine: there is no HTML text.
-import { createDrawer, KIND, INSTANCE_BYTES } from './draw.js';
+import { createDrawer, KIND, INSTANCE_BYTES, PARAMS_NEUTRAL, COLOUR } from './draw.js';
 import { createTextProvider, STYLE } from './text.js';
 
 const q = new URLSearchParams(location.search);
@@ -25,6 +28,36 @@ canvas.height = Math.round(window.innerHeight * dpr);
 const want1 = q.get('gl') === '1';
 const gl = canvas.getContext(want1 ? 'webgl' : 'webgl2', { antialias: true, alpha: false });
 if (!gl) { info.textContent = 'no context'; document.body.dataset.error = 'no context'; throw new Error('no context'); }
+// Is the macro defined in the VERTEX stage too (the standard says so; draw.js relies on it)?
+const macroInVertex = (() => {
+  const sh = gl.createShader(gl.VERTEX_SHADER);
+  gl.shaderSource(sh, '#ifdef GL_FRAGMENT_PRECISION_HIGH\n#error defined\n#endif\nvoid main(){gl_Position=vec4(0.0);}');
+  gl.compileShader(sh);
+  const ok = gl.getShaderParameter(sh, gl.COMPILE_STATUS);
+  gl.deleteShader(sh);
+  return !ok;
+})();
+// ?nohigh=1: the twin's gate (its tools/page/no_highp/run.py): the precision query reports no
+// high float for the fragment stage, and GL_FRAGMENT_PRECISION_HIGH is renamed in every
+// fragment source to a name never defined. ?nohigh=2: the rename alone, the query left true.
+const nohigh = q.get('nohigh');
+const fragHighp = [];   // fragment sources that still say the word after the gate's own stripping
+if (nohigh === '1' || nohigh === '2') {
+  const kinds = new WeakMap(), cs = gl.createShader.bind(gl), ss = gl.shaderSource.bind(gl);
+  gl.createShader = (t) => { const sh = cs(t); kinds.set(sh, t); return sh; };
+  gl.shaderSource = (sh, src) => {
+    if (kinds.get(sh) === gl.FRAGMENT_SHADER) {
+      src = src.replace(/GL_FRAGMENT_PRECISION_HIGH/g, 'CEWP_NO_HIGHP');
+      const kept = src.replace(/#ifdef CEWP_NO_HIGHP[\s\S]*?#endif/g, '');
+      if (/\bhighp\b/.test(kept)) fragHighp.push(kept.slice(0, 120));
+    }
+    ss(sh, src);
+  };
+  if (nohigh === '1') {
+    const pf = gl.getShaderPrecisionFormat.bind(gl);
+    gl.getShaderPrecisionFormat = (st, pt) => (st === gl.FRAGMENT_SHADER && (pt === gl.HIGH_FLOAT || pt === gl.HIGH_INT) ? { rangeMin: 0, rangeMax: 0, precision: 0 } : pf(st, pt));
+  }
+}
 if (q.get('novao') === '1') {
   const real = gl.getExtension.bind(gl);
   gl.getExtension = (n) => (n === 'OES_vertex_array_object' ? null : real(n));
@@ -62,7 +95,24 @@ class Batch {
 
 function scene() {
   const OFF = [100, 200, 0];           // every batch's offset; the camera looks at it
-  const floor = new Batch(KIND.PATCH, OFF);
+  // Two ground tiles side by side. A: RAMP patches (t in aux[0]). B: TINT patches, at its
+  // own origin 8 units east; its NOISE origin makes up the difference, so the field is one
+  // field across the seam. 20 field units (metres) to a world unit.
+  const OFFB = [OFF[0] + 8, OFF[1], OFF[2]];
+  const groundA = new Batch(KIND.PATCH, OFF), groundB = new Batch(KIND.PATCH, OFFB), roofsB = new Batch(KIND.BOX, OFFB);
+  const M = 20;
+  const pA = Float32Array.from(PARAMS_NEUTRAL), pB = Float32Array.from(PARAMS_NEUTRAL), pRest = Float32Array.from(PARAMS_NEUTRAL);
+  pA.set([0.16, 0.30, 0.15, 1], 4); pA.set([0.50, 0.47, 0.44, 1], 8); pA.set([0, 0, M, M], 16);
+  pB.set([1.0, 0.80, 0.58, 1], 12); pB.set([8 * M, 0, M, M], 16);
+  groundA.params = pA; groundB.params = pB; roofsB.params = pB;
+  for (let i = 0; i < 4; i++) for (let j = 0; j < 6; j++) {
+    const t = Math.min(1, Math.max(0, (j + 0.5) / 6 + 0.12 * ((i * 7 + j * 3) % 5 - 2) / 2));
+    groundA.add([-7 + 2 * i, -5 + 2 * j, -0.02], [2, 2, 0], [t, 0, 0], 0, [255, 0, 255, 255], 0, COLOUR.RAMP);
+    const g = 120 + ((i * 5 + j * 11) % 4) * 22;
+    groundB.add([-7 + 2 * i, -5 + 2 * j, -0.02], [2, 2, 0], null, 0, [g, g, g, 255], 0, COLOUR.TINT);
+  }
+  roofsB.add([-3.4, 4.6, 0], [1.2, 0.9, 0.5], null, 0.3, [235, 235, 235, 255], 0, COLOUR.TINT);
+  roofsB.add([-1.6, 4.2, 0], [0.9, 1.3, 0.7], null, -0.2, [200, 200, 200, 255], 0, COLOUR.TINT);
   const quads = new Batch(KIND.QUAD, OFF);
   const discs = new Batch(KIND.DISC, OFF);
   const boxes = new Batch(KIND.BOX, OFF);
@@ -73,7 +123,6 @@ function scene() {
   const lines = new Batch(KIND.LINE, OFF);
   const glass = new Batch(KIND.SPHERE, OFF);
 
-  floor.add([0, 0, -0.02], [16, 12, 0], null, 0, [38, 46, 60, 255]);
   // Quads: a row of tiles on the floor, each turned a little more.
   for (let i = 0; i < 5; i++) quads.add([-6 + i * 1.3, -4.6, 0.01], [1.0, 0.6, 0], null, i * 0.3, [230, 180 - i * 25, 60 + i * 30, 255]);
   // Discs.
@@ -112,7 +161,9 @@ function scene() {
   // A translucent sphere, last (blending is in the order given).
   glass.add([5.8, -0.6, 1.9], [0.9, 0, 0], null, 0, [120, 200, 255, 110]);
 
-  return { OFF, batches: [floor, quads, discs, boxes, prisms, spheres, coarse, rods, lines, glass] };
+  const rest = [quads, discs, boxes, prisms, spheres, coarse, rods, lines, glass];
+  for (const b of rest) b.params = pRest;
+  return { OFF, batches: [groundA, groundB, roofsB, ...rest], pA, pB, pRest };
 }
 
 // ---- camera (column-major) ----
@@ -141,7 +192,9 @@ function ortho(h, aspect, n, f) {
   return new Float32Array([1 / (h * aspect), 0, 0, 0, 0, 1 / h, 0, 0, 0, 0, 2 / (n - f), 0, 0, 0, (f + n) / (n - f), 1]);
 }
 
-const { OFF, batches } = scene();
+const { OFF, batches, pA, pB, pRest } = scene();
+const state = { dim: Math.min(1, Math.max(0.3, +(q.get('dim') || 1))), tex: q.get('tex') === '0' ? 0 : 1 };
+const hit = { slider: null, button: null };   // device-pixel rectangles [x0, y0, x1, y1] of the two controls
 
 // ---- the screen overlay: panels, rows, buttons, in device pixels ----
 // A panel is one screen tile: its origin is the batch offset, and its marks are packed per
@@ -174,7 +227,9 @@ class Panel {
     return e;
   }
 }
-const panels = [new Panel(), new Panel(), new Panel()];
+const panels = [new Panel(), new Panel(), new Panel(), new Panel()];
+const pPanel = Float32Array.from(PARAMS_NEUTRAL);   // panel 4 shows tile A's ramp and tile B's tint in screen marks
+for (const b of panels[3].batches) b.params = pPanel;
 const INK = [222, 229, 240, 255], DIM = [140, 152, 172, 255], HEAD = [120, 190, 255, 255];
 
 function overlay(lines) {
@@ -227,12 +282,58 @@ function overlay(lines) {
   });
   c.disc(x + bht / 2, pad + bht / 2, bht / 2, [235, 180, 60, 255]);
   c.disc(x + bht / 2, pad + bht / 2, bht / 2 - 4 * d, [17, 22, 32, 255]);
+
+  // Panel 4: the tile settings. A slider for DIM (drag it), the field's switch, and screen
+  // discs in RAMP and TINT mode reading the same settings the ground does.
+  const s4 = panels[3];
+  const sh = pad * 2 + 24 * d + 3 * row + 10 * d;
+  if (narrow) s4.begin(12 * d, c.o[1] - sh - 12 * d, pw, sh); else s4.begin(W - pw - 12 * d, b.o[1] + b.h + 12 * d, pw, sh);
+  heading(s4, 'Tile settings');
+  y = pad + 24 * d + row / 2;
+  s4.text('night dim', STYLE.BODY, pad, y, -1, DIM);
+  s4.text(state.dim.toFixed(2), STYLE.BODY, s4.w - pad, y, 1, INK);
+  const tx0 = pad + 96 * d, tx1 = s4.w - pad - 48 * d, f = (state.dim - 0.3) / 0.7, kx = tx0 + f * (tx1 - tx0);
+  s4.rect(tx0, y - 2 * d, tx1 - tx0, 4 * d, 2 * d, [52, 64, 90, 255]);
+  s4.rect(tx0, y - 2 * d, kx - tx0, 4 * d, 2 * d, [120, 190, 255, 255]);
+  s4.disc(kx, y, 7 * d, [222, 229, 240, 255]);
+  hit.slider = [s4.o[0] + tx0, s4.o[1] + y - 12 * d, s4.o[0] + tx1, s4.o[1] + y + 12 * d];
+  y += row + 4 * d;
+  s4.text('ground field', STYLE.BODY, pad, y, -1, DIM);
+  const bw4 = 56 * d, bx4 = s4.w - pad - bw4;
+  s4.rect(bx4, y - 11 * d, bw4, 22 * d, 6 * d, state.tex > 0 ? [38, 128, 96, 255] : [70, 50, 56, 255]);
+  s4.text(state.tex > 0 ? 'on' : 'off', STYLE.BUTTON, bx4 + bw4 / 2, y, 0, INK);
+  hit.button = [s4.o[0] + bx4, s4.o[1] + y - 11 * d, s4.o[0] + bx4 + bw4, s4.o[1] + y + 11 * d];
+  y += row + 4 * d;
+  s4.text('ramp', STYLE.SMALL, pad, y, -1, DIM);
+  for (let i = 0; i < 5; i++) s4.discs.add([pad + (48 + 22 * i) * d, y, 0], [8 * d, 0, 0], [i / 4, 0, 0], 0, [255, 0, 255, 255], 0, COLOUR.RAMP);
+  s4.text('tint', STYLE.SMALL, s4.w - pad - 60 * d, y, 1, DIM);
+  for (let i = 0; i < 2; i++) s4.discs.add([s4.w - pad - (8 + 22 * (1 - i)) * d, y, 0], [8 * d, 0, 0], null, 0, [150 + 80 * i, 150 + 80 * i, 150 + 80 * i, 255], 0, COLOUR.TINT);
 }
+
+// The settings, written into the tiles' 32 numbers: no instance changes.
+function applyState() {
+  for (const p of [pA, pB, pRest, pPanel]) { p[0] = state.dim; p[1] = state.dim; p[2] = state.dim; }
+  pA[20] = state.tex; pB[20] = state.tex;
+  pPanel.set(pA.subarray(4, 12), 4); pPanel.set(pB.subarray(12, 16), 12);
+}
+let pending = false;
+function invalidate() { if (!pending) { pending = true; requestAnimationFrame(frame); } }
+const inside = (r, x, y) => r && x >= r[0] && x <= r[2] && y >= r[1] && y <= r[3];
+let dragging = false;
+const slide = (x) => { const r = hit.slider; state.dim = Math.round((0.3 + 0.7 * Math.min(1, Math.max(0, (x - r[0]) / (r[2] - r[0])))) * 100) / 100; invalidate(); };
+canvas.addEventListener('pointerdown', (e) => {
+  const x = e.clientX * dpr, y = e.clientY * dpr;
+  if (inside(hit.slider, x, y)) { dragging = true; canvas.setPointerCapture(e.pointerId); slide(x); }
+  else if (inside(hit.button, x, y)) { state.tex = state.tex > 0 ? 0 : 1; invalidate(); }
+});
+canvas.addEventListener('pointermove', (e) => { if (dragging) slide(e.clientX * dpr); });
+canvas.addEventListener('pointerup', () => { dragging = false; });
 
 let drawer, text;
 try {
   text = createTextProvider(gl, { dpr, pageSize: +(q.get('page') || 0), maxPages: +(q.get('pages') || 0) });
   drawer = createDrawer(gl, { text, forceMediump: q.get('mediump') === '1' });
+  window.__state = state; window.__invalidate = invalidate;
 } catch (e) {
   info.textContent = String(e); document.body.dataset.error = String(e); throw e;
 }
@@ -248,6 +349,8 @@ const last = { drawCalls: 0, instances: 0, bytesUploaded: 0 };
 let frames = 0, epochs = 0;
 
 function frame(tms) {
+  pending = false;
+  applyState();
   if (q.get('spin') === '1') az += 0.004;
   const at = [OFF[0], OFF[1], OFF[2] + 1.2];
   const eye = [at[0] + dist * Math.cos(el) * Math.sin(az), at[1] - dist * Math.cos(el) * Math.cos(az), at[2] + dist * Math.sin(el)];
@@ -287,10 +390,10 @@ function frame(tms) {
   frames++;
   // Two frames, so the counts the first one measured are the ones the second one shows.
   if (frames >= 2) {
-    document.body.dataset.stats = JSON.stringify({ ...s, glError: err, version: gl.getParameter(gl.VERSION), instancing: drawer.instancing, vertexArrays: drawer.vertexArrays, screenPrecision: drawer.screenPrecision, text: { ...text.stats() }, relayouts: epochs, drawMs: +ms.toFixed(2) });
+    document.body.dataset.stats = JSON.stringify({ ...s, glError: err, version: gl.getParameter(gl.VERSION), instancing: drawer.instancing, vertexArrays: drawer.vertexArrays, screenPrecision: drawer.screenPrecision, macroInVertex, fragHighp, dim: state.dim, tex: state.tex, text: { ...text.stats() }, relayouts: epochs, drawMs: +ms.toFixed(2) });
     document.body.dataset.ready = '1';
   }
-  if (q.get('spin') === '1' || frames < 2) requestAnimationFrame(frame);
+  if (q.get('spin') === '1' || frames < 2) invalidate();
 }
-requestAnimationFrame(frame);
+invalidate();
 </script>

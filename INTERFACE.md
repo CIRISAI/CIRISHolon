@@ -18,6 +18,23 @@ for data. This is the closed-versus-carried split at the screen: a mark is carri
 consumer reads it. (The standard implies the first two sentences through L1 and GraphView's
 `twin` slot; the labelling is this file's addition and binds this engine only.)
 
+## 0a. Two ways a draw layer is hosted (revised the same day, before any reply to the draft)
+
+The first draft assumed the client was the host. The client session then relayed that the
+lead means `holon-draw` for CEWPOS, not the client (as relayed; not said to this session).
+CEWPOS's own guide (`AGENTS.md`, read at `d6ba311`) says its scene IS the whole screen,
+projected from a closed set of UX primitives (12 there; the standard now has 24). So there
+are two profiles, and the engine is one core with a layer above it for the second.
+
+- **Profile A, a canvas in a host** (the twin's map; a GraphView inside a client). The host
+  draws text, the 17 state forms and every control. The draw layer draws marks. §1 to §3 as
+  first written are this profile.
+- **Profile B, the whole screen** (CEWPOS). There is no host toolkit: the draw layer draws
+  all 24 primitives, so it needs text and a form for each of the 17 states. This adds two
+  marks (D11, D12) and a UI layer (`holon-draw-ui`, §3a) that composes the 24 from marks. The
+  core does not learn about cards; the UI layer is a client of it, as the map and the atoms
+  are.
+
 ## 1. The draw primitives (`holon-draw`)
 
 Ten marks, one container, four services. A mark is an INSTANCE: a fixed-size record, drawn
@@ -53,14 +70,25 @@ drawn), `pin` (never elided or coarsened).
   marks are drawn fine. Behind one interface; the ring (distance) and the bits allocator
   (issue #4 §3a) are two implementations of it.
 
-**No text.** The draw layer draws no text and holds no strings. It returns anchors (S3) and
-the host draws labels with its own already-localised strings and its own shaping. A label
-is therefore never in a language the host did not choose, and right-to-left and complex
-scripts are not this engine's work. (The one exception a host may ask for later is digits
-on a `glyph`; it is not in this draft.)
+**Text is drawn, never shaped, by the core.** In profile A the draw layer draws no text: it
+returns anchors (S3) and the host draws labels. In profile B two more marks exist:
 
-**No state forms.** Loading, error, empty, refused and the other states of a read are the
-host's to draw. The draw layer is given a scene only when its read is `populated`.
+| # | mark | what it is | fields |
+|---|---|---|---|
+| D11 | `run` | one already-shaped run of text: a strip of glyph quads from an atlas | atlas rectangle per glyph, advance, baseline, colour |
+| D12 | `image` | a rectangle of a host-supplied texture (a QR grid, a media frame the host decoded) | texture id, source rectangle |
+
+The core holds no strings, no fonts and no language. A `run` arrives from a TEXT PROVIDER
+behind one trait: given a localised string, a style and a width, return shaped, positioned
+glyphs and their coverage. On the web the provider is the platform (the browser shapes and
+rasterises, so right-to-left and complex scripts are the platform's); on bare metal it is a
+shaping library and a rasteriser compiled in. Which library, and its size, is an open
+decision (§5). The laws' "only localised labels" holds in both: the core cannot invent a
+word.
+
+**State forms are the UI layer's, not the core's.** In profile A the host draws them. In
+profile B `holon-draw-ui` holds one form per state, all 17, and a missing form is a build
+error (the constitution session's reading of L3). The core is given marks either way.
 
 ## 2. What the screen standard's laws put on a draw layer
 
@@ -102,12 +130,43 @@ so the two sets of primitives can be checked against each other.
 | FieldRow (`txt`), Field (`input`), Choice (`opt`), DestinationPicker (`pick`) | no | — | all of it; where one overlays a canvas its anchor is `pin`ned (L12) |
 | Action (`btn`, `mi`), ConfirmSheet (`sheet`), ReceiptSheet (`receipt`), Ceremony (`ceremony`), StepFlow (`step`), ConscienceStep (`conscience`) | no | — | all of it; a pick never acts |
 
+### 3a. Profile B: the same 24 when the draw layer is the whole screen
+
+Each primitive is a composition in `holon-draw-ui`; `run` is D11, and every row carries its
+tag on the mark a person would touch.
+
+| UX primitive | composition | notes |
+|---|---|---|
+| CardShell | `quad` (radius) + `run` title | a tile of its own: a card is a tile |
+| FieldRow | `run` label + `run` value, or the fixed "not sent" form | never blank (its note) |
+| ItemRow | `quad` + `run`s + `glyph` flag + Action | the twin of any canvas mark with the same tag |
+| ScopePill, Chip | `quad` (radius) + `run`; Chip adds a `glyph` | never colour alone |
+| Action | `quad` + `run`; disabled draws its reason `run` (L5) | `pin`ned (L12) |
+| ReceiptSheet, ConfirmSheet | a tile above the scene: `quad` + fact `run`s + Actions | one open at a time; a sheet's `shows:` is `pin`ned |
+| StateBlock | exactly one of 17 forms, swapped on one frame (L2) | each form is `glyph` + `run`; `loading_known` adds a `quad` bar |
+| Metric | `run` number + `run` unit + `run` source, or an em dash `run` | a chart is optional (§3) |
+| Choice, DestinationPicker | option rows: `quad` + `run` + `glyph` mark; nothing preselected | `pin`ned |
+| Field | `quad` + `run` + caret `line` + ceiling `run` | text INPUT (keys, an input method, selection) is the platform's or a further layer: not in this draft |
+| StepFlow | step `disc`s + `line`s + `run`s; a skipped step is absent | |
+| Ceremony | `run` prices and window + signer rows + Action | numbers only from the node's answer |
+| LineageChain | `disc`s + `arc`s + `run`s | |
+| CodeCompare | large `run`s (words, digits) + verdict `glyph` | |
+| QrCode | `image` (exact, nearest sampling) or a grid of `quad`s; scanning is the platform's camera | |
+| Transcript, Document | `run`s in a scrolling tile; a recanted claim is a `run` with a `line` through it and its reason beside it | long text needs line breaking from the provider |
+| ConscienceStep, PolicyLens | rows of `run` + `glyph`; hidden items absent with a count `run` | |
+| GraphView | as §3 | its twin is ItemRows drawn by this same layer |
+| Media | `image` with its alt `run` and disclosure `run`, or not drawn (L10) | decoding is the platform's |
+
+What profile B costs beyond profile A, stated plainly: a text provider on each platform; line
+breaking and scrolling; text input; focus order and a screen reader's tree built from the
+tags. None of these is the 3D core, and each is its own piece of work.
+
 **Which draw primitives no UX primitive uses:** `box`, `prism`, `patch` with a field. They
 exist for worlds (streets, terrain, atoms), where the consumer is a map or a workbench, not
 a card. A world view shown inside a client is a GraphView whose rows are places.
 
-**Which UX needs the draw set lacks:** text (deliberately), images (Media), and a curved
-text path. None is proposed.
+**Which UX needs the draw set lacks in profile A:** text and images, which are the host's.
+In profile B they are D11 and D12. A curved text path is not proposed.
 
 ## 4. The seam contract (from the CEWP twin)
 
@@ -135,7 +194,9 @@ text path. None is proposed.
 
 - Whether "decoration is labelled" should be a law of the standard (a draft bump; an issue
   on the constitution's repository).
-- Whether a draw layer in the client is wanted at all, and if so on which surface: the
-  client reports a native surface per platform fits its architecture and a WebGL surface in
-  a web view would be new. That is the lead's decision, with a size budget.
-- Digits on a mark without host text.
+- CEWPOS as the host of profile B: its targets (a browser canvas today, bare metal later),
+  its size budget, and whether its 12 primitives are to be re-based on the standard's 24.
+  These are the lead's and the CEWPOS side's; nobody from that side has been asked yet.
+- The text provider off the web: which shaping library and rasteriser, and what they weigh.
+- Text input, focus and the screen reader's tree in profile B.
+- The first draft's line "Ten marks" in §1 now reads twelve in profile B.

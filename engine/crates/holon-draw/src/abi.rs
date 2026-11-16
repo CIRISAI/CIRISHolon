@@ -8,7 +8,7 @@
 //! MEMORY CAN MOVE: `hd_in` and `hd_build_leaf` may grow the module's memory, which detaches
 //! every view a host holds on the old buffer. Take `memory.buffer` AFTER the call that returns
 //! the pointer, never before (the twin found this on its first integration).
-use crate::twin::{build_leaf, Leaf, Style};
+use crate::twin::{build_leaf, build_leaf_instances, Leaf, Style, GROUPS};
 use std::cell::RefCell;
 
 #[derive(Default)]
@@ -16,6 +16,10 @@ struct State {
     input: [Vec<f64>; 6], // roads, buildings, meta, streets, tones, style
     out: Vec<f32>,
     style: Option<Style>,
+    /// The last leaf as packed instance records, in group order, and each group's
+    /// (first record, count).
+    inst: Vec<u8>,
+    groups: [(u32, u32); 8],
 }
 
 thread_local! {
@@ -83,6 +87,65 @@ pub extern "C" fn hd_build_leaf(id: f64, ox: f64, oy: f64, sx: f64, pph: f64, ro
     })
 }
 
+/// Build the leaf as INSTANCE records for `draw.js` (same arguments as [`hd_build_leaf`]).
+/// Returns the number of 52-byte records, or 0 on the same refusals. The records are in the
+/// twin's paint order by group (`twin::GROUPS`: ground, mottling and scattered trees, yards,
+/// garden trees, casings, streets, shadows, roofs), each group one kind; positions are in the
+/// tile's frame (the leaf's offset and east-west stretch applied).
+#[no_mangle]
+#[allow(clippy::too_many_arguments)]
+pub extern "C" fn hd_build_leaf_instances(id: f64, ox: f64, oy: f64, sx: f64, pph: f64, road_r: f64, road_g: f64, road_b: f64, has_tones: u32) -> u32 {
+    STATE.with(|s| {
+        let mut s = s.borrow_mut();
+        let st = &mut *s;
+        let [roads, buildings, meta, streets, tones, _] = &st.input;
+        st.inst.clear();
+        st.groups = [(0, 0); 8];
+        if meta.len() < 3 || roads.len() % 5 != 0 || buildings.len() % 8 != 0 {
+            return 0;
+        }
+        let style = Style { pph, road: [road_r, road_g, road_b], ..st.style.clone().unwrap_or_default() };
+        let leaf = Leaf { id, roads, buildings, meta, streets, tones: if has_tones != 0 { Some(tones) } else { None }, ox, oy, sx };
+        let recs = build_leaf_instances(&leaf, &style);
+        for (i, r) in recs.iter().enumerate() {
+            let g = &mut st.groups[r.group];
+            if g.1 == 0 {
+                g.0 = i as u32;
+            }
+            g.1 += 1;
+            r.inst.pack(&mut st.inst);
+        }
+        recs.len() as u32
+    })
+}
+
+/// Where the last leaf's records are (52 bytes each). Valid until the next call.
+#[no_mangle]
+pub extern "C" fn hd_out_instances() -> *const u8 {
+    STATE.with(|s| s.borrow().inst.as_ptr())
+}
+
+/// The number of paint groups (8).
+#[no_mangle]
+pub extern "C" fn hd_inst_groups() -> u32 {
+    GROUPS.len() as u32
+}
+
+/// Group `g`'s kind (holon-draw's `Kind` number), first record, or record count (`which` 0,
+/// 1 or 2); 0 for a group out of range.
+#[no_mangle]
+pub extern "C" fn hd_inst_group(g: u32, which: u32) -> u32 {
+    let Some(&(_, kind)) = GROUPS.get(g as usize) else { return 0 };
+    STATE.with(|s| {
+        let (first, count) = s.borrow().groups[g as usize];
+        match which {
+            0 => kind as u32,
+            1 => first,
+            _ => count,
+        }
+    })
+}
+
 /// Where the last built leaf's floats are. Valid until the next call into this module.
 #[no_mangle]
 pub extern "C" fn hd_out() -> *const f32 {
@@ -106,6 +169,15 @@ mod tests {
         let want = build_leaf(&Leaf { id: 42.0, roads: &roads, buildings: &buildings, meta: &meta, streets: &streets, tones: None, ox: 1.0, oy: 2.0, sx: 1.0 }, &style);
         assert_eq!(got, want);
         assert!(hd_in(9, 4).is_null());
+        // the instance path over the same inputs: records in group order, groups adding up
+        let n = hd_build_leaf_instances(42.0, 1.0, 2.0, 1.0, 2.5, 0.47, 0.49, 0.53, 0);
+        assert!(n > 0);
+        let total: u32 = (0..hd_inst_groups()).map(|g| hd_inst_group(g, 2)).sum();
+        assert_eq!(total, n);
+        assert_eq!(hd_inst_group(0, 0), crate::Kind::Patch as u32);
+        assert_eq!(hd_inst_group(5, 0), crate::Kind::Line as u32);
+        let bytes = unsafe { std::slice::from_raw_parts(hd_out_instances(), n as usize * crate::INSTANCE_BYTES) };
+        assert_eq!(bytes[48], crate::Kind::Patch as u8, "the first record is the ground");
         hd_in(1, 7); // a building record cut short
         assert_eq!(hd_build_leaf(42.0, 1.0, 2.0, 1.0, 2.5, 0.47, 0.49, 0.53, 0), 0);
     }

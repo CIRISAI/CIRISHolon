@@ -243,6 +243,50 @@ pub fn tone(density: f64) -> f64 {
 struct Out<'a> {
     v: Vec<f32>,
     l: &'a Leaf<'a>,
+    /// When set, every primitive is also recorded as an instance (see [`build_leaf_instances`]).
+    inst: Option<Vec<Rec>>,
+    /// The section being built, which tells a lot's quad from a shadow's and a garden tree
+    /// from a scattered one.
+    section: Section,
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Section {
+    Leaf,
+    Lots,
+    Streets,
+    Buildings,
+}
+
+/// One instance with the paint group it belongs to and where its primitive starts in the
+/// vertex stream (for the proof that the two are the same geometry).
+#[derive(Clone, Copy, Debug)]
+pub struct Rec {
+    pub group: usize,
+    pub inst: crate::Instance,
+    pub start: usize,
+}
+
+/// The paint groups of a leaf, in the twin's paint order, and the one kind each holds.
+pub const GROUPS: [(&str, crate::Kind); 8] = [
+    ("ground", crate::Kind::Patch),
+    ("mottling and scattered trees", crate::Kind::Disc),
+    ("yards", crate::Kind::Quad),
+    ("garden trees", crate::Kind::Disc),
+    ("casings", crate::Kind::Line),
+    ("streets", crate::Kind::Line),
+    ("shadows", crate::Kind::Quad),
+    ("roofs", crate::Kind::Quad),
+];
+
+/// A disc's `variant`: bit 0 puts it in the CASING surface class (the twin's kind 1); bit 2
+/// gives it the canopy field (the twin's kind 1.25 is both).
+pub const DISC_CASING: u8 = 0x01;
+pub const DISC_CANOPY_FIELD: u8 = 0x04;
+
+fn rgba(c: [f64; 3], a: f64) -> [u8; 4] {
+    let q = |v: f64| (v.clamp(0.0, 1.0) * 255.0).round() as u8;
+    [q(c[0]), q(c[1]), q(c[2]), q(a)]
 }
 
 impl Out<'_> {
@@ -251,12 +295,51 @@ impl Out<'_> {
         let l = self.l;
         self.v.extend_from_slice(&[(l.ox + x * l.sx) as f32, (l.oy + y) as f32, nx as f32, ny as f32, wd as f32, c[0] as f32, c[1] as f32, c[2] as f32, a as f32, k as f32]);
     }
+    /// A point of the leaf in the tile's frame, as the vertex stream places it.
+    fn tile(&self, x: f64, y: f64) -> [f32; 3] {
+        [(self.l.ox + x * self.l.sx) as f32, (self.l.oy + y) as f32, 0.0]
+    }
+    fn record(&mut self, group: usize, inst: crate::Instance, start: usize) {
+        if let Some(v) = self.inst.as_mut() {
+            v.push(Rec { group, inst, start });
+        }
+    }
     fn quad(&mut self, p: [[f64; 2]; 4], c: [f64; 3], a: f64, k: f64) {
+        if self.inst.is_some() {
+            // the rectangle from its corners: centre on the diagonal, sides from corner 0
+            let (cx, cy) = (0.5 * (p[0][0] + p[2][0]), 0.5 * (p[0][1] + p[2][1]));
+            let (wx, wy, hx, hy) = (p[1][0] - p[0][0], p[1][1] - p[0][1], p[3][0] - p[0][0], p[3][1] - p[0][1]);
+            let mut m = crate::Instance::new(crate::Kind::Quad, self.tile(cx, cy), [wx.hypot(wy) as f32, hx.hypot(hy) as f32, 0.0]);
+            m.angle = wy.atan2(wx) as f32;
+            let group = if k == 0.0 {
+                m.kind = crate::Kind::Patch;
+                m.variant = crate::COLOUR_RAMP;
+                m.aux[0] = c[0] as f32;
+                m.rgba = rgba([1.0, 1.0, 1.0], a);
+                0
+            } else if k == 3.0 {
+                m.variant = crate::COLOUR_TINT;
+                m.rgba = rgba(c, a);
+                7
+            } else {
+                m.rgba = rgba(c, a);
+                if self.section == Section::Buildings { 6 } else { 2 }
+            };
+            let start = self.v.len();
+            self.record(group, m, start);
+        }
         for q in [0, 1, 2, 0, 2, 3] {
             self.vert(p[q][0], p[q][1], 0.0, 0.0, 0.0, c, a, k);
         }
     }
     fn disc(&mut self, x: f64, y: f64, r: f64, c: [f64; 3], a: f64, kd: f64) {
+        if self.inst.is_some() {
+            let mut m = crate::Instance::new(crate::Kind::Disc, self.tile(x, y), [r as f32, 0.0, 0.0]).colour(rgba(c, a));
+            m.variant = if kd == 1.25 { DISC_CASING | DISC_CANOPY_FIELD } else { DISC_CASING };
+            let group = if self.section == Section::Lots { 3 } else { 1 };
+            let start = self.v.len();
+            self.record(group, m, start);
+        }
         for k in 0..6 {
             let (a0, a1) = (k as f64 * std::f64::consts::PI / 3.0, (k + 1) as f64 * std::f64::consts::PI / 3.0);
             self.vert(x, y, 0.0, 0.0, 0.0, c, a, kd);
@@ -285,6 +368,13 @@ impl Out<'_> {
             y1 += uy * wd;
         }
         let (nx, ny) = (-uy, ux);
+        if self.inst.is_some() {
+            let mut m = crate::Instance::new(crate::Kind::Line, self.tile(x0, y0), [(2.0 * wd) as f32, 0.0, 0.0]).colour(rgba(c, a));
+            m.aux = self.tile(x1, y1);
+            m.variant = if k == 1.0 { crate::VARIANT_CASING } else { 0 };
+            let start = self.v.len();
+            self.record(if k == 1.0 { 4 } else { 5 }, m, start);
+        }
         for (px, py, sg) in [(x0, y0, -1.0), (x1, y1, -1.0), (x1, y1, 1.0), (x0, y0, -1.0), (x1, y1, 1.0), (x0, y0, 1.0)] {
             self.vert(px, py, nx * sg, ny * sg, wd, c, a, k);
         }
@@ -293,8 +383,23 @@ impl Out<'_> {
 
 /// The leaf's vertex stream in the twin's format: 10 floats a vertex.
 pub fn build_leaf(l: &Leaf, style: &Style) -> Vec<f32> {
+    build(l, style, false).0
+}
+
+/// The same leaf as instance records for `draw.js`, in the twin's paint order by group
+/// ([`GROUPS`]): positions in the TILE's frame; quads, discs and lines with their sizes in
+/// metres. The records are the vertex stream's geometry: [`expand`] turns them back into
+/// the twin's triangles, and the tests compare those with [`build_leaf`]'s within the leaf's
+/// east-west stretch (sizes are not stretched; centres and line ends are exact).
+pub fn build_leaf_instances(l: &Leaf, style: &Style) -> Vec<Rec> {
+    let (_, mut r) = build(l, style, true);
+    r.sort_by_key(|x| x.group); // stable: within a group, the twin's order
+    r
+}
+
+fn build(l: &Leaf, style: &Style, instances: bool) -> (Vec<f32>, Vec<Rec>) {
     let (w, h, hh) = (l.meta[0], l.meta[1], l.meta[2]);
-    let mut o = Out { v: Vec::new(), l };
+    let mut o = Out { v: Vec::new(), l, inst: if instances { Some(Vec::new()) } else { None }, section: Section::Leaf };
     let km2 = (w * h / 1e6).max(1e-6);
     o.quad([[-w / 2.0, -h / 2.0], [w / 2.0, -h / 2.0], [w / 2.0, h / 2.0], [-w / 2.0, h / 2.0]], [tone(hh / km2), 0.0, 0.0], style.ground_alpha, 0.0);
     let seed = to_int32(l.id % 2_147_483_647.0) as f64;
@@ -321,6 +426,7 @@ pub fn build_leaf(l: &Leaf, style: &Style) -> Vec<f32> {
     }
     let bb = l.buildings;
     let lots = hh * style.pph / km2 < style.lots_pkm;
+    o.section = Section::Lots;
     if lots {
         for b in (0..bb.len()).step_by(8) {
             let (cx, cy, bw, bd, ca, sa) = (bb[b], bb[b + 1], bb[b + 2] / 2.0, bb[b + 3] / 2.0, bb[b + 4].cos(), bb[b + 4].sin());
@@ -348,6 +454,7 @@ pub fn build_leaf(l: &Leaf, style: &Style) -> Vec<f32> {
     }
     // streets by width class, narrow first so wider ones cross over; casings, then streets
     let rank = |r: usize| if l.roads[r + 4] >= style.arterial_width { 2 } else if l.roads[r + 4] >= style.collector_width { 1 } else { 0 };
+    o.section = Section::Streets;
     let mut order: Vec<usize> = (0..l.roads.len()).step_by(5).collect();
     order.sort_by_key(|&r| rank(r));
     for &r in &order {
@@ -361,6 +468,7 @@ pub fn build_leaf(l: &Leaf, style: &Style) -> Vec<f32> {
         };
         o.road(r, 0.0, c, 1.0, 2.0);
     }
+    o.section = Section::Buildings;
     for b in (0..bb.len()).step_by(8) {
         let (cx, cy, bw, bd, ca, sa, units) = (bb[b], bb[b + 1], bb[b + 2] / 2.0, bb[b + 3] / 2.0, bb[b + 4].cos(), bb[b + 4].sin(), bb[b + 6]);
         let at = |u: f64, v: f64, dx: f64, dy: f64| [cx + dx + ca * u - sa * v, cy + dy + sa * u + ca * v];
@@ -377,7 +485,49 @@ pub fn build_leaf(l: &Leaf, style: &Style) -> Vec<f32> {
             o.quad([at(0.0, -bd, 0.0, 0.0), at(bw, -bd, 0.0, 0.0), at(bw, bd, 0.0, 0.0), at(0.0, bd, 0.0, 0.0)], dark, 1.0, 3.0);
         }
     }
-    o.v
+    let inst = o.inst.take().unwrap_or_default();
+    (o.v, inst)
+}
+
+/// The twin's triangles from instance records, for the proof: each record turned back into
+/// the vertices its primitive had (6 for a quad or line, 18 for a disc), in the twin's format.
+pub fn expand(r: &Rec, kind_code: f32) -> Vec<f32> {
+    let m = &r.inst;
+    let c = |i: usize| m.rgba[i] as f32 / 255.0;
+    let mut v = Vec::new();
+    let mut vert = |x: f32, y: f32, nx: f32, ny: f32, wd: f32, col: [f32; 3], a: f32| v.extend_from_slice(&[x, y, nx, ny, wd, col[0], col[1], col[2], a, kind_code]);
+    match m.kind {
+        crate::Kind::Quad | crate::Kind::Patch => {
+            let (ca, sa) = (m.angle.cos(), m.angle.sin());
+            let (hw, hd) = (0.5 * m.size[0], 0.5 * m.size[1]);
+            let at = |u: f32, w: f32| [m.pos[0] + ca * u - sa * w, m.pos[1] + sa * u + ca * w];
+            let p = [at(-hw, -hd), at(hw, -hd), at(hw, hd), at(-hw, hd)];
+            let col = if m.kind == crate::Kind::Patch { [m.aux[0], 0.0, 0.0] } else { [c(0), c(1), c(2)] };
+            for q in [0, 1, 2, 0, 2, 3] {
+                vert(p[q][0], p[q][1], 0.0, 0.0, 0.0, col, c(3));
+            }
+        }
+        crate::Kind::Disc => {
+            for k in 0..6 {
+                let (a0, a1) = (k as f64 * std::f64::consts::PI / 3.0, (k + 1) as f64 * std::f64::consts::PI / 3.0);
+                let r = m.size[0] as f64;
+                vert(m.pos[0], m.pos[1], 0.0, 0.0, 0.0, [c(0), c(1), c(2)], c(3));
+                vert(m.pos[0] + (r * a0.cos()) as f32, m.pos[1] + (r * a0.sin()) as f32, 0.0, 0.0, 0.0, [c(0), c(1), c(2)], c(3));
+                vert(m.pos[0] + (r * a1.cos()) as f32, m.pos[1] + (r * a1.sin()) as f32, 0.0, 0.0, 0.0, [c(0), c(1), c(2)], c(3));
+            }
+        }
+        crate::Kind::Line => {
+            let (dx, dy) = (m.aux[0] - m.pos[0], m.aux[1] - m.pos[1]);
+            let len = dx.hypot(dy);
+            let (nx, ny) = (-dy / len, dx / len);
+            let wd = 0.5 * m.size[0];
+            for (px, py, sg) in [(m.pos[0], m.pos[1], -1.0f32), (m.aux[0], m.aux[1], -1.0), (m.aux[0], m.aux[1], 1.0), (m.pos[0], m.pos[1], -1.0), (m.aux[0], m.aux[1], 1.0), (m.pos[0], m.pos[1], 1.0)] {
+                vert(px, py, nx * sg, ny * sg, wd, [c(0), c(1), c(2)], c(3));
+            }
+        }
+        _ => {}
+    }
+    v
 }
 
 #[cfg(test)]
@@ -447,6 +597,78 @@ mod tests {
             .chain([d.roof_lit, d.roof_dark]).collect();
         flat.extend(rest);
         assert_eq!(Style::from_flat(&flat), Some(d));
+    }
+
+    /// A small deterministic generator for synthetic leaves (not the twin's hash).
+    fn leaves(n: usize) -> Vec<(Vec<f64>, Vec<f64>, Vec<f64>, Vec<f64>, Vec<f64>, f64, f64, f64, f64)> {
+        let mut s = 0x2545_f491u64;
+        let mut rnd = move || {
+            s ^= s << 13;
+            s ^= s >> 7;
+            s ^= s << 17;
+            (s >> 11) as f64 / (1u64 << 53) as f64
+        };
+        (0..n)
+            .map(|k| {
+                let (w, h) = (40.0 + rnd() * 400.0, 40.0 + rnd() * 400.0);
+                let hh = [0.0, 3.0, 12.0, 60.0, 200.0, 900.0][k % 6] * (0.5 + rnd());
+                let (mut roads, mut streets, mut b, mut tones) = (vec![], vec![], vec![], vec![]);
+                for _ in 0..(rnd() * 8.0) as usize {
+                    roads.extend([(rnd() - 0.5) * w, (rnd() - 0.5) * h, (rnd() - 0.5) * w, (rnd() - 0.5) * h, [4.0, 7.0, 9.0, 14.0][(rnd() * 4.0) as usize]]);
+                    streets.extend([0.0, (rnd() * 3.0).floor(), (rnd() * 3.0).floor()]);
+                }
+                for _ in 0..(rnd() * 30.0) as usize {
+                    b.extend([(rnd() - 0.5) * w, (rnd() - 0.5) * h, 3.0 + rnd() * 30.0, 3.0 + rnd() * 30.0, rnd() * 6.0 - 3.0, (rnd() * 10.0).floor(), [0.0, 1.0, 8.0][(rnd() * 3.0) as usize], 0.0]);
+                    tones.push((rnd() * 8.0).floor());
+                }
+                let id = 3.0 * 140737488355328.0 + (rnd() * 1e12).floor();
+                let sx = 1.0 + (rnd() - 0.5) * 2e-4;
+                (roads, b, vec![w, h, hh], streets, tones, id, (rnd() - 0.5) * 2000.0, (rnd() - 0.5) * 2000.0, sx)
+            })
+            .collect()
+    }
+
+    #[test]
+    fn the_instance_records_are_the_vertex_streams_geometry() {
+        let style = Style::default();
+        let (mut prims, mut worst) = (0usize, 0.0f32);
+        let mut groups = [0usize; 8];
+        for (roads, b, meta, streets, tones, id, ox, oy, sx) in leaves(300) {
+            let l = Leaf { id, roads: &roads, buildings: &b, meta: &meta, streets: &streets, tones: Some(&tones), ox, oy, sx };
+            let v = build_leaf(&l, &style);
+            let recs = build_leaf_instances(&l, &style);
+            // every primitive of the stream is one record, and the groups are in paint order
+            let n_prims: usize = recs.iter().map(|r| if r.inst.kind == crate::Kind::Disc { 18 } else { 6 }).sum::<usize>();
+            assert_eq!(n_prims * 10, v.len());
+            assert!(recs.windows(2).all(|p| p[0].group <= p[1].group));
+            for r in &recs {
+                groups[r.group] += 1;
+                assert_eq!(GROUPS[r.group].1, r.inst.kind);
+                let kind_code = v[r.start + 9];
+                let e = expand(r, kind_code);
+                let orig = &v[r.start..r.start + e.len()];
+                let size = r.inst.size[0].max(r.inst.size[1]);
+                // positions: exact centres and ends; sizes unstretched by sx; f32 rounding
+                let tol = 2e-3 + (sx as f32 - 1.0).abs() * size + 1e-6 * (ox.abs().max(oy.abs()) as f32);
+                for (a, b) in e.chunks(10).zip(orig.chunks(10)) {
+                    for i in [0usize, 1] {
+                        let d = (a[i] - b[i]).abs();
+                        worst = worst.max(d - tol);
+                        assert!(d <= tol, "group {} position off by {d} (tolerance {tol})", GROUPS[r.group].0);
+                    }
+                    for i in [2usize, 3, 4] {
+                        assert!((a[i] - b[i]).abs() <= 1e-3, "group {} normal or width: {} against {}", GROUPS[r.group].0, a[i], b[i]);
+                    }
+                    for i in [5usize, 6, 7, 8] {
+                        assert!((a[i] - b[i]).abs() <= 0.5 / 255.0 + 1e-6, "group {} colour {i}: {} against {}", GROUPS[r.group].0, a[i], b[i]);
+                    }
+                    assert_eq!(a[9], b[9]);
+                }
+                prims += 1;
+            }
+        }
+        assert!(prims > 5000 && groups.iter().all(|&g| g > 0), "{prims} {groups:?}");
+        assert!(worst <= 0.0);
     }
 
     #[test]

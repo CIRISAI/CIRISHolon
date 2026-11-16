@@ -38,21 +38,22 @@
 //
 // TILE SETTINGS (`batch.params`, 32 numbers = 8 groups of 4; absent means neutral). Slots:
 //   [0..2]   DIM     rgb multiplier on every colour of the tile, applied last (after lighting)
+//   [3]      FADE    alpha multiplier on every mark of the tile, runs too (the core's DIM.w)
 //   [4..6]   RAMP0   the colour at t = 0        [8..10]  RAMP1   the colour at t = 1
 //   [12..14] TINT    rgb multiplier for TINT marks
 //   [16..19] NOISE   x0, y0, sx, sy: field position = (x0, y0) + (sx, sy) * (the mark's local xy)
 //   [20]     TEX     the procedural field's strength, 0 off
-//   [24]     FLOOR   a world line's or arc's least HALF width, in pixels; 0 off
+//   [21]     FLOOR_CASING  a CASING line's or arc's least HALF width, in pixels; 0 off
+//   [24]     FLOOR   any other world line's or arc's least HALF width, in pixels; 0 off
 //   [25]     A_GROUND  [26] A_CASING  [27] A_ROAD  [28] A_ROOF   alpha multiplier per surface
-//                    class (below). 0 MEANS NOT SET, i.e. 1: neutral settings are all zero
-//                    here, and a class cannot be hidden by these (drop its marks instead).
+//                    class (below), read as given: 1 neutral, 0 hides the class.
 //   [29..31] RING    centre x, centre y, radius, in device pixels from the viewport's top-left,
 //                    y down: alpha *= 1 - smoothstep(0.85 r, r, distance), on every WORLD mark
 //                    of the tile; radius 0 off. Screen batches do not read it. The distance
 //                    is taken PER PIXEL (the twin takes it per vertex, which is the same on
 //                    its short segments and wrong on a long street or a large patch, whose
 //                    ends can all lie outside the ring while its middle crosses it).
-//   [3] [7] [11] [15] [21..23] are not read.
+//   [7] [11] [15] [22] [23] are not read.
 // They are uploaded per batch only when their values differ from the last ones uploaded to
 // that program (compared number by number; nothing is allocated).
 //
@@ -73,8 +74,19 @@
 //           a disc with bit 0 SET (a CANOPY)             A_CASING   canopy field
 //   ROAD    a line or arc with bit 0 clear               A_ROAD     none
 // (This is the twin's four kinds; its shadows and canopies ride in its casing kind.)
-// PROPOSED FLAG: bit 0 of `variant` (0x01) on a line or arc = casing, on a disc = canopy.
-// A glyph's variant is its shape and is left alone: a glyph is in no class.
+// Bit 0 of `variant` (0x01, the core's VARIANT_CASING / VARIANT_CANOPY): a line or arc is a
+// casing, a disc is a canopy. A glyph's variant is its shape: a glyph is in no class.
+//
+// LINE ENDS. A world line or arc ends FLUSH (cut square at pos and at aux) unless bit 1 of
+// its `variant` is set (0x02, VARIANT_ROUND, proposed here): then each end has a round cap
+// of the line's own half width (after FLOOR), so a polyline of such segments has round
+// joins. It is one mesh either way: a flush line's cap vertices sit on its end. Where two
+// translucent round-ended segments overlap at a join, the overlap is blended twice.
+// LINE SHAPE. With the depth test on, a line is a tube (8 sides; hemispheres for round
+// ends). With `opts.flatLines` it is a FLAT RIBBON in the plane that holds the line and
+// the horizontal across it (half discs for round ends), which is what a map wants;
+// `flatLines` defaults to true when `opts.depthTest` is false, else false. A vertical line
+// has no horizontal across it that means anything: draw those as tubes.
 //
 // THE FIELD (the twin's FSD/twin/texture.md, as its tiling.js TLF has it), when TEX > 0:
 // band-limited value noise on the grid of the field position, each octave faded out between
@@ -92,8 +104,9 @@
 // A FLAT MAP (the twin's street tier): pass `opts.depthTest: false`. World batches are then
 // painted in the order given with no depth test, so a road lies over its casing and a roof
 // over a road by ORDER. With the depth test on, a line is a tube and a wider casing's top
-// is above its road's. Note the core emits a tile's kinds in a fixed order (quad, line,
-// arc, disc, ..., patch): what must be painted in another order goes in another tile.
+// is above its road's. The core emits a tile's kinds in a fixed order (quad, line, arc,
+// disc, ..., patch) and orders tiles by layer: a host splits a leaf into tiles on layers
+// (ground, streets, buildings).
 //
 // PRECISION (INTERFACE.md §7): NO UNIFORM NAME APPEARS IN BOTH SHADER STAGES, in either
 // program. World program: the vertex stage owns u_vp, u_offset, u_eye, u_mode, u_pix,
@@ -114,6 +127,12 @@
 // in both stages. On a true mediump-only device the field's position, text sampling and
 // large rounded shapes lose accuracy (not seen here: no such device in the test).
 //
+// STENCIL. This file makes no stencil call at all today: not the test, the function, the
+// operation, the mask or a clear. A host's stencil test, if enabled, therefore applies to
+// everything draw() draws, with the host's function and mask. THE RULE if this file ever
+// does use the stencil: only bits 4..128 (mask 0xFC), with stencilMask(0xFC) while it
+// writes; bits 1 and 2 are the host's and are left as found.
+//
 // GL STATE. draw() does not clear, does not set the viewport, does not touch the bound
 // framebuffer, scissor, stencil or colour mask. It CHANGES, and leaves changed:
 //   - the current program (left as one of this drawer's two programs);
@@ -122,6 +141,7 @@
 //   - DEPTH_TEST enabled, depthFunc(LEQUAL), depthMask(true) (the test is off while screen
 //     batches are drawn, and for world batches under `opts.depthTest: false`; it is
 //     enabled again on return in every case);
+//   - CULL_FACE is off while flat marks are drawn and enabled again on return;
 //   - CULL_FACE (left enabled), cullFace(BACK), frontFace(CCW);
 //   - ARRAY_BUFFER binding (left null);
 //   - the vertex array object binding, where one exists (WebGL 2 or OES_vertex_array_object):
@@ -178,11 +198,13 @@ const PF_HEAD_F = `#ifdef GL_FRAGMENT_PRECISION_HIGH
 `;
 
 /** Where each setting is in a tile's 32 numbers (see TILE SETTINGS at the top). */
-export const PARAM = Object.freeze({ DIM: 0, RAMP0: 4, RAMP1: 8, TINT: 12, NOISE: 16, TEX: 20, FLOOR: 24, A_GROUND: 25, A_CASING: 26, A_ROAD: 27, A_ROOF: 28, RING: 29 });
+export const PARAM = Object.freeze({ DIM: 0, FADE: 3, RAMP0: 4, RAMP1: 8, TINT: 12, NOISE: 16, TEX: 20, FLOOR_CASING: 21, FLOOR: 24, A_GROUND: 25, A_CASING: 26, A_ROAD: 27, A_ROOF: 28, RING: 29 });
 /** Bit 0 of `variant`: a line or arc is a casing, a disc is a canopy. */
 export const VARIANT_CASING = 0x01, VARIANT_CANOPY = 0x01;
+/** Bit 1 of `variant` on a line or arc: round ends (a cap of the line's half width at each). */
+export const VARIANT_ROUND = 0x02;
 /** Tile settings that leave every colour as its record gives it (the core's PARAMS_NEUTRAL). */
-export const PARAMS_NEUTRAL = Object.freeze([1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+export const PARAMS_NEUTRAL = Object.freeze([1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0]);
 export const COLOUR = Object.freeze({ LITERAL: 0x00, RAMP: 0x40, TINT: 0x80 });
 
 const VS = `
@@ -206,7 +228,7 @@ uniform vec4 u_params[8];  // the tile's settings
 varying mediump vec3 v_n;
 varying mediump vec3 v_v;
 varying lowp vec4 v_c;
-varying mediump vec3 v_dim;
+varying mediump vec4 v_dim;     // rgb: DIM; a: the alpha multiplier (class times FADE)
 varying PF vec2 v_np;      // the field's position
 varying PF vec3 v_fp;      // pixels per field unit; the field's amplitude (0 off); which field (0 ground, 1 canopy, 2 roof)
 varying PF vec2 v_ring;    // (pixel - ring centre) / ring radius; 0 when the ring is off
@@ -217,6 +239,10 @@ float ppuAt(float w) {
 }
 void main() {
   float kc = u_pix.z;
+  float var = floor(i_meta.w + 0.5);
+  float bit0 = mod(var, 2.0);
+  float bit1 = mod(floor(var / 2.0), 2.0);
+  bool liney = kc > 2.5 && kc < 3.5;
   vec3 p;
   vec3 n;
   vec3 o = i_pos + u_offset;
@@ -231,11 +257,15 @@ void main() {
     vec3 bx = normalize(cross(up, dn));
     vec3 by = cross(dn, bx);
     float r = i_size.x * u_mode.y;
-    if (kc > 2.5 && kc < 3.5 && u_params[6].x > 0.0) {
-      // the street floor: at least FLOOR pixels of half width, measured on the centre line
-      r = max(r, u_params[6].x / ppuAt((u_vp * vec4(o + d * a_p.z, 1.0)).w));
+    // Along the axis: t in [0, 1] on the body; a cap's vertices lie beyond, by e radii.
+    float t = clamp(a_p.z, 0.0, 1.0);
+    float e = liney && bit1 > 0.5 ? a_p.z - t : 0.0;
+    float fl = liney ? (bit0 > 0.5 ? u_params[5].y : u_params[6].x) : 0.0;
+    if (fl > 0.0) {
+      // the street floor: at least this many pixels of half width, measured on the centre line
+      r = max(r, fl / ppuAt((u_vp * vec4(o + d * t, 1.0)).w));
     }
-    p = o + (bx * a_p.x + by * a_p.y) * r + d * a_p.z;
+    p = o + (bx * a_p.x + by * a_p.y) * r + d * t + dn * (e * r);
     n = bx * a_n.x + by * a_n.y + dn * a_n.z;
   } else {
     vec3 s = u_mode.y > 0.5 ? i_size.xxx : i_size;
@@ -247,9 +277,7 @@ void main() {
   }
   v_n = n;
   v_v = normalize(u_eye.xyz - p * u_eye.w);
-  float var = floor(i_meta.w + 0.5);
   float cm = floor(var / 64.0);
-  float bit0 = mod(var, 2.0);
   bool ramp = cm > 0.5 && cm < 1.5;
   bool tint = cm > 1.5 && cm < 2.5;
   bool tube = u_mode.x > 0.5 && u_mode.x < 1.5;
@@ -261,8 +289,8 @@ void main() {
   } else if (tint) {
     rgb *= u_params[3].rgb;
   }
-  // The surface class: its alpha multiplier (0 = not set = 1) and its field (-1 none).
-  float am = 0.0;
+  // The surface class: its alpha multiplier (1 for a mark in no class) and its field (-1 none).
+  float am = 1.0;
   float fk = -1.0;
   float fa = 1.0;
   if (kc > 1.5 && kc < 2.5 || kc > 0.5 && kc < 1.5 && ramp) {
@@ -276,7 +304,6 @@ void main() {
   } else if (kc > 3.5 && kc < 4.5 && bit0 > 0.5) {
     am = u_params[6].z; fk = 1.0;                                        // canopy
   }
-  if (am == 0.0) am = 1.0;
   gl_Position = u_vp * vec4(p, 1.0);
   // The ring: the pixel's place relative to the centre, in radii, for the fragment stage.
   float ringR = u_params[7].w;
@@ -286,8 +313,8 @@ void main() {
   } else {
     v_ring = vec2(0.0);
   }
-  v_c = vec4(rgb, i_color.a * am);
-  v_dim = u_params[0].rgb;
+  v_c = vec4(rgb, i_color.a);
+  v_dim = vec4(u_params[0].rgb, am * u_params[0].w);
   float amp = fk < -0.5 ? 0.0 : u_params[5].x * fa;
   if (amp > 0.0) {
     vec2 pl = (p.xy - o.xy) + i_pos.xy;
@@ -307,7 +334,7 @@ uniform vec4 u_shade;  // x lit (0 or 1), y ambient, z specular, w rim
 varying mediump vec3 v_n;
 varying mediump vec3 v_v;
 varying lowp vec4 v_c;
-varying mediump vec3 v_dim;
+varying mediump vec4 v_dim;     // rgb: DIM; a: the alpha multiplier (class times FADE)
 varying PF vec2 v_np;
 varying PF vec3 v_fp;
 varying PF vec2 v_ring;
@@ -357,7 +384,7 @@ void main() {
   vec3 shaded = base * (lit + rim) + vec3(sp);
   // min() keeps the length inside mediump's range far outside the ring
   float ring = 1.0 - smoothstep(0.85, 1.0, length(min(abs(v_ring), vec2(8.0))));
-  gl_FragColor = vec4(mix(base, shaded, u_shade.x) * v_dim, v_c.a * ring);
+  gl_FragColor = vec4(mix(base, shaded, u_shade.x) * v_dim.rgb, v_c.a * v_dim.a * ring);
 }
 `;
 
@@ -381,6 +408,7 @@ varying PF vec2 v_uv;
 varying PF float v_r;
 varying mediump float v_page;
 varying lowp vec4 v_c;
+varying mediump float v_fade;
 void main() {
   vec2 o = i_pos.xy + u_soffset.xy;
   vec2 px;
@@ -428,6 +456,7 @@ void main() {
     else if (cm > 1.5 && cm < 2.5) rgb *= u_sparams[3].rgb;
   }
   v_c = vec4(rgb * u_sparams[0].rgb, i_color.a);
+  v_fade = u_sparams[0].w;
   gl_Position = vec4(px.x / u_view.x * 2.0 - 1.0, 1.0 - px.y / u_view.y * 2.0, 0.0, 1.0);
 }
 `;
@@ -445,6 +474,7 @@ varying PF vec2 v_uv;
 varying PF float v_r;
 varying mediump float v_page;
 varying lowp vec4 v_c;
+varying mediump float v_fade;
 void main() {
   float cov;
   if (u_fmode > 0.5) {
@@ -457,7 +487,7 @@ void main() {
     float d = length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - v_r;
     cov = clamp(0.5 - d, 0.0, 1.0);
   }
-  gl_FragColor = vec4(v_c.rgb, v_c.a * cov);
+  gl_FragColor = vec4(v_c.rgb, v_c.a * cov * v_fade);
 }
 `;
 
@@ -513,6 +543,40 @@ function tubeMesh(sides, caps) {
 }
 
 // x and y in [-1/2, 1/2], z in [0, 1].
+// A line as a tube: a surface of revolution about +z, radius 1, body from z = 0 to 1, with a
+// hemisphere beyond each end (z in [-1, 0] and [1, 2]). The vertex stage takes
+// clamp(z, 0, 1) as the place on the body and the rest as the cap's reach in radii, so a
+// flush line folds the caps onto its ends. Normals are the unit profile's.
+function capsuleMesh(sides, rings) {
+  const prof = [];   // [radius, z, normal z]
+  for (let k = rings; k >= 0; k--) { const f = (Math.PI / 2) * (k / rings); prof.push([Math.cos(f), -Math.sin(f), -Math.sin(f)]); }
+  for (let k = 0; k <= rings; k++) { const f = (Math.PI / 2) * (k / rings); prof.push([Math.cos(f), 1 + Math.sin(f), Math.sin(f)]); }
+  const v = [], ix = [], w = sides + 1;
+  for (const [r, z, nz] of prof) {
+    for (let j = 0; j <= sides; j++) {
+      const f = (2 * Math.PI * j) / sides, x = Math.cos(f), y = Math.sin(f);
+      v.push(x * r, y * r, z, x * r, y * r, nz);
+    }
+  }
+  for (let i = 0; i + 1 < prof.length; i++) {
+    for (let j = 0; j < sides; j++) {
+      const a = i * w + j, b = a + 1, c = b + w, d = a + w;
+      ix.push(a, b, c, a, c, d);
+    }
+  }
+  return { v, ix };
+}
+
+// A line as a flat ribbon, in the tube's x-z plane (y = 0, normal +y): a stadium, drawn as a
+// fan. The same z convention as the capsule.
+function ribbonMesh(arc) {
+  const v = [], ix = [];
+  for (let k = 0; k <= arc; k++) { const a = (Math.PI * k) / arc; v.push(Math.cos(a), 0, -Math.sin(a), 0, 1, 0); }
+  for (let k = 0; k <= arc; k++) { const a = (Math.PI * k) / arc; v.push(-Math.cos(a), 0, 1 + Math.sin(a), 0, 1, 0); }
+  for (let k = 1; k + 1 < v.length / 6; k++) ix.push(0, k, k + 1);
+  return { v, ix };
+}
+
 function boxMesh() {
   const faces = [
     [[1, 0, 0], [0, 1, 0], [0, 0, 1]], [[-1, 0, 0], [0, 0, 1], [0, 1, 0]],
@@ -557,8 +621,8 @@ function discMesh(sides) {
 // ---- slots: how a kind is drawn. Index = kind; 11 and 12 are the coarse sphere and rod. ----
 // mode: [vertex mode, radius scale or uniform-scale switch]; shade: [lit, specular, rim]; cull.
 // The vertex stage's kind code: 1 quad, 2 patch, 3 line or arc, 4 disc, 5 box or prism, 0 the rest.
-const KIND_CODE = [0, 1, 3, 3, 4, 5, 5, 0, 0, 2, 0, 0];
-const SLOT_COARSE_SPHERE = 11, SLOT_COARSE_ROD = 12, N_SLOT = 13;
+const KIND_CODE = [0, 1, 3, 3, 4, 5, 5, 0, 0, 2, 0, 0, 0, 3, 3];
+const SLOT_COARSE_SPHERE = 11, SLOT_COARSE_ROD = 12, SLOT_FLAT_LINE = 13, SLOT_FLAT_ARC = 14, N_SLOT = 15;
 
 function compile(gl, type, src) {
   const s = gl.createShader(type);
@@ -701,7 +765,8 @@ export function createDrawer(gl, options) {
   const mSphereCoarse = mesh(sphereMesh(10, 6));
   const mRod = mesh(tubeMesh(sides, true));
   const mRodCoarse = mesh(tubeMesh(8, true));
-  const mLine = mesh(tubeMesh(6, false));
+  const mLine = mesh(capsuleMesh(8, 3));
+  const mRibbon = mesh(ribbonMesh(10));
   const mBox = mesh(boxMesh());
   const mQuad = mesh(quadMesh());
   const mDisc = mesh(discMesh(24));
@@ -709,7 +774,7 @@ export function createDrawer(gl, options) {
   // slot -> { mesh, kind (whose instance buffer), mode x, mode y, lit, spec, rim, cull, vao }
   const slots = new Array(N_SLOT).fill(null);
   const slot = (i, kind, m, mx, my, lit, spec, rim, cull) => {
-    slots[i] = { mesh: m, kind, mx, my, lit, spec, rim, cull, vao: null, kc: KIND_CODE[kind] };
+    slots[i] = { mesh: m, kind, mx, my, lit, spec, rim, cull, vao: null, kc: KIND_CODE[i] };
   };
   slot(KIND.QUAD, KIND.QUAD, mQuad, 2, 0, 0, 0, 0, false);
   slot(KIND.PATCH, KIND.PATCH, mQuad, 2, 0, 0, 0, 0, false);
@@ -723,6 +788,8 @@ export function createDrawer(gl, options) {
   slot(KIND.ROD, KIND.ROD, mRod, 1, 1, 1, 0.18, 0.08, true);
   slot(SLOT_COARSE_SPHERE, KIND.SPHERE, mSphereCoarse, 0, 0, 1, 0.3, 0.18, true);
   slot(SLOT_COARSE_ROD, KIND.ROD, mRodCoarse, 1, 1, 1, 0.18, 0.08, true);
+  slot(SLOT_FLAT_LINE, KIND.LINE, mRibbon, 1, 0.5, 0, 0, 0, false);
+  slot(SLOT_FLAT_ARC, KIND.ARC, mRibbon, 1, 0.5, 0, 0, 0, false);
 
   // Screen slots, by kind: vertex mode (0 rectangle, 1 circle, 2 line, 3 run).
   const sslots = new Array(12).fill(null);
@@ -781,6 +848,7 @@ export function createDrawer(gl, options) {
   const inv = new Float64Array(16);
   const st = { drawCalls: 0, instances: 0, bytesUploaded: 0, paramUploads: 0 };
   let dead = false;
+  let flat = false;   // lines as flat ribbons, for the draw() in progress
 
   // The eye, homogeneous, from vp alone: the preimage of clip (0, 0, -1, 0). For a
   // perspective vp that is the camera position (w != 0); for an orthographic one it is the
@@ -815,6 +883,10 @@ export function createDrawer(gl, options) {
     if (k < 1 || k > 11) return null;
     if (b.screen === true) return sslots[k];
     if (k > 10) return null;
+    if (flat) {
+      if (k === KIND.LINE) return slots[SLOT_FLAT_LINE];
+      if (k === KIND.ARC) return slots[SLOT_FLAT_ARC];
+    }
     if (b.coarse === true) {
       if (k === KIND.SPHERE) return slots[SLOT_COARSE_SPHERE];
       if (k === KIND.ROD) return slots[SLOT_COARSE_ROD];
@@ -861,11 +933,12 @@ export function createDrawer(gl, options) {
   /**
    * @param {Array<{kind:number, offset?:ArrayLike<number>, count:number, bytes:Uint8Array, screen?:boolean, coarse?:boolean, params?:ArrayLike<number>}>} batches
    * @param {Float32Array} vp column-major, 16 (world batches only)
-   * @param {{light?:ArrayLike<number>, ambient?:number, flatLit?:boolean, viewport?:ArrayLike<number>, pixelsPerUnit?:number, depthTest?:boolean}} [opts]
+   * @param {{light?:ArrayLike<number>, ambient?:number, flatLit?:boolean, viewport?:ArrayLike<number>, pixelsPerUnit?:number, depthTest?:boolean, flatLines?:boolean}} [opts]
    */
   function draw(batches, vp, opts) {
     if (dead) throw new Error('holon-draw: draw() after destroy()');
     st.drawCalls = 0; st.instances = 0; st.bytesUploaded = 0; st.paramUploads = 0;
+    flat = !!opts && (opts.flatLines === true || (opts.flatLines !== false && opts.depthTest === false));
     const nb = batches.length;
 
     // Pass 1: bytes needed per kind; how many world and screen batches there are.

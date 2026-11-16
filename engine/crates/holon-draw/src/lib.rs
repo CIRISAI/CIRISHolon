@@ -201,6 +201,10 @@ pub const PARAM_RING: usize = 29; // 29..31: a radial fade's centre x, y and rad
 /// colour mode and this bit are listed in `web/draw.js`'s header.
 pub const VARIANT_CASING: u8 = 0x01;
 pub const VARIANT_CANOPY: u8 = 0x01;
+/// Bit 1 of a world line's or arc's `variant`: round ends (a cap of the line's half width,
+/// after the floor); a polyline of round-ended segments has round joins. Without it a line
+/// ends flush, as the twin's streets do at an exit.
+pub const VARIANT_ROUND: u8 = 0x02;
 
 /// The tile settings that leave colours exactly as their records give them.
 pub const PARAMS_NEUTRAL: [f32; 32] = {

@@ -118,9 +118,10 @@ INIT_JS = r"""
 (() => {
   const READY_EXPR = __READY__;
   const FAIL_EXPR = __FAIL__;
+  const MARKS = __MARKS__;   // name -> expression; each is timed when first true
   const C = (window.__cmp = {
     readyAt: null, failAt: null, longtasks: [], gaps: [], frames: [], pageRaf: [],
-    wasmMemories: [], longtaskSupported: false,
+    wasmMemories: [], longtaskSupported: false, marks: {},
   });
   const test = (src) => { try { return !!(0, eval)(src); } catch (e) { return false; } };
 
@@ -129,7 +130,12 @@ INIT_JS = r"""
   const poll = setInterval(() => {
     if (C.readyAt === null && test(READY_EXPR)) C.readyAt = performance.now();
     if (FAIL_EXPR && C.failAt === null && test(FAIL_EXPR)) C.failAt = performance.now();
-    if (C.readyAt !== null && (!FAIL_EXPR || C.failAt !== null)) clearInterval(poll);
+    let pending = false;
+    for (const k of Object.keys(MARKS)) {
+      if (!(k in C.marks) && test(MARKS[k])) C.marks[k] = performance.now();
+      if (!(k in C.marks)) pending = true;
+    }
+    if (C.readyAt !== null && !pending && (!FAIL_EXPR || C.failAt !== null)) clearInterval(poll);
   }, 16);
 
   try {
@@ -213,7 +219,7 @@ async () => {
   }
   const mem = performance.memory || {};
   return {
-    readyAt: C.readyAt, failAt: C.failAt,
+    readyAt: C.readyAt, failAt: C.failAt, marks: C.marks,
     longtaskSupported: C.longtaskSupported, longtasks: C.longtasks, gaps: C.gaps,
     frames: C.frames, pageRaf: C.pageRaf, resources,
     usedJSHeapSize: mem.usedJSHeapSize ?? null, totalJSHeapSize: mem.totalJSHeapSize ?? null,
@@ -327,7 +333,8 @@ def one_run(pw, args, mode, base_url, run_index):
             r.url, dict(status=r.status, content_length=r.headers.get("content-length"),
                         content_type=r.headers.get("content-type"))))
         page.add_init_script(INIT_JS.replace("__READY__", json.dumps(args.ready))
-                             .replace("__FAIL__", json.dumps(args.fail)))
+                             .replace("__FAIL__", json.dumps(args.fail))
+                             .replace("__MARKS__", json.dumps(getattr(args, "marks", None) or {})))
         if m["cpu_throttle"] != 1:
             cdp = context.new_cdp_session(page)
             cdp.send("Emulation.setCPUThrottlingRate", {"rate": m["cpu_throttle"]})
@@ -372,6 +379,24 @@ def one_run(pw, args, mode, base_url, run_index):
                     break
                 page.wait_for_timeout(200)
         ready = ready_pixels if args.pixels else ready_js
+
+        # Extra marks (e.g. "calibrated"): the frame window does not begin until every
+        # one is true, so a start-up burst that follows the first frame is counted as
+        # start-up for this page as it is for a page that bursts before its first frame.
+        marks = getattr(args, "marks", None) or {}
+        startup = ready
+        if out["error"] is None and marks:
+            try:
+                page.wait_for_function(
+                    "(names) => names.every((k) => k in window.__cmp.marks)",
+                    arg=list(marks), timeout=args.timeout * 1000, polling=50)
+            except PwTimeout:
+                out["error"] = f"marks not all true within {args.timeout} s: {list(marks)}"
+            got = page.evaluate("window.__cmp.marks")
+            out["marks_ms"] = {k: round(v, 1) for k, v in got.items()}
+            if out["error"] is None:
+                startup = max([ready] + list(got.values()))
+        out["startup_ms"] = round(startup, 1) if startup is not None else None
 
         if out["error"] is None:
             # ready + 1 s: a screenshot on run 1; the same wait on every run.
@@ -441,6 +466,7 @@ def one_run(pw, args, mode, base_url, run_index):
             out["longtasks_whole_run"] = longtask_stats(lt_all, 0, float("inf"))
             # Heartbeat gaps: a gap that STARTS before ready counts toward ready.
             out["stalls_to_ready"] = longtask_stats(data["gaps"], 0, ready)
+            out["stalls_to_startup"] = longtask_stats(data["gaps"], 0, startup)
             out["stalls_in_window"] = longtask_stats(data["gaps"], w0, w1)
             out["window_ms"] = [round(w0, 1), round(w1, 1)]
             out["frames_harness_clock"] = interval_stats(data["frames"], w0, w1)
@@ -464,6 +490,10 @@ SUMMARY_KEYS = [
     ("ready_js_ms", lambda r: r.get("ready_js_ms")),
     ("ready_pixels_ms", lambda r: r.get("ready_pixels_ms")),
     ("ready_ms", lambda r: r.get("ready_ms")),
+    ("startup_ms", lambda r: r.get("startup_ms")),
+    ("longest_stall_to_startup_ms", lambda r: r.get("stalls_to_startup", {}).get("longest_ms")),
+    ("stalled_ms_to_startup", lambda r: r.get("stalls_to_startup", {}).get("total_ms")),
+    ("stalls_over_50ms_to_startup", lambda r: r.get("stalls_to_startup", {}).get("count_over_50ms")),
     ("transfer_bytes", lambda r: r.get("transfer_bytes")),
     ("decoded_bytes", lambda r: r.get("decoded_bytes")),
     ("gzip6_bytes_estimate", lambda r: r.get("gzip6_bytes_estimate")),
@@ -500,6 +530,9 @@ def main():
                     help="JS expression that is true once the page claims its first frame")
     ap.add_argument("--fail", default=None,
                     help="optional JS expression that is true when the page reports failure")
+    ap.add_argument("--mark", action="append", default=[], metavar="NAME=EXPR",
+                    help="also time when this JS expression first becomes true (repeatable); the "
+                         "frame window waits for every mark, and startup_ms is the latest of them and ready")
     ap.add_argument("--pixels", default=None, metavar="SELECTOR",
                     help="also require that a screenshot of this element is not one flat colour")
     ap.add_argument("--pixel-fraction", type=float, default=0.002,
@@ -512,6 +545,7 @@ def main():
     ap.add_argument("--out", default=DEFAULT_OUT)
     args = ap.parse_args()
     args.root = os.path.abspath(args.root)
+    args.marks = dict(m.split("=", 1) for m in args.mark)
     if not args.label:
         args.label = os.path.basename(os.path.dirname(args.page.split("?")[0])) or "page"
     if not os.path.isfile(os.path.join(args.root, args.page.split("?")[0])):
@@ -582,6 +616,8 @@ def main():
         ("webgl renderer", str(doc["webgl_renderer"])),
         ("webgpu probe", str(doc["webgpu_probe"])),
         ("ready (claim / pixels)", f"{ms(g['ready_js_ms'])} / {ms(g['ready_pixels_ms'])}"),
+        ("start-up (ready + marks)", f"{ms(g['startup_ms'])}  marks: {list(args.marks) or 'none'}; stalled "
+                                     f"{ms(g['stalled_ms_to_startup'])}, longest {ms(g['longest_stall_to_startup_ms'])}"),
         ("transferred / decoded", f"{mb(g['transfer_bytes'])} / {mb(g['decoded_bytes'])}"
                                   f"  ({num(g['resource_count'])} resources)"),
         ("if gzip -6 (estimate)", mb(g["gzip6_bytes_estimate"])),

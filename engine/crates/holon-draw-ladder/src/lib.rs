@@ -75,14 +75,21 @@ impl Ladder {
         if let Some(r) = rungs.last_mut() {
             r.z_hi = Z_MAX;
         }
-        // the host's band: clip the rungs that cross it to its edges
-        for r in rungs.iter_mut() {
-            if r.z_lo < band.z_lo && r.z_hi > band.z_lo {
-                r.z_hi = band.z_lo;
-            } else if r.z_lo < band.z_hi && r.z_hi > band.z_hi {
-                r.z_lo = band.z_hi;
-            } else if r.z_lo >= band.z_lo && r.z_hi <= band.z_hi {
+        // the host's band: a rung whose own span lies below the band ends at its lower edge, one
+        // whose span lies above starts at its upper edge, one inside it is never drawn (decided
+        // on the scene's OWN span, so a ladder built from one half alone is clipped on the
+        // right side; found by the outward scene worker)
+        for (r, sc) in rungs.iter_mut().zip(scenes.iter()) {
+            let mid = 0.5 * (sc.span().0 + sc.span().1);
+            if mid < band.z_lo {
+                r.z_hi = r.z_hi.min(band.z_lo);
+            } else if mid > band.z_hi {
+                r.z_lo = r.z_lo.max(band.z_hi);
+            } else {
                 r.z_hi = r.z_lo; // inside the host's band: never drawn
+            }
+            if r.z_hi < r.z_lo {
+                r.z_hi = r.z_lo;
             }
         }
         Ladder { scenes, rungs, band }

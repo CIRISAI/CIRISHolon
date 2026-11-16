@@ -1190,11 +1190,19 @@ impl LocalGroup {
             })
             .collect();
         // galaxies beyond the group, as single points: a thin scatter and the Virgo cluster
-        let mut field = Vec::with_capacity(700);
-        while field.len() < 480 {
+        let mut field = Vec::with_capacity(1500);
+        while field.len() < 520 {
             let p = mulk(r.in_ball(), 950.0);
             if norm(p) > 45.0 {
-                field.push(Dot { p: f3(p), c: if r.f() < 0.5 { [214, 210, 198] } else { [188, 202, 226] }, a: 0.7, s: 1.0 });
+                field.push(Dot { p: f3(p), c: if r.f() < 0.5 { [226, 220, 204] } else { [198, 212, 236] }, a: 0.95, s: 1.5 });
+            }
+        }
+        // and small groups of a few galaxies each, thicker toward the middle, as galaxies gather
+        for _ in 0..70 {
+            let c = mulk(r.on_sphere(), 70.0 + 600.0 * r.f().powf(1.2));
+            let n = 4 + (r.f() * 9.0) as usize;
+            for _ in 0..n {
+                field.push(Dot { p: f3(add(c, [9.0 * r.g(), 9.0 * r.g(), 9.0 * r.g()])), c: if r.f() < 0.5 { [236, 222, 190] } else { [204, 216, 238] }, a: 0.95, s: 1.5 });
             }
         }
         let virgo = mulk(dir(VIRGO.0, VIRGO.1), VIRGO.2 * ly);
@@ -1226,7 +1234,7 @@ impl Scene for LocalGroup {
         Status::Illustration
     }
     fn source(&self) -> &'static str {
-        "The Milky Way, Andromeda (2.5 million light years away), Triangulum and the two Magellanic Clouds, each a drawing at its measured place, distance and rough size (galactic coordinates from NED, rounded); the tilt of each disc is chosen, not measured. The galaxies beyond are scattered by rule, except that the Virgo cluster is put at its measured direction and distance (54 million light years)."
+        "The Milky Way, Andromeda (2.5 million light years away), Triangulum and the two Magellanic Clouds, each a drawing at its measured place, distance and rough size (galactic coordinates from NED, rounded); the tilt of each disc is chosen, not measured. Once they are specks the measured ones wear a thin ring. The galaxies and small groups beyond are scattered by rule, none of them a real one, except that the Virgo cluster is put at its measured direction and distance (54 million light years)."
     }
     fn span(&self) -> (f64, f64) {
         (18.5, 21.0)
@@ -1236,7 +1244,11 @@ impl Scene for LocalGroup {
         let mut m = Vec::with_capacity(8000);
         let galaxy = |m: &mut Vec<Instance>, c: V3, radius: f64, tilt: Option<&M3>, dots: &[Dot], tint: [u8; 3]| {
             if radius < 3.0 * p {
+                // a speck: a point, in a thin ring that says it is placed by measurement
                 point(m, c, 1.7 * p, rgba(tint, 0.95));
+                if norm(c) > 0.0 {
+                    circle(m, c, [1.0, 0.0, 0.0], [0.0, 1.0, 0.0], 7.0 * p * depth(c, p), 24, 0.0, 1.0 * p, rgba(PAPER, 0.55));
+                }
             } else {
                 // fewer points while the galaxy is small on screen
                 let keep = ((radius / p / 60.0).clamp(0.12, 1.0) * dots.len() as f64) as usize;
@@ -1249,7 +1261,7 @@ impl Scene for LocalGroup {
         }
         // a ring about the Milky Way, so that home can be found
         circle(&mut m, [0.0; 3], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0], 12.0 * p, 48, 0.0, 1.2 * p, rgba(AMBER, 0.8 * smooth(22.3, 22.8, z)));
-        emit_dots(&mut m, &self.field, [0.0; 3], 1.0, None, 1.3 * p, smooth(22.5, 23.1, z), p, [0.0; 3]);
+        emit_dots(&mut m, &self.field, [0.0; 3], 1.0, None, 1.4 * p, smooth(22.3, 22.9, z), p, [0.0; 3]);
         vec![tile(LOCAL_GROUP_TILE, [0.0; 3], m)]
     }
 }
@@ -1682,6 +1694,67 @@ mod tests {
         for z in [6.0, 6.4] {
             let t = s.tiles(z, NOW, 1.0);
             assert!(close(reach(find(&t, MOON_TILE)), 3.0 * 10f64.powf(z - 6.0), 0.03));
+        }
+    }
+
+    #[test]
+    fn what_a_rung_draws_at_a_zoom_does_not_depend_on_the_windows_size() {
+        // through the ladder, as the inward rungs test it: a phone and a large screen at one z
+        // get the same world batches, byte for byte; only the camera differs
+        use crate::Ladder;
+        use holon_draw::ladder::Band;
+        let band = Band { z_lo: -1.0, z_hi: 4.2, clamp: false };
+        let (mut small, mut large) = (Ladder::standard(band), Ladder::standard(band)); // with the inward rungs, so that the band is where it is on the page
+        for k in 0..=41 {
+            let z = 4.0 + k as f64 * 0.5;
+            let a = small.passes(z, 0.8, 0.42, 390.0, 844.0, 3.0, NOW);
+            let b = large.passes(z, 0.8, 0.42, 2560.0, 1440.0, 1.0, NOW);
+            assert_eq!(a.len(), b.len(), "z = {z}");
+            assert!(!a.is_empty() || z < 4.5, "z = {z}");
+            for (p, q) in a.iter().zip(&b) {
+                assert_eq!((p.rung, p.weight), (q.rung, q.weight));
+                let world = |f: &holon_draw::Frame| f.batches.iter().filter(|b| !b.screen).map(|b| (b.tile, b.kind, b.coarse, b.bytes.clone(), b.params)).collect::<Vec<_>>();
+                assert!(world(&p.frame) == world(&q.frame), "z = {z}, rung {}", small.rungs[p.rung].name);
+            }
+        }
+    }
+
+    /// Run with `cargo test --release -p holon-draw-ladder timing -- --ignored --nocapture`.
+    #[test]
+    #[ignore = "a timing, to be read in release"]
+    fn timing_of_a_scenes_tiles_and_of_the_cores_packing() {
+        use crate::Ladder;
+        use holon_draw::ladder::Band;
+        use std::time::Instant;
+        const N: u32 = 200;
+        let band = Band { z_lo: -1.0, z_hi: 4.2, clamp: false };
+        let mut ladder = Ladder::standard(band);
+        let mut worst = (0.0f64, 0.0f64);
+        println!("    z  rungs   marks  tiles() ms  passes() ms  packing ms");
+        for k in 0..=40 {
+            let z = 4.5 + k as f64 * 0.5;
+            // the scenes the ladder draws at z, timed alone
+            let live: Vec<usize> = holon_draw::ladder::visible(&ladder.rungs, z).into_iter().map(|x| x.0).collect();
+            let mut marks = 0;
+            let t = Instant::now();
+            for _ in 0..N {
+                marks = 0;
+                for &i in &live {
+                    marks += ladder.scenes[i].tiles(z, NOW, 1.0).iter().map(|t| t.marks.len()).sum::<usize>();
+                }
+            }
+            let tiles = t.elapsed().as_secs_f64() * 1e3 / N as f64;
+            let t = Instant::now();
+            for _ in 0..N {
+                std::hint::black_box(ladder.passes(z, 0.8, 0.42, 1200.0, 800.0, 1.0, NOW));
+            }
+            let passes = t.elapsed().as_secs_f64() * 1e3 / N as f64;
+            println!("{z:5.1}  {:5}  {marks:6}  {tiles:10.3}  {passes:11.3}  {:10.3}", live.len(), passes - tiles);
+            worst = (worst.0.max(tiles), worst.1.max(passes));
+        }
+        println!("worst: tiles() {:.3} ms, passes() {:.3} ms", worst.0, worst.1);
+        if !cfg!(debug_assertions) {
+            assert!(worst.0 < 1.0, "a scene's tiles() took {:.3} ms", worst.0);
         }
     }
 

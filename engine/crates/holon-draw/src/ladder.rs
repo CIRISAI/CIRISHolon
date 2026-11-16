@@ -139,13 +139,23 @@ pub fn host_weight(b: &Band, z: f64) -> f64 {
     weight(&b.as_rung(), z)
 }
 
+/// The window height, in device pixels, at which a rung camera's field of view is `fov_y`.
+pub const REF_PX: f64 = 1000.0;
+
 /// The camera for one rung at `z`: an orbit about the rung's origin (plus `pan`, in the rung's
 /// unit) at which one device pixel spans 10^z metres at the focus.
+///
+/// The camera's DISTANCE is set by `z` alone (as a window [`REF_PX`] pixels high would have it
+/// at `fov_y`), and the field of view widens or narrows with the window instead. So a pixel
+/// spans the same metres at every depth, not only at the focus, on every window: the acuity
+/// choices for every mark are the window's size's business only in WHICH marks are on
+/// screen, never in how finely each is drawn.
 #[allow(clippy::too_many_arguments)]
 pub fn rung_camera(r: &Rung, z: f64, pan: [f64; 3], yaw: f64, pitch: f64, fov_y: f64, width: f64, height: f64) -> crate::Camera {
-    let view = 10f64.powf(z - r.unit as f64) * height; // view height in the rung's unit
-    let dist = 0.5 * view / (0.5 * fov_y).tan();
-    crate::Camera::orbit(pan, yaw, pitch, dist, fov_y, width, height)
+    let mpp = 10f64.powf(z - r.unit as f64); // the rung's units per device pixel at the focus
+    let dist = 0.5 * mpp * REF_PX / (0.5 * fov_y).tan();
+    let fov = 2.0 * (0.5 * mpp * height / dist).atan();
+    crate::Camera::orbit(pan, yaw, pitch, dist, fov, width, height)
 }
 
 #[cfg(test)]
@@ -206,6 +216,10 @@ mod tests {
                 assert!((c.scale / want - 1.0).abs() < 1e-9, "{z}: {} against {want}", c.scale);
             }
             let c = rung_camera(&r, z, [0.0; 3], 0.4, 0.3, 0.8, 1000.0, 800.0);
+            // a point off the focus spans the same pixels on a phone and a large window
+            let big = rung_camera(&r, z, [0.0; 3], 0.4, 0.3, 0.8, 2560.0, 1440.0);
+            let off = [3.0, -2.0, 1.0].map(|v: f64| v * 10f64.powf(z - unit as f64) * 100.0);
+            assert!((c.pixels(off, 1.0) / big.pixels(off, 1.0) - 1.0).abs() < 1e-9);
             let p = c.project([0.0, 0.0, 0.0]).unwrap();
             assert!((p[0] - 500.0).abs() < 1e-6 && (p[1] - 400.0).abs() < 1e-6);
         }

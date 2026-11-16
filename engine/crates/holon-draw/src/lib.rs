@@ -403,6 +403,17 @@ pub struct Frame {
     pub remainder_px: f64,
 }
 
+/// The fraction of a mark's size by which a backend's cheaper mesh falls short of the true
+/// outline (`web/draw.js`: a coarse sphere has 10 segments around, `1 - cos(pi/10)`; a coarse
+/// rod 8 sides, `1 - cos(pi/8)`). Marks a backend draws the same coarse or fine: 0.
+pub fn coarse_shortfall(kind: Kind) -> f64 {
+    match kind {
+        Kind::Sphere => 1.0 - (std::f64::consts::PI / 10.0).cos(),
+        Kind::Rod => 1.0 - (std::f64::consts::PI / 8.0).cos(),
+        _ => 0.0,
+    }
+}
+
 /// A mark under this many pixels across is drawn but not legible.
 pub const LEGIBLE_PX: f64 = 4.0;
 
@@ -438,14 +449,23 @@ impl Scene {
             }
             let d = [t.origin[0] - cam.focus[0], t.origin[1] - cam.focus[1], t.origin[2] - cam.focus[2]];
             // drawing a tile fine adds its detailed decoration and the fine forms of its tagged marks
-            let work = t.marks.iter().filter(|m| m.detail > 0 && !m.pin).count() as u64;
+            // and the marks a backend draws more cheaply when the tile is coarse
+            let work = t.marks.iter().filter(|m| !m.pin && (m.detail > 0 || coarse_shortfall(m.kind) > 0.0)).count() as u64;
             let read = t.marks.iter().filter(|m| m.detail > 0 && !m.pin && m.tag != 0).count() as u64;
-            // the largest on-screen size of anything coarse drawing drops or simplifies
+            // the pixels by which drawing this tile coarse is wrong: a dropped mark's whole size,
+            // a mark drawn on a backend's cheaper mesh its outline's shortfall ([`COARSE_SHORTFALL`])
             let error_px = t
                 .marks
                 .iter()
-                .filter(|m| m.detail > 0 && !m.pin)
-                .map(|m| cam.pixels([t.origin[0] + m.pos[0] as f64, t.origin[1] + m.pos[1] as f64, t.origin[2] + m.pos[2] as f64], m.bound() as f64))
+                .filter(|m| !m.pin)
+                .map(|m| {
+                    let px = cam.pixels([t.origin[0] + m.pos[0] as f64, t.origin[1] + m.pos[1] as f64, t.origin[2] + m.pos[2] as f64], m.bound() as f64);
+                    if m.detail > 0 && m.tag == 0 {
+                        px
+                    } else {
+                        px * coarse_shortfall(m.kind)
+                    }
+                })
                 .fold(0.0, f64::max);
             cands.push(Candidate { distance: (d[0] * d[0] + d[1] * d[1] + d[2] * d[2]).sqrt(), work, read, error_px });
             live.push((t, d));
@@ -467,7 +487,26 @@ impl Scene {
             for kind in KINDS {
                 let mut bytes = Vec::new();
                 let mut count = 0u32;
+                // a pinned mark is never coarsened: in a coarse tile it rides in a batch of its own
+                let mut pinned = Vec::new();
+                let mut n_pinned = 0u32;
                 for m in t.marks.iter().filter(|m| m.kind == kind) {
+                    if !is_fine && !t.screen && m.pin {
+                        let at = pinned.len();
+                        m.pack_as(&mut pinned, false);
+                        n_pinned += 1;
+                        if m.tag != 0 {
+                            let shown = fnv(0xcbf2_9ce4_8422_2325, &pinned[at..]);
+                            let world = [t.origin[0] + m.pos[0] as f64, t.origin[1] + m.pos[1] as f64, t.origin[2] + m.pos[2] as f64];
+                            let r = m.bound() as f64 * cam.scale;
+                            let (x, y, depth, on) = match cam.project(world) {
+                                Some(p) => (p[0], p[1], p[2], p[0] + r >= 0.0 && p[0] - r <= cam.width && p[1] + r >= 0.0 && p[1] - r <= cam.height),
+                                None => (f64::NAN, f64::NAN, f64::INFINITY, false),
+                            };
+                            frame.marks.push(Mark { tag: m.tag, layer: t.layer, coarse: false, on_screen: on, x, y, r, depth, legible: on && 2.0 * r >= LEGIBLE_PX, shown, rect: None });
+                        }
+                        continue;
+                    }
                     let whole = is_fine || m.detail == 0 || m.pin;
                     if !whole && m.tag == 0 {
                         continue;
@@ -498,6 +537,9 @@ impl Scene {
                 }
                 if count > 0 {
                     frame.batches.push(Batch { tile: t.id, offset, kind, count, bytes, screen: t.screen, params: t.params, coarse: !t.screen && !is_fine });
+                }
+                if n_pinned > 0 {
+                    frame.batches.push(Batch { tile: t.id, offset, kind, count: n_pinned, bytes: pinned, screen: false, params: t.params, coarse: false });
                 }
             }
         }
@@ -751,6 +793,28 @@ mod tests {
         let big = Camera::map([50.0, 50.0, 0.0], 0.1, 1600.0, 1200.0);
         let g = s.frame(&big, 7, &Acuity { eps_px: 1.0 }, u64::MAX).unwrap();
         assert_eq!((g.fine, g.coarse, g.remainder_px), (f.fine, f.coarse, f.remainder_px));
+    }
+
+    #[test]
+    fn a_kept_sphere_costs_only_its_meshes_shortfall_and_a_pinned_one_is_never_coarse() {
+        // one tile of spheres 3 units across, all kept (detail 0), one pinned
+        let mut marks: Vec<Instance> = (0..20).map(|i| Instance::new(Kind::Sphere, [i as f32 * 4.0, 0.0, 0.0], [1.5, 0.0, 0.0]).tagged(1 + i)).collect();
+        marks[3] = marks[3].pinned();
+        let s = scene(vec![Tile { id: 1, origin: [0.0; 3], version: 7, layer: 0, screen: false, params: PARAMS_NEUTRAL, marks }]);
+        // at 4 px a unit a sphere is 12 px across; its cheap outline is 4.9 % short: 0.59 px
+        let c = Camera::map([40.0, 0.0, 0.0], 4.0, 800.0, 600.0);
+        let f = s.frame(&c, 7, &Acuity { eps_px: 1.0 }, u64::MAX).unwrap();
+        assert_eq!(f.coarse, 1, "within a pixel: coarse");
+        assert!(f.remainder_px > 0.5 && f.remainder_px < 1.0, "{}", f.remainder_px);
+        let coarse: u32 = f.batches.iter().filter(|b| b.coarse).map(|b| b.count).sum();
+        let fine: u32 = f.batches.iter().filter(|b| !b.coarse).map(|b| b.count).sum();
+        assert_eq!((coarse, fine), (19, 1), "the pinned sphere rides alone, fine");
+        assert!(!f.report(4).unwrap().coarse);
+        // at 40 px a unit the shortfall is 5.9 px: fine
+        let near = Camera::map([40.0, 0.0, 0.0], 40.0, 800.0, 600.0);
+        let g = s.frame(&near, 7, &Acuity { eps_px: 1.0 }, u64::MAX).unwrap();
+        assert_eq!((g.fine, g.coarse), (1, 0));
+        assert!(g.batches.iter().all(|b| !b.coarse));
     }
 
     #[test]

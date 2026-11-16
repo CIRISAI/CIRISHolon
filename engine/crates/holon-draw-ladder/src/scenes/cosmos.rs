@@ -1666,6 +1666,26 @@ mod tests {
     }
 
     #[test]
+    fn what_is_drawn_depends_on_the_pixel_alone() {
+        // A scene is given `z` (metres per device pixel) and never the window's size, so a
+        // phone and a wall at the same `z` get the same marks: two scenes built apart agree
+        // mark for mark, and every size chosen "in pixels" is that many times 10^z metres.
+        for (mut a, mut b) in outward().into_iter().zip(outward()) {
+            let (lo, hi) = a.span();
+            for z in [lo, 0.5 * (lo + hi), hi] {
+                let (ta, tb) = (a.tiles(z, NOW, 1.0), b.tiles(z, NOW, 1.0));
+                assert!(ta == tb, "{} at {z}", a.name());
+            }
+        }
+        // the Moon's least radius is 3 pixels at any zoom where its true radius is less
+        let mut s = EarthMoon::new();
+        for z in [6.0, 6.4] {
+            let t = s.tiles(z, NOW, 1.0);
+            assert!(close(reach(find(&t, MOON_TILE)), 3.0 * 10f64.powf(z - 6.0), 0.03));
+        }
+    }
+
+    #[test]
     fn the_same_picture_every_time() {
         let (a, b) = (spiral(7, 500), spiral(7, 500));
         assert!(a.iter().zip(&b).all(|(x, y)| x.p == y.p && x.c == y.c));

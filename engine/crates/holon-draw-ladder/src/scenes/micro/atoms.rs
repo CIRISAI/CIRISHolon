@@ -6,11 +6,11 @@ use holon_draw_atoms::World;
 /// Ångströms. The simulation's own unit is the bohr; marks are converted.
 pub const UNIT: i32 = -10;
 pub const ANGSTROM_PER_BOHR: f64 = 0.529_177_210_9;
-/// The pair curve the atoms page ships (`docs/atoms/h2_potential.json`, 6,000 bytes), built
-/// in. It is the page's FILE door: a Morse curve fitted to H2's spectroscopic constants, a
-/// placeholder by its own provenance line, and not the STO-3G full-CI curve the engine can
-/// solve (that solve is what the host's load budget forbids).
-const CURVE: &str = include_str!("../../../../../../docs/atoms/h2_potential.json");
+/// The engine's own pair curve, computed ahead of time and built in (41,174 bytes): H2 in the
+/// STO-3G basis, full CI, the 492 knots from 0.3 to 10 bohr that the atoms page solves on
+/// load, written by `holon-draw-atoms/examples/export_curve.rs` with every number at full
+/// precision. Loading it fills the table the solve fills, without the solve's second.
+const CURVE: &str = include_str!("../../../../holon-draw-atoms/data/h2_sto3g.json");
 /// Boltzmann's constant in hartree per kelvin.
 const K_B: f64 = 3.166_811_563e-6;
 
@@ -39,17 +39,22 @@ fn array(json: &str, key: &str) -> Option<Vec<f64>> {
 }
 
 impl Atoms {
-    /// The shipped curve, parsed: R (bohr), E (hartree), F (hartree per bohr), then R_e, D_e
-    /// and the asymptote.
+    /// The built-in curve, parsed: R (bohr), E (hartree), F (hartree per bohr), d2E/dR2, then
+    /// R_e, D_e and the asymptote.
     #[allow(clippy::type_complexity)]
-    pub fn curve() -> Option<(Vec<f64>, Vec<f64>, Vec<f64>, f64, f64, f64)> {
-        Some((array(CURVE, "R_grid_bohr")?, array(CURVE, "E_hartree")?, array(CURVE, "F_hartree_per_bohr")?, number(CURVE, "R_e")?, number(CURVE, "D_e")?, number(CURVE, "E_asymptote")?))
+    pub fn curve() -> Option<(Vec<f64>, Vec<f64>, Vec<f64>, Vec<f64>, f64, f64, f64)> {
+        Some((array(CURVE, "R_grid_bohr")?, array(CURVE, "E_hartree")?, array(CURVE, "F_hartree_per_bohr")?, array(CURVE, "d2E_hartree_per_bohr2")?, number(CURVE, "R_e")?, number(CURVE, "D_e")?, number(CURVE, "E_asymptote")?))
+    }
+    /// The file's own provenance line.
+    pub fn provenance() -> &'static str {
+        let at = CURVE.find("\"provenance\": \"").map_or(0, |i| i + 15);
+        &CURVE[at..at + CURVE[at..].find('"').unwrap_or(0)]
     }
 
     pub fn new() -> Atoms {
         let mut world = World::new();
-        if let Some((r, e, f, r_e, d_e, e_inf)) = Self::curve() {
-            if world.load_curve(&r, &e, &f, r_e, d_e, e_inf, 2) == holon_render_ok() && world.sim.n == 2 {
+        if let Some((r, e, f, e2, r_e, d_e, e_inf)) = Self::curve() {
+            if world.load_curve(&r, &e, &f, Some(&e2), r_e, d_e, e_inf, 2) == holon_render_ok() && world.sim.n == 2 {
                 // One H2 molecule at the middle of the box, bound: stretched 15% beyond its
                 // equilibrium length and at rest along the bond, so it vibrates; turning with
                 // kT of rotational energy at 300 K about an axis tilted out of the page.
@@ -97,7 +102,7 @@ impl Scene for Atoms {
         Status::Simulated
     }
     fn source(&self) -> &'static str {
-        "Computed as you watch by this repository's engine (holon-render's Sim, through holon-draw-atoms): one H2 molecule, started stretched 15% and turning with kT at 300 K, in the engine's 24-bohr walled box (the frame), followed by its first atom. The pair curve is the one the atoms page ships, docs/atoms/h2_potential.json: a Morse curve fitted to H2's measured constants (D_e 0.17449 Eh, R_e 1.40112 bohr), a placeholder by its own provenance, loaded instead of the engine's own STO-3G solve, which takes over a second. No three-body table is loaded; two atoms need none. Atoms are drawn as the engine draws them, as balls of 0.694 bohr (half the bond length of its own solved curve)."
+        "Computed as you watch by this repository's engine (holon-render's Sim, through holon-draw-atoms): one H2 molecule, started stretched 15% and turning with kT at 300 K, in the engine's 24-bohr walled box (the frame), followed by its first atom. The pair curve is the engine's own: H2 in the STO-3G basis, full CI (holon-chem), computed ahead of time on the 492 knots the atoms page solves on load and built in (holon-draw-atoms/data/h2_sto3g.json; R_e 1.3887 bohr, D_e 0.2041 Eh), because the solve takes over a second. Exact in that model, not a prediction of experiment. No three-body table is loaded; two atoms need none. Atoms are drawn as the engine draws them, as balls of half that bond length."
     }
     fn span(&self) -> (f64, f64) {
         (-10.3 - VIEW_DECADES, -9.0 - VIEW_DECADES)

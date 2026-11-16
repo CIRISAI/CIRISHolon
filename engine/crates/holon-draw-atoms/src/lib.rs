@@ -326,13 +326,16 @@ impl World {
     /// Load hydrogen's pair curve from knots the caller already holds, WITHOUT solving it,
     /// and place `n` hydrogen atoms: the file door of `holon-render` (`holon_table_begin`,
     /// `holon_table_knot`, `holon_table_finish`), for a host that cannot spend the solve's
-    /// second on load. `force[i]` is the force at `r[i]` (so `dE/dR = -force`). No
-    /// three-body table is loaded. Returns the curve's status (`holon_render::TABLE_OK` is
+    /// second on load. `force[i]` is the force at `r[i]` (so `dE/dR = -force`); `curvature`
+    /// is the optional `d2E/dR2` column, pushed as `holon_table_knot_curvature` does (the
+    /// engine's own generator supplies it). No three-body table is loaded, and the curve's
+    /// provenance in the bank is left undeclared, as for any curve through the file door. Returns the curve's status (`holon_render::TABLE_OK` is
     /// success); the preset is left at 0 (H2). [`World::load`] is unchanged and still solves.
-    pub fn load_curve(&mut self, r: &[f64], e: &[f64], force: &[f64], r_e: f64, d_e: f64, e_asymptote: f64, n: usize) -> u32 {
+    #[allow(clippy::too_many_arguments)]
+    pub fn load_curve(&mut self, r: &[f64], e: &[f64], force: &[f64], curvature: Option<&[f64]>, r_e: f64, d_e: f64, e_asymptote: f64, n: usize) -> u32 {
         self.sim.clear_bank();
         let refused = u32::MAX - 1;
-        if r.len() != e.len() || r.len() != force.len() {
+        if r.len() != e.len() || r.len() != force.len() || curvature.is_some_and(|c| c.len() != r.len()) {
             self.status = refused;
             return refused;
         }
@@ -342,7 +345,7 @@ impl World {
             return refused;
         }
         for i in 0..r.len() {
-            if !t.knot(i, r[i], e[i], force[i]) {
+            if !t.knot(i, r[i], e[i], force[i]) || curvature.is_some_and(|c| !t.knot_curvature(i, c[i])) {
                 self.status = refused;
                 return refused;
             }

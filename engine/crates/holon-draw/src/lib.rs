@@ -459,11 +459,13 @@ impl Scene {
                 .iter()
                 .filter(|m| !m.pin)
                 .map(|m| {
-                    let px = cam.pixels([t.origin[0] + m.pos[0] as f64, t.origin[1] + m.pos[1] as f64, t.origin[2] + m.pos[2] as f64], m.bound() as f64);
+                    let at = [t.origin[0] + m.pos[0] as f64, t.origin[1] + m.pos[1] as f64, t.origin[2] + m.pos[2] as f64];
                     if m.detail > 0 && m.tag == 0 {
-                        px
+                        cam.pixels(at, m.bound() as f64)
                     } else {
-                        px * coarse_shortfall(m.kind)
+                        // a cheap mesh falls short across the mark's girth: a sphere's radius,
+                        // a rod's radius (not its length)
+                        cam.pixels(at, m.size[0].abs() as f64) * coarse_shortfall(m.kind)
                     }
                 })
                 .fold(0.0, f64::max);

@@ -16,10 +16,14 @@ const R_BOND: f32 = 0.11;
 /// Sites along x and y, and layers down.
 const SIDE: i32 = 19;
 const LAYERS: i32 = 3;
-/// The nearest molecules move and are drawn whole; the rest are still, each hydrogen a short
-/// round stub (a sphere is 728 triangles in the backend's mesh, a stub a few dozen).
+/// The nearest molecules move; the rest are still.
 const MOVING: usize = 300;
-
+/// Molecules are dealt into tiles by distance from the point the zoom goes into (and the
+/// still ones by quadrant too), so that the allocator can draw each tile's balls on the
+/// backend's full mesh or its cheap one by what a pixel resolves THERE (the core prices a
+/// ball on the cheap mesh at its outline's shortfall, 4.9% of its size). These are the ranks
+/// at which a new ring of tiles starts.
+const RINGS: [usize; 6] = [0, 60, 150, MOVING, 500, 750];
 const C_O: [u8; 4] = [204, 58, 50, 255];
 const C_H: [u8; 4] = [236, 236, 232, 255];
 const C_BOND: [u8; 4] = [150, 150, 146, 255];
@@ -40,7 +44,10 @@ struct Mol {
 pub struct Water {
     mols: Vec<Mol>,
     floor: Tile,
-    still: Tile,
+    /// The still molecules' tiles, built once.
+    still: Vec<Tile>,
+    /// The moving molecules' tiles: the ranks in each.
+    moving: Vec<std::ops::Range<usize>>,
 }
 
 fn add(a: [f32; 3], b: [f32; 3]) -> [f32; 3] {
@@ -139,17 +146,28 @@ impl Water {
         mols[0].o = [0.0, 0.0, -OH];
         // nearest first: the first MOVING move, the rest are built once
         mols[1..].sort_by(|x, y| dot(x.o, x.o).total_cmp(&dot(y.o, y.o)));
-        let mut still = Vec::with_capacity(3 * n + 1);
-        // the liquid below and beyond the slab, as the drop rung draws it
         let floor = tile(3, 0, vec![disc([0.0, 0.0, -(LAYERS as f32 + 0.3) * a - shift[2]], 6000.0, shade(WATER, 1.05))]);
-        for m in mols.iter().skip(MOVING) {
-            still.push(sphere(m.o, R_O, C_O));
-            for h in [m.h1, m.h2] {
-                let at = |k: f32| [m.o[0] + k * h[0], m.o[1] + k * h[1], m.o[2] + k * h[2]];
-                still.push(rod(at(0.74), at(1.26), 0.93 * R_H, C_H));
+        // the tiles: rings of rank; beyond the moving set, each ring in four quadrants
+        let mut moving = Vec::new();
+        let mut still = Vec::new();
+        for (k, &from) in RINGS.iter().enumerate() {
+            let to = RINGS.get(k + 1).copied().unwrap_or(n).min(n);
+            if from < MOVING {
+                moving.push(from..to);
+                continue;
+            }
+            for q in 0..4 {
+                let members: Vec<usize> = (from..to).filter(|&i| (mols[i].o[0] >= 0.0) as usize + 2 * (mols[i].o[1] >= 0.0) as usize == q).collect();
+                let (mut balls, mut sticks) = (Vec::with_capacity(3 * members.len()), Vec::with_capacity(2 * members.len()));
+                for &i in &members {
+                    let m = &mols[i];
+                    molecule(&mut balls, &mut sticks, m.o, add(m.o, m.h1), add(m.o, m.h2));
+                }
+                still.push(tile(100 + 4 * k as u64 + q as u64, 1, balls));
+                still.push(tile(200 + 4 * k as u64 + q as u64, 1, sticks));
             }
         }
-        Water { mols, floor, still: tile(1, 1, still) }
+        Water { mols, floor, still, moving }
     }
 
     /// Molecule `i`'s oxygen and two hydrogens at `clock`.
@@ -185,36 +203,50 @@ impl Scene for Water {
         Status::Illustration
     }
     fn source(&self) -> &'static str {
-        "A picture of the model this repository MEASURED its water on (TIERS.md, the molecule and fluid rows; MOLSEARCH1_RESULTS.md): rigid molecules, O-H 0.9572 Å, H-O-H 104.52°, at the liquid's 33.4 molecules per nm³, at the drop's surface. The positions, orientations and slow motion are drawn from a seed, NOT read from the measured trajectories; atoms are drawn as balls of 0.5 and 0.3 Å, and the surface beyond the 6 nm patch as the drop rung draws it."
+        "A picture of the model this repository MEASURED its water on (TIERS.md, the molecule and fluid rows; MOLSEARCH1_RESULTS.md): rigid molecules, O-H 0.9572 Å, H-O-H 104.52°, at the liquid's 33.4 molecules per nm³, at the drop's surface. The positions, orientations and slow motion are drawn from a seed, NOT read from the measured trajectories; atoms are drawn as balls of 0.5 and 0.3 Å (on a coarser mesh where a pixel cannot tell), and the surface beyond the 6 nm patch as the drop rung draws it."
     }
     fn span(&self) -> (f64, f64) {
         (-9.0 - VIEW_DECADES, -7.5 - VIEW_DECADES)
     }
     fn tiles(&mut self, z: f64, clock: f64, _alpha: f64) -> Vec<Tile> {
+        // a stick is 0.22 Å across: drawn while a pixel resolves it
+        let sticks = 2.0e-10 * R_BOND as f64 / 10f64.powf(z) >= 1.0;
         let z = z + VIEW_DECADES; // the view's height, as the rest of this function has it
-        let moving = MOVING.min(self.mols.len());
-        // the sticks are under a pixel wide once the view is over 6 nm high
-        let sticks = z < -8.2;
-        let mut marks = Vec::with_capacity(moving * if sticks { 5 } else { 3 });
-        for i in 0..moving {
-            let (o, h1, h2) = self.pose(i, clock);
-            marks.push(sphere(o, R_O, C_O));
-            marks.push(sphere(h1, R_H, C_H));
-            marks.push(sphere(h2, R_H, C_H));
+        let mut out = vec![self.floor.clone()];
+        for (k, ranks) in self.moving.iter().enumerate() {
+            let (mut balls, mut rods) = (Vec::with_capacity(ranks.len() * 3), Vec::with_capacity(ranks.len() * 2));
+            for i in ranks.clone() {
+                let (o, h1, h2) = self.pose(i, clock);
+                molecule(&mut balls, &mut rods, o, h1, h2);
+            }
+            out.push(tile(10 + k as u64, 0, balls));
             if sticks {
-                marks.push(rod(o, h1, R_BOND, C_BOND));
-                marks.push(rod(o, h2, R_BOND, C_BOND));
+                out.push(tile(20 + k as u64, 0, rods));
             }
         }
-        // the far molecules come in as the view widens past 1.3 nm; closer, they are beyond
-        // the horizon of the near ones
-        let far = ramp(z, -8.9, -8.7);
-        let mut out = vec![self.floor.clone(), tile(2, 0, marks)];
+        // the far molecules come in as a pixel passes 0.063 Å, where their balls are small
+        // enough for the cheap mesh (an oxygen's shortfall is under a pixel from 0.049 Å);
+        // closer, they are beyond the horizon of the near ones
+        let far = ramp(z, -8.2, -8.05);
         if far > 0.0 {
-            out.push(faded(self.still.clone(), far));
+            for t in self.still.iter().filter(|t| sticks || t.id < 200) {
+                out.push(faded(t.clone(), far));
+            }
         }
         out
     }
+}
+
+/// One molecule's marks: three balls into one tile's list and two sticks into another's.
+/// They are in separate tiles because the core prices a rod on the cheap mesh by its LENGTH
+/// (7.6% of the bond, not of the stick's width), which would hold a tile of balls on the full
+/// mesh half a decade longer than the balls need.
+fn molecule(balls: &mut Vec<Instance>, sticks: &mut Vec<Instance>, o: [f32; 3], h1: [f32; 3], h2: [f32; 3]) {
+    balls.push(sphere(o, R_O, C_O));
+    balls.push(sphere(h1, R_H, C_H));
+    balls.push(sphere(h2, R_H, C_H));
+    sticks.push(rod(o, h1, R_BOND, C_BOND));
+    sticks.push(rod(o, h2, R_BOND, C_BOND));
 }
 
 #[cfg(test)]

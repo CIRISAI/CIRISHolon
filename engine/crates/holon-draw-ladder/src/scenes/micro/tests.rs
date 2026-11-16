@@ -56,7 +56,7 @@ fn every_rung_says_what_it_is_and_where_its_numbers_come_from() {
     // the honest words are in the lines
     let source = |name: &str| scenes.iter().find(|s| s.name() == name).unwrap().source();
     assert!(source("liquid water, molecule by molecule").contains("NOT read from the measured trajectories"));
-    assert!(source("hydrogen, atom by atom").contains("Morse") && source("hydrogen, atom by atom").contains("No three-body table"));
+    assert!(source("hydrogen, atom by atom").contains("STO-3G") && source("hydrogen, atom by atom").contains("computed ahead of time") && source("hydrogen, atom by atom").contains("No three-body table"));
     assert!(source("inside the proton").contains("one space dimension only"));
     assert!(source("the vacuum").contains("Nothing in this repository computes"));
 }
@@ -167,11 +167,13 @@ fn water_is_rigid_molecules_at_the_liquids_density() {
 }
 
 #[test]
-fn the_atoms_rung_loads_the_shipped_curve_without_solving_and_steps() {
-    let (r, e, f, r_e, d_e, e_inf) = Atoms::curve().expect("the shipped curve parses");
-    assert_eq!((r.len(), e.len(), f.len()), (107, 107, 107));
-    assert_eq!((r[0], r_e, d_e, e_inf), (0.4, 1.40112, 0.17449, -1.0));
+fn the_atoms_rung_loads_the_engines_own_curve_without_solving_and_steps() {
+    let (r, e, f, e2, r_e, d_e, e_inf) = Atoms::curve().expect("the built-in curve parses");
+    assert_eq!((r.len(), e.len(), f.len(), e2.len()), (492, 492, 492, 492));
+    assert_eq!((r[0], r[491]), (0.3, 10.0));
+    assert_eq!((r_e, d_e, e_inf), (1.3886940180177756, 0.20414235210759035, -0.933163699114551));
     assert!(r.windows(2).all(|w| w[1] > w[0]));
+    assert!(Atoms::provenance().contains("STO-3G") && Atoms::provenance().contains("492 knots") && Atoms::provenance().contains("commit"));
     let t = Instant::now();
     let mut a = Atoms::new();
     let built = t.elapsed();
@@ -183,11 +185,11 @@ fn the_atoms_rung_loads_the_shipped_curve_without_solving_and_steps() {
     println!("atoms rung built in {built:?}");
     // stretched 15% beyond R_e at the start
     let start = a.bond();
-    assert!((start - 1.15 * 1.40112 * atoms::ANGSTROM_PER_BOHR).abs() < 1e-9, "{start}");
+    assert!((start - 1.15 * 1.3886940180177756 * atoms::ANGSTROM_PER_BOHR).abs() < 1e-9, "{start}");
     // off screen it does not step
     a.advance(0.016);
     assert_eq!(a.substeps, 0);
-    // on screen it does, the bond stays bound and oscillates about R_e (0.7414 Å)
+    // on screen it does, the bond stays bound and oscillates about R_e (0.7349 Å)
     let (mut lo, mut hi) = (f64::MAX, f64::MIN);
     let t = Instant::now();
     for _ in 0..600 {
@@ -206,7 +208,7 @@ fn the_atoms_rung_loads_the_shipped_curve_without_solving_and_steps() {
     let per_frame = t.elapsed() / 600;
     println!("atoms rung: {} substeps in 600 frames, {per_frame:?} a frame, bond {lo:.4} to {hi:.4} Å", a.substeps);
     assert!(a.substeps > 0);
-    assert!(lo > 0.55 && lo < 0.7414 && hi > 0.7414 && hi < 0.95, "bond from {lo} to {hi}");
+    assert!(lo > 0.55 && lo < 0.7349 && hi > 0.7349 && hi < 0.95, "bond from {lo} to {hi}");
     // the box is the engine's 24 bohr, drawn in Å
     let m = marks(&mut a, -9.6, 0.0);
     let edge = m.iter().filter(|m| m.kind == Kind::Line).map(|m| ((m.aux[0] - m.pos[0]).powi(2) + (m.aux[1] - m.pos[1]).powi(2) + (m.aux[2] - m.pos[2]).powi(2)).sqrt()).fold(0.0f32, f32::max);
@@ -337,8 +339,83 @@ fn what_a_rung_draws_at_a_zoom_does_not_depend_on_the_windows_size() {
         assert_eq!(a.len(), b.len(), "z = {z}");
         for (p, q) in a.iter().zip(&b) {
             assert_eq!((p.rung, p.weight), (q.rung, q.weight));
-            let world = |f: &holon_draw::Frame| f.batches.iter().filter(|b| !b.screen).map(|b| (b.tile, b.kind, b.bytes.clone(), b.params)).collect::<Vec<_>>();
+            let world = |f: &holon_draw::Frame| f.batches.iter().filter(|b| !b.screen).map(|b| (b.tile, b.kind, b.coarse, b.bytes.clone(), b.params)).collect::<Vec<_>>();
             assert!(world(&p.frame) == world(&q.frame), "z = {z}, rung {}", small.rungs[p.rung].name);
         }
+    }
+}
+
+#[test]
+fn the_built_in_curve_is_the_curve_the_engine_solves() {
+    // the solve (over a second in release; it is why the rung does not do it) against the file
+    let mut solved = holon_draw_atoms::World::new();
+    assert_eq!(solved.load(0), 1);
+    let mut loaded = Atoms::new();
+    let read = |w: &mut holon_draw_atoms::World| {
+        let t = w.sim.table_mut();
+        (t.knots(), (0..=2000).map(|k| t.eval(0.3 + 9.7 * k as f64 / 2000.0)).collect::<Vec<_>>())
+    };
+    // energy, slope and curvature at 2001 separations: the same floats
+    assert!(read(&mut solved) == read(&mut loaded.world));
+    // and the clocks that are functions of the curve alone (dt itself is refined by each
+    // scene's own energy envelope, and the two scenes differ)
+    let (s, l) = (&solved.sim.timescale, &loaded.world.sim.timescale);
+    assert_eq!((s.dt_reference, s.period, s.omega_e), (l.dt_reference, l.period, l.omega_e));
+}
+
+/// Triangles the backend draws for a frame's world batches (`holon-draw/web/draw.js`: a
+/// sphere is 28 by 14, or 10 by 6 when its batch is coarse; a rod 20 sides, or 8; a box 12,
+/// a disc 24, a line 12), and the same if every batch were drawn fine.
+fn triangles(f: &holon_draw::Frame) -> (u64, u64) {
+    let (mut drawn, mut fine) = (0u64, 0u64);
+    for b in f.batches.iter().filter(|b| !b.screen) {
+        let (full, cheap) = match b.kind {
+            Kind::Sphere => (728, 100),
+            Kind::Rod => (80, 32),
+            Kind::Box | Kind::Prism | Kind::Line | Kind::Arc => (12, 12),
+            Kind::Disc | Kind::Glyph => (24, 24),
+            _ => (2, 2),
+        };
+        drawn += b.count as u64 * if b.coarse { cheap } else { full };
+        fine += b.count as u64 * full;
+    }
+    (drawn, fine)
+}
+
+#[test]
+fn water_far_from_the_eye_is_drawn_on_the_cheap_mesh_and_near_it_on_the_full_one() {
+    let band = Band { z_lo: -1.0, z_hi: 4.2, clamp: false };
+    let mut l = Ladder::new(inward(), band);
+    let water = l.rungs.iter().position(|r| r.name == "liquid water, molecule by molecule").unwrap();
+    let mut seen = Vec::new();
+    for k in 0..=30 {
+        let z = -12.0 + 0.05 * k as f64;
+        let passes = l.passes(z, 0.8, 0.42, 1100.0, 720.0, 1.0, NOW);
+        let p = passes.iter().find(|p| p.rung == water).unwrap();
+        let (drawn, fine) = triangles(&p.frame);
+        println!("water z = {z:6.2}: {:2} tiles fine, {:2} coarse, {drawn:8} triangles ({fine:8} if all were fine), remainder {:.2} px", p.frame.fine, p.frame.coarse, p.frame.remainder_px);
+        // what is left coarse is within the pixel the allocator was given
+        assert!(p.frame.remainder_px <= 1.0);
+        assert!(drawn <= fine);
+        // nothing is dropped but the probes: every ball is in the frame
+        let balls: u32 = p.frame.batches.iter().filter(|b| b.kind == Kind::Sphere).map(|b| b.count).sum();
+        assert!(balls == 900 || balls == 3 * 1083, "{balls}");
+        seen.push((z, drawn, fine, p.frame.fine, p.frame.coarse));
+    }
+    // closest in, everything drawn is near and on the full mesh
+    assert_eq!(seen[0].4, 0);
+    // by the time the whole patch is in view every molecule tile is coarse (the one fine
+    // tile is the floor, which has no detail) and the frame is a seventh of the triangles
+    let wide = seen.last().unwrap();
+    assert_eq!(wide.3, 1);
+    assert!(wide.1 * 6 < wide.2, "{wide:?}");
+    // never more than 0.9 million triangles
+    assert!(seen.iter().all(|s| s.1 < 900_000), "{seen:?}");
+    // on a phone the choices are the same: the camera's distance is set by z alone
+    let mut phone = Ladder::new(inward(), band);
+    for (z, _, _, fine, coarse) in &seen {
+        let passes = phone.passes(*z, 0.8, 0.42, 390.0, 844.0, 3.0, NOW);
+        let p = passes.iter().find(|p| p.rung == water).unwrap();
+        assert_eq!((p.frame.fine, p.frame.coarse), (*fine, *coarse), "z = {z}");
     }
 }

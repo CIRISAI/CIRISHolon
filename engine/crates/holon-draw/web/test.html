@@ -3,20 +3,25 @@
 <title>holon-draw backend test</title>
 <style>
   html, body { margin: 0; background: #10141c; color: #cdd6e4; font: 13px system-ui, sans-serif; }
-  canvas { display: block; width: 960px; height: 640px; }
-  #info { padding: 6px 10px; white-space: pre-wrap; }
+  html, body { height: 100%; overflow: hidden; }
+  canvas { display: block; width: 100vw; height: 100vh; }
 </style>
-<canvas id="c" width="960" height="640"></canvas>
-<div id="info"></div>
+<canvas id="c"></canvas>
 <script type="module">
 // A synthetic scene built in plain script, in the core's 52-byte record, drawn by draw.js.
 // Query: ?gl=1 asks for WebGL 1; ?ortho=1 an orthographic camera; ?az=deg&el=deg the orbit;
-// ?spin=1 keeps drawing; ?novao=1 hides vertex array objects (the bare WebGL 1 path).
+// ?spin=1 keeps drawing; ?novao=1 hides vertex array objects (the bare WebGL 1 path);
+// ?page=N&pages=M shrinks the text atlas (to see eviction); ?mediump=1 writes mediump for the screen program's fragment precision; ?overlay=0 leaves
+// the panels out. Every word on the page is drawn by the engine: there is no HTML text.
 import { createDrawer, KIND, INSTANCE_BYTES } from './draw.js';
+import { createTextProvider, STYLE } from './text.js';
 
 const q = new URLSearchParams(location.search);
 const canvas = document.getElementById('c');
-const info = document.getElementById('info');
+const info = { set textContent(v) { console.log(v); } };
+const dpr = window.devicePixelRatio || 1;
+canvas.width = Math.round(window.innerWidth * dpr);
+canvas.height = Math.round(window.innerHeight * dpr);
 const want1 = q.get('gl') === '1';
 const gl = canvas.getContext(want1 ? 'webgl' : 'webgl2', { antialias: true, alpha: false });
 if (!gl) { info.textContent = 'no context'; document.body.dataset.error = 'no context'; throw new Error('no context'); }
@@ -27,12 +32,13 @@ if (q.get('novao') === '1') {
 
 // ---- records ----
 class Batch {
-  constructor(kind, offset, coarse) {
-    this.kind = kind; this.offset = offset || [0, 0, 0]; this.coarse = !!coarse;
+  constructor(kind, offset, coarse, screen) {
+    this.kind = kind; this.offset = offset || [0, 0, 0]; this.coarse = !!coarse; this.screen = !!screen;
     this.count = 0; this.buf = new ArrayBuffer(64 * INSTANCE_BYTES); this.dv = new DataView(this.buf);
     this.bytes = new Uint8Array(this.buf, 0, 0);
   }
-  add(pos, size, aux, angle, rgba, flags) {
+  clear() { this.count = 0; this.bytes = new Uint8Array(this.buf, 0, 0); return this; }
+  add(pos, size, aux, angle, rgba, flags, variant) {
     if ((this.count + 1) * INSTANCE_BYTES > this.buf.byteLength) {
       const nb = new ArrayBuffer(this.buf.byteLength * 2);
       new Uint8Array(nb).set(new Uint8Array(this.buf));
@@ -47,7 +53,7 @@ class Batch {
     dv.setFloat32(o + 36, angle || 0, true);
     for (let i = 0; i < 4; i++) dv.setUint8(o + 40 + i, rgba[i]);
     dv.setUint32(o + 44, 0, true);
-    dv.setUint8(o + 48, this.kind); dv.setUint8(o + 49, 0); dv.setUint8(o + 50, flags || 0); dv.setUint8(o + 51, 0);
+    dv.setUint8(o + 48, this.kind); dv.setUint8(o + 49, 0); dv.setUint8(o + 50, flags || 0); dv.setUint8(o + 51, variant || 0);
     this.count++;
     this.bytes = new Uint8Array(this.buf, 0, this.count * INSTANCE_BYTES);
     return this;
@@ -136,9 +142,97 @@ function ortho(h, aspect, n, f) {
 }
 
 const { OFF, batches } = scene();
-let drawer;
+
+// ---- the screen overlay: panels, rows, buttons, in device pixels ----
+// A panel is one screen tile: its origin is the batch offset, and its marks are packed per
+// kind in the core's order (quad, line, disc, run), as Scene::frame emits them.
+class Panel {
+  constructor() {
+    this.o = [0, 0, 0];
+    this.quads = new Batch(KIND.QUAD, this.o, false, true);
+    this.lines = new Batch(KIND.LINE, this.o, false, true);
+    this.discs = new Batch(KIND.DISC, this.o, false, true);
+    this.runs = new Batch(KIND.RUN, this.o, false, true);
+    this.batches = [this.quads, this.lines, this.discs, this.runs];
+  }
+  begin(x, y, w, h) {
+    this.o[0] = x; this.o[1] = y; this.w = w; this.h = h;
+    for (const b of this.batches) b.clear();
+    const r = 10 * dpr;
+    this.rect(-dpr, -dpr, w + 2 * dpr, h + 2 * dpr, r + dpr, [86, 100, 128, 255]);   // a 1 px (CSS) rim
+    this.rect(0, 0, w, h, r, [17, 22, 32, 232]);
+  }
+  rect(x, y, w, h, r, rgba) { this.quads.add([x + w / 2, y + h / 2, 0], [w, h, 0], [r, 0, 0], 0, rgba); }
+  line(x0, y0, x1, y1, w, rgba) { this.lines.add([x0, y0, 0], [w, 0, 0], [x1, y1, 0], 0, rgba); }
+  disc(x, y, r, rgba) { this.discs.add([x, y, 0], [r, 0, 0], null, 0, rgba); }
+  // align: -1 the ink starts at x, 0 centred on x, 1 the ink ends at x; cy is the row's centre line.
+  text(str, style, x, cy, align, rgba) {
+    const e = text.place(str, style);
+    if (e.w === 0) return e;
+    const cx = align < 0 ? x + e.w / 2 - 1 : align > 0 ? x - e.w / 2 + 1 : x;
+    this.runs.add([cx, cy, 0], [e.w, e.h, 0], [e.u0, e.v0, e.u1], e.v1, rgba, 0, e.page);
+    return e;
+  }
+}
+const panels = [new Panel(), new Panel(), new Panel()];
+const INK = [222, 229, 240, 255], DIM = [140, 152, 172, 255], HEAD = [120, 190, 255, 255];
+
+function overlay(lines) {
+  const W = canvas.width, H = canvas.height, d = dpr;
+  const narrow = W / d < 700;
+  const pad = 12 * d, row = 20 * d, pw = Math.min(330 * d, W - 24 * d);
+  const heading = (p, str) => {
+    p.text(str, STYLE.HEADING, pad, pad + 8 * d, -1, HEAD);
+    p.line(pad, pad + 20 * d, p.w - pad, pad + 20 * d, d, [60, 72, 96, 255]);
+  };
+
+  // Panel 1: the engine's own counts, and the verdict.
+  const a = panels[0];
+  a.begin(12 * d, 12 * d, pw, pad * 2 + 24 * d + lines.length * row + 34 * d);
+  heading(a, 'Engine');
+  let y = pad + 24 * d + row / 2;
+  for (const [k, v] of lines) {
+    a.text(k, STYLE.BODY, pad, y, -1, DIM);
+    a.text(v, STYLE.BODY, a.w - pad, y, 1, INK);
+    y += row;
+  }
+  a.disc(pad + 8 * d, y + 12 * d, 7 * d, [80, 220, 120, 255]);
+  a.text('PASS', STYLE.STATUS, pad + 24 * d, y + 12 * d, -1, [80, 220, 120, 255]);
+  a.text('gl error 0', STYLE.SMALL, a.w - pad, y + 12 * d, 1, DIM);
+
+  // Panel 2: strings the platform must shape (joining, reordering, stacked marks, fallback).
+  const scripts = [['Arabic', 'مرحبا بالعالم 123'], ['Hindi', 'नमस्ते दुनिया'], ['Thai', 'สวัสดีชาวโลก'], ['Japanese', 'こんにちは世界'], ['Mixed', 'H₂O → água, 25 °C']];
+  const b = panels[1];
+  const bh = pad * 2 + 24 * d + scripts.length * row;
+  if (narrow) b.begin(12 * d, a.o[1] + a.h + 12 * d, pw, bh); else b.begin(W - pw - 12 * d, 12 * d, pw, bh);
+  heading(b, 'Scripts, shaped by the platform');
+  y = pad + 24 * d + row / 2;
+  for (const [k, v] of scripts) {
+    b.text(k, STYLE.SMALL, pad, y, -1, DIM);
+    b.text(v, STYLE.BODY, b.w - pad, y, 1, INK);
+    y += row;
+  }
+
+  // Panel 3: a row of rounded buttons and a disc.
+  const c = panels[2];
+  const names = ['Reset', 'Spin', 'Explore'];
+  const bwid = 84 * d, bht = 30 * d, gap = 8 * d;
+  const cw = pad * 2 + names.length * bwid + (names.length - 1) * gap + gap + bht;
+  c.begin(narrow ? (W - cw) / 2 : 12 * d, H - bht - pad * 2 - 12 * d, cw, bht + pad * 2);
+  let x = pad;
+  names.forEach((n, i) => {
+    c.rect(x, pad, bwid, bht, 7 * d, i === 2 ? [38, 128, 96, 255] : [48, 62, 90, 255]);
+    c.text(n, STYLE.BUTTON, x + bwid / 2, pad + bht / 2, 0, INK);
+    x += bwid + gap;
+  });
+  c.disc(x + bht / 2, pad + bht / 2, bht / 2, [235, 180, 60, 255]);
+  c.disc(x + bht / 2, pad + bht / 2, bht / 2 - 4 * d, [17, 22, 32, 255]);
+}
+
+let drawer, text;
 try {
-  drawer = createDrawer(gl);
+  text = createTextProvider(gl, { dpr, pageSize: +(q.get('page') || 0), maxPages: +(q.get('pages') || 0) });
+  drawer = createDrawer(gl, { text, forceMediump: q.get('mediump') === '1' });
 } catch (e) {
   info.textContent = String(e); document.body.dataset.error = String(e); throw e;
 }
@@ -146,26 +240,57 @@ let az = (+(q.get('az') || 35) * Math.PI) / 180;
 const el = (+(q.get('el') || 28) * Math.PI) / 180;
 const dist = 19;
 
+const all = batches.slice();
+const showOverlay = q.get('overlay') !== '0';
+if (showOverlay) for (const p of panels) all.push(...p.batches);
+const viewport = [0, 0, canvas.width, canvas.height];
+const last = { drawCalls: 0, instances: 0, bytesUploaded: 0 };
+let frames = 0, epochs = 0;
+
 function frame(tms) {
   if (q.get('spin') === '1') az += 0.004;
   const at = [OFF[0], OFF[1], OFF[2] + 1.2];
   const eye = [at[0] + dist * Math.cos(el) * Math.sin(az), at[1] - dist * Math.cos(el) * Math.cos(az), at[2] + dist * Math.sin(el)];
   const aspect = canvas.width / canvas.height;
-  const proj = q.get('ortho') === '1' ? ortho(6.2, aspect, 0.1, 100) : perspective((38 * Math.PI) / 180, aspect, 0.1, 100);
+  const fov = (38 * Math.PI) / 180 * (aspect < 1 ? 1.9 : 1);
+  const proj = q.get('ortho') === '1' ? ortho(6.2, aspect, 0.1, 100) : perspective(fov, aspect, 0.1, 100);
   const vp = mul(proj, lookAt(eye, at, [0, 0, 1]));
+
+  text.beginFrame();
+  if (showOverlay) {
+    const ver = gl.getParameter(gl.VERSION).replace(/ \(.*/, '');
+    const ts = text.stats();
+    const lines = [
+      ['context', ver],
+      ['instancing', drawer.instancing === 'webgl2' ? 'native' : 'ANGLE ext'],
+      ['canvas', canvas.width + ' x ' + canvas.height + ' @' + dpr + 'x'],
+      ['draw calls', String(last.drawCalls)],
+      ['instances', String(last.instances)],
+      ['atlas', ts.pages + ' page, ' + ts.entries + ' runs'],
+    ];
+    // A page emptied during the layout makes earlier rectangles stale: lay out again.
+    // Once more only: if one layout holds more than the atlas does, a second pass cannot
+    // help (stats().overflows says so) and a loop here would never end.
+    let e0 = text.epoch;
+    overlay(lines);
+    if (text.epoch !== e0) { epochs++; overlay(lines); }
+  }
 
   gl.viewport(0, 0, canvas.width, canvas.height);
   gl.clearColor(0.063, 0.078, 0.11, 1);
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   const t0 = performance.now();
-  drawer.draw(batches, vp, { light: [0.35, -0.5, 0.8], ambient: 0.25 });
+  drawer.draw(all, vp, { light: [0.35, -0.5, 0.8], ambient: 0.25, viewport });
   const ms = performance.now() - t0;
   const s = drawer.stats(), err = gl.getError();
-  const ver = gl.getParameter(gl.VERSION);
-  info.textContent = `${ver} | instancing: ${drawer.instancing} | vertex arrays: ${drawer.vertexArrays} | draw calls ${s.drawCalls}, instances ${s.instances}, bytes ${s.bytesUploaded} | gl error ${err} | draw() ${ms.toFixed(2)} ms`;
-  document.body.dataset.stats = JSON.stringify({ ...s, glError: err, version: ver, instancing: drawer.instancing, vertexArrays: drawer.vertexArrays });
-  document.body.dataset.ready = '1';
-  if (q.get('spin') === '1') requestAnimationFrame(frame);
+  last.drawCalls = s.drawCalls; last.instances = s.instances; last.bytesUploaded = s.bytesUploaded;
+  frames++;
+  // Two frames, so the counts the first one measured are the ones the second one shows.
+  if (frames >= 2) {
+    document.body.dataset.stats = JSON.stringify({ ...s, glError: err, version: gl.getParameter(gl.VERSION), instancing: drawer.instancing, vertexArrays: drawer.vertexArrays, screenPrecision: drawer.screenPrecision, text: { ...text.stats() }, relayouts: epochs, drawMs: +ms.toFixed(2) });
+    document.body.dataset.ready = '1';
+  }
+  if (q.get('spin') === '1' || frames < 2) requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
 </script>

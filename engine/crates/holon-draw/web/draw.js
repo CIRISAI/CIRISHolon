@@ -20,25 +20,52 @@
 // Boxes, prisms, spheres and rods are lit. Flat marks and lines are drawn in their exact
 // colour unless `opts.flatLit` is set.
 //
-// PRECISION (INTERFACE.md §7): NO UNIFORM NAME APPEARS IN BOTH SHADER STAGES. The vertex
-// stage owns u_vp, u_offset, u_eye, u_mode; the fragment stage owns u_light, u_shade. So
-// there is no pair whose precision could disagree at link. The fragment stage is `mediump`
-// throughout and never names `highp` or GL_FRAGMENT_PRECISION_HIGH, so undefining that
-// macro changes nothing. Varyings are declared with the same explicit precision in both.
+// SCREEN BATCHES (`batch.screen === true`): positions are DEVICE PIXELS from the viewport's
+// top-left, y down; `offset` is the tile's origin in pixels; `vp` does not apply. They are
+// drawn AFTER every world batch, in the order given, with the depth test off. Kinds there:
+//   1 quad, 9 patch   rectangle size[0] by size[1] centred at pos, corner radius aux[0] px
+//   4 disc, 10 glyph  filled circle, radius size[0] px
+//   2 line, 3 arc     from pos to aux, width size[0] px, flat ends
+//   11 run            a text run from the text provider's atlas (`./text.js`): rectangle
+//                     size[0] by size[1] centred at pos, its top-left rounded to a whole pixel;
+//                     u0 = aux[0], v0 = aux[1], u1 = aux[2], v1 = angle; atlas page = variant
+//                     (byte 51, pages 0..3); colour = rgba.rgb, alpha = rgba.a * coverage.
+// Shapes are cut by a signed distance in the fragment stage, with about 1 px of antialiasing.
+// Other kinds in a screen batch, a run in a world batch, and a run with no provider bound
+// are skipped. The viewport is `opts.viewport` ([x, y, w, h], as GL has it) or, without it,
+// gl.getParameter(gl.VIEWPORT), which allocates: a host that draws screen batches every
+// frame passes `opts.viewport`.
+//
+// PRECISION (INTERFACE.md §7): NO UNIFORM NAME APPEARS IN BOTH SHADER STAGES, in either
+// program. World program: the vertex stage owns u_vp, u_offset, u_eye, u_mode; the fragment
+// stage owns u_light, u_shade. Screen program: the vertex stage owns u_view, u_soffset,
+// u_smode; the fragment stage owns u_fmode, u_t0..u_t3. So there is no pair whose precision
+// could disagree at link. The world fragment stage is `mediump` throughout. The screen
+// fragment stage wants more (pixel distances and atlas coordinates up to a few thousand),
+// so its precision is a word, PF, written into BOTH stages' source by this file: `highp`
+// where gl.getShaderPrecisionFormat says the fragment stage has it, else `mediump`. It
+// never reads GL_FRAGMENT_PRECISION_HIGH; `options.forceMediump` is the no-high-precision
+// test. Varyings are declared with the same explicit precision in both stages. On a device
+// with mediump only, text sampling and large rounded shapes lose accuracy (not seen here:
+// no such device in the test).
 //
 // GL STATE. draw() does not clear, does not set the viewport, does not touch the bound
 // framebuffer, scissor, stencil or colour mask. It CHANGES, and leaves changed:
-//   - the current program (left as this drawer's program);
+//   - the current program (left as one of this drawer's two programs);
 //   - BLEND enabled, blendFuncSeparate(SRC_ALPHA, ONE_MINUS_SRC_ALPHA, ONE, ONE_MINUS_SRC_ALPHA)
 //     (the blend equation is not touched: a host that uses another must restore FUNC_ADD first);
-//   - DEPTH_TEST enabled, depthFunc(LEQUAL), depthMask(true);
+//   - DEPTH_TEST enabled, depthFunc(LEQUAL), depthMask(true) (the test is off while screen
+//     batches are drawn and on again on return);
 //   - CULL_FACE (left enabled), cullFace(BACK), frontFace(CCW);
 //   - ARRAY_BUFFER binding (left null);
 //   - the vertex array object binding, where one exists (WebGL 2 or OES_vertex_array_object):
 //     left null, i.e. the default object, whose own attribute state is NOT touched;
-//   - where no vertex array object exists (bare WebGL 1): attribute slots 0..6 (pointers,
-//     enabled flags, divisors) and the ELEMENT_ARRAY_BUFFER binding. On return slots 0..6 are
-//     disabled, their divisors are 0, and ELEMENT_ARRAY_BUFFER is null.
+//   - where no vertex array object exists (bare WebGL 1): attribute slots 0..7 (pointers,
+//     enabled flags, divisors) and the ELEMENT_ARRAY_BUFFER binding. On return slots 0..7 are
+//     disabled, their divisors are 0, and ELEMENT_ARRAY_BUFFER is null;
+//   - only when a run batch is drawn: activeTexture (left TEXTURE0) and the TEXTURE_2D
+//     bindings of units 0..3 (left on the atlas pages that exist; a unit whose page does
+//     not exist is not touched).
 // A draw() with nothing to draw changes no state.
 //
 // Translucent records are blended in the order given and write depth; a host that needs
@@ -50,13 +77,16 @@
 export const INSTANCE_BYTES = 52;
 
 export const KIND = Object.freeze({
-  QUAD: 1, LINE: 2, ARC: 3, DISC: 4, BOX: 5, PRISM: 6, SPHERE: 7, ROD: 8, PATCH: 9, GLYPH: 10,
+  QUAD: 1, LINE: 2, ARC: 3, DISC: 4, BOX: 5, PRISM: 6, SPHERE: 7, ROD: 8, PATCH: 9, GLYPH: 10, RUN: 11,
 });
 
 // Attribute slots, bound before link. Slot 0 is a mesh attribute (never instanced), which
 // desktop GL needs.
-const A_P = 0, A_N = 1, I_POS = 2, I_SIZE = 3, I_AUX = 4, I_ANGLE = 5, I_COLOR = 6;
+// Slot 7 (the record's four trailing bytes) is read by the screen program only, which does
+// not read slot 1: eight slots in all, WebGL 1's guaranteed minimum.
+const A_P = 0, A_N = 1, I_POS = 2, I_SIZE = 3, I_AUX = 4, I_ANGLE = 5, I_COLOR = 6, I_META = 7;
 const N_ATTR = 7;
+const MAX_PAGES = 4;
 
 const VS = `
 precision highp float;
@@ -125,6 +155,100 @@ void main() {
   float rim = pow(1.0 - max(dot(n, v), 0.0), 3.0) * u_shade.w;
   vec3 shaded = v_c.rgb * (lit + rim) + vec3(sp);
   gl_FragColor = vec4(mix(v_c.rgb, shaded, u_shade.x), v_c.a);
+}
+`;
+
+// The screen program. PF is replaced by this file with one precision word, the same in both
+// stages (see PRECISION above).
+const SVS = `
+precision highp float;
+attribute vec3 a_p;
+attribute vec3 i_pos;
+attribute vec3 i_size;
+attribute vec3 i_aux;
+attribute float i_angle;
+attribute vec4 i_color;
+attribute vec4 i_meta;   // kind, detail, flags, variant as 0..255
+uniform vec2 u_view;     // viewport width and height in pixels
+uniform vec3 u_soffset;
+uniform float u_smode;   // 0 rectangle, 1 circle, 2 line, 3 run
+varying PF vec2 v_a;     // max(v_a, v_b) = |local| - (half - radius): small near every edge
+varying PF vec2 v_b;
+varying PF vec2 v_uv;
+varying PF float v_r;
+varying mediump float v_page;
+varying lowp vec4 v_c;
+void main() {
+  vec2 o = i_pos.xy + u_soffset.xy;
+  vec2 px;
+  if (u_smode > 2.5) {
+    vec2 tl = floor(o - 0.5 * i_size.xy + 0.5);
+    vec2 t = a_p.xy + 0.5;
+    px = tl + t * i_size.xy;
+    v_uv = mix(i_aux.xy, vec2(i_aux.z, i_angle), t);
+    v_a = vec2(0.0);
+    v_b = vec2(0.0);
+    v_r = 0.0;
+    v_page = i_meta.w;
+  } else {
+    vec2 hs;
+    float r = 0.0;
+    vec2 ux = vec2(1.0, 0.0);
+    vec2 c = o;
+    if (u_smode < 0.5) {
+      hs = 0.5 * abs(i_size.xy);
+      r = i_aux.x;
+    } else if (u_smode < 1.5) {
+      hs = vec2(abs(i_size.x));
+      r = hs.x;
+    } else {
+      vec2 d = i_aux.xy - i_pos.xy;
+      float len = length(d);
+      if (len > 1e-6) ux = d / len;
+      c = o + 0.5 * d;
+      hs = vec2(0.5 * len, 0.5 * abs(i_size.x));
+    }
+    r = clamp(r, 0.0, min(hs.x, hs.y));
+    vec2 l = a_p.xy * 2.0 * (hs + 1.0);   // one pixel of margin for the antialiased edge
+    px = c + ux * l.x + vec2(-ux.y, ux.x) * l.y;
+    vec2 inner = hs - r;
+    v_a = l - inner;
+    v_b = -l - inner;
+    v_r = r;
+    v_uv = vec2(0.0);
+    v_page = 0.0;
+  }
+  v_c = i_color;
+  gl_Position = vec4(px.x / u_view.x * 2.0 - 1.0, 1.0 - px.y / u_view.y * 2.0, 0.0, 1.0);
+}
+`;
+
+const SFS = `
+precision PF float;
+uniform sampler2D u_t0;
+uniform sampler2D u_t1;
+uniform sampler2D u_t2;
+uniform sampler2D u_t3;
+uniform mediump float u_fmode;   // 0 shape, 1 run
+varying PF vec2 v_a;
+varying PF vec2 v_b;
+varying PF vec2 v_uv;
+varying PF float v_r;
+varying mediump float v_page;
+varying lowp vec4 v_c;
+void main() {
+  float cov;
+  if (u_fmode > 0.5) {
+    if (v_page < 0.5) cov = texture2D(u_t0, v_uv).a;
+    else if (v_page < 1.5) cov = texture2D(u_t1, v_uv).a;
+    else if (v_page < 2.5) cov = texture2D(u_t2, v_uv).a;
+    else cov = texture2D(u_t3, v_uv).a;
+  } else {
+    vec2 q = max(v_a, v_b);
+    float d = length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - v_r;
+    cov = clamp(0.5 - d, 0.0, 1.0);
+  }
+  gl_FragColor = vec4(v_c.rgb, v_c.a * cov);
 }
 `;
 
@@ -239,7 +363,9 @@ function compile(gl, type, src) {
 
 /**
  * @param {WebGLRenderingContext|WebGL2RenderingContext} gl a context the HOST owns
- * @param {{sphereSegments?: number, rodSides?: number}} [options]
+ * @param {{sphereSegments?: number, rodSides?: number, text?: {texture: (page: number) => WebGLTexture|null}, forceMediump?: boolean}} [options]
+ *   text: a provider from `./text.js`; without one, run batches are skipped.
+ *   forceMediump: write `mediump` for the screen program's fragment precision whatever the device has.
  */
 export function createDrawer(gl, options) {
   options = options || {};
@@ -305,6 +431,38 @@ export function createDrawer(gl, options) {
   const uLight = gl.getUniformLocation(program, 'u_light');
   const uShade = gl.getUniformLocation(program, 'u_shade');
 
+  // The screen program.
+  const hp = gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER, gl.HIGH_FLOAT);
+  const PF = !options.forceMediump && hp && hp.precision > 0 ? 'highp' : 'mediump';
+  const svs = compile(gl, gl.VERTEX_SHADER, SVS.replace(/\bPF\b/g, PF));
+  const sfs = compile(gl, gl.FRAGMENT_SHADER, SFS.replace(/\bPF\b/g, PF));
+  const sprogram = gl.createProgram();
+  gl.attachShader(sprogram, svs);
+  gl.attachShader(sprogram, sfs);
+  gl.bindAttribLocation(sprogram, A_P, 'a_p');
+  gl.bindAttribLocation(sprogram, I_POS, 'i_pos');
+  gl.bindAttribLocation(sprogram, I_SIZE, 'i_size');
+  gl.bindAttribLocation(sprogram, I_AUX, 'i_aux');
+  gl.bindAttribLocation(sprogram, I_ANGLE, 'i_angle');
+  gl.bindAttribLocation(sprogram, I_COLOR, 'i_color');
+  gl.bindAttribLocation(sprogram, I_META, 'i_meta');
+  gl.linkProgram(sprogram);
+  gl.deleteShader(svs);
+  gl.deleteShader(sfs);
+  if (!gl.getProgramParameter(sprogram, gl.LINK_STATUS)) {
+    const log = gl.getProgramInfoLog(sprogram);
+    gl.deleteProgram(sprogram);
+    gl.deleteProgram(program);
+    throw new Error('holon-draw: screen program did not link: ' + log);
+  }
+  const uView = gl.getUniformLocation(sprogram, 'u_view');
+  const uSOffset = gl.getUniformLocation(sprogram, 'u_soffset');
+  const uSMode = gl.getUniformLocation(sprogram, 'u_smode');
+  const uFMode = gl.getUniformLocation(sprogram, 'u_fmode');
+  const uTex = [0, 1, 2, 3].map((i) => gl.getUniformLocation(sprogram, 'u_t' + i));
+  let samplersSet = false;
+  const text = options.text || null;
+
   // Meshes, built once. createDrawer() puts back the buffer and vertex array bindings it
   // found, and changes no other state.
   const prevArray = gl.getParameter(gl.ARRAY_BUFFER_BINDING);
@@ -347,6 +505,17 @@ export function createDrawer(gl, options) {
   slot(SLOT_COARSE_SPHERE, KIND.SPHERE, mSphereCoarse, 0, 0, 1, 0.3, 0.18, true);
   slot(SLOT_COARSE_ROD, KIND.ROD, mRodCoarse, 1, 1, 1, 0.18, 0.08, true);
 
+  // Screen slots, by kind: vertex mode (0 rectangle, 1 circle, 2 line, 3 run).
+  const sslots = new Array(12).fill(null);
+  sslots[KIND.QUAD] = { kind: KIND.QUAD, smode: 0 };
+  sslots[KIND.PATCH] = { kind: KIND.PATCH, smode: 0 };
+  sslots[KIND.DISC] = { kind: KIND.DISC, smode: 1 };
+  sslots[KIND.GLYPH] = { kind: KIND.GLYPH, smode: 1 };
+  sslots[KIND.LINE] = { kind: KIND.LINE, smode: 2 };
+  sslots[KIND.ARC] = { kind: KIND.ARC, smode: 2 };
+  if (text) sslots[KIND.RUN] = { kind: KIND.RUN, smode: 3 };
+  let screenVAO = null;
+
   function meshAttribs(m) {
     gl.bindBuffer(gl.ARRAY_BUFFER, m.vbo);
     gl.vertexAttribPointer(A_P, 3, gl.FLOAT, false, 24, 0);
@@ -367,6 +536,11 @@ export function createDrawer(gl, options) {
       meshAttribs(s.mesh);
       gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, s.mesh.ix, gl.STATIC_DRAW);
     }
+    screenVAO = createVAO();
+    bindVAO(screenVAO);
+    meshAttribs(mQuad);
+    gl.enableVertexAttribArray(I_META);
+    divisor(I_META, 1);
     bindVAO(prevVAO);
   } else {
     for (const m of meshes) {
@@ -380,10 +554,10 @@ export function createDrawer(gl, options) {
   // One instance buffer per kind, grown as needed and reused. Within one draw() every batch
   // of a kind is written at its own offset in that buffer, so a later batch never overwrites
   // bytes an earlier draw call of the same frame still reads.
-  const instBuf = new Array(11).fill(null);
-  const instCap = new Int32Array(11);
-  const need = new Int32Array(11);
-  const cursor = new Int32Array(11);
+  const instBuf = new Array(12).fill(null);
+  const instCap = new Int32Array(12);
+  const need = new Int32Array(12);
+  const cursor = new Int32Array(12);
 
   // Scratch, allocated once.
   const light = new Float32Array(3);
@@ -418,9 +592,12 @@ export function createDrawer(gl, options) {
     inv[0] = x / s; inv[1] = y / s; inv[2] = z / s; inv[3] = w / s;
   }
 
+  // The slot a batch is drawn with, or null if it is not drawn.
   function slotOf(b) {
     const k = b.kind | 0;
-    if (k < 1 || k > 10) return null;
+    if (k < 1 || k > 11) return null;
+    if (b.screen === true) return sslots[k];
+    if (k > 10) return null;
     if (b.coarse === true) {
       if (k === KIND.SPHERE) return slots[SLOT_COARSE_SPHERE];
       if (k === KIND.ROD) return slots[SLOT_COARSE_ROD];
@@ -428,31 +605,53 @@ export function createDrawer(gl, options) {
     return slots[k];
   }
 
+  // Upload one batch at its kind's cursor and point the instanced attributes at it.
+  function feed(b, k, len, meta) {
+    const at = cursor[k];
+    cursor[k] = at + len;
+    gl.bindBuffer(gl.ARRAY_BUFFER, instBuf[k]);
+    const bytes = b.bytes;
+    if (bytes.byteLength === len) gl.bufferSubData(gl.ARRAY_BUFFER, at, bytes);
+    else if (isGL2) gl.bufferSubData(gl.ARRAY_BUFFER, at, bytes, 0, len);
+    else gl.bufferSubData(gl.ARRAY_BUFFER, at, bytes.subarray(0, len)); // the one view made; pass exact-length bytes to avoid it
+    gl.vertexAttribPointer(I_POS, 3, gl.FLOAT, false, INSTANCE_BYTES, at);
+    gl.vertexAttribPointer(I_SIZE, 3, gl.FLOAT, false, INSTANCE_BYTES, at + 12);
+    gl.vertexAttribPointer(I_AUX, 3, gl.FLOAT, false, INSTANCE_BYTES, at + 24);
+    gl.vertexAttribPointer(I_ANGLE, 1, gl.FLOAT, false, INSTANCE_BYTES, at + 36);
+    gl.vertexAttribPointer(I_COLOR, 4, gl.UNSIGNED_BYTE, true, INSTANCE_BYTES, at + 40);
+    if (meta) gl.vertexAttribPointer(I_META, 4, gl.UNSIGNED_BYTE, false, INSTANCE_BYTES, at + 48);
+    st.drawCalls++;
+    st.instances += b.count | 0;
+    st.bytesUploaded += len;
+  }
+
   /**
-   * @param {Array<{kind:number, offset?:ArrayLike<number>, count:number, bytes:Uint8Array, coarse?:boolean}>} batches
-   * @param {Float32Array} vp column-major, 16
-   * @param {{light?:ArrayLike<number>, ambient?:number, flatLit?:boolean}} [opts]
+   * @param {Array<{kind:number, offset?:ArrayLike<number>, count:number, bytes:Uint8Array, screen?:boolean, coarse?:boolean}>} batches
+   * @param {Float32Array} vp column-major, 16 (world batches only)
+   * @param {{light?:ArrayLike<number>, ambient?:number, flatLit?:boolean, viewport?:ArrayLike<number>}} [opts]
    */
   function draw(batches, vp, opts) {
     if (dead) throw new Error('holon-draw: draw() after destroy()');
     st.drawCalls = 0; st.instances = 0; st.bytesUploaded = 0;
     const nb = batches.length;
 
-    // Pass 1: bytes needed per kind.
+    // Pass 1: bytes needed per kind; how many world and screen batches there are.
     need.fill(0);
-    let any = false;
+    let nWorld = 0, nScreen = 0;
     for (let i = 0; i < nb; i++) {
-      const b = batches[i], k = b.kind | 0, c = b.count | 0;
-      if (c <= 0 || k < 1 || k > 10) continue;
+      const b = batches[i], c = b.count | 0;
+      if (c <= 0) continue;
+      const s = slotOf(b);
+      if (!s) continue;
       if (b.bytes.byteLength < c * INSTANCE_BYTES) {
-        throw new Error('holon-draw: batch ' + i + ' (kind ' + k + ') has ' + b.bytes.byteLength + ' bytes for ' + c + ' records of ' + INSTANCE_BYTES);
+        throw new Error('holon-draw: batch ' + i + ' (kind ' + b.kind + ') has ' + b.bytes.byteLength + ' bytes for ' + c + ' records of ' + INSTANCE_BYTES);
       }
-      need[k] += c * INSTANCE_BYTES;
-      any = true;
+      need[s.kind] += c * INSTANCE_BYTES;
+      if (b.screen === true) nScreen++; else nWorld++;
     }
-    if (!any) return;
+    if (nWorld + nScreen === 0) return;
 
-    for (let k = 1; k <= 10; k++) {
+    for (let k = 1; k <= 11; k++) {
       cursor[k] = 0;
       if (need[k] <= instCap[k]) continue;
       let cap = instCap[k] || 64 * INSTANCE_BYTES;
@@ -464,7 +663,6 @@ export function createDrawer(gl, options) {
     }
 
     // Frame state.
-    gl.useProgram(program);
     gl.enable(gl.BLEND);
     gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
     gl.enable(gl.DEPTH_TEST);
@@ -475,65 +673,100 @@ export function createDrawer(gl, options) {
     gl.enable(gl.CULL_FACE);
     let culling = true;
 
-    gl.uniformMatrix4fv(uVP, false, vp);
-    eyeFrom(vp);
-    gl.uniform4f(uEye, inv[0], inv[1], inv[2], inv[3]);
-    let lx = 0.35, ly = -0.5, lz = 0.8;
-    const L = opts && opts.light;
-    if (L) { lx = +L[0]; ly = +L[1]; lz = +L[2]; }
-    let ll = Math.sqrt(lx * lx + ly * ly + lz * lz);
-    if (!(ll > 0) || !isFinite(ll)) { lx = 0; ly = 0; lz = 1; ll = 1; }
-    light[0] = lx / ll; light[1] = ly / ll; light[2] = lz / ll;
-    gl.uniform3fv(uLight, light);
-    let ambient = opts && typeof opts.ambient === 'number' ? opts.ambient : 0.25;
-    ambient = ambient < 0 ? 0 : ambient > 1 ? 1 : ambient;
-    const flatLit = !!(opts && opts.flatLit);
+    // Pass 2: the world batches, in the order given.
+    if (nWorld > 0) {
+      gl.useProgram(program);
+      gl.uniformMatrix4fv(uVP, false, vp);
+      eyeFrom(vp);
+      gl.uniform4f(uEye, inv[0], inv[1], inv[2], inv[3]);
+      let lx = 0.35, ly = -0.5, lz = 0.8;
+      const L = opts && opts.light;
+      if (L) { lx = +L[0]; ly = +L[1]; lz = +L[2]; }
+      let ll = Math.sqrt(lx * lx + ly * ly + lz * lz);
+      if (!(ll > 0) || !isFinite(ll)) { lx = 0; ly = 0; lz = 1; ll = 1; }
+      light[0] = lx / ll; light[1] = ly / ll; light[2] = lz / ll;
+      gl.uniform3fv(uLight, light);
+      let ambient = opts && typeof opts.ambient === 'number' ? opts.ambient : 0.25;
+      ambient = ambient < 0 ? 0 : ambient > 1 ? 1 : ambient;
+      const flatLit = !!(opts && opts.flatLit);
 
-    // Pass 2: upload and draw, in the order given.
-    let cur = null;
-    for (let i = 0; i < nb; i++) {
-      const b = batches[i], c = b.count | 0;
-      if (c <= 0) continue;
-      const s = slotOf(b);
-      if (!s) continue;
-      const k = s.kind, len = c * INSTANCE_BYTES, at = cursor[k];
-      cursor[k] = at + len;
-
-      if (s !== cur) {
-        cur = s;
-        if (hasVAO) bindVAO(s.vao); else meshAttribs(s.mesh);
-        gl.uniform2f(uMode, s.mx, s.my);
-        gl.uniform4f(uShade, s.lit || flatLit ? 1 : 0, ambient, s.spec, s.rim);
-        if (s.cull !== culling) {
-          culling = s.cull;
-          if (culling) gl.enable(gl.CULL_FACE); else gl.disable(gl.CULL_FACE);
+      let cur = null;
+      for (let i = 0; i < nb; i++) {
+        const b = batches[i], c = b.count | 0;
+        if (c <= 0 || b.screen === true) continue;
+        const s = slotOf(b);
+        if (!s) continue;
+        if (s !== cur) {
+          cur = s;
+          if (hasVAO) bindVAO(s.vao); else meshAttribs(s.mesh);
+          gl.uniform2f(uMode, s.mx, s.my);
+          gl.uniform4f(uShade, s.lit || flatLit ? 1 : 0, ambient, s.spec, s.rim);
+          if (s.cull !== culling) {
+            culling = s.cull;
+            if (culling) gl.enable(gl.CULL_FACE); else gl.disable(gl.CULL_FACE);
+          }
         }
+        feed(b, s.kind, c * INSTANCE_BYTES, false);
+        const o = b.offset;
+        if (o) gl.uniform3f(uOffset, o[0], o[1], o[2]); else gl.uniform3f(uOffset, 0, 0, 0);
+        drawInstanced(s.mesh.n, c);
       }
+    }
 
-      gl.bindBuffer(gl.ARRAY_BUFFER, instBuf[k]);
-      const bytes = b.bytes;
-      if (bytes.byteLength === len) gl.bufferSubData(gl.ARRAY_BUFFER, at, bytes);
-      else if (isGL2) gl.bufferSubData(gl.ARRAY_BUFFER, at, bytes, 0, len);
-      else gl.bufferSubData(gl.ARRAY_BUFFER, at, bytes.subarray(0, len)); // the one view made; pass exact-length bytes to avoid it
-      gl.vertexAttribPointer(I_POS, 3, gl.FLOAT, false, INSTANCE_BYTES, at);
-      gl.vertexAttribPointer(I_SIZE, 3, gl.FLOAT, false, INSTANCE_BYTES, at + 12);
-      gl.vertexAttribPointer(I_AUX, 3, gl.FLOAT, false, INSTANCE_BYTES, at + 24);
-      gl.vertexAttribPointer(I_ANGLE, 1, gl.FLOAT, false, INSTANCE_BYTES, at + 36);
-      gl.vertexAttribPointer(I_COLOR, 4, gl.UNSIGNED_BYTE, true, INSTANCE_BYTES, at + 40);
-
-      const o = b.offset;
-      if (o) gl.uniform3f(uOffset, o[0], o[1], o[2]); else gl.uniform3f(uOffset, 0, 0, 0);
-      drawInstanced(s.mesh.n, c);
-      st.drawCalls++;
-      st.instances += c;
-      st.bytesUploaded += len;
+    // Pass 3: the screen batches, over everything, in the order given.
+    if (nScreen > 0) {
+      gl.useProgram(sprogram);
+      gl.disable(gl.DEPTH_TEST);
+      if (culling) { gl.disable(gl.CULL_FACE); culling = false; }
+      const V = (opts && opts.viewport) || gl.getParameter(gl.VIEWPORT);
+      gl.uniform2f(uView, V[2], V[3]);
+      if (hasVAO) {
+        bindVAO(screenVAO);
+      } else {
+        meshAttribs(mQuad);
+        gl.enableVertexAttribArray(I_META);
+        divisor(I_META, 1);
+      }
+      let smode = -1, textured = false;
+      for (let i = 0; i < nb; i++) {
+        const b = batches[i], c = b.count | 0;
+        if (c <= 0 || b.screen !== true) continue;
+        const s = slotOf(b);
+        if (!s) continue;
+        if (s.smode !== smode) {
+          smode = s.smode;
+          gl.uniform1f(uSMode, smode);
+          gl.uniform1f(uFMode, smode === 3 ? 1 : 0);
+        }
+        if (smode === 3 && !textured) {
+          // Once per draw(): the atlas pages on units 0..3. Pages are bound here, at draw
+          // time, so a page the provider made or refilled this frame is the one sampled.
+          textured = true;
+          if (!samplersSet) {
+            samplersSet = true;
+            for (let u = 0; u < MAX_PAGES; u++) gl.uniform1i(uTex[u], u);
+          }
+          for (let u = MAX_PAGES - 1; u >= 0; u--) {
+            const t = text.texture(u);
+            if (!t) continue;
+            gl.activeTexture(gl.TEXTURE0 + u);
+            gl.bindTexture(gl.TEXTURE_2D, t);
+          }
+          gl.activeTexture(gl.TEXTURE0);
+        }
+        feed(b, s.kind, c * INSTANCE_BYTES, true);
+        const o = b.offset;
+        if (o) gl.uniform3f(uSOffset, o[0], o[1], 0); else gl.uniform3f(uSOffset, 0, 0, 0);
+        drawInstanced(mQuad.n, c);
+      }
+      gl.enable(gl.DEPTH_TEST);
     }
 
     // Leave as documented at the top of this file.
     if (hasVAO) {
       bindVAO(null);
     } else {
-      for (let i = 0; i < N_ATTR; i++) {
+      for (let i = 0; i <= I_META; i++) {
         divisor(i, 0);
         gl.disableVertexAttribArray(i);
       }
@@ -560,9 +793,13 @@ export function createDrawer(gl, options) {
       instBuf[k] = null;
       instCap[k] = 0;
     }
-    if (hasVAO) for (const s of slots) if (s && s.vao) deleteVAO(s.vao);
+    if (hasVAO) {
+      for (const s of slots) if (s && s.vao) deleteVAO(s.vao);
+      deleteVAO(screenVAO);
+    }
     gl.deleteProgram(program);
+    gl.deleteProgram(sprogram);
   }
 
-  return { draw, stats, destroy, instancing: isGL2 ? 'webgl2' : 'ANGLE_instanced_arrays', vertexArrays: hasVAO };
+  return { draw, stats, destroy, instancing: isGL2 ? 'webgl2' : 'ANGLE_instanced_arrays', vertexArrays: hasVAO, screenPrecision: PF };
 }

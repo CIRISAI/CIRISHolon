@@ -12,6 +12,7 @@ use holon_draw::ladder::{host_weight, rung_camera, visible, Band, Rung, Status, 
 use holon_draw::{Acuity, Camera, Frame, Scene as DrawScene, Tile, PARAM_DIM};
 
 pub mod abi;
+pub mod nav;
 pub mod scenes;
 
 /// One rung's scene.
@@ -48,6 +49,23 @@ pub struct Ladder {
     pub scenes: Vec<Box<dyn Scene>>,
     pub rungs: Vec<Rung>,
     pub band: Band,
+    /// The view's pan, in METRES along the screen's right and up at the focus. Metres, not a
+    /// rung's units, so a pan carries across rungs; as the zoom widens the same pan is a smaller
+    /// share of the view.
+    pub pan: [f64; 2],
+}
+
+/// The world direction of the screen's right and up for an orbit at `yaw` and `pitch` (z up).
+pub fn screen_axes(yaw: f64, pitch: f64) -> ([f64; 3], [f64; 3]) {
+    let (cp, sp, cy, sy) = (pitch.cos(), pitch.sin(), yaw.cos(), yaw.sin());
+    let f = [-cp * cy, -cp * sy, -sp]; // from the eye toward the focus
+    let right = {
+        let r = [f[1], -f[0], 0.0]; // f x z
+        let l = (r[0] * r[0] + r[1] * r[1]).sqrt().max(1e-12);
+        [r[0] / l, r[1] / l, 0.0]
+    };
+    let up = [right[1] * f[2] - right[2] * f[1], right[2] * f[0] - right[0] * f[2], right[0] * f[1] - right[1] * f[0]];
+    (right, up)
 }
 
 impl Ladder {
@@ -79,7 +97,8 @@ impl Ladder {
         // whose span lies above starts at its upper edge, one inside it is never drawn (decided
         // on the scene's OWN span, so a ladder built from one half alone is clipped on the
         // right side; found by the outward scene worker)
-        for (r, sc) in rungs.iter_mut().zip(scenes.iter()) {
+        // an empty band means no host on the page: the rungs meet each other and nothing is clipped
+        for (r, sc) in rungs.iter_mut().zip(scenes.iter()).filter(|_| band.z_hi > band.z_lo) {
             let mid = 0.5 * (sc.span().0 + sc.span().1);
             if mid < band.z_lo {
                 r.z_hi = r.z_hi.min(band.z_lo);
@@ -92,7 +111,7 @@ impl Ladder {
                 r.z_hi = r.z_lo;
             }
         }
-        Ladder { scenes, rungs, band }
+        Ladder { scenes, rungs, band, pan: [0.0; 2] }
     }
 
     /// The standard ladder: every scene of `scenes::micro` and `scenes::cosmos`, around a
@@ -123,7 +142,10 @@ impl Ladder {
             // the ladder's share is (1 - host), split between its visible rungs
             let weight = (1.0 - host) * w / total;
             let r = self.rungs[i].clone();
-            let cam = rung_camera(&r, z, [0.0; 3], yaw, pitch, std::f64::consts::FRAC_PI_4, width, height);
+            let (rt, up) = screen_axes(yaw, pitch);
+            let k = 10f64.powi(-r.unit); // metres to the rung's units
+            let pan = [0, 1, 2].map(|i| (self.pan[0] * rt[i] + self.pan[1] * up[i]) * k);
+            let cam = rung_camera(&r, z, pan, yaw, pitch, std::f64::consts::FRAC_PI_4, width, height);
             let mut tiles = self.scenes[i].tiles(z, clock, weight);
             for t in tiles.iter_mut() {
                 t.params[PARAM_DIM + 3] *= weight as f32;
@@ -244,6 +266,34 @@ mod tests {
             if z > Z_MIN + 0.3 && z < Z_MAX - 0.3 {
                 assert!((host + rungs - 1.0).abs() < 1e-9 || (host == 1.0), "{z}: host {host} rungs {rungs}");
             }
+        }
+    }
+
+    #[test]
+    fn a_pan_moves_the_view_by_its_metres_across_the_screen() {
+        let mut l = ladder(false);
+        let (w, h) = (800.0, 600.0);
+        let z = -12.5; // the atoms rung: a pixel is 10^-12.5 m
+        let before = l.passes(z, 0.5, 0.3, w, h, 1.0, 0.0);
+        let p0 = before[0].camera.project([0.0; 3]).unwrap();
+        // pan 100 pixels' worth of metres to the right: the scene's origin moves 100 px left
+        l.pan = [100.0 * 10f64.powf(z), 0.0];
+        let after = l.passes(z, 0.5, 0.3, w, h, 1.0, 0.0);
+        let p1 = after[0].camera.project([0.0; 3]).unwrap();
+        assert!((p0[0] - p1[0] - 100.0).abs() < 1e-6 && (p0[1] - p1[1]).abs() < 1e-6, "{p0:?} {p1:?}");
+    }
+
+    #[test]
+    fn with_no_host_the_rungs_meet_each_other_and_cover_everything() {
+        let s: Vec<Box<dyn Scene>> = vec![Box::new(Dummy("far", 5.0, 11.0, 11)), Box::new(Dummy("vacuum", -38.0, -19.0, -25)), Box::new(Dummy("atoms", -14.0, -11.0, -10)), Box::new(Dummy("drop", -11.0, -3.0, -4))];
+        let mut l = Ladder::new(s, Band { z_lo: 0.0, z_hi: 0.0, clamp: false });
+        assert_eq!(l.rungs[2].z_hi, l.rungs[3].z_lo, "the drop meets the far rung");
+        for k in 0..600 {
+            let z = Z_MIN + 0.3 + k as f64 * 0.1;
+            if z > Z_MAX - 0.3 {
+                break;
+            }
+            assert!(!l.passes(z, 0.5, 0.3, 800.0, 600.0, 1.0, 0.0).is_empty(), "nothing drawn at {z}");
         }
     }
 

@@ -136,6 +136,9 @@ pub fn host_weight(b: &Band, z: f64) -> f64 {
     if b.clamp {
         return 1.0;
     }
+    if b.z_hi <= b.z_lo {
+        return 0.0; // no host: the ladder draws everything
+    }
     weight(&b.as_rung(), z)
 }
 

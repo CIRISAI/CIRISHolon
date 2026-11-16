@@ -38,23 +38,83 @@
       w = instance.exports;
       window.holonLadder = w;
       const drawer = createDrawer(gl, { text });
-      // the host's band: the CEWP twin's street to globe (stand-in values until the twin sends its own)
-      const BAND = [Number(q.get("lo") || -1.0), Number(q.get("hi") || 4.2)]; // log10 metres per device pixel
+      // the host's band: on this page there is no host, so with the switch OFF the ladder draws the
+      // whole range itself (an empty band); with it ON the zoom is held to the twin's street-to-globe
+      // band (stand-in values, log10 metres per device pixel), where the twin, not this page, draws
+      const BAND = [Number(q.get("lo") || -1.0), Number(q.get("hi") || 4.2)];
+      const hosted = q.has("lo") || q.has("hi");
       let clamp = q.get("switch") === "on";
-      w.hl_band(BAND[0], BAND[1], clamp ? 1 : 0);
-      const view = { z: q.get("z") ? Number(q.get("z")) : -12.6, yaw: 0.8, pitch: 0.42 }; // log10 metres per device pixel
+      const setBand = () => clamp ? w.hl_band(BAND[0], BAND[1], 1) : hosted ? w.hl_band(BAND[0], BAND[1], 0) : w.hl_band(0, 0, 0);
+      setBand();
+      // the zoom (log10 metres per device pixel) eases toward a target, so a wheel notch or a key is
+      // a smooth move; it opens on the ground underfoot, at human scale, unless ?z= says otherwise
+      const view = { z: q.get("z") ? Number(q.get("z")) : -2.2, yaw: 0.8, pitch: 0.42 };
+      let target = view.z;
+      const NAV = 0x50000000;
+      const zoomBy = (d) => { target = w.hl_clamp_z(target + d); };
       const setLine = () => {
-        const s = (clamp ? "switch ON: street to globe" : "switch OFF: universe to vacuum") + "  ·  1 px = 10^" + view.z.toFixed(1) + " m  ·  S to switch";
+        const s = (clamp ? "switch ON: street to globe" : "switch OFF: universe to vacuum") + "  ·  1 px = 10^" + view.z.toFixed(1) + " m  ·  drag to turn, right-drag to pan, wheel to zoom";
         const b = enc.encode(s); const p = w.hl_scratch(b.length); new Uint8Array(w.memory.buffer, p, b.length).set(b); w.hl_caption_line(p, b.length);
       };
-      addEventListener("keydown", (e) => { if (e.key === "s" || e.key === "S") { clamp = !clamp; w.hl_band(BAND[0], BAND[1], clamp ? 1 : 0); view.z = w.hl_clamp_z(view.z); } });
-      canvas.addEventListener("wheel", (e) => { e.preventDefault(); view.z = w.hl_clamp_z(view.z + e.deltaY * 0.002); }, { passive: false });
+      addEventListener("keydown", (e) => {
+        const k = e.key;
+        if (k === "s" || k === "S") { clamp = !clamp; setBand(); target = w.hl_clamp_z(target); view.z = w.hl_clamp_z(view.z); }
+        else if (k === "+" || k === "=" || k === "ArrowUp") { zoomBy(-1); e.preventDefault(); }
+        else if (k === "-" || k === "_" || k === "ArrowDown") { zoomBy(1); e.preventDefault(); }
+        else if (k === "PageUp") { zoomBy(-5); e.preventDefault(); }
+        else if (k === "PageDown") { zoomBy(5); e.preventDefault(); }
+        else if (k === "Home") { act(NAV + 12); e.preventDefault(); }
+      });
+      // a wheel notch (or a trackpad's equivalent, or a pinch, which browsers send as a wheel with
+      // ctrl held) is a third of a decade; lines and pages are converted to pixels first
+      // a wheel notch (or a trackpad's equivalent, or a pinch, which browsers send as a wheel with
+      // ctrl held) is a third of a decade; lines and pages are converted to pixels first
+      canvas.addEventListener("wheel", (e) => {
+        e.preventDefault();
+        const px = e.deltaY * (e.deltaMode === 1 ? 33 : e.deltaMode === 2 ? 800 : 1);
+        zoomBy(px * (e.ctrlKey ? 0.01 : 0.0033));
+      }, { passive: false });
+      canvas.addEventListener("contextmenu", (e) => e.preventDefault());
+      canvas.addEventListener("dblclick", (e) => { if (!w.hl_pick(...dev(e))) zoomBy(-1); });
+      // the engine's navigation control, and the usual mouse: left-drag orbits, right- or
+      // shift-drag pans, wheel or pinch zooms, double-click zooms in
+      const dev = (e) => { const r = canvas.getBoundingClientRect(); return [(e.clientX - r.left) * canvas.width / r.width, (e.clientY - r.top) * canvas.height / r.height]; };
+            const panBy = (dxPx, dyPx) => { const m = Math.pow(10, view.z); w.hl_pan_by(dxPx * m, dyPx * m); };
+      const act = (tag) => {
+        const H = canvas.height, step = 0.15 * H;
+        switch (tag - NAV) {
+          case 2: view.yaw = -Math.PI / 2; break; // north up
+          case 3: view.pitch = Math.min(1.45, view.pitch + 0.15); break;
+          case 4: view.pitch = Math.max(-1.45, view.pitch - 0.15); break;
+          case 5: panBy(0, step); break;
+          case 6: panBy(0, -step); break;
+          case 7: panBy(-step, 0); break;
+          case 8: panBy(step, 0); break;
+          case 9: zoomBy(-1); break;
+          case 10: zoomBy(1); break;
+          case 12: target = w.hl_clamp_z(-2.2); view.yaw = 0.8; view.pitch = 0.42; w.hl_pan_reset(); break;
+          case 13: clamp = !clamp; setBand(); target = w.hl_clamp_z(target); view.z = w.hl_clamp_z(view.z); break;
+        }
+      };
       let drag = null; const touches = new Map(); let pinch = null;
-      canvas.addEventListener("pointerdown", (e) => { canvas.setPointerCapture(e.pointerId); touches.set(e.pointerId, [e.clientX, e.clientY]); drag = [e.clientX, e.clientY]; });
+      canvas.addEventListener("pointerdown", (e) => {
+        canvas.setPointerCapture(e.pointerId); touches.set(e.pointerId, [e.clientX, e.clientY]);
+        const [x, y] = dev(e), tag = w.hl_pick(x, y);
+        if (tag === NAV + 1) drag = { mode: "ring", x: e.clientX, y: e.clientY, a: Math.atan2(y - w.hl_nav(1), x - w.hl_nav(0)) };
+        else if (tag === NAV + 11) { drag = { mode: "slider" }; target = w.hl_clamp_z(w.hl_nav_z(y)); }
+        else if (tag) { act(tag); drag = null; }
+        else drag = { mode: (e.button === 2 || e.shiftKey) ? "pan" : "orbit", x: e.clientX, y: e.clientY };
+      });
       canvas.addEventListener("pointermove", (e) => {
         if (!touches.has(e.pointerId)) return; touches.set(e.pointerId, [e.clientX, e.clientY]);
-        if (touches.size === 2) { const [a, b] = [...touches.values()]; const d = Math.hypot(a[0] - b[0], a[1] - b[1]); if (pinch) view.z = w.hl_clamp_z(view.z - Math.log10(d / pinch)); pinch = d; return; }
-        if (drag) { view.yaw -= (e.clientX - drag[0]) * 0.006; view.pitch = Math.max(-1.45, Math.min(1.45, view.pitch + (e.clientY - drag[1]) * 0.006)); drag = [e.clientX, e.clientY]; }
+        if (touches.size === 2) { const [a, b] = [...touches.values()]; const d = Math.hypot(a[0] - b[0], a[1] - b[1]); if (pinch) { view.z = w.hl_clamp_z(view.z - 3 * Math.log10(d / pinch)); target = view.z; } pinch = d; return; }
+        if (!drag) return;
+        const [x, y] = dev(e);
+        if (drag.mode === "ring") { const a = Math.atan2(y - w.hl_nav(1), x - w.hl_nav(0)); view.yaw += a - drag.a; drag.a = a; }
+        else if (drag.mode === "slider") target = w.hl_clamp_z(w.hl_nav_z(y));
+        else if (drag.mode === "pan") { const s = canvas.width / canvas.getBoundingClientRect().width; panBy(-(e.clientX - drag.x) * s, (e.clientY - drag.y) * s); }
+        else { view.yaw -= (e.clientX - drag.x) * 0.006; view.pitch = Math.max(-1.45, Math.min(1.45, view.pitch + (e.clientY - drag.y) * 0.006)); }
+        drag.x = e.clientX; drag.y = e.clientY;
       });
       const up = (e) => { touches.delete(e.pointerId); pinch = null; drag = null; };
       canvas.addEventListener("pointerup", up); canvas.addEventListener("pointercancel", up);
@@ -62,6 +122,8 @@
       let last = performance.now(), first = true;
       function frame(now) {
         const dt = Math.min(0.1, (now - last) / 1000); last = now;
+        view.z += (target - view.z) * Math.min(1, dt * 10); // ease toward the target
+        if (Math.abs(target - view.z) < 1e-4) view.z = target;
         const W = canvas.clientWidth * DPR | 0, H = canvas.clientHeight * DPR | 0;
         if (canvas.width !== W || canvas.height !== H) { canvas.width = W; canvas.height = H; }
         gl.viewport(0, 0, W, H);
@@ -86,7 +148,7 @@
           drawer.draw(batches, new Float32Array(w.memory.buffer, w.hl_pass_vp(p), 16), { viewport: [0, 0, W, H] });
         }
         if (first) { first = false; document.body.dataset.engine = "holon-draw ladder on " + (typeof WebGL2RenderingContext !== "undefined" && gl instanceof WebGL2RenderingContext ? "webgl2" : "webgl1"); document.body.dataset.ready = "1"; }
-        window.holonLadderView = view;
+        window.holonLadderView = view; window.holonLadderTarget = (z) => { if (z !== undefined) target = w.hl_clamp_z(z); return target; };
         requestAnimationFrame(frame);
       }
       requestAnimationFrame(frame);

@@ -14,6 +14,7 @@ use std::cell::RefCell;
 
 struct State {
     ladder: Ladder,
+    nav: crate::nav::Geometry,
     passes: Vec<Pass>,
     vp: Vec<[f32; 16]>,
     text: HostText,
@@ -37,10 +38,11 @@ pub extern "C" fn hl_band(z_lo: f64, z_hi: f64, clamp: u32) {
         match s.as_mut() {
             Some(st) => {
                 st.ladder.band = band;
-                let scenes = std::mem::take(&mut st.ladder.scenes);
+                let (scenes, pan) = (std::mem::take(&mut st.ladder.scenes), st.ladder.pan);
                 st.ladder = Ladder::new(scenes, band);
+                st.ladder.pan = pan;
             }
-            None => *s = Some(State { ladder: Ladder::standard(band), passes: Vec::new(), vp: Vec::new(), text: HostText::new(1.0), caption_key: String::new() }),
+            None => *s = Some(State { ladder: Ladder::standard(band), nav: Default::default(), passes: Vec::new(), vp: Vec::new(), text: HostText::new(1.0), caption_key: String::new() }),
         }
     })
 }
@@ -127,28 +129,68 @@ pub extern "C" fn hl_text_ptr() -> *const u8 {
 pub extern "C" fn hl_view(z: f64, yaw: f64, pitch: f64, width: f64, height: f64, dpr: f64, clock: f64) -> u32 {
     with(0, |s| {
         s.passes = s.ladder.passes(z, yaw, pitch, width, height, dpr, clock);
-        s.vp = s.passes.iter().map(|p| p.camera.relative()).collect();
-        // the caption, drawn by the engine, rides in the last pass as a screen tile
-        if let Some(cap) = s.ladder.caption(z, height) {
-            if s.text.dpr != dpr as f32 {
-                s.text = HostText::new(dpr as f32);
-            }
-            let key = format!("{}|{}|{}", cap.0, cap.3, dpr);
-            if key != s.caption_key {
-                s.caption_key = key;
-            }
-            let tile = caption_tile(&mut s.text, cap, width as f32, height as f32, dpr as f32);
-            if let Some(last) = s.passes.last_mut() {
-                let mut scene = holon_draw::Scene { tiles: vec![tile], modal: None };
-                if let Ok(f) = scene.frame(&last.camera, 1, &holon_draw::Ring, u64::MAX) {
-                    last.frame.batches.extend(f.batches);
-                }
-                scene.tiles.clear();
-            }
+        if s.text.dpr != dpr as f32 {
+            s.text = HostText::new(dpr as f32);
         }
+        // the OVERLAY pass, always last and always present: the caption and the navigation
+        // control, drawn by the engine as screen tiles (so they show where no rung is drawn)
+        let mut tiles = Vec::new();
+        if let Some(cap) = s.ladder.caption(z, height) {
+            s.caption_key = format!("{}|{}|{}", cap.0, cap.3, dpr);
+            tiles.push(caption_tile(&mut s.text, cap, width as f32, height as f32, dpr as f32));
+        }
+        let (nav, g) = crate::nav::build(&mut s.text, width as f32, height as f32, dpr as f32, z, yaw, pitch, s.ladder.band.clamp);
+        s.nav = g;
+        tiles.extend(nav);
+        let cam = holon_draw::Camera::map([0.0; 3], 1.0, width, height);
+        if let Ok(frame) = (holon_draw::Scene { tiles, modal: None }).frame(&cam, 1, &holon_draw::Ring, u64::MAX) {
+            s.passes.push(Pass { rung: usize::MAX, weight: 1.0, camera: cam, frame });
+        }
+        s.vp = s.passes.iter().map(|p| p.camera.relative()).collect();
         s.passes.len() as u32
     })
 }
+
+/// The control under a pixel (a `nav::` handle), or 0. The last pass is the overlay.
+#[no_mangle]
+pub extern "C" fn hl_pick(x: f64, y: f64) -> u32 {
+    with(0, |s| s.passes.last().and_then(|p| p.frame.pick(x, y)).unwrap_or(0))
+}
+
+/// The navigation control's continuous parts, for dragging: `which` 0..2 the compass ring's
+/// centre x, y and radius; 3..5 the slider's x, top and bottom (device pixels).
+#[no_mangle]
+pub extern "C" fn hl_nav(which: u32) -> f32 {
+    with(0.0, |s| {
+        let g = s.nav;
+        match which {
+            0..=2 => g.ring[which as usize],
+            3..=5 => g.slider[which as usize - 3],
+            _ => 0.0,
+        }
+    })
+}
+
+/// The zoom a y on the slider stands for.
+#[no_mangle]
+pub extern "C" fn hl_nav_z(y: f64) -> f64 {
+    with(0.0, |s| s.nav.z_at(y as f32))
+}
+
+/// The view's pan in metres along the screen's right and up; `hl_pan_by` adds to it.
+#[no_mangle]
+pub extern "C" fn hl_pan_by(dx_m: f64, dy_m: f64) {
+    with((), |s| {
+        s.ladder.pan[0] += dx_m;
+        s.ladder.pan[1] += dy_m;
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn hl_pan_reset() {
+    with((), |s| s.ladder.pan = [0.0; 2])
+}
+
 
 fn caption_tile(text: &mut dyn Text, cap: (&str, &str, &str, String, f64), width: f32, height: f32, dpr: f32) -> Tile {
     let mut ui = Ui::new(text, dpr);

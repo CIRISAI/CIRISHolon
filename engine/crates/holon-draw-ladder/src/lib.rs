@@ -85,6 +85,14 @@ impl Ladder {
         Ladder { scenes, rungs, band }
     }
 
+    /// The standard ladder: every scene of `scenes::micro` and `scenes::cosmos`, around a
+    /// host's band.
+    pub fn standard(band: Band) -> Ladder {
+        let mut s = scenes::micro::inward();
+        s.extend(scenes::cosmos::outward());
+        Ladder::new(s, band)
+    }
+
     pub fn advance(&mut self, dt: f64) {
         for s in self.scenes.iter_mut() {
             s.advance(dt);

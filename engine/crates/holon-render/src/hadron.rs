@@ -54,6 +54,8 @@ struct Band {
     /// `Σ_c ⟨n_{k,c}⟩`, one entry per site — of the CURRENT state, which is the ground
     /// state until a grab and an evolution move it.
     occ: Vec<f64>,
+    /// The colour-electric energy on each of the `n − 1` links, of the CURRENT state.
+    links: Vec<f64>,
     // ---- the dynamics. The state is complex; the Hamiltonian is real symmetric, so the
     // two real parts are all that is stored and `exp(-iHt)` is built from `cos(Ht)` and
     // `sin(Ht)` on each (see `propagate`).
@@ -124,6 +126,7 @@ pub extern "C" fn holon_hadron_solve(n: u32, x: f64, b: i32) -> u32 {
     let sol = solve_lanes(&space, &q.lane_hamiltonian(), 1);
     let seconds = crate::hadron_elapsed(t0);
     let occ = occupancy(&space, &sol, n);
+    let links = link_energies(&q, &space, &sol.vector, &[]);
     let code = exit_code(sol.exit);
     BANDS.lock().expect("hadron band")[b as usize] = Some(Band {
         n,
@@ -136,6 +139,7 @@ pub extern "C" fn holon_hadron_solve(n: u32, x: f64, b: i32) -> u32 {
         margin: sol.variational_margin,
         seconds,
         occ,
+        links,
         re: sol.vector.clone(),
         im: vec![0.0; sol.vector.len()],
         t: 0.0,
@@ -215,6 +219,68 @@ pub extern "C" fn holon_hadron_sites(b: i32) -> u32 {
 #[no_mangle]
 pub extern "C" fn holon_hadron_occ(b: i32, k: u32) -> f64 {
     band(b, |x| x.occ.get(k as usize).copied().unwrap_or(f64::NAN), f64::NAN)
+}
+
+/// `⟨ψ|A|ψ⟩` for a real symmetric lane operator on a state held as two real parts (an empty
+/// or all-zero imaginary part costs nothing).
+fn expectation(sig: &mut LaneSigma<f64>, re: &[f64], im: &[f64]) -> f64 {
+    let mut w = vec![0.0; re.len()];
+    sig.apply(re, &mut w);
+    let mut e = re.iter().zip(&w).map(|(a, c)| a * c).sum::<f64>();
+    if im.iter().any(|v| *v != 0.0) {
+        sig.apply(im, &mut w);
+        e += im.iter().zip(&w).map(|(a, c)| a * c).sum::<f64>();
+    }
+    e
+}
+
+/// The colour-electric energy on every link, `⟨Σ_a (Σ_{k≤n} q^a_k)²⟩` for `n = 0 .. N−2`, in
+/// the Hamiltonian's own units: the Casimir of the colour charge to the link's left, which is
+/// what the flux through the link carries. Each is the expectation of
+/// [`Qcd2::lane_link`], the same one- and two-body pieces the Hamiltonian is built from, so
+/// their sum is the Hamiltonian's whole gauge part.
+fn link_energies(q: &Qcd2, space: &holon_chem::lanes::LaneSpace, re: &[f64], im: &[f64]) -> Vec<f64> {
+    (0..q.n - 1)
+        .map(|l| {
+            let mut sig = LaneSigma::new(space, &q.lane_link(l), 1);
+            expectation(&mut sig, re, im)
+        })
+        .collect()
+}
+
+/// The number of links of the solved chain (`N − 1`), `0` if the sector is not solved.
+#[no_mangle]
+pub extern "C" fn holon_hadron_links(b: i32) -> u32 {
+    band(b, |x| x.links.len() as u32, 0)
+}
+
+/// The colour-electric energy on link `n` (between sites `n` and `n + 1`) in the CURRENT
+/// state: the ground state, or the evolving state after a grab. `⟨Σ_a (Σ_{k≤n} Q^a_k)²⟩`, the
+/// Casimir of the colour charge to the link's left, in the Hamiltonian's units; non-negative.
+/// This is the one-dimensional flux tube: in one space dimension Gauss's law fixes the
+/// field on a link by the charge beside it, and this is that field's energy. `NaN` off the
+/// end.
+#[no_mangle]
+pub extern "C" fn holon_hadron_link_energy(b: i32, n: u32) -> f64 {
+    band(b, |x| x.links.get(n as usize).copied().unwrap_or(f64::NAN), f64::NAN)
+}
+
+/// The hopping energy `⟨x Σ (ψ†ψ + h.c.)⟩` of the CURRENT state: with the links' energies
+/// (and a grab's `Σ_k pin_k · occ_k`) it makes up the whole of [`holon_hadron_live_energy`].
+#[no_mangle]
+pub extern "C" fn holon_hadron_hop_energy(b: i32) -> f64 {
+    if !(0..=2).contains(&b) {
+        return f64::NAN;
+    }
+    let (n, x, re, im) = {
+        let g = BANDS.lock().expect("hadron band");
+        let Some(band) = g[b as usize].as_ref() else { return f64::NAN };
+        (band.n, band.x, band.re.clone(), band.im.clone())
+    };
+    let q = Qcd2::new(n, x);
+    let space = q.lane_space(b);
+    let mut sig = LaneSigma::new(&space, &q.lane_hopping(), 1);
+    expectation(&mut sig, &re, &im)
 }
 
 /// The baryon mass in the Hamer–Kogut units the campaign uses: `(E₁ − E₀) / (2√x)`, from the
@@ -432,11 +498,13 @@ pub extern "C" fn holon_hadron_step(b: i32, dt: f64) -> u32 {
     let new_re: Vec<f64> = cre.iter().zip(&sim).map(|(c, s)| c + s).collect();
     let new_im: Vec<f64> = cim.iter().zip(&sre).map(|(c, s)| c - s).collect();
     let occ = occupancy_complex(&space, &new_re, &new_im, n);
+    let links = link_energies(&q, &space, &new_re, &new_im);
     let mut g = BANDS.lock().expect("hadron band");
     if let Some(band) = g[b as usize].as_mut() {
         band.re = new_re;
         band.im = new_im;
         band.occ = occ;
+        band.links = links;
         band.t += dt;
     }
     0

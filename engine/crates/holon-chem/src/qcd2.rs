@@ -200,6 +200,27 @@ impl Qcd2 {
 
     /// The same operator as [`Self::integrals`], in lane form (header).
     pub fn lane_hamiltonian(&self) -> LaneHamiltonian<f64> {
+        self.lane_operator(self.x, |k, kp| self.coulomb_weight(k, kp))
+    }
+
+    /// The colour-electric term of ONE link, in lane form: `Σ_a (Σ_{k≤link} q^a_k)²`, the
+    /// Casimir of the colour charge to the left of link `link` (the link between sites `link`
+    /// and `link + 1`). It is [`Self::lane_hamiltonian`] with no hopping and the weight
+    /// `w_{kk'}` replaced by 1 where both sites are at or left of the link and 0 elsewhere;
+    /// since `w_{kk'} = N − 1 − max(k, k')` counts exactly those links, the sum of this
+    /// operator over the `N − 1` links is the Hamiltonian's whole gauge part.
+    pub fn lane_link(&self, link: usize) -> LaneHamiltonian<f64> {
+        assert!(link + 1 < self.n, "a chain of {} sites has no link {link}", self.n);
+        self.lane_operator(0.0, |k, kp| if k.max(kp) <= link { 1.0 } else { 0.0 })
+    }
+
+    /// The hopping term alone, in lane form: `x Σ_n Σ_c (ψ†_{n,c} ψ_{n+1,c} + h.c.)`.
+    pub fn lane_hopping(&self) -> LaneHamiltonian<f64> {
+        self.lane_operator(self.x, |_, _| 0.0)
+    }
+
+    /// Hopping `x` plus the colour-Coulomb term with weight `w(k, k')`, in lane form.
+    fn lane_operator(&self, x: f64, w: impl Fn(usize, usize) -> f64) -> LaneHamiltonian<f64> {
         let n = self.n;
         let trace = match self.mutation {
             Mutation::None => 1.0 / 6.0,
@@ -209,15 +230,15 @@ impl Qcd2 {
         for c in 0..COLOURS {
             for k in 0..n {
                 if k + 1 < n {
-                    ham.one_body(c, k, k + 1, self.x);
-                    ham.one_body(c, k + 1, k, self.x);
+                    ham.one_body(c, k, k + 1, x);
+                    ham.one_body(c, k + 1, k, x);
                 }
-                ham.one_body(c, k, k, self.coulomb_weight(k, k));
+                ham.one_body(c, k, k, w(k, k));
             }
         }
         for k in 0..n {
             for kp in 0..n {
-                let w = self.coulomb_weight(k, kp);
+                let w = w(k, kp);
                 if w == 0.0 {
                     continue;
                 }

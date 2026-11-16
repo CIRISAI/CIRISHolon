@@ -58,7 +58,7 @@ impl Scene for Nucleus {
         "Hydrogen. The nucleus is a DECLARED input of this repository (TIERS.md, the nucleus row: Z, mass, spin, charge radius; nothing here computes it): one proton, drawn at its charge radius, 0.84 fm (CODATA). The cloud is 6000 dots drawn from a seed with the textbook 1s density exp(-2r/a0)/(pi a0^3), a0 = 52.9 pm; it thins to nothing because the atom is that empty. The dots' size and the ring that marks where the proton is are not physical."
     }
     fn span(&self) -> (f64, f64) {
-        (-14.5 - VIEW_DECADES, -10.3 - VIEW_DECADES)
+        (-14.1 - VIEW_DECADES, -10.3 - VIEW_DECADES)
     }
     fn tiles(&mut self, z: f64, _clock: f64, _alpha: f64) -> Vec<Tile> {
         let z = z + VIEW_DECADES; // the view's height, as the rest of this function has it

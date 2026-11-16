@@ -23,7 +23,11 @@ fn the_rungs_cover_the_vacuum_to_the_street_with_no_gap() {
     let mut spans: Vec<(f64, f64)> = inward().iter().map(|s| s.span()).collect();
     spans.sort_by(|a, b| a.0.total_cmp(&b.0));
     // from the end of what is computed (the ladder's Z_MIN) to a street: 0.1 m a pixel
-    assert_eq!(spans[0].0, Z_MIN);
+    // seven rungs of this module's own; the eighth, the 3+1D gauge field's, is registered by
+    // its own module and owns the bottom of the ladder. Until it is, the sea is the finest
+    // rung and the ladder stretches it down to Z_MIN.
+    let gauge4 = inward().len() == 8;
+    assert_eq!(spans[0].0, if gauge4 { Z_MIN } else { -18.0 });
     assert_eq!(spans.last().unwrap().1, -1.0);
     for w in spans.windows(2) {
         assert_eq!(w[0].1, w[1].0, "a gap or an overlap between {:?} and {:?}", w[0], w[1]);
@@ -42,7 +46,8 @@ fn the_rungs_cover_the_vacuum_to_the_street_with_no_gap() {
 #[test]
 fn every_rung_says_what_it_is_and_where_its_numbers_come_from() {
     let scenes = inward();
-    assert_eq!(scenes.len(), 8);
+    // seven of this module's own, and the 3+1D gauge field's rung once it is registered
+    assert!(scenes.len() == 7 || scenes.len() == 8, "{}", scenes.len());
     for s in &scenes {
         assert!(!s.name().is_empty());
         assert!(s.source().len() > 80, "{}: a source line that says something", s.name());
@@ -55,10 +60,14 @@ fn every_rung_says_what_it_is_and_where_its_numbers_come_from() {
     let status = |name: &str| scenes.iter().find(|s| s.name() == name).unwrap().status();
     // what an engine computes in the page says simulated; the declared input says declared;
     // the rest are pictures and say so
-    for n in ["hydrogen, atom by atom", "below the nucleus: a baryon on a chain", "the gauge vacuum: the sea", "the end of the record"] {
+    for n in ["hydrogen, atom by atom", "below the nucleus: a baryon on a chain", "the gauge vacuum: the sea"] {
         assert_eq!(status(n), Status::Simulated, "{n}");
     }
     assert_eq!(status("inside the atom: the nucleus"), Status::Declared);
+    // the chain and the 3+1D field are different theories: the boundaries between them are cuts
+    let chain = |name: &str| scenes.iter().find(|s| s.name() == name).unwrap();
+    assert!(chain("the gauge vacuum: the sea").cut_below());
+    assert!(!chain("the gauge vacuum: the sea").cut_above() && !chain("below the nucleus: a baryon on a chain").cut_below());
     for n in ["the ground underfoot", "a drop of water", "liquid water, molecule by molecule"] {
         assert_eq!(status(n), Status::Illustration, "{n}");
     }
@@ -68,9 +77,9 @@ fn every_rung_says_what_it_is_and_where_its_numbers_come_from() {
     assert!(source("hydrogen, atom by atom").contains("STO-3G") && source("hydrogen, atom by atom").contains("computed ahead of time") && source("hydrogen, atom by atom").contains("No three-body table"));
     let baryon = source("below the nucleus: a baryon on a chain");
     assert!(baryon.contains("ONE space dimension") && baryon.contains("NOT the proton") && baryon.contains("no transverse gluons") && baryon.contains("by choice"));
+    assert!(baryon.contains("flux tube") && baryon.contains("NOT the 3+1D vacuum of lattice QCD") && baryon.contains("colour-electric energy") && baryon.contains("drawn and not computed"));
     let sea = source("the gauge vacuum: the sea");
     assert!(sea.contains("not the vacuum") && sea.contains("Schwinger") && sea.contains("GF1_RESULTS.md") && sea.contains("different model"));
-    assert!(source("the end of the record").contains("The record stops here") && source("the end of the record").contains("nothing in this repository computes"));
 }
 
 #[test]
@@ -257,6 +266,7 @@ fn the_chain_below_the_nucleus_is_the_engines_exact_solve() {
     let r = Record::solve();
     let took = t.elapsed();
     println!("the 4-site chain, both sectors: solved in {took:?}");
+    println!("links: sea {:?}, baryon {:?}", r.sea_links, r.baryon_links);
     if !cfg!(debug_assertions) {
         assert!(took.as_secs_f64() < 0.05, "{took:?}");
     }
@@ -271,6 +281,10 @@ fn the_chain_below_the_nucleus_is_the_engines_exact_solve() {
     assert!((r.baryon.iter().sum::<f64>() - 9.0).abs() < 1e-9);
     assert!((r.baryon[0] - r.baryon[3]).abs() < 1e-8 && (r.baryon[1] - r.baryon[2]).abs() < 1e-8, "{:?}", r.baryon);
     assert!(r.baryon.iter().zip(&r.sea).all(|(b, s)| b > s), "an excess on every site");
+    // the string: the links' energies the captions quote, none negative, mirror-symmetric
+    for (got, want) in [(&r.sea_links, SEA_LINKS), (&r.baryon_links, BARYON_LINKS)] {
+        assert!(got.len() == 3 && got.iter().zip(want).all(|(a, b)| (a - b).abs() < 1e-8 && *a >= 0.0), "{got:?}");
+    }
     // the same again: the solve is deterministic
     assert_eq!(Record::solve(), r);
 
@@ -288,20 +302,24 @@ fn the_chain_below_the_nucleus_is_the_engines_exact_solve() {
     // the excess over the sea stands on it and is three quarks in all
     let excess: f64 = m.iter().filter(|m| m.kind == Kind::Box && m.pos[2] > 1.0).map(|m| m.size[2] as f64 / (10.0 * QUARK_FM)).sum();
     assert!((excess - 3.0).abs() < 1e-5, "{excess}");
+    // the string: a tube per link from site to site, its cross-section the link's energy
+    let tubes: Vec<&Instance> = m.iter().filter(|m| m.kind == Kind::Rod).collect();
+    assert_eq!(tubes.len(), 3);
+    for (k, t) in tubes.iter().enumerate() {
+        assert!((t.pos[0] as f64 - 10.0 * site_fm(k as u32)).abs() < 1e-5 && (t.aux[0] as f64 - 10.0 * site_fm(k as u32 + 1)).abs() < 1e-5);
+        assert!((t.size[0] as f64 - 10.0 * tube_fm(BARYON_LINKS[k])).abs() < 1e-5);
+    }
+    assert!((tube_fm(4.0 / 3.0) - 0.1).abs() < 1e-12 && (tube_fm(BARYON_LINKS[1]) / tube_fm(BARYON_LINKS[0]) - (BARYON_LINKS[1] / BARYON_LINKS[0]).sqrt()).abs() < 1e-12);
     // the ring is the proton's charge radius
     let ring = m.iter().filter(|m| m.kind == Kind::Line && m.rgba[3] == 150).map(|m| (m.pos[0].powi(2) + m.pos[1].powi(2)).sqrt()).fold(0.0f32, f32::max);
     assert!((ring - 8.414).abs() < 1e-4);
 
-    // the sea rung: four equal columns; the last rung: the same chain in hundredths of a fm
+    // the sea rung: four equal columns and its own string
     let mut s = Sea::new();
     let m = marks(&mut s, -15.4, 0.0);
     assert_eq!(m.iter().filter(|m| m.kind == Kind::Box && (m.size[2] as f64 - 1.5 * 10.0 * QUARK_FM).abs() < 1e-5).count(), 4);
-    let mut e = End::new();
-    let m = marks(&mut e, -16.5, 0.0);
-    let link = m.iter().find(|m| m.kind == Kind::Line).unwrap();
-    assert!(((link.aux[0] - link.pos[0]) as f64 - 100.0 * 3.0 * SPACING_FM).abs() < 1e-3);
-    // nothing but the link is within a view of 0.03 fm about the origin
-    assert!(m.iter().filter(|m| m.kind != Kind::Line).all(|m| m.pos[0].abs() - if m.kind == Kind::Box { 0.5 * m.size[0] } else { m.size[0] } > 3.0), "the sites are off to either side");
+    let tubes: Vec<f64> = m.iter().filter(|m| m.kind == Kind::Rod).map(|m| m.size[0] as f64).collect();
+    assert!(tubes.len() == 3 && tubes.iter().zip(SEA_LINKS).all(|(r, e)| (r - 10.0 * tube_fm(e)).abs() < 1e-5), "{tubes:?}");
 }
 
 #[test]
@@ -316,10 +334,17 @@ fn the_baryon_moves_under_the_exact_hamiltonian_only_while_it_is_seen() {
     // on screen: 600 frames of a sixtieth of a second are 6 units of model time
     let t = Instant::now();
     let mut moved = 0.0f64;
+    let (mut lo, mut hi, mut series) = ([f64::MAX; 3], [f64::MIN; 3], Vec::new());
     for _ in 0..600 {
         h.tiles(-17.8, 0.0, 1.0);
         h.advance(1.0 / 60.0);
         moved = moved.max(h.occ.iter().zip(&start).map(|(a, b)| (a - b).abs()).fold(0.0, f64::max));
+        assert!(h.links.iter().all(|e| *e >= 0.0));
+        for l in 0..3 {
+            lo[l] = lo[l].min(h.links[l]);
+            hi[l] = hi[l].max(h.links[l]);
+        }
+        series.push(h.links[0]);
         // quarks are neither made nor lost, and the two readouts hold still
         assert!((h.occ.iter().sum::<f64>() - 9.0).abs() < 1e-8);
         assert!((h.norm - 1.0).abs() < 1e-8, "norm {}", h.norm);
@@ -327,6 +352,26 @@ fn the_baryon_moves_under_the_exact_hamiltonian_only_while_it_is_seen() {
     println!("the baryon rung: {:?} a frame; model time {:.3}; largest change of a site's density {moved:.3}; norm {:.12}", t.elapsed() / 600, h.time, h.norm);
     assert!((h.time - 6.0).abs() < 1e-9, "{}", h.time);
     assert!(moved > 0.01, "the pull moves the density: {moved}");
+    // the string swings: each link's energy, and with it its tube's radius
+    for l in 0..3 {
+        println!("link {l}: energy {:.3} to {:.3}, tube {:.4} to {:.4} fm", lo[l], hi[l], tube_fm(lo[l]), tube_fm(hi[l]));
+    }
+    assert!(hi[0] - lo[0] > 0.2 && tube_fm(hi[0]) / tube_fm(lo[0]) > 1.3, "the first link's tube swells by a third and more");
+    // the first link swings mostly at the pulled chain's first gap: its strongest line over
+    // these 6 units of model time (which resolve a frequency to about 1) is at 3.48
+    let mean = series.iter().sum::<f64>() / series.len() as f64;
+    let power = |w: f64| {
+        let (mut c, mut s) = (0.0, 0.0);
+        for (i, v) in series.iter().enumerate() {
+            let t = (i + 1) as f64 * RATE / 60.0;
+            c += (v - mean) * (w * t).cos();
+            s += (v - mean) * (w * t).sin();
+        }
+        (c * c + s * s).sqrt() * 2.0 / series.len() as f64
+    };
+    let best = (0..=300).map(|k| 1.0 + 0.05 * k as f64).max_by(|a, b| power(*a).total_cmp(&power(*b))).unwrap();
+    println!("the first link's strongest line: frequency {best:.2} (the first gap is {FIRST_GAP}), amplitude {:.3}", power(best));
+    assert!((best - FIRST_GAP).abs() < 0.5, "{best}");
     // the energy under the pulled Hamiltonian is conserved: one more stretch changes it by nothing
     let e = h.energy;
     for _ in 0..40 {
@@ -344,7 +389,7 @@ fn building_every_rung_and_drawing_a_frame_of_each_is_fast() {
     let t = Instant::now();
     let mut scenes = inward();
     let built = t.elapsed();
-    println!("all eight inward rungs built in {built:?}");
+    println!("the inward rungs built in {built:?}");
     let mut worst = (0.0f64, "");
     for s in scenes.iter_mut() {
         let (lo, hi) = s.span();

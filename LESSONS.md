@@ -150,3 +150,38 @@ These are binding on all CIRISHolon code.*
     The census now MEASURES the excursion, reports it beside the declaration,
     and shouts above every other reading when the two disagree. Declared
     metadata is an input to be verified, not a fact to be consumed.
+
+18. **A price is not a cost: "needed to predict it" and "read by it" are two
+    measurements.** The removability gate prices a candidate by what the
+    level above loses in held-out prediction when the candidate is dropped
+    from a dictionary. Put to a small language model with each price then
+    realised by projecting the direction out (PARALLAX-H, the RATCHET
+    session's run, 2026-11-12, as that session reports it), price and
+    realised cost rank-correlated at 0.14 to 0.61 by layer and parted both
+    ways: a probe's direction was carried (+0.044) where removing it cost
+    +0.0001 nats, and the model's own writing direction was dropped at every
+    layer where removing it cost +0.006 to +0.058. A system reads its own
+    channels; it does not re-derive their content from elsewhere. Rule: a
+    carried reading states which of the two it is; where an intervention is
+    possible (a renderer can remove a summary and look at the frame) both
+    are taken, and a map shows both. Registered as KS-PRICE-NOT-COST
+    (`engine/crates/holon-closure/examples/admit_file/main.rs`). Sibling of
+    rules 13 and 16: a check that works in one direction.
+
+19. **A proxy is not the quantity the consumer reads.** MESH-0 measured how
+    long a message waits for its addressee and coded "the phone is on" as
+    "the person is awake". The long waits it reported were sleep (0.81 of
+    waits over 8 hours were sent between 20:00 and 04:00), not the mesh: the
+    mesh's own added wait with no holder was 0 hours in 0.787 of cases and
+    over 8 hours in 0.011. The measure the consumer reads is hours beyond
+    the addressee's next available hour
+    (`conformance/scene/MESH0_RESULTS.md`). Rule: before a stake is frozen,
+    name the consumer and the quantity it reads, and state the proxy's
+    relation to it; a result on a proxy is labelled as one.
+
+20. **Shared infrastructure is a consumer too.** Pushing each commit put 29
+    runs of the verify workflow on the organisation's shared runners and held
+    another repository's deploys for hours (2026-11-12). Rule: push in
+    batches at campaign boundaries; the workflow runs one per branch and a
+    later push cancels an earlier run (`5bf165e`); "banked" is the newest
+    run on the branch, green, after a quiet gap.

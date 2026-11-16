@@ -200,3 +200,62 @@ In profile B they are D11 and D12. A curved text path is not proposed.
 - The text provider off the web: which shaping library and rasteriser, and what they weigh.
 - Text input, focus and the screen reader's tree in profile B.
 - The first draft's line "Ten marks" in §1 now reads twelve in profile B.
+
+## 6. CORRECTION 2026-11-15 — from the client session's check against the registry (the tables above kept legible; where a row above and a line here disagree, this section holds)
+
+**Framing.** The client is a host in neither profile: it draws all 24 with its own toolkit
+and gave requirements only. Profile A's host is the twin or any canvas host; profile B's is
+CEWPOS. §3's lead-in ("the one plausible host is GraphView's canvas") is read as: of the 24,
+GraphView's `canvas` is the one a draw layer would host under ANY toolkit.
+
+**Tags.** A tag in the standard is a derived STRING (`prefix '_' surface '_' instance
+['__' slot] ['.' key]`), built by the primitives layer and never by hand. The `tag` of a
+mark here is a HANDLE (u32) into a table the consumer owns from handle to derived tag. This
+engine never mints a tag. Keyed instances take the element id as `.key`, so two rows do not
+collide. In profile B each composition emits its own primitive's prefix and no other: an
+Action in an ItemRow is `btn_…`; `act` is the row's SLOT that holds it.
+
+**Laws.**
+- L9 binds the draw layer too: the allocator must not cull a tagged mark at every zoom and
+  in every camera state. Stated as a property of S4: with budget enough, every mark of a
+  live tile is drawn (tested in `holon-draw`); a consumer's zoom range must reach it.
+- L3 is wider than state forms: anything drawn from a read is present only when that read
+  was answered. C1's `version` therefore covers L3 as well as L11: a tile retained from an
+  unanswered or failed read is not drawn.
+- L12: "drawn" means LEGIBLE, not merely in a buffer. S3's `legible` is the test a host
+  uses before a send.
+
+**Rows that contradicted a note.**
+- ScopePill is ONE pill naming the group. A group's boundary or outline on a canvas is not
+  a ScopePill: it is decoration (handle 0) or a grouping GraphView owns.
+- Choice: nothing preselected UNLESS the card names the default and its `cost`.
+- Ceremony: numbers from the node's answer OR the governance policy manifest, never the card.
+- QrCode, both profiles: a scan fills a Field and never submits.
+
+**Slots §3a missed** (closed lists; every one is a `run`, a `glyph` or an Action unless
+said): FieldRow `gloss`; StateBlock's root tag always present with the state's name as its
+value, `freshness`, one block per read; ReceiptSheet `open`, `holders`, `notes`, `acts`
+(keyed); Field `error`; StepFlow `next`, `back`; QrCode `paste`, prefixes `qr` and `scan`;
+Transcript `receipt`, `fetch`; ConscienceStep `cost`, `faculty` (4 faculties); PolicyLens
+`depth`; Document `revision`, `cite`; DestinationPicker `group`; Media `blur`, `class`;
+Action's second prefix `mi` inside a menu container, which §3a did not compose. And the
+four shell prefixes (`circle`, `tab`, `nav`, `screen`), which a whole-screen layer must draw:
+each is `quad` + `run` (+ `glyph`), in a tile of its own that is `pin`ned.
+
+**Text.** One provider behind one trait stands, with three changes to what crosses it.
+(a) The unit is the PARAGRAPH with a base direction, not a run: bidirectional reordering is
+paragraph-level (UAX #9), and the provider returns visual runs. (b) Layout direction is an
+input to the UI LAYER, not to text alone: StepFlow's next and back, list alignment and the
+arrows of D10 mirror, so `glyph` carries a mirror flag. (c) Line breaking is the
+provider's, including dictionary breaking where words are not spaced (Thai, Burmese) and
+per-character rules (Japanese, Chinese). Scripts the client ships that need real shaping,
+as the client reports them: Arabic script, the Indic scripts, Thai, Burmese; Ethiopic needs
+its syllabary in a font; the large fonts of Chinese, Japanese and Korean weigh on any
+bare-metal size budget. Text input stays outside the core.
+
+**From the twin's lead, the same day (as relayed).** The timing protocol is 390 px wide at
+6× CPU throttle, cold, with a 200 ms longest-task budget on the dive (this file's §4 did not
+state a number; an earlier message of mine said 4×, which was wrong). The witnesses a
+replacement must run green are the twin's own (its story, layer, texture-switch, no-highp
+and service-worker tests). And the twin was wound down today at the lead's request: whether
+it switches to this engine is the lead's decision, and gating a switch is the twin's.

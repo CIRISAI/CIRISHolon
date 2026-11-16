@@ -496,6 +496,17 @@ cargo test -q -p holon-device 2>/dev/null >/dev/null \
   && ok "holon-device: the device class round-trips, and an unknown tag is refused" \
   || no "holon-device: the device class round-trips, and an unknown tag is refused"
 
+# holon-draw: the generic draw core of INTERFACE.md -- tiles of tagged instance records,
+# a pure pick, a per-mark report, a detail allocator behind one interface. ZERO
+# dependencies; no graphics backend is in it, so every gate here is headless.
+n_draw=$(cargo test -q -p holon-draw -- --list 2>/dev/null | grep -c ': test$')
+[ "${n_draw:-0}" -gt 0 ] \
+  && ok "holon-draw reaches $n_draw tests" \
+  || no "holon-draw reaches 0 tests (gate 9's disease: passing without covering anything)"
+cargo test -q -p holon-draw 2>/dev/null >/dev/null \
+  && ok "holon-draw: one tag one mark, a pinned mark always drawn, detail never changes what, a stale tile not drawn, a far origin keeps its precision" \
+  || no "holon-draw: one tag one mark, a pinned mark always drawn, detail never changes what, a stale tile not drawn, a far origin keeps its precision"
+
 # 12. A CROSS-REFERENCE IS A WARRANT ONLY IF ITS TARGET EXISTS (team-lead's ruling,
 #     2026-08-24). Q10_PREREG.md §10 cites "M1-M6 carry over from Q9's brief unchanged" —
 #     there is no Q9 file anywhere in the repository, so that citation warrants nothing,

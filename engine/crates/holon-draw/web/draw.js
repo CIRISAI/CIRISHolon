@@ -71,11 +71,15 @@
 //   ROOF    a quad, box or prism in TINT                 A_ROOF     roof field
 //   CASING  a literal quad (a cast shadow);              A_CASING   none
 //           a line or arc with bit 0 SET (a casing);     A_CASING   none
-//           a disc with bit 0 SET (a CANOPY)             A_CASING   canopy field
+//           a disc with bit 0 SET                        A_CASING   none
 //   ROAD    a line or arc with bit 0 clear               A_ROAD     none
 // (This is the twin's four kinds; its shadows and canopies ride in its casing kind.)
-// Bit 0 of `variant` (0x01, the core's VARIANT_CASING / VARIANT_CANOPY): a line or arc is a
-// casing, a disc is a canopy. A glyph's variant is its shape: a glyph is in no class.
+// On a DISC the two things are separate bits of `variant`: bit 0 (0x01, the core's
+// twin::DISC_CASING) puts it in the casing class, with no field; bit 2 (0x04,
+// twin::DISC_CANOPY_FIELD) gives it the canopy field, whatever its class. The twin's
+// mottling patches are 0x01 and its trees 0x05. On a line or arc, bit 0 (0x01,
+// VARIANT_CASING) is the casing and bit 1 the round ends (below). A glyph's variant is its
+// shape: a glyph is in no class.
 //
 // LINE ENDS. A world line or arc ends FLUSH (cut square at pos and at aux) unless bit 1 of
 // its `variant` is set (0x02, VARIANT_ROUND, proposed here): then each end has a round cap
@@ -199,8 +203,10 @@ const PF_HEAD_F = `#ifdef GL_FRAGMENT_PRECISION_HIGH
 
 /** Where each setting is in a tile's 32 numbers (see TILE SETTINGS at the top). */
 export const PARAM = Object.freeze({ DIM: 0, FADE: 3, RAMP0: 4, RAMP1: 8, TINT: 12, NOISE: 16, TEX: 20, FLOOR_CASING: 21, FLOOR: 24, A_GROUND: 25, A_CASING: 26, A_ROAD: 27, A_ROOF: 28, RING: 29 });
-/** Bit 0 of `variant`: a line or arc is a casing, a disc is a canopy. */
-export const VARIANT_CASING = 0x01, VARIANT_CANOPY = 0x01;
+/** Bit 0 of `variant` on a line or arc: a casing. */
+export const VARIANT_CASING = 0x01;
+/** On a disc: bit 0 the casing class (no field), bit 2 the canopy field. A tree is both (0x05). */
+export const DISC_CASING = 0x01, DISC_CANOPY_FIELD = 0x04;
 /** Bit 1 of `variant` on a line or arc: round ends (a cap of the line's half width at each). */
 export const VARIANT_ROUND = 0x02;
 /** Tile settings that leave every colour as its record gives it (the core's PARAMS_NEUTRAL). */
@@ -242,6 +248,7 @@ void main() {
   float var = floor(i_meta.w + 0.5);
   float bit0 = mod(var, 2.0);
   float bit1 = mod(floor(var / 2.0), 2.0);
+  float bit2 = mod(floor(var / 4.0), 2.0);
   bool liney = kc > 2.5 && kc < 3.5;
   vec3 p;
   vec3 n;
@@ -301,8 +308,9 @@ void main() {
     am = u_params[6].z;                                                  // a literal quad: a shadow
   } else if (kc > 2.5 && kc < 3.5) {
     am = bit0 > 0.5 ? u_params[6].z : u_params[6].w;                     // casing, road
-  } else if (kc > 3.5 && kc < 4.5 && bit0 > 0.5) {
-    am = u_params[6].z; fk = 1.0;                                        // canopy
+  } else if (kc > 3.5 && kc < 4.5) {
+    if (bit0 > 0.5) am = u_params[6].z;                                  // a disc in the casing class
+    if (bit2 > 0.5) fk = 1.0;                                            // a disc with the canopy field
   }
   gl_Position = u_vp * vec4(p, 1.0);
   // The ring: the pixel's place relative to the centre, in radii, for the fragment stage.

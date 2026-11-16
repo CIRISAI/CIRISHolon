@@ -196,11 +196,12 @@ pub const PARAM_A_ROAD: usize = 27;
 pub const PARAM_A_ROOF: usize = 28;
 pub const PARAM_RING: usize = 29; // 29..31: a radial fade's centre x, y and radius in device pixels (radius 0 off)
 
-/// Bit 0 of a world mark's `variant`: a line or arc that is a CASING (under its road), or a
-/// disc that is a CANOPY (a tree's crown). The surface classes the backend derives from kind,
-/// colour mode and this bit are listed in `web/draw.js`'s header.
+/// Bit 0 of a world mark's `variant`: a line or arc, or a disc, in the CASING surface class
+/// (a casing under its road; a disc such as ground mottling). Bit 2 of a disc's `variant`
+/// gives it the canopy field (a tree's crown); `twin::DISC_CASING` and
+/// `twin::DISC_CANOPY_FIELD` name the two for discs. The surface classes the backend derives
+/// from kind, colour mode and these bits are listed in `web/draw.js`'s header.
 pub const VARIANT_CASING: u8 = 0x01;
-pub const VARIANT_CANOPY: u8 = 0x01;
 /// Bit 1 of a world line's or arc's `variant`: round ends (a cap of the line's half width,
 /// after the floor); a polyline of round-ended segments has round joins. Without it a line
 /// ends flush, as the twin's streets do at an exit.

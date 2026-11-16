@@ -1,5 +1,14 @@
 # atoms3d (Bevy) against atoms-draw (holon-draw): the same harness on both pages
 
+> **CORRECTION 2026-11-15, after this was committed (`ebf98a7`).** The AFTER page measured
+> here never ran its calibration burst: the page tested the curve's status against 0, and
+> `holon_render::TABLE_OK` is 1, so it skipped the burst and ran with no substep budget,
+> while BEFORE was calibrated. The two pages therefore did not run the same physics
+> schedule, and AFTER's ready time also omits the burst Bevy's includes. Found by the
+> worker that ported the HUD. Every number below stands as a measurement of the pages as
+> they were, and NONE of it is a like-for-like comparison. A rerun on the corrected page
+> (calibrated, with the same panels drawn in the canvas) replaces it.
+
 Every cell is `median (min to max)`.
 
 **What this measures.** Rendering is SwiftShader (CPU rasterisation in headless Chromium), so absolute frame times are not a GPU device's. The comparison between pages measured under the same conditions is what this measures.

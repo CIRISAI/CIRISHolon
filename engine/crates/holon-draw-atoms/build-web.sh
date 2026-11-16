@@ -1,6 +1,6 @@
 #!/bin/sh
 # Build the atoms scene's browser artifact into docs/atoms-draw/, beside a copy of the draw
-# backend. The same release settings as holon-render's build-web.sh.
+# backend and its text provider. The same release settings as holon-render's build-web.sh.
 set -eu
 here=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 workspace=$(CDPATH= cd -- "$here/../.." && pwd)
@@ -16,4 +16,5 @@ cargo build --manifest-path "$workspace/Cargo.toml" --package holon-draw-atoms -
 mkdir -p "$out"
 cp "$workspace/target/web-dist/wasm32-unknown-unknown/release/holon_draw_atoms.wasm" "$out/"
 cp "$workspace/crates/holon-draw/web/draw.js" "$out/"
+cp "$workspace/crates/holon-draw/web/text.js" "$out/"
 printf 'Built %s (%s bytes)\n' "$out/holon_draw_atoms.wasm" "$(wc -c < "$out/holon_draw_atoms.wasm")"

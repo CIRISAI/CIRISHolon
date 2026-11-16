@@ -45,6 +45,7 @@
 pub mod abi;
 pub mod alloc;
 pub mod twin;
+pub mod ui;
 
 pub use alloc::{Allocator, Bits, Candidate, Ring};
 

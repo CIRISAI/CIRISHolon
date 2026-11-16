@@ -31,3 +31,4 @@ docs/atoms3d/webgl2/
 # with its copy of draw.js. Only the page itself is record.
 docs/atoms-draw/holon_draw_atoms.wasm
 docs/atoms-draw/draw.js
+docs/atoms-draw/text.js

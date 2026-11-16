@@ -172,8 +172,42 @@ pub struct Tile {
     /// added), drawn after every world tile with no depth test, in order. Panels, text and
     /// buttons are screen tiles. A world tile's marks are in world units.
     pub screen: bool,
+    /// The tile's SETTINGS: 8 groups of 4 numbers the backend hands to the shader for every
+    /// batch of this tile (`PARAM_*` names the groups). A mark whose colour mode is not
+    /// [`COLOUR_LITERAL`] takes its colour from them, so a host can recolour a whole tile
+    /// (night, terrain, a roof factor) by changing 32 numbers and no instance.
+    pub params: [f32; 32],
     pub marks: Vec<Instance>,
 }
+
+/// The settings groups of a tile, by index of their first number.
+pub const PARAM_DIM: usize = 0; // rgb multiplier on every colour of the tile (night); w unused
+pub const PARAM_RAMP0: usize = 4; // the colour at t = 0 of COLOUR_RAMP
+pub const PARAM_RAMP1: usize = 8; // the colour at t = 1 of COLOUR_RAMP
+pub const PARAM_TINT: usize = 12; // rgb multiplier for COLOUR_TINT (roofs)
+pub const PARAM_NOISE: usize = 16; // the procedural field's origin and scale: x0, y0, sx, sy
+pub const PARAM_TEX: usize = 20; // x: the field's strength (0 off); yzw: the host's
+pub const PARAM_FREE: usize = 24; // 24..32: the host's own
+
+/// The tile settings that leave colours exactly as their records give them.
+pub const PARAMS_NEUTRAL: [f32; 32] = {
+    let mut p = [0.0f32; 32];
+    p[0] = 1.0;
+    p[1] = 1.0;
+    p[2] = 1.0;
+    p[12] = 1.0;
+    p[13] = 1.0;
+    p[14] = 1.0;
+    p
+};
+
+/// A mark's colour mode, in the top two bits of its `variant` byte for every kind but
+/// `Run` (whose `variant` is its atlas page). LITERAL: `rgba`. RAMP: the mix of the tile's
+/// RAMP0 and RAMP1 at `t = aux[0]`, alpha from `rgba`. TINT: `rgba.rgb` times the tile's TINT.
+/// In every mode the result is then multiplied by the tile's DIM.
+pub const COLOUR_LITERAL: u8 = 0;
+pub const COLOUR_RAMP: u8 = 1 << 6;
+pub const COLOUR_TINT: u8 = 2 << 6;
 
 /// A view: a 4 by 4 matrix (row-major) from world to clip space, and the viewport in pixels.
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -271,6 +305,8 @@ pub struct Batch {
     pub bytes: Vec<u8>,
     /// A screen tile's batch: positions are device pixels, `offset` is the tile's origin.
     pub screen: bool,
+    /// The tile's settings ([`Tile::params`]).
+    pub params: [f32; 32],
 }
 
 /// What is said of one mark of a tagged instance.
@@ -410,7 +446,7 @@ impl Scene {
                     }
                 }
                 if count > 0 {
-                    frame.batches.push(Batch { tile: t.id, offset, kind, count, bytes, screen: t.screen });
+                    frame.batches.push(Batch { tile: t.id, offset, kind, count, bytes, screen: t.screen, params: t.params });
                 }
             }
         }
@@ -518,7 +554,7 @@ mod tests {
             // a garden tree beside it: decoration, detailed
             marks.push(Instance::new(Kind::Disc, [p[0] + 3.0, p[1], 0.0], [1.0, 0.0, 0.0]).detail(1));
         }
-        Tile { id, origin: [ox, 0.0, 0.0], version: 7, layer: 0, screen: false, marks }
+        Tile { id, origin: [ox, 0.0, 0.0], version: 7, layer: 0, screen: false, params: PARAMS_NEUTRAL, marks }
     }
     fn cam() -> Camera {
         Camera::map([50.0, 50.0, 0.0], 4.0, 800.0, 600.0)
@@ -552,7 +588,7 @@ mod tests {
     fn an_instance_is_every_mark_with_its_tag_and_a_pick_names_it() {
         let mut s = scene(vec![tile(1, 0.0, 40, 100)]);
         // instance 113 gains a second mark (a flag beside the building), in a second tile
-        s.tiles.push(Tile { id: 2, origin: [0.0; 3], version: 7, layer: 0, screen: false, marks: vec![Instance::new(Kind::Glyph, [40.0, 18.0, 0.0], [1.0, 0.0, 0.0]).tagged(113)] });
+        s.tiles.push(Tile { id: 2, origin: [0.0; 3], version: 7, layer: 0, screen: false, params: PARAMS_NEUTRAL, marks: vec![Instance::new(Kind::Glyph, [40.0, 18.0, 0.0], [1.0, 0.0, 0.0]).tagged(113)] });
         let f = s.frame(&cam(), 7, &Ring, 1000).unwrap();
         // mark 100+13 sits at local (34, 18): on screen at ((34-50)*4+400, 300-(18-50)*4)
         assert_eq!(f.pick(336.0, 428.0), Some(113));
@@ -594,7 +630,7 @@ mod tests {
     #[test]
     fn an_open_modal_layer_takes_every_pick() {
         let mut s = scene(vec![tile(1, 0.0, 40, 100)]);
-        let sheet = Tile { id: 9, origin: [0.0; 3], version: 7, layer: 5, screen: false, marks: vec![Instance::new(Kind::Quad, [70.0, 70.0, 0.0], [6.0, 4.0, 0.0]).tagged(900).pinned()] };
+        let sheet = Tile { id: 9, origin: [0.0; 3], version: 7, layer: 5, screen: false, params: PARAMS_NEUTRAL, marks: vec![Instance::new(Kind::Quad, [70.0, 70.0, 0.0], [6.0, 4.0, 0.0]).tagged(900).pinned()] };
         s.tiles.push(sheet);
         let f = s.frame(&cam(), 7, &Ring, 1000).unwrap();
         assert_eq!(f.pick(336.0, 428.0), Some(113), "no modal: the scene is picked");
@@ -614,7 +650,7 @@ mod tests {
         let mut button = Instance::new(Kind::Quad, [-50.0, 0.0, 0.0], [80.0, 24.0, 0.0]).tagged(7);
         button.aux = [6.0, 0.0, 0.0];
         let label = Instance::new(Kind::Run, [-50.0, 0.0, 0.0], [52.0, 14.0, 0.0]);
-        s.tiles.push(Tile { id: 50, origin: [300.0, 420.0, 0.0], version: 7, layer: 0, screen: true, marks: vec![Instance::new(Kind::Quad, [0.0; 3], [200.0, 40.0, 0.0]), button, label] });
+        s.tiles.push(Tile { id: 50, origin: [300.0, 420.0, 0.0], version: 7, layer: 0, screen: true, params: PARAMS_NEUTRAL, marks: vec![Instance::new(Kind::Quad, [0.0; 3], [200.0, 40.0, 0.0]), button, label] });
         let f = s.frame(&cam(), 7, &Ring, 1000).unwrap();
         assert_eq!(f.pick(260.0, 425.0), Some(7), "the button, inside its rectangle");
         assert_eq!(f.pick(212.0, 425.0), Some(7));
@@ -628,6 +664,22 @@ mod tests {
         let last = f.batches.last().unwrap();
         assert!(last.screen && last.kind == Kind::Run && last.offset == [300.0, 420.0, 0.0]);
         assert!(f.batches.iter().take_while(|b| !b.screen).count() >= 2);
+    }
+
+    #[test]
+    fn a_tile_carries_its_settings_to_every_batch_and_a_mark_its_colour_mode() {
+        let mut t = tile(1, 0.0, 3, 100);
+        t.params[PARAM_DIM] = 0.62;
+        let mut ground = Instance::new(Kind::Patch, [0.0; 3], [10.0, 10.0, 0.0]);
+        ground.variant = COLOUR_RAMP;
+        ground.aux[0] = 0.37;
+        t.marks.push(ground);
+        let f = scene(vec![t]).frame(&cam(), 7, &Ring, 1000).unwrap();
+        assert!(f.batches.iter().all(|b| b.params[PARAM_DIM] == 0.62 && b.params[PARAM_TINT] == 1.0));
+        let patch = f.batches.iter().find(|b| b.kind == Kind::Patch).unwrap();
+        let last = &patch.bytes[patch.bytes.len() - INSTANCE_BYTES..];
+        assert_eq!(last[51] & 0xC0, COLOUR_RAMP);
+        assert_eq!(&last[24..28], &0.37f32.to_le_bytes());
     }
 
     #[test]
@@ -665,7 +717,7 @@ mod tests {
         // 20,000 km from the world's origin, two marks 1 unit apart: the offset the GPU adds
         // is taken from the focus in 64-bit, so they land 4 pixels apart at 4 pixels a unit
         let far = 2.0e7;
-        let t = Tile { id: 1, origin: [far, far, 0.0], version: 1, layer: 0, screen: false, marks: vec![
+        let t = Tile { id: 1, origin: [far, far, 0.0], version: 1, layer: 0, screen: false, params: PARAMS_NEUTRAL, marks: vec![
             Instance::new(Kind::Disc, [0.0, 0.0, 0.0], [0.4, 0.0, 0.0]).tagged(1),
             Instance::new(Kind::Disc, [1.0, 0.0, 0.0], [0.4, 0.0, 0.0]).tagged(2),
         ] };

@@ -567,7 +567,7 @@ impl World {
             marks.push(m);
             marks.push(Instance::new(Kind::Sphere, [x as f32, y as f32, z as f32], [0.18, 0.0, 0.0]).colour([233, 196, 106, 255]));
         }
-        Scene { tiles: vec![Tile { id: 1, origin: [0.0; 3], version: 1, layer: 0, screen: false, marks }], modal: None }
+        Scene { tiles: vec![Tile { id: 1, origin: [0.0; 3], version: 1, layer: 0, screen: false, params: holon_draw::PARAMS_NEUTRAL, marks }], modal: None }
     }
 
     /// The overlay as `holon-draw`'s `ui` takes it: Bevy's six panels, its status line and

@@ -358,7 +358,7 @@ pub fn layout(hud: &Hud, text: &mut dyn Text, width: f32, height: f32, dpr: f32,
             }
             scene = [m + w, 0.0, width - m - w, bar_top];
         }
-        let tile = Tile { id, origin: [0.0; 3], version, layer, screen: true, marks: ui.marks };
+        let tile = Tile { id, origin: [0.0; 3], version, layer, screen: true, params: crate::PARAMS_NEUTRAL, marks: ui.marks };
         return Layout { tile, narrow, panels, buttons, status, scene };
     }
 }

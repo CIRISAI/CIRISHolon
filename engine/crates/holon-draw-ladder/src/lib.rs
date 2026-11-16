@@ -27,6 +27,18 @@ pub trait Scene {
     /// The finest and coarsest `z` (log10 metres per device pixel) the scene is meant for (the
     /// ladder may stretch the outermost rungs to meet a host's band or the ends of the range).
     fn span(&self) -> (f64, f64);
+    /// True when the boundary with the next FINER rung is a CUT: a hard switch with no
+    /// cross-fade. A fade is honest only when the coarser picture is a function of the finer
+    /// one; between two different theories (the 1+1D chain and the 3+1D gauge field) it would
+    /// show frames that are states of neither, so the ladder cuts there (the CIRISOntology
+    /// session's reading of its fibre results, as relayed, 2026-11-16).
+    fn cut_below(&self) -> bool {
+        false
+    }
+    /// True when the boundary with the next COARSER rung is a cut.
+    fn cut_above(&self) -> bool {
+        false
+    }
     /// Advance by `dt` seconds of wall time (a simulated scene steps; others may animate).
     fn advance(&mut self, _dt: f64) {}
     /// The scene's tiles at zoom `z` (log10 metres per device pixel; marks in the scene's unit
@@ -56,6 +68,8 @@ pub struct Ladder {
     /// A host that draws its own band on the same canvas and says what its own weight is
     /// ([`Host`]). `None`: the ladder works its share out itself from the band.
     pub host: Option<Host>,
+    /// The `z` of each boundary between rungs that is a cut (see [`Scene::cut_below`]).
+    pub cuts: Vec<f64>,
 }
 
 /// A host on whose canvas the ladder draws (the CEWP twin).
@@ -165,7 +179,8 @@ impl Ladder {
                 r.z_hi = r.z_lo;
             }
         }
-        Ladder { scenes, rungs, band, pan: [0.0; 2], host: None }
+        let cuts = (1..rungs.len()).filter(|&i| scenes[i].cut_below() || scenes[i - 1].cut_above()).map(|i| rungs[i].z_lo).collect();
+        Ladder { scenes, rungs, band, pan: [0.0; 2], host: None, cuts }
     }
 
     /// The standard ladder: every scene of `scenes::micro` and `scenes::cosmos`, around a
@@ -213,7 +228,14 @@ impl Ladder {
         if host >= 1.0 {
             return out;
         }
-        let live: Vec<(usize, f64)> = visible(&self.rungs, z).into_iter().filter(|(i, _)| self.rungs[*i].z_hi > self.rungs[*i].z_lo).collect();
+        let mut live: Vec<(usize, f64)> = visible(&self.rungs, z).into_iter().filter(|(i, _)| self.rungs[*i].z_hi > self.rungs[*i].z_lo).collect();
+        // at a cut, no fade: only the rung whose span holds z is drawn, at full weight
+        if live.len() == 2 && self.cuts.iter().any(|&c| (c - self.rungs[live[1].0].z_lo).abs() < 1e-12) {
+            live.retain(|(i, _)| self.rungs[*i].z_lo <= z && z < self.rungs[*i].z_hi);
+            for l in live.iter_mut() {
+                l.1 = 1.0;
+            }
+        }
         let total: f64 = live.iter().map(|x| x.1).sum::<f64>().max(1e-12);
         for (i, w) in live {
             // the ladder's share is (1 - host), split between its visible rungs
@@ -347,6 +369,47 @@ mod tests {
                 assert!((host + rungs - 1.0).abs() < 1e-9 || (host == 1.0), "{z}: host {host} rungs {rungs}");
             }
         }
+    }
+
+    struct Cut(&'static str, f64, f64, bool);
+    impl Scene for Cut {
+        fn name(&self) -> &'static str {
+            self.0
+        }
+        fn unit(&self) -> i32 {
+            -15
+        }
+        fn status(&self) -> Status {
+            Status::Simulated
+        }
+        fn source(&self) -> &'static str {
+            "test"
+        }
+        fn span(&self) -> (f64, f64) {
+            (self.1, self.2)
+        }
+        fn cut_below(&self) -> bool {
+            self.3
+        }
+        fn tiles(&mut self, _z: f64, _c: f64, _a: f64) -> Vec<Tile> {
+            Vec::new()
+        }
+    }
+
+    #[test]
+    fn at_a_cut_one_rung_is_drawn_whole_and_elsewhere_neighbours_fade() {
+        // a field below, a chain above it (a cut between: a different theory), a nucleus above
+        // the chain (a fade)
+        let s: Vec<Box<dyn Scene>> = vec![Box::new(Cut("field", -20.0, -19.0, false)), Box::new(Cut("chain", -19.0, -18.0, true)), Box::new(Cut("nucleus", -18.0, -16.0, false))];
+        let mut l = Ladder::new(s, Band { z_lo: 0.0, z_hi: 0.0, clamp: false });
+        assert_eq!(l.cuts, vec![-19.0]);
+        for (z, want) in [(-19.1, vec![("field", 1.0)]), (-18.95, vec![("chain", 1.0)]), (-19.0, vec![("chain", 1.0)])] {
+            let p = l.passes(z, 0.4, 0.3, 800.0, 600.0, 1.0, 0.0);
+            let got: Vec<(&str, f64)> = p.iter().map(|x| (l.rungs[x.rung].name, x.weight)).collect();
+            assert_eq!(got, want, "at {z}");
+        }
+        // the chain to nucleus boundary still fades
+        assert_eq!(l.passes(-18.0, 0.4, 0.3, 800.0, 600.0, 1.0, 0.0).len(), 2);
     }
 
     #[test]

@@ -166,6 +166,17 @@ pub struct HostText {
     pub asked: u64,
 }
 
+impl HostText {
+    /// A provider for `dpr` with an empty cache (the ladder's caption uses one of its own).
+    pub fn new(dpr: f32) -> HostText {
+        HostText { dpr, cache: HashMap::new(), asked: 0 }
+    }
+    /// Forget every placement (after the host's atlas was emptied).
+    pub fn forget(&mut self) {
+        self.cache.clear();
+    }
+}
+
 impl Text for HostText {
     fn place(&mut self, text: &str, style: u8) -> Placed {
         if let Some(p) = self.cache.get(&(style, text.to_string())) {

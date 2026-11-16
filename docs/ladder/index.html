@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#0b0f0e" />
+    <title>CIRISHolon · from the vacuum to the universe</title>
+    <style>
+      html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #0b0f0e; }
+      canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+      #err { position: fixed; inset: 0; display: none; place-items: center; padding: 24px; color: #ede9df; font: 14px sans-serif; text-align: center; }
+    </style>
+  </head>
+  <body data-engine="loading">
+    <canvas id="c" aria-label="One zoom from the vacuum to the universe. Wheel or pinch to zoom, drag to turn, S switches between the host band and the whole range."></canvas>
+    <div id="err"></div>
+    <script type="module">
+      import { createDrawer } from "./draw.js";
+      import { createTextProvider } from "./text.js";
+      const q = new URLSearchParams(location.search);
+      const canvas = document.getElementById("c");
+      const fail = (m) => { const e = document.getElementById("err"); e.style.display = "grid"; e.textContent = m; document.body.dataset.engine = "failed: " + m; };
+      const gl = canvas.getContext("webgl2", { antialias: true }) || canvas.getContext("webgl", { antialias: true });
+      if (!gl) fail("This browser offers no WebGL.");
+      const DPR = q.get("dpr") ? Number(q.get("dpr")) : devicePixelRatio;
+      const text = createTextProvider(gl, { dpr: DPR });
+      let w = null;
+      const enc = new TextEncoder(), dec = new TextDecoder();
+      const env = {
+        host_text(ptr, len, style, out) {
+          const s = dec.decode(new Uint8Array(w.memory.buffer, ptr, len));
+          const p = text.place(s, style);
+          const o = new Float32Array(w.memory.buffer, out, 7);
+          o[0] = p.w; o[1] = p.h; o[2] = p.u0; o[3] = p.v0; o[4] = p.u1; o[5] = p.v1; o[6] = p.page;
+        },
+      };
+      const { instance } = await WebAssembly.instantiate(await (await fetch("holon_draw_ladder.wasm")).arrayBuffer(), { env });
+      w = instance.exports;
+      window.holonLadder = w;
+      const drawer = createDrawer(gl, { text });
+      // the host's band: the CEWP twin's street to globe (stand-in values until the twin sends its own)
+      const BAND = [Number(q.get("lo") || 2.0), Number(q.get("hi") || 7.15)];
+      let clamp = q.get("switch") === "on";
+      w.hl_band(BAND[0], BAND[1], clamp ? 1 : 0);
+      const view = { z: q.get("z") ? Number(q.get("z")) : -9.6, yaw: 0.8, pitch: 0.42 };
+      const setLine = () => {
+        const s = (clamp ? "switch ON: street to globe" : "switch OFF: universe to vacuum") + "  ·  view 10^" + view.z.toFixed(1) + " m  ·  S to switch";
+        const b = enc.encode(s); const p = w.hl_scratch(b.length); new Uint8Array(w.memory.buffer, p, b.length).set(b); w.hl_caption_line(p, b.length);
+      };
+      addEventListener("keydown", (e) => { if (e.key === "s" || e.key === "S") { clamp = !clamp; w.hl_band(BAND[0], BAND[1], clamp ? 1 : 0); view.z = w.hl_clamp_z(view.z); } });
+      canvas.addEventListener("wheel", (e) => { e.preventDefault(); view.z = w.hl_clamp_z(view.z + e.deltaY * 0.002); }, { passive: false });
+      let drag = null; const touches = new Map(); let pinch = null;
+      canvas.addEventListener("pointerdown", (e) => { canvas.setPointerCapture(e.pointerId); touches.set(e.pointerId, [e.clientX, e.clientY]); drag = [e.clientX, e.clientY]; });
+      canvas.addEventListener("pointermove", (e) => {
+        if (!touches.has(e.pointerId)) return; touches.set(e.pointerId, [e.clientX, e.clientY]);
+        if (touches.size === 2) { const [a, b] = [...touches.values()]; const d = Math.hypot(a[0] - b[0], a[1] - b[1]); if (pinch) view.z = w.hl_clamp_z(view.z - Math.log10(d / pinch)); pinch = d; return; }
+        if (drag) { view.yaw -= (e.clientX - drag[0]) * 0.006; view.pitch = Math.max(-1.45, Math.min(1.45, view.pitch + (e.clientY - drag[1]) * 0.006)); drag = [e.clientX, e.clientY]; }
+      });
+      const up = (e) => { touches.delete(e.pointerId); pinch = null; drag = null; };
+      canvas.addEventListener("pointerup", up); canvas.addEventListener("pointercancel", up);
+      const batches = []; const pool = [];
+      let last = performance.now(), first = true;
+      function frame(now) {
+        const dt = Math.min(0.1, (now - last) / 1000); last = now;
+        const W = canvas.clientWidth * DPR | 0, H = canvas.clientHeight * DPR | 0;
+        if (canvas.width !== W || canvas.height !== H) { canvas.width = W; canvas.height = H; }
+        gl.viewport(0, 0, W, H);
+        gl.clearColor(0.043, 0.059, 0.055, 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        text.beginFrame();
+        w.hl_advance(dt);
+        setLine();
+        const epoch = text.epoch;
+        let n = w.hl_view(view.z, view.yaw, view.pitch, W, H, DPR, Date.now() / 1000);
+        if (text.epoch !== epoch) { w.hl_text_stale(); n = w.hl_view(view.z, view.yaw, view.pitch, W, H, DPR, Date.now() / 1000); }
+        for (let p = 0; p < n; p++) {
+          const m = w.hl_pass_batches(p); batches.length = 0;
+          for (let i = 0; i < m; i++) {
+            const b = pool[i] || (pool[i] = { offset: [0, 0, 0] });
+            b.kind = w.hl_batch_kind(p, i); b.count = w.hl_batch_count(p, i); b.screen = !!w.hl_batch_screen(p, i);
+            b.offset[0] = w.hl_batch_offset(p, i, 0); b.offset[1] = w.hl_batch_offset(p, i, 1); b.offset[2] = w.hl_batch_offset(p, i, 2);
+            b.bytes = new Uint8Array(w.memory.buffer, w.hl_batch_ptr(p, i), b.count * 52);
+            b.params = new Float32Array(w.memory.buffer, w.hl_batch_params(p, i), 32);
+            batches.push(b);
+          }
+          gl.clear(gl.DEPTH_BUFFER_BIT);
+          drawer.draw(batches, new Float32Array(w.memory.buffer, w.hl_pass_vp(p), 16), { viewport: [0, 0, W, H] });
+        }
+        if (first) { first = false; document.body.dataset.engine = "holon-draw ladder on " + (typeof WebGL2RenderingContext !== "undefined" && gl instanceof WebGL2RenderingContext ? "webgl2" : "webgl1"); document.body.dataset.ready = "1"; }
+        window.holonLadderView = view;
+        requestAnimationFrame(frame);
+      }
+      requestAnimationFrame(frame);
+    </script>
+  </body>
+</html>

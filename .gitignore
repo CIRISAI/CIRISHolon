@@ -32,3 +32,7 @@ docs/atoms3d/webgl2/
 docs/atoms-draw/holon_draw_atoms.wasm
 docs/atoms-draw/draw.js
 docs/atoms-draw/text.js
+# the ladder page: built by engine/crates/holon-draw-ladder/build-web.sh
+docs/ladder/holon_draw_ladder.wasm
+docs/ladder/draw.js
+docs/ladder/text.js

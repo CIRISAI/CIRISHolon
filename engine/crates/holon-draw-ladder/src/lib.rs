@@ -11,6 +11,7 @@
 use holon_draw::ladder::{host_weight, rung_camera, visible, Band, Rung, Status, Z_MAX, Z_MIN};
 use holon_draw::{Camera, Frame, Ring, Scene as DrawScene, Tile, PARAM_DIM};
 
+pub mod abi;
 pub mod scenes;
 
 /// One rung's scene.
@@ -118,35 +119,21 @@ impl Ladder {
             for t in tiles.iter_mut() {
                 t.params[PARAM_DIM + 3] *= weight as f32;
             }
-            tiles.push(self.label(i, z, width, height, dpr, weight));
+            let _ = dpr;
             let frame = DrawScene { tiles, modal: None }.frame(&cam, 1, &Ring, u64::MAX).unwrap_or(Frame { batches: Vec::new(), marks: Vec::new(), fine: 0, coarse: 0, stale: 0, modal: None });
             out.push(Pass { rung: i, weight, camera: cam, frame });
         }
         out
     }
 
-    /// The rung's caption as a screen tile: a scale bar at the bottom left. The words (name,
-    /// status, source, the bar's length) are returned by [`Ladder::caption`] for the host's
-    /// text provider; this tile carries only the bar.
-    fn label(&self, i: usize, z: f64, width: f64, height: f64, dpr: f64, weight: f64) -> Tile {
-        use holon_draw::{Instance, Kind, PARAMS_NEUTRAL};
-        let (px, _) = scale_bar(z, height);
-        let x0 = 24.0 * dpr;
-        let y = height - 28.0 * dpr;
-        let mut bar = Instance::new(Kind::Line, [x0 as f32, y as f32, 0.0], [2.0 * dpr as f32, 0.0, 0.0]).colour([237, 233, 223, 230]);
-        bar.aux = [(x0 + px) as f32, y as f32, 0.0];
-        let mut params = PARAMS_NEUTRAL;
-        params[PARAM_DIM + 3] = weight as f32;
-        let _ = (i, width);
-        Tile { id: 9000 + i as u64, origin: [0.0; 3], version: 1, layer: 200, screen: true, params, marks: vec![bar] }
-    }
-
     /// The caption of the rung that carries most weight at `z`: its name, its status, its
     /// source line, and the scale bar's length as words (for example "1 nm").
-    pub fn caption(&self, z: f64, height: f64) -> Option<(&'static str, &'static str, &'static str, String)> {
+    /// The fifth field is the scale bar's length in device pixels.
+    pub fn caption(&self, z: f64, height: f64) -> Option<(&'static str, &'static str, &'static str, String, f64)> {
         let best = visible(&self.rungs, z).into_iter().filter(|(i, _)| self.rungs[*i].z_hi > self.rungs[*i].z_lo).max_by(|a, b| a.1.total_cmp(&b.1))?;
         let s = &self.scenes[best.0];
-        Some((s.name(), s.status().label(), s.source(), scale_bar(z, height).1))
+        let (px, name) = scale_bar(z, height);
+        Some((s.name(), s.status().label(), s.source(), name, px))
     }
 }
 

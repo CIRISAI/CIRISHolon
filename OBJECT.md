@@ -109,6 +109,90 @@ network, the cell and face charts, the VAMPnet's coordinate) and to the Clifford
 with the network and the uncarried coordinate as the plants it must REJECT and the face chart
 and the light cone as the ones it must KEEP; kill: one wrong call. It costs no trajectory.
 
+## CORRECTION 2026-11-15 — the consumer selects; the selector was written too narrowly (issue #4; locked text above and below kept legible)
+
+The correction of 2026-09-25 above says a tier is a closed view "THE TIER ABOVE CARRIES — one
+its conservation law cannot remove", and the SELECT-1 candidate reads "carried ⇔ not removable
+within the level-above budget under its law". Four things learned since are stated here, each
+with its status. Nothing above is withdrawn; the selector is widened and two of its words are
+made precise.
+
+1. **The selector is the CONSUMER, and a conservation law is one kind of consumer.** What
+   reads the view decides what of it is carried: the tier above's law in the physical tower,
+   the owed answers of a node in the kernel (item 4), the frame in a renderer, a downstream
+   reading in a generated scene. "Not carried" is therefore always "not carried by the
+   consumers tested" (`TIERS.md` §1 already says so of the network). *Status: a restatement
+   of the 09-25 definition, not a new result.* What it adds is that where the consumer is
+   DECLARED (a renderer's frame), the selection rule can be used and tested without settling
+   whether the tower fixes its own consumers, which stays the open question.
+2. **The candidate rule, in compression form (issue #4 §2; WAGER, not run).** A closed
+   summary is carried when removing it from the consumer's predictor raises the held-out
+   description length of the consumer's own next state by more than the null's floor.
+   Estimator: `(N/2)·log₂(RSS_without / RSS_with)` on held-out data, a monotone rescaling of
+   the increment `holon-closure::removable` already reads. Threshold: a multiple of the
+   time-shuffled null's own floor, derived per case, replacing typed bars such as `+0.02`.
+   Calibration: a planted coupling per case, so a zero is the scene's and not the
+   instrument's. *Prior art, credited first:* the information bottleneck (Tishby, Pereira,
+   Bialek 1999) with the relevance variable fixed by the consumer, and the causal state of
+   computational mechanics (Crutchfield and Young 1989; Shalizi and Crutchfield 2001).
+   SELECT-1 remains unwritten as a freeze; issue #4 §4 lists its calibration cases (read, so
+   they can kill and cannot earn) and three unread forward cases.
+3. **Predicted-by is not read-by (MEASURED once, on a carrier that is not this engine's).**
+   The rule in item 2, like the gate, prices what the consumer needs TO BE PREDICTED given
+   the dictionary. Whether the consumer READS a channel is a second measurement, taken by
+   removing it. On a language model the two parted in both directions (`LESSONS.md` rule
+   18). The definition of carried therefore owes a choice: the price, the realised cost, or
+   both. Where both can be taken they are both taken; a tier admitted on price alone says
+   so. This bears on design rule 10 and on ACUITY-B's frame, which allocate by price.
+4. **A second exact carrier, outside physics (PROVED in CIRISKernel; one lemma in two places,
+   not two confirmations).** The causal kernel's checkpoint is a closed view under the motion
+   "more rows arrive, in any order" (`pruned_view_closed`, with `full_view_closed` as its
+   "closure is cheap" and `count_view_not_closed` as its witness pair). This corrects the
+   sentence in Move 3 below, "The only EXACT closures in the record are conservation
+   fibers": the purge is exact and is not a fibre of a conserved quantity. Two results
+   transfer. Coarsening composes (`closedBy_comp`, the same statement as `viewClosed_comp`).
+   And TWO coarsenings compose only under a separation condition: each summary must read
+   nothing the other's coarsening dropped (`shared_drop_misreads` exhibits the failure).
+   `viewClosed_comp` as cited in "One question" is composition of one view over another; it
+   is silent on two summaries side by side, and `holon-render`'s unposted three- and
+   four-body terms across two coarse composites are that case (issue #4 §3d).
+
+**What changes in the rules below.** Design rule 2 gains a clause: *a budget belongs to an
+(observable, consumer) pair; a `K`-Lipschitz reading moves by at most `K · cost`
+(`SceneCert.lean`, `mean_reading_le`), so a consumer with tolerance `τ` owes the view `τ / K`;
+with several consumers the tightest binds and is named in the certificate.* And a
+per-observable budget certifies per-observable consumers only: two ensembles can match on
+every marginal and differ for a consumer that reads two observables together
+(`marginals_match_joint_differs`). This is REPLACE-1's "redundancy is cheap under one-at-a-time
+removal" seen from the consumer's side, and one entry in the DRY register.
+
+## The scene certificate — two objects, not one (2026-11-15; `SceneCert.lean`, issue #3)
+
+A GENERATED scene (streets under a population cell, a backmapped atomistic box, a mock
+catalogue) has no fine motion to close over, so `Closed` does not describe it. Its certificate
+is two objects, and neither discharges the other (`section_does_not_fix_fibre`).
+
+- **The section law — exact, PROVED.** A generator `gen : Coarse → Seed → Fine` satisfies
+  `v (gen c s) = c` for every seed. It stacks across levels of detail and under an ordinary
+  tier with no further precondition.
+- **The match — a transport cost on an ensemble, MEASURED per case.** A cost between the
+  generated ensemble and a reference SAMPLE of reality, on the JOINT the consumer reads. The
+  certificate is against the sample, not reality: the sample's own error is a budget term,
+  the choice of reference places IS the envelope, and the reference is frozen before any
+  generator is fitted to it. Verdict order: envelope, then floor, then match
+  (`verdict_certified_iff`, `unresolved_ignores_match`).
+- **It composes downstream only under four hypotheses** (`stacked_le`: `K · cost + n · ε`): the
+  downstream reading factors through the certified observables; it is Lipschitz there; the
+  cost is on their joint; and the tier's own certificate holds on real scenes. The first of
+  these is what item 2 above would measure instead of assume: an observable needs a
+  certificate when dropping it costs the consumer more than the floor, and is decoration
+  otherwise. Decoration is drawn labelled as such.
+
+*What the record holds under this heading, at its own strength:* one section law in the
+engine (`holon-scene`), reference tables with frozen bars (grid, devices, connection, climate
+class, state code), one generator killed on its joint (BUILDGEN-1) and one reading of which
+key carries a dwelling's tables (REGIONNORM-1). No generated scene is certified end to end.
+
 ## The procedure, as arithmetic — the one fold the three measurements share (2026-09-21, locked at the owner's order)
 
 *Provenance, line by line: `Closed` and composition are PROVED (`Object.lean`, `StatClosure.lean`);
@@ -196,7 +280,7 @@ to `2e-12`. A reading, marked as one: it adds no primitive and names no new kill
 1. **Closure is certified, not assumed.** A tier ships with its battery: construction premise,
    budget (coarse divergence growth ratio ≤ 1.05 over its rise epoch), witness-pair hunt.
    *Added 2026-09-20:* and the certified view is found and selected, never guessed (rule 11).
-2. **Exact closure is not expected; budgets are.** The claim is never "zero leak"; it is
+2. **Exact closure is not expected; budgets are.** *(Clause added 2026-11-15: a budget belongs to an (observable, consumer) pair, and the tightest consumer binds; see the CORRECTION of 2026-11-15.)* The claim is never "zero leak"; it is
    "non-expanding leak within the stated budget" (`Budget.lean`).
 3. **Charts declare their conditioning** (`sum_perturb_le`, `sum_perturb_attained`,
    `coherence_of_nonneg`): a near-cancelling aggregate amplifies per-term perturbation by
@@ -412,6 +496,9 @@ harder, not to add a primitive.*
 | the residual of an embedded view ≡ the value the next view carries | `EMBED2_RESULTS.md`: the two-body residual is the three-body dispersion, `−C/R⁹`; separation by decay rate is what makes a residual tabulable |
 | the self-consistent fixed point ≡ the declaration corner | `declaration_is_double`; measured start-independent to `2e-12` |
 | a residual's exponent ≡ its channel; precision ≡ an allocator over channels | design rule 10: the sum of channels is exact once the field is counted once, so a residual is assigned by its decay law (`9.34 → R⁻⁹`, EMBED-2) and a scenario evaluates only the channels above the digit it asks for |
+| the kernel's checkpoint ≡ a closed view under arrival | CIRISKernel `pruned_view_closed`; `closedBy_comp` ≡ `viewClosed_comp`; side-by-side summaries need `shared_drop_misreads`' separation condition (one lemma in two places; CORRECTION 2026-11-15) |
+| marginals not certifying a joint consumer ≡ redundancy being cheap under one-at-a-time removal | `marginals_match_joint_differs`; REPLACE-1 Amendment 1 (ordered admission with a joint price) |
+| the renderer's frame ≡ a declared consumer | issue #4 §3: where the consumer is declared the selection rule can be used and tested; not run |
 
 ## The surface, audited — what of the workbench is the holon (2026-09-04)
 

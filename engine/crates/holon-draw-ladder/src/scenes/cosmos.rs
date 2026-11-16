@@ -295,6 +295,23 @@ pub fn moon(d: f64) -> (V3, V3, f64) {
     (n, p, lon - node)
 }
 
+thread_local! {
+    static HOST_SUN: std::cell::Cell<Option<(f64, f64)>> = const { std::cell::Cell::new(None) };
+}
+
+/// A host's sun: the latitude and east longitude, in degrees, of the point on the Earth where
+/// the host draws the sun overhead. While one is set the Earth rung lights the Earth from it
+/// and not from [`sun`], so that the rung's day and night lie where the host's globe has them
+/// (the CEWP twin's sun is a model of its own on a simulated clock). `None` returns to the
+/// almanac.
+pub fn set_host_sun(sun: Option<(f64, f64)>) {
+    HOST_SUN.with(|s| s.set(sun));
+}
+
+pub fn host_sun() -> Option<(f64, f64)> {
+    HOST_SUN.with(|s| s.get())
+}
+
 /// The Earth's own frame (z the north pole, x through the Greenwich meridian) to the
 /// ecliptic frame of date.
 fn earth_to_ecl(s: &Sun) -> M3 {
@@ -428,6 +445,36 @@ fn tile(id: u64, origin: V3, marks: Vec<Instance>) -> Tile {
     let mut params = PARAMS_NEUTRAL;
     params[PARAM_FLOOR] = 0.5;
     Tile { id, origin, version: 1, layer: 0, screen: false, params, marks }
+}
+
+/// Added to a tile's id for its depth-only twin ([`one_layer`]).
+pub const DEPTH_ONLY: u64 = 1_000_000;
+
+/// Make a rung of tube-built bodies fade as ONE layer. A ball's tubes overlap, so drawn
+/// translucent (in a cross-fade, or under a host's weight) each pixel would be blended two or
+/// three times over and the ball would show its seams and be more opaque than its weight.
+/// While `alpha` is under 1 every tile is therefore given a twin on the layer beneath, the
+/// same marks with no opacity at all: it leaves the colour as it was and writes the depth, and
+/// the tile proper, drawn after it at the same depth, then passes the depth test only on the
+/// surface nearest the eye. At full weight the tiles are returned as they are.
+fn one_layer(tiles: Vec<Tile>, alpha: f64) -> Vec<Tile> {
+    if alpha >= 0.999 {
+        return tiles;
+    }
+    let mut out = Vec::with_capacity(2 * tiles.len());
+    for t in &tiles {
+        let mut d = t.clone();
+        d.id += DEPTH_ONLY;
+        for m in d.marks.iter_mut() {
+            m.rgba[3] = 0;
+        }
+        out.push(d);
+    }
+    for mut t in tiles {
+        t.layer = 1;
+        out.push(t);
+    }
+    out
 }
 
 // ---------------------------------------------------------------------------------------
@@ -634,6 +681,9 @@ impl Scene for EarthMoon {
         Status::Catalogue
     }
     fn source(&self) -> &'static str {
+        if host_sun().is_some() {
+            return "The Earth at its mean radius (6371 km) with day and night where the host draws its sun (the host's own model of the sun and its own clock, not an almanac); the Moon at its mean radius (1737 km) and mean distance (384,400 km) on an orbit tilted 5.1 degrees, placed to about 0.3 degrees and never drawn under 3 pixels, its night side at three tenths of full light so that it can be found; a ring marks the Earth once it is a speck. No land, cloud or ice is drawn.";
+        }
         "The Earth at its mean radius (6371 km) with day and night from the Sun's place now (the Astronomical Almanac's low-precision formula, good to 0.01 degrees); the Moon at its mean radius (1737 km) and mean distance (384,400 km) on an orbit tilted 5.1 degrees, placed to about 0.3 degrees and never drawn under 3 pixels, its night side at three tenths of full light so that it can be found; a ring marks the Earth once it is a speck. No land, cloud or ice is drawn."
     }
     fn span(&self) -> (f64, f64) {
@@ -646,7 +696,17 @@ impl Scene for EarthMoon {
         let full = earth_to_ecl(&s);
         let q = rot_partial(&full, EarthMoon::turn(z));
         let from_ecl = mm(&q, &tr(&full));
-        let to_sun = mv(&from_ecl, [s.lambda.cos(), s.lambda.sin(), 0.0]);
+        let almanac = mv(&from_ecl, [s.lambda.cos(), s.lambda.sin(), 0.0]);
+        // a host's sun is a point on the Earth, so it turns with the Earth's frame; it gives
+        // way to the almanac's as the frame turns to the ecliptic, where the next rung, which
+        // puts the Earth on its orbit by the almanac, takes over
+        let to_sun = match host_sun() {
+            Some((lat, lon)) => {
+                let (h, t) = (mv(&q, dir(lon, lat)), EarthMoon::turn(z));
+                unit(add(mulk(h, 1.0 - t), mulk(almanac, t)))
+            }
+            None => almanac,
+        };
         let re = EARTH_R_M / 1e6;
 
         let mut earth = Vec::with_capacity(self.earth.len() + 1200);
@@ -694,7 +754,7 @@ impl Scene for EarthMoon {
         let mut body = Vec::with_capacity(self.moon.len());
         let rm = (MOON_R_M / 1e6).max(3.0 * p);
         emit_ball(&mut body, &self.moon, [0.0; 3], rm, &toward(to_sun), |nn| lit([188, 184, 176], nn, to_sun, 0.3));
-        vec![tile(EARTH_TILE, [0.0; 3], earth), tile(MOON_ORBIT_TILE, [0.0; 3], orbit), tile(MOON_TILE, at, body)]
+        one_layer(vec![tile(EARTH_TILE, [0.0; 3], earth), tile(MOON_ORBIT_TILE, [0.0; 3], orbit), tile(MOON_TILE, at, body)], alpha)
     }
 }
 
@@ -802,7 +862,7 @@ impl Scene for SolarSystem {
     fn span(&self) -> (f64, f64) {
         (6.5, 11.0)
     }
-    fn tiles(&mut self, z: f64, clock: f64, _alpha: f64) -> Vec<Tile> {
+    fn tiles(&mut self, z: f64, clock: f64, alpha: f64) -> Vec<Tile> {
         let d = days_j2000(clock);
         let (p, z) = (px(z, 11), z + VIEW_DECADES);
         let earth = SolarSystem::place(2, d);
@@ -869,7 +929,7 @@ impl Scene for SolarSystem {
             emit_ball(&mut m, &self.body, [0.0; 3], (PLUTO.5 * 1e3 / 1e11).max(2.5 * p), &toward(to_sun), |n| lit([190, 170, 150], n, to_sun, 0.3));
             out.push(tile(PLANET_TILE + 8, add(shift, at), m));
         }
-        out
+        one_layer(out, alpha)
     }
 }
 
@@ -1787,6 +1847,52 @@ mod tests {
         }
         assert_eq!(depth([0.0; 3], p), 1.0);
         assert_eq!(depth([1e9, 0.0, 0.0], p), 0.25);
+    }
+
+    #[test]
+    fn a_hosts_sun_takes_the_almanacs_place_on_the_earth() {
+        // (the setting is per thread, and each test has its own)
+        let mut s = EarthMoon::new();
+        let lum = |m: &Instance| m.rgba[0] as f64 + m.rgba[1] as f64 + m.rgba[2] as f64;
+        let noon_at = |s: &mut EarthMoon, z: f64| {
+            let t = s.tiles(z, NOW, 1.0);
+            let e = find(&t, EARTH_TILE);
+            let b = e.marks.iter().filter(|m| m.size[0] > 0.1).max_by(|a, b| lum(a).total_cmp(&lum(b))).unwrap();
+            unit(add(d3(b.pos), d3(b.aux)))
+        };
+        let (lat, lon) = subsolar(NOW);
+        assert!(dot(noon_at(&mut s, 4.6), dir(lon, lat)) > 0.97);
+        assert!(s.source().contains("Almanac"));
+        // the twin's model sun on a simulated clock: say 10 degrees north over 100 degrees east
+        set_host_sun(Some((10.0, 100.0)));
+        assert!(dot(noon_at(&mut s, 4.6), dir(100.0, 10.0)) > 0.97, "{:?}", noon_at(&mut s, 4.6));
+        assert!(dot(noon_at(&mut s, 4.6), dir(lon, lat)) < 0.9);
+        assert!(s.source().contains("host") && !s.source().contains("Almanac"));
+        // by the top of the rung, in the ecliptic frame, the almanac's sun is back: the rung
+        // above places the Earth by it
+        let top = s.tiles(6.4, NOW, 1.0);
+        set_host_sun(None);
+        let plain = s.tiles(6.4, NOW, 1.0);
+        assert!(top == plain);
+        assert!(dot(noon_at(&mut s, 4.6), dir(lon, lat)) > 0.97);
+    }
+
+    #[test]
+    fn a_fading_ball_is_drawn_as_one_layer() {
+        for mut s in [Box::new(EarthMoon::new()) as Box<dyn Scene>, Box::new(SolarSystem::new())] {
+            let z = s.span().1;
+            let whole = s.tiles(z, NOW, 1.0);
+            let fading = s.tiles(z, NOW, 0.5);
+            assert!(whole.iter().all(|t| t.layer == 0 && t.id < DEPTH_ONLY));
+            assert_eq!(fading.len(), 2 * whole.len());
+            for t in &whole {
+                // the depth-only twin: the same marks, invisible, on the layer beneath
+                let (d, c) = (find(&fading, t.id + DEPTH_ONLY), find(&fading, t.id));
+                assert_eq!((d.layer, c.layer), (0, 1));
+                assert!(c.marks == t.marks && d.origin == t.origin && d.params == t.params);
+                assert!(d.marks.iter().zip(&t.marks).all(|(a, b)| a.rgba[3] == 0 && (a.pos, a.aux, a.size) == (b.pos, b.aux, b.size)));
+            }
+        }
     }
 
     #[test]

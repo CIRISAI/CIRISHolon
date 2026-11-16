@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+    <title>holon-draw ladder · a stand-in host</title>
+    <style>
+      html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #0b0f0e; }
+      canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+      #hud { position: fixed; right: 12px; top: 10px; color: #ede9df; font: 12px/1.5 ui-monospace, monospace; text-align: right; white-space: pre; pointer-events: none; }
+    </style>
+  </head>
+  <body data-engine="loading">
+    <canvas id="c" aria-label="A stand-in for the CEWP twin: a plain globe inside the band, the holon-draw ladder past either edge. Wheel to zoom, drag to turn, S for the switch."></canvas>
+    <div id="hud"></div>
+    <script type="module">
+      // A STAND-IN FOR THE CEWP TWIN, to test holon-ladder.js without it. It is not the twin:
+      // it draws a plain shaded disc where the twin draws its globe and a grey grid where the
+      // twin draws its streets, and it calls the hook the way the twin's lead described:
+      //   window.HOLON_LADDER.draw(gl, view, slot)   after its own passes, past either edge.
+      // What it copies from the twin, as relayed: the view record's fields; the globe's
+      // projection (orthographic, north up, the view's centre at longitude yaw and latitude
+      // pitch, the Earth's radius k = 0.86 * zoom * min(w, h) / 2 CSS pixels); the twin's weight
+      // (1 in the band, to 0 over half a decade past an edge); its model sun; STENCIL_TEST off
+      // at the call. Every frame it reads the GL state before the call and after, and says in
+      // document.body.dataset.state whether the adapter left it as it found it.
+      //
+      // URL: ?z= (log10 m per device pixel)  ?dpr=  ?rs= (renderScale)  ?street= (edge, -1)
+      //      ?solo=1 (do not draw the stand-in's own globe)  ?ring=1 (a thin ring at the twin's k)
+      //      ?utc= ?doy= (the simulated clock)  ?switch=on  ?gl=1 (WebGL 1)  ?lon= ?lat= (degrees)
+      import { install } from "./holon-ladder.js";
+      const q = new URLSearchParams(location.search);
+      const num = (k, d) => (q.has(k) && Number.isFinite(Number(q.get(k))) ? Number(q.get(k)) : d);
+      const canvas = document.getElementById("c");
+      const attrs = { antialias: true, stencil: true, preserveDrawingBuffer: true };
+      const gl = (q.get("gl") === "1" ? null : canvas.getContext("webgl2", attrs)) || canvas.getContext("webgl", attrs);
+      const DPR = num("dpr", devicePixelRatio);
+      const RS = num("rs", Math.min(DPR, 1.45));
+      const R = 6371000;
+      const STREET = num("street", -1.0);
+
+      // ---- the stand-in's own drawing: one program, a quad over the viewport ----
+      const VS = "attribute vec2 a; varying vec2 v; void main() { v = a; gl_Position = vec4(a, 0.0, 1.0); }";
+      const FS = `precision highp float;
+        varying vec2 v; uniform vec2 u_half; uniform float u_k; uniform float u_w; uniform vec3 u_eye; uniform vec3 u_sun; uniform float u_mode; uniform float u_cell;
+        void main() {
+          vec2 p = v * u_half;                       // buffer pixels from the centre, y up
+          if (u_mode > 1.5) {                        // a thin ring at radius k
+            float d = abs(length(p) - u_k);
+            if (d > 0.75) discard;
+            gl_FragColor = vec4(1.0, 0.25, 0.8, 1.0); return;
+          }
+          if (u_mode > 0.5) {                        // the streets: a grid
+            vec2 g = abs(fract(p / u_cell + 0.5) - 0.5) * u_cell;
+            float line = step(min(g.x, g.y), 1.0);
+            gl_FragColor = vec4(mix(vec3(0.16, 0.18, 0.17), vec3(0.42, 0.44, 0.40), line), u_w); return;
+          }
+          vec2 s = p / u_k;                          // the globe, orthographic
+          float r2 = dot(s, s);
+          if (r2 > 1.0) discard;
+          vec3 right = normalize(vec3(-u_eye.y, u_eye.x, 0.0));
+          vec3 up = cross(u_eye, right);
+          vec3 n = s.x * right + s.y * up + sqrt(1.0 - r2) * u_eye;   // z north, x Greenwich, y 90 E
+          float c = dot(n, u_sun);
+          vec3 col = mix(vec3(0.05, 0.09, 0.10), vec3(0.16, 0.50, 0.46), smoothstep(-0.14, 0.07, c));
+          float lat = degrees(asin(clamp(n.z, -1.0, 1.0))), lon = degrees(atan(n.y, n.x));
+          float gl30 = min(abs(fract(lat / 30.0 + 0.5) - 0.5) * 30.0, abs(fract(lon / 30.0 + 0.5) - 0.5) * 30.0 * max(cos(radians(lat)), 0.05));
+          col = mix(col, vec3(0.95, 0.85, 0.35), 0.6 * (1.0 - smoothstep(0.0, 0.5, gl30)));
+          gl_FragColor = vec4(col, u_w);
+        }`;
+      const sh = (t, s) => { const x = gl.createShader(t); gl.shaderSource(x, s); gl.compileShader(x); if (!gl.getShaderParameter(x, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(x)); return x; };
+      const prog = gl.createProgram();
+      gl.attachShader(prog, sh(gl.VERTEX_SHADER, VS)); gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, FS));
+      gl.bindAttribLocation(prog, 0, "a"); gl.linkProgram(prog);
+      const U = {}; for (const n of ["u_half", "u_k", "u_w", "u_eye", "u_sun", "u_mode", "u_cell"]) U[n] = gl.getUniformLocation(prog, n);
+      const quad = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, quad); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+      const mine = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, mine);
+
+      // ---- the view: the stand-in's orbit and zoom ----
+      const size = () => [canvas.clientWidth, canvas.clientHeight];
+      const kAt = (zoom) => 0.86 * zoom * Math.min(...size()) / 2;          // CSS pixels
+      const zAt = (zoom) => Math.log10(R / (kAt(zoom) * DPR));              // per device pixel
+      const state = { z: 0, yaw: num("lon", 12) * Math.PI / 180, pitch: num("lat", 35) * Math.PI / 180, band: q.get("switch") === "on", utcHours: num("utc", 14), doy: num("doy", 319) };
+      state.z = num("z", zAt(1));
+      window.twinView = state;
+      const sunOf = () => [23.44 * Math.cos(2 * Math.PI * (state.doy - 172) / 365.25), -15 * (state.utcHours - 12)];
+      const weight = (z, e) => (z > e.globe ? Math.max(0, 1 - (z - e.globe) / e.band) : z < e.street ? Math.max(0, 1 - (e.street - z) / e.band) : 1);
+
+      addEventListener("keydown", (e) => { if (e.key === "s" || e.key === "S") state.band = !state.band; });
+      canvas.addEventListener("wheel", (e) => { e.preventDefault(); state.z += e.deltaY * 0.002; }, { passive: false });
+      let drag = null;
+      canvas.addEventListener("pointerdown", (e) => { canvas.setPointerCapture(e.pointerId); drag = [e.clientX, e.clientY]; });
+      canvas.addEventListener("pointermove", (e) => { if (!drag) return; state.yaw -= (e.clientX - drag[0]) * 0.006; state.pitch = Math.max(-1.5, Math.min(1.5, state.pitch + (e.clientY - drag[1]) * 0.006)); drag = [e.clientX, e.clientY]; });
+      canvas.addEventListener("pointerup", () => { drag = null; });
+
+      // ---- the GL state the stand-in holds at the call, read before and after ----
+      const ext = gl.getExtension("OES_vertex_array_object");
+      const gl2 = typeof WebGL2RenderingContext !== "undefined" && gl instanceof WebGL2RenderingContext;
+      const snapshot = () => {
+        const g = (p) => gl.getParameter(p);
+        const o = {
+          viewport: Array.from(g(gl.VIEWPORT)).join(","), program: g(gl.CURRENT_PROGRAM) === prog,
+          blend: gl.isEnabled(gl.BLEND), blendSrcRGB: g(gl.BLEND_SRC_RGB), blendDstRGB: g(gl.BLEND_DST_RGB), blendSrcA: g(gl.BLEND_SRC_ALPHA), blendDstA: g(gl.BLEND_DST_ALPHA), blendEq: g(gl.BLEND_EQUATION_RGB),
+          depthTest: gl.isEnabled(gl.DEPTH_TEST), depthFunc: g(gl.DEPTH_FUNC), depthMask: g(gl.DEPTH_WRITEMASK),
+          cull: gl.isEnabled(gl.CULL_FACE), cullMode: g(gl.CULL_FACE_MODE), frontFace: g(gl.FRONT_FACE),
+          arrayBuffer: g(gl.ARRAY_BUFFER_BINDING) === quad, vao: (gl2 ? g(gl.VERTEX_ARRAY_BINDING) : ext ? g(ext.VERTEX_ARRAY_BINDING_OES) : null) === null,
+          activeTexture: g(gl.ACTIVE_TEXTURE), texture: g(gl.TEXTURE_BINDING_2D) === mine,
+          stencilTest: gl.isEnabled(gl.STENCIL_TEST), stencilMask: g(gl.STENCIL_WRITEMASK), stencilFunc: g(gl.STENCIL_FUNC), stencilRef: g(gl.STENCIL_REF), stencilFail: g(gl.STENCIL_FAIL), stencilClear: g(gl.STENCIL_CLEAR_VALUE),
+          scissor: gl.isEnabled(gl.SCISSOR_TEST), colorMask: Array.from(g(gl.COLOR_WRITEMASK)).join(","), framebuffer: g(gl.FRAMEBUFFER_BINDING) === null,
+          clearColor: Array.from(g(gl.COLOR_CLEAR_VALUE)).map((x) => x.toFixed(3)).join(","), unpackFlip: g(gl.UNPACK_FLIP_Y_WEBGL), unpackPremul: g(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL), unpackAlign: g(gl.UNPACK_ALIGNMENT),
+        };
+        if (!gl2 && !ext) delete o.vao;
+        return o;
+      };
+
+      const hud = document.getElementById("hud");
+      let W = 0, H = 0, frames = 0, worst = "";
+      function draw() {
+        const [cw, ch] = size();
+        W = Math.round(cw * RS); H = Math.round(ch * RS);
+        if (canvas.width !== W || canvas.height !== H) { canvas.width = W; canvas.height = H; }
+        const edges = { globe: zAt(1), street: STREET, band: 0.5 };
+        if (state.band) state.z = Math.min(edges.globe, Math.max(edges.street, state.z));
+        const w = state.band ? 1 : weight(state.z, edges);
+        const side = state.z > edges.globe ? "out" : state.z < edges.street ? "in" : null;
+        const sun = sunOf();
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+        gl.viewport(0, 0, W, H);
+        gl.disable(gl.SCISSOR_TEST); gl.colorMask(true, true, true, true); gl.depthMask(true);
+        gl.stencilMask(0xff); gl.clearStencil(3);
+        gl.clearColor(0.043, 0.059, 0.055, 1);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT | gl.STENCIL_BUFFER_BIT);
+        // the stand-in's state for its own passes, deliberately unlike what draw.js leaves
+        gl.useProgram(prog);
+        gl.bindBuffer(gl.ARRAY_BUFFER, quad); gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+        gl.disable(gl.DEPTH_TEST); gl.depthFunc(gl.GREATER); gl.depthMask(false);
+        gl.disable(gl.CULL_FACE); gl.cullFace(gl.FRONT); gl.frontFace(gl.CW);
+        gl.enable(gl.BLEND); gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ZERO, gl.ONE);
+        gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, mine);
+        gl.stencilMask(0x03); gl.stencilFunc(gl.EQUAL, 3, 0x03); gl.stencilOp(gl.KEEP, gl.KEEP, gl.KEEP);
+        gl.uniform2f(U.u_half, W / 2, H / 2);
+        const kBuf = R / Math.pow(10, state.z) / DPR * RS;                 // the Earth's radius in buffer pixels
+        const globeLike = state.z > 0.5 * (edges.globe + edges.street);
+        if (w > 0 && q.get("solo") !== "1") {
+          gl.uniform1f(U.u_w, w); gl.uniform1f(U.u_k, kBuf);
+          const cp = Math.cos(state.pitch);
+          gl.uniform3f(U.u_eye, cp * Math.cos(state.yaw), cp * Math.sin(state.yaw), Math.sin(state.pitch));
+          const cl = Math.cos(sun[0] * Math.PI / 180);
+          gl.uniform3f(U.u_sun, cl * Math.cos(sun[1] * Math.PI / 180), cl * Math.sin(sun[1] * Math.PI / 180), Math.sin(sun[0] * Math.PI / 180));
+          gl.uniform1f(U.u_mode, globeLike ? 0 : 1);
+          gl.uniform1f(U.u_cell, 10 / Math.pow(10, state.z) / DPR * RS);    // a ten-metre grid
+          gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+        }
+        // THE HOOK, as the twin calls it: stencil test off, after its own last pass
+        gl.disable(gl.STENCIL_TEST);
+        const view = { z: state.z, edges, w, side, band: state.band, anchor: side === "in" ? { lat: state.pitch * 180 / Math.PI, lon: state.yaw * 180 / Math.PI, height: 0 } : { centre: "earth", lat: 0, lon: 0, height: -R },
+          yaw: state.yaw, pitch: state.pitch, viewport: [cw, ch], dpr: DPR, renderScale: RS, utcHours: state.utcHours, sun, doy: state.doy };
+        const before = snapshot();
+        let drew = false;
+        if (window.HOLON_LADDER) drew = window.HOLON_LADDER.draw(gl, view, side);
+        const after = snapshot();
+        const diff = Object.keys(before).filter((k) => before[k] !== after[k]).map((k) => k + ": " + before[k] + " -> " + after[k]);
+        if (diff.length) worst = diff.join("; ");
+        // (what the stand-in draws after the call uses the state it set before it: if the
+        // adapter had left another program or buffer bound, this ring would not appear)
+        if (q.get("ring") === "1" && globeLike) { gl.uniform1f(U.u_mode, 2); gl.uniform1f(U.u_k, kBuf); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4); }
+        const L = window.HOLON_LADDER ? window.HOLON_LADDER.last : null;
+        frames++;
+        document.body.dataset.state = worst ? "changed: " + worst : "kept";
+        document.body.dataset.last = JSON.stringify(Object.assign({ w, side, kBuf, edges, W, H, drew }, L));
+        hud.textContent = "stand-in host   z " + state.z.toFixed(2) + "   edges " + edges.street.toFixed(2) + " .. " + edges.globe.toFixed(2) + "\nhost weight " + w.toFixed(2) + "   ladder " + (L ? L.share.toFixed(2) : "not loaded") + (drew ? "   drawn in " + L.ms.toFixed(1) + " ms" : "") +
+          "\nswitch " + (state.band ? "ON" : "off") + "   sun " + sun[0].toFixed(1) + ", " + sun[1].toFixed(1) + "\nGL state " + (worst ? "CHANGED" : "kept");
+        if (window.HOLON_LADDER && window.HOLON_LADDER.ready && frames > 2) { document.body.dataset.ready = "1"; document.body.dataset.engine = "stand-in host on " + (gl2 ? "webgl2" : "webgl1"); }
+        requestAnimationFrame(draw);
+      }
+
+      // The Earth's limb as drawn, in buffer pixels from the centre: outward along 16 directions
+      // from just inside the expected limb, the last pixel that is not the background; the
+      // median. Call with ?solo=1 so that only the ladder's Earth is on the canvas.
+      window.measureLimb = () => {
+        const kBuf = R / Math.pow(10, state.z) / DPR * RS;
+        const px = new Uint8Array(4), bg = [11, 15, 14];
+        const isBg = (x, y) => { gl.readPixels(Math.round(x), Math.round(y), 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px); return Math.abs(px[0] - bg[0]) + Math.abs(px[1] - bg[1]) + Math.abs(px[2] - bg[2]) < 6; };
+        const out = [];
+        for (let i = 0; i < 16; i++) {
+          const a = (i + 0.37) * Math.PI / 8, c = Math.cos(a), s = Math.sin(a);
+          let edge = NaN;
+          for (let r = kBuf - 12; r < kBuf + 40; r += 0.25) { if (isBg(W / 2 + r * c, H / 2 + r * s)) { edge = r - 0.25; break; } }
+          if (Number.isFinite(edge) && edge > kBuf - 12) out.push(edge);
+        }
+        out.sort((a, b) => a - b);
+        return { expected: kBuf, measured: out.length ? out[out.length >> 1] : NaN, lo: out[0], hi: out[out.length - 1], n: out.length };
+      };
+
+      requestAnimationFrame(draw);
+      install({ wasm: "./holon_draw_ladder.wasm" }).catch((e) => { document.body.dataset.engine = "failed: " + e.message; });
+    </script>
+  </body>
+</html>

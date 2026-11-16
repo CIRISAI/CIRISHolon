@@ -8,7 +8,7 @@
 //!
 //! The scenes live in `scenes/`, one module each. Adding a rung is adding a module and a line
 //! in [`Ladder::standard`].
-use holon_draw::ladder::{host_weight, rung_camera, visible, Band, Rung, Status, Z_MAX, Z_MIN};
+use holon_draw::ladder::{host_weight, rung_camera, visible, Band, Rung, Status, REF_PX, Z_MAX, Z_MIN};
 use holon_draw::{Acuity, Camera, Frame, Scene as DrawScene, Tile, PARAM_DIM};
 
 pub mod abi;
@@ -53,6 +53,60 @@ pub struct Ladder {
     /// rung's units, so a pan carries across rungs; as the zoom widens the same pan is a smaller
     /// share of the view.
     pub pan: [f64; 2],
+    /// A host that draws its own band on the same canvas and says what its own weight is
+    /// ([`Host`]). `None`: the ladder works its share out itself from the band.
+    pub host: Option<Host>,
+}
+
+/// A host on whose canvas the ladder draws (the CEWP twin).
+///
+/// The host's `weight` is its own share of the picture at this frame (1 in its band, falling
+/// to 0 past either edge by its own rule); the ladder draws at one minus that and does not
+/// compute a fade of its own. With `far_eye` the rungs coarser than the band are seen at the
+/// band's edge from [`FAR_EYE`] times the usual distance, which is an orthographic view to
+/// within a hundredth of a percent, and the eye comes in to its usual place over the decade
+/// beyond ([`Ladder::eye_factor`]): a host whose globe is drawn orthographically hands over to
+/// an Earth of the same size and the same visible half.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Host {
+    pub weight: f64,
+    pub far_eye: bool,
+}
+
+/// How many times the usual distance the eye stands at the edge of a far-eyed host's band.
+pub const FAR_EYE: f64 = 30.0;
+
+/// An orbit camera as `holon_draw::ladder::rung_camera` makes it, with the eye `far` times as
+/// far and the field of view narrowed to match, so that a device pixel still spans `10^z`
+/// metres at the focus; and with NORTH (the rung's z axis) up at every pitch short of the
+/// pole itself, where the core's orbit swaps its up axis three degrees early. `far` 1 at a
+/// pitch under 87 degrees is the core's camera exactly.
+#[allow(clippy::too_many_arguments)]
+pub fn hosted_camera(r: &Rung, z: f64, pan: [f64; 3], yaw: f64, pitch: f64, fov_y: f64, width: f64, height: f64, far: f64) -> Camera {
+    let mpp = 10f64.powf(z - r.unit as f64);
+    let dist = far * 0.5 * mpp * REF_PX / (0.5 * fov_y).tan();
+    let fov = 2.0 * (0.5 * mpp * height / dist).atan();
+    let (cp, sp, cy, sy) = (pitch.cos(), pitch.sin(), yaw.cos(), yaw.sin());
+    let eye = [pan[0] + dist * cp * cy, pan[1] + dist * cp * sy, pan[2] + dist * sp];
+    let dot = |a: [f64; 3], b: [f64; 3]| a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+    let cross = |a: [f64; 3], b: [f64; 3]| [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+    let f = [-cp * cy, -cp * sy, -sp];
+    // the screen's right is level and a quarter turn on from the eye's meridian; at the pole
+    // itself the same formula still holds (it does not depend on the pitch)
+    let s = [-sy, cy, 0.0];
+    let u = cross(s, f);
+    let view = [s[0], s[1], s[2], -dot(s, eye), u[0], u[1], u[2], -dot(u, eye), -f[0], -f[1], -f[2], dot(f, eye), 0.0, 0.0, 0.0, 1.0];
+    let (near, far_plane) = (dist * 0.02, dist * 20.0);
+    let t = 1.0 / (0.5 * fov).tan();
+    let aspect = width / height;
+    let proj = [t / aspect, 0.0, 0.0, 0.0, 0.0, t, 0.0, 0.0, 0.0, 0.0, (far_plane + near) / (near - far_plane), 2.0 * far_plane * near / (near - far_plane), 0.0, 0.0, -1.0, 0.0];
+    let mut m = [0.0; 16];
+    for r in 0..4 {
+        for c in 0..4 {
+            m[4 * r + c] = (0..4).map(|k| proj[4 * r + k] * view[4 * k + c]).sum();
+        }
+    }
+    Camera { m, width, height, scale: height * t / (2.0 * dist), focus: pan }
 }
 
 /// The world direction of the screen's right and up for an orbit at `yaw` and `pitch` (z up).
@@ -111,7 +165,7 @@ impl Ladder {
                 r.z_hi = r.z_lo;
             }
         }
-        Ladder { scenes, rungs, band, pan: [0.0; 2] }
+        Ladder { scenes, rungs, band, pan: [0.0; 2], host: None }
     }
 
     /// The standard ladder: every scene of `scenes::micro` and `scenes::cosmos`, around a
@@ -128,10 +182,33 @@ impl Ladder {
         }
     }
 
+    /// The host's share at `z`: what a host on the canvas says it is, else the band's own fade.
+    pub fn host_share(&self, z: f64) -> f64 {
+        match self.host {
+            Some(_) if self.band.clamp => 1.0,
+            Some(h) if h.weight.is_finite() => h.weight.clamp(0.0, 1.0),
+            _ => host_weight(&self.band, z),
+        }
+    }
+
+    /// How many times the usual distance the eye stands for rung `i` at `z`: [`FAR_EYE`] from
+    /// the upper edge of a far-eyed host's band to a quarter decade past it (where the host
+    /// has half faded), easing to 1 by a whole decade past. 1 for every rung finer than the
+    /// band, and with no such host.
+    pub fn eye_factor(&self, i: usize, z: f64) -> f64 {
+        match self.host {
+            Some(h) if h.far_eye && self.band.z_hi > self.band.z_lo && self.rungs[i].z_lo >= self.band.z_hi => {
+                let t = ((z - self.band.z_hi - 0.25) / 0.75).clamp(0.0, 1.0);
+                FAR_EYE.powf(1.0 - t * t * (3.0 - 2.0 * t))
+            }
+            _ => 1.0,
+        }
+    }
+
     /// The passes to draw at `z`, coarsest scale first is irrelevant: each pass clears depth.
     #[allow(clippy::too_many_arguments)]
     pub fn passes(&mut self, z: f64, yaw: f64, pitch: f64, width: f64, height: f64, dpr: f64, clock: f64) -> Vec<Pass> {
-        let host = host_weight(&self.band, z);
+        let host = self.host_share(z);
         let mut out = Vec::new();
         if host >= 1.0 {
             return out;
@@ -145,7 +222,10 @@ impl Ladder {
             let (rt, up) = screen_axes(yaw, pitch);
             let k = 10f64.powi(-r.unit); // metres to the rung's units
             let pan = [0, 1, 2].map(|i| (self.pan[0] * rt[i] + self.pan[1] * up[i]) * k);
-            let cam = rung_camera(&r, z, pan, yaw, pitch, std::f64::consts::FRAC_PI_4, width, height);
+            let cam = match self.host {
+                Some(_) => hosted_camera(&r, z, pan, yaw, pitch, std::f64::consts::FRAC_PI_4, width, height, self.eye_factor(i, z)),
+                None => rung_camera(&r, z, pan, yaw, pitch, std::f64::consts::FRAC_PI_4, width, height),
+            };
             let mut tiles = self.scenes[i].tiles(z, clock, weight);
             for t in tiles.iter_mut() {
                 t.params[PARAM_DIM + 3] *= weight as f32;
@@ -313,6 +393,90 @@ mod tests {
         assert!((p.iter().map(|x| x.weight).sum::<f64>() - 1.0).abs() < 1e-9);
         // the weight is in every world batch's alpha
         assert!(p[0].frame.batches.iter().all(|b| (b.params[PARAM_DIM + 3] as f64 - p[0].weight).abs() < 1e-6));
+    }
+
+    #[test]
+    fn a_host_on_the_canvas_sets_the_ladders_share_and_sees_its_globe_orthographically() {
+        use holon_draw::ladder::Band;
+        // the twin's band: street 0.1 m a pixel, globe at 10^4.2 m a pixel
+        let band = Band { z_lo: -1.0, z_hi: 4.2, clamp: false };
+        let mut l = Ladder::standard(band);
+        let earth = l.rungs.iter().position(|r| r.name == "the Earth and the Moon").unwrap();
+        assert_eq!(l.rungs[earth].z_lo, 4.2);
+        // the host's weight falls PAST the edge (the ladder's own fade is centred on it): at the
+        // edge the host says 1 and nothing is drawn; a quarter decade past, a half each
+        l.host = Some(Host { weight: 1.0, far_eye: true });
+        assert!(l.passes(4.2, 0.3, 0.5, 780.0, 1688.0, 2.0, 0.0).is_empty());
+        l.host = Some(Host { weight: 0.5, far_eye: true });
+        let p = l.passes(4.45, 0.3, 0.5, 780.0, 1688.0, 2.0, 0.0);
+        assert_eq!((p.len(), p[0].rung, p[0].weight), (1, earth, 0.5));
+        assert!(p[0].frame.batches.iter().filter(|b| !b.screen).all(|b| b.params[PARAM_DIM + 3] == 0.5));
+        l.host = Some(Host { weight: 0.25, far_eye: true });
+        assert_eq!(l.passes(4.3, 0.3, 0.5, 780.0, 1688.0, 2.0, 0.0)[0].weight, 0.75);
+        // the same going in, on the finest rung below the street
+        let p = l.passes(-1.2, 0.3, 0.5, 780.0, 1688.0, 2.0, 0.0);
+        assert!((p.iter().map(|x| x.weight).sum::<f64>() - 0.75).abs() < 1e-12);
+        // with the switch on, nothing, whatever the host says
+        l.band.clamp = true;
+        assert!(l.passes(4.6, 0.3, 0.5, 780.0, 1688.0, 2.0, 0.0).is_empty());
+        l.band.clamp = false;
+
+        // THE EARTH'S SIZE AT THE HAND-OFF. The twin's globe is orthographic: the Earth's limb
+        // is 6,371,000 / 10^z pixels from the centre. Seen in perspective from the usual
+        // distance the limb is some 6 % wider; from FAR_EYE times as far it is within a tenth
+        // of a pixel (a third of one on the 4K window), on a phone and on a desk (390 x 844 at 2 and 1440 x 900 at 1, where the
+        // twin's globe has radius k = 0.86 * min(w, h) / 2 CSS pixels at zoom 1, and on a
+        // 4K window, the largest globe)
+        let limb = |cam: &Camera, yaw: f64, pitch: f64| {
+            // the widest any point of the sphere is drawn from the centre, in pixels
+            let (rt, up) = screen_axes(yaw, pitch);
+            let eye = [pitch.cos() * yaw.cos(), pitch.cos() * yaw.sin(), pitch.sin()];
+            let c = cam.project([0.0; 3]).unwrap();
+            (0..=2000).map(|k| {
+                let th = std::f64::consts::PI * k as f64 / 2000.0;
+                let p = [0, 1, 2].map(|i| 6.371 * (th.sin() * (0.6 * rt[i] + 0.8 * up[i]) + th.cos() * eye[i]));
+                let q = cam.project(p).unwrap();
+                ((q[0] - c[0]).powi(2) + (q[1] - c[1]).powi(2)).sqrt()
+            }).fold(0.0, f64::max)
+        };
+        for (w, h, scale) in [(390.0, 844.0, 2.0), (1440.0, 900.0, 1.0), (3840.0, 2160.0, 1.0)] {
+            let k = 0.86 * f64::min(w, h) / 2.0 * scale; // device pixels
+            let z = (6.371e6 / k).log10();
+            let mut l = Ladder::standard(Band { z_lo: -1.0, z_hi: z, clamp: false });
+            l.host = Some(Host { weight: 0.5, far_eye: true });
+            let (yaw, pitch) = (-1.3, 0.7);
+            for dz in [0.0, 0.25] {
+                let p = l.passes(z + dz, yaw, pitch, w * scale, h * scale, scale, 0.0);
+                let want = k / 10f64.powf(dz);
+                let got = limb(&p[0].camera, yaw, pitch);
+                assert!((got - want).abs() < if w > 2000.0 { 0.5 } else { 0.1 }, "{w} x {h}: the limb at {got} px, the twin's at {want}");
+                // the view's centre is the point of the Earth at longitude yaw, latitude pitch
+                let c = p[0].camera.project([0.0; 3]).unwrap();
+                let sub = p[0].camera.project([6.371 * pitch.cos() * yaw.cos(), 6.371 * pitch.cos() * yaw.sin(), 6.371 * pitch.sin()]).unwrap();
+                assert!((sub[0] - c[0]).abs() < 1e-6 && (sub[1] - c[1]).abs() < 1e-6);
+                // and north is up: the pole is straight above the centre
+                let pole = p[0].camera.project([0.0, 0.0, 6.371]).unwrap();
+                assert!((pole[0] - c[0]).abs() < 1e-6 && pole[1] < c[1]);
+            }
+            // without the far eye the same Earth would be drawn too large by more than a pixel
+            l.host = Some(Host { weight: 0.5, far_eye: false });
+            let p = l.passes(z, yaw, pitch, w * scale, h * scale, scale, 0.0);
+            assert!(limb(&p[0].camera, yaw, pitch) - k > 1.0);
+            // the eye is back at its usual place a decade past the edge, and was never moved
+            // for the rungs finer than the band
+            l.host = Some(Host { weight: 0.0, far_eye: true });
+            let e = l.rungs.iter().position(|r| r.name == "the Earth and the Moon").unwrap();
+            assert_eq!((l.eye_factor(e, z), l.eye_factor(e, z + 0.25), l.eye_factor(e, z + 1.0), l.eye_factor(0, -3.0)), (FAR_EYE, FAR_EYE, 1.0, 1.0));
+            assert!(l.eye_factor(e, z + 0.6) > 1.0 && l.eye_factor(e, z + 0.6) < FAR_EYE);
+        }
+        // at the usual distance and an ordinary pitch the hosted camera is the core's camera
+        let r = Rung { name: "", z_lo: 0.0, z_hi: 9.0, unit: 6, status: Status::Catalogue };
+        let (a, b) = (hosted_camera(&r, 5.0, [1.0, 2.0, 3.0], 0.7, -0.4, 0.785, 800.0, 600.0, 1.0), rung_camera(&r, 5.0, [1.0, 2.0, 3.0], 0.7, -0.4, 0.785, 800.0, 600.0));
+        assert!(a.m.iter().zip(&b.m).all(|(x, y)| (x - y).abs() <= 1e-12 * y.abs().max(1.0)) && a.scale == b.scale);
+        // and at the pole north is still up (the pole is the centre; Greenwich's far meridian is above it)
+        let c = hosted_camera(&r, 5.0, [0.0; 3], 0.0, std::f64::consts::FRAC_PI_2, 0.785, 800.0, 600.0, FAR_EYE);
+        let (centre, away) = (c.project([0.0, 0.0, 6.371]).unwrap(), c.project([-3.0, 0.0, 5.0]).unwrap());
+        assert!((centre[0] - 400.0).abs() < 1e-6 && (centre[1] - 300.0).abs() < 1e-6 && (away[0] - 400.0).abs() < 1e-6 && away[1] < 300.0);
     }
 
     #[test]

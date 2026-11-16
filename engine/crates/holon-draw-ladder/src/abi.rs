@@ -6,7 +6,7 @@
 //! engine as a screen panel in the LAST pass, through the host's text provider (the `env`
 //! import `host_text`, as the atoms page has it).
 use crate::{Ladder, Pass};
-use holon_draw::ladder::{host_weight, Band};
+use holon_draw::ladder::Band;
 use holon_draw::ui::{Text, Ui};
 use holon_draw::{Instance, Kind, Tile, PARAMS_NEUTRAL};
 use holon_draw_atoms::HostText;
@@ -19,6 +19,8 @@ struct State {
     vp: Vec<[f32; 16]>,
     text: HostText,
     caption_key: String,
+    /// Which parts of the overlay pass are drawn: the caption, the navigation control.
+    overlay: (bool, bool),
 }
 
 thread_local! {
@@ -38,13 +40,41 @@ pub extern "C" fn hl_band(z_lo: f64, z_hi: f64, clamp: u32) {
         match s.as_mut() {
             Some(st) => {
                 st.ladder.band = band;
-                let (scenes, pan) = (std::mem::take(&mut st.ladder.scenes), st.ladder.pan);
+                let (scenes, pan, host) = (std::mem::take(&mut st.ladder.scenes), st.ladder.pan, st.ladder.host);
                 st.ladder = Ladder::new(scenes, band);
                 st.ladder.pan = pan;
+                st.ladder.host = host;
             }
-            None => *s = Some(State { ladder: Ladder::standard(band), nav: Default::default(), passes: Vec::new(), vp: Vec::new(), text: HostText::new(1.0), caption_key: String::new() }),
+            None => *s = Some(State { ladder: Ladder::standard(band), nav: Default::default(), passes: Vec::new(), vp: Vec::new(), text: HostText::new(1.0), caption_key: String::new(), overlay: (true, true) }),
         }
     })
+}
+
+/// A host that draws its own band on this canvas says what its own weight is this frame
+/// (`w` in 0..=1: 1 in its band, falling to 0 past either edge by its own rule). The ladder then
+/// draws at `1 - w` and computes no fade of its own; and with `far_eye` not 0 the rungs coarser
+/// than the band are seen orthographically at the band's edge (`crate::Host`). A `w` that is
+/// not a number, or negative, removes the host: the ladder fades by its own rule again.
+/// Call after `hl_band`.
+#[no_mangle]
+pub extern "C" fn hl_host_weight_override(w: f64, far_eye: u32) {
+    with((), |s| s.ladder.host = if w.is_finite() && w >= 0.0 { Some(crate::Host { weight: w.min(1.0), far_eye: far_eye != 0 }) } else { None })
+}
+
+/// Where the host draws its sun: the latitude and east longitude, in degrees, of the point on
+/// the Earth with the sun overhead. The Earth rung then lights the Earth from there instead of
+/// from the almanac, so its day and night lie where the host's do. Not-a-number removes it.
+#[no_mangle]
+pub extern "C" fn hl_sun(lat_deg: f64, lon_deg: f64) {
+    crate::scenes::cosmos::set_host_sun(if lat_deg.is_finite() && lon_deg.is_finite() { Some((lat_deg, lon_deg)) } else { None })
+}
+
+/// Which parts of the engine's overlay are drawn: the caption (the rung's name, status, source
+/// and scale bar) and the navigation control. Both by default; a host with its own controls
+/// turns the second off.
+#[no_mangle]
+pub extern "C" fn hl_overlay(caption: u32, nav: u32) {
+    with((), |s| s.overlay = (caption != 0, nav != 0))
 }
 
 /// The zoom a host may reach under its switch.
@@ -53,10 +83,11 @@ pub extern "C" fn hl_clamp_z(z: f64) -> f64 {
     with(z, |s| s.ladder.band.clamp_z(z))
 }
 
-/// The host's own weight at `z` (1 inside its band; fading beyond it when the switch is off).
+/// The host's own weight at `z` (1 inside its band; fading beyond it when the switch is off;
+/// what the host said, if it said: `hl_host_weight_override`).
 #[no_mangle]
 pub extern "C" fn hl_host_weight(z: f64) -> f64 {
-    with(1.0, |s| host_weight(&s.ladder.band, z))
+    with(1.0, |s| s.ladder.host_share(z))
 }
 
 #[no_mangle]
@@ -135,13 +166,22 @@ pub extern "C" fn hl_view(z: f64, yaw: f64, pitch: f64, width: f64, height: f64,
         // the OVERLAY pass, always last and always present: the caption and the navigation
         // control, drawn by the engine as screen tiles (so they show where no rung is drawn)
         let mut tiles = Vec::new();
-        if let Some(cap) = s.ladder.caption(z, height) {
+        // on a host's canvas the overlay fades with the ladder's share, and is not drawn at none
+        let share = 1.0 - s.ladder.host_share(z);
+        let hosted = s.ladder.host.is_some();
+        if let Some(cap) = s.ladder.caption(z, height).filter(|_| s.overlay.0 && (!hosted || share > 0.0)) {
             s.caption_key = format!("{}|{}|{}", cap.0, cap.3, dpr);
-            tiles.push(caption_tile(&mut s.text, cap, width as f32, height as f32, dpr as f32));
+            let mut t = caption_tile(&mut s.text, cap, width as f32, height as f32, dpr as f32);
+            if hosted {
+                t.params[holon_draw::PARAM_DIM + 3] = share as f32;
+            }
+            tiles.push(t);
         }
-        let (nav, g) = crate::nav::build(&mut s.text, width as f32, height as f32, dpr as f32, z, yaw, pitch, s.ladder.band.clamp);
-        s.nav = g;
-        tiles.extend(nav);
+        if s.overlay.1 {
+            let (nav, g) = crate::nav::build(&mut s.text, width as f32, height as f32, dpr as f32, z, yaw, pitch, s.ladder.band.clamp);
+            s.nav = g;
+            tiles.extend(nav);
+        }
         let cam = holon_draw::Camera::map([0.0; 3], 1.0, width, height);
         if let Ok(frame) = (holon_draw::Scene { tiles, modal: None }).frame(&cam, 1, &holon_draw::Ring, u64::MAX) {
             s.passes.push(Pass { rung: usize::MAX, weight: 1.0, camera: cam, frame });

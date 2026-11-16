@@ -15,4 +15,6 @@ cargo build --manifest-path "$workspace/Cargo.toml" --package holon-draw-ladder 
 mkdir -p "$out"
 cp "$workspace/target/web-dist/wasm32-unknown-unknown/release/holon_draw_ladder.wasm" "$out/"
 cp "$workspace/crates/holon-draw/web/draw.js" "$workspace/crates/holon-draw/web/text.js" "$out/"
+# the adapter a host calls (window.HOLON_LADDER), beside the files it imports
+cp "$here/web/holon-ladder.js" "$out/"
 printf 'Built %s (%s bytes)\n' "$out/holon_draw_ladder.wasm" "$(wc -c < "$out/holon_draw_ladder.wasm")"

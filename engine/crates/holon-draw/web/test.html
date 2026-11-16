@@ -1,0 +1,171 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>holon-draw backend test</title>
+<style>
+  html, body { margin: 0; background: #10141c; color: #cdd6e4; font: 13px system-ui, sans-serif; }
+  canvas { display: block; width: 960px; height: 640px; }
+  #info { padding: 6px 10px; white-space: pre-wrap; }
+</style>
+<canvas id="c" width="960" height="640"></canvas>
+<div id="info"></div>
+<script type="module">
+// A synthetic scene built in plain script, in the core's 52-byte record, drawn by draw.js.
+// Query: ?gl=1 asks for WebGL 1; ?ortho=1 an orthographic camera; ?az=deg&el=deg the orbit;
+// ?spin=1 keeps drawing; ?novao=1 hides vertex array objects (the bare WebGL 1 path).
+import { createDrawer, KIND, INSTANCE_BYTES } from './draw.js';
+
+const q = new URLSearchParams(location.search);
+const canvas = document.getElementById('c');
+const info = document.getElementById('info');
+const want1 = q.get('gl') === '1';
+const gl = canvas.getContext(want1 ? 'webgl' : 'webgl2', { antialias: true, alpha: false });
+if (!gl) { info.textContent = 'no context'; document.body.dataset.error = 'no context'; throw new Error('no context'); }
+if (q.get('novao') === '1') {
+  const real = gl.getExtension.bind(gl);
+  gl.getExtension = (n) => (n === 'OES_vertex_array_object' ? null : real(n));
+}
+
+// ---- records ----
+class Batch {
+  constructor(kind, offset, coarse) {
+    this.kind = kind; this.offset = offset || [0, 0, 0]; this.coarse = !!coarse;
+    this.count = 0; this.buf = new ArrayBuffer(64 * INSTANCE_BYTES); this.dv = new DataView(this.buf);
+    this.bytes = new Uint8Array(this.buf, 0, 0);
+  }
+  add(pos, size, aux, angle, rgba, flags) {
+    if ((this.count + 1) * INSTANCE_BYTES > this.buf.byteLength) {
+      const nb = new ArrayBuffer(this.buf.byteLength * 2);
+      new Uint8Array(nb).set(new Uint8Array(this.buf));
+      this.buf = nb; this.dv = new DataView(nb);
+    }
+    const o = this.count * INSTANCE_BYTES, dv = this.dv;
+    for (let i = 0; i < 3; i++) {
+      dv.setFloat32(o + 4 * i, pos[i], true);
+      dv.setFloat32(o + 12 + 4 * i, size[i] || 0, true);
+      dv.setFloat32(o + 24 + 4 * i, aux ? aux[i] : 0, true);
+    }
+    dv.setFloat32(o + 36, angle || 0, true);
+    for (let i = 0; i < 4; i++) dv.setUint8(o + 40 + i, rgba[i]);
+    dv.setUint32(o + 44, 0, true);
+    dv.setUint8(o + 48, this.kind); dv.setUint8(o + 49, 0); dv.setUint8(o + 50, flags || 0); dv.setUint8(o + 51, 0);
+    this.count++;
+    this.bytes = new Uint8Array(this.buf, 0, this.count * INSTANCE_BYTES);
+    return this;
+  }
+}
+
+function scene() {
+  const OFF = [100, 200, 0];           // every batch's offset; the camera looks at it
+  const floor = new Batch(KIND.PATCH, OFF);
+  const quads = new Batch(KIND.QUAD, OFF);
+  const discs = new Batch(KIND.DISC, OFF);
+  const boxes = new Batch(KIND.BOX, OFF);
+  const prisms = new Batch(KIND.PRISM, OFF);
+  const spheres = new Batch(KIND.SPHERE, OFF);
+  const coarse = new Batch(KIND.SPHERE, OFF, true);
+  const rods = new Batch(KIND.ROD, OFF);
+  const lines = new Batch(KIND.LINE, OFF);
+  const glass = new Batch(KIND.SPHERE, OFF);
+
+  floor.add([0, 0, -0.02], [16, 12, 0], null, 0, [38, 46, 60, 255]);
+  // Quads: a row of tiles on the floor, each turned a little more.
+  for (let i = 0; i < 5; i++) quads.add([-6 + i * 1.3, -4.6, 0.01], [1.0, 0.6, 0], null, i * 0.3, [230, 180 - i * 25, 60 + i * 30, 255]);
+  // Discs.
+  for (let i = 0; i < 5; i++) discs.add([1 + i * 1.2, -4.6, 0.01], [0.25 + 0.07 * i, 0, 0], null, 0, [80 + i * 35, 200, 230 - i * 30, 255]);
+  // A box and a turned prism.
+  boxes.add([5.6, 2.2, 0], [1.6, 1.2, 2.2], null, 0.0, [205, 120, 80, 255]);
+  boxes.add([5.8, -0.6, 0], [1.0, 1.0, 1.0], null, 0.6, [120, 170, 110, 255]);
+  prisms.add([-6.0, 2.6, 0], [1.4, 2.2, 1.4], null, -0.5, [150, 130, 200, 255]);
+
+  // A lattice of atoms with bonds.
+  const N = [5, 4, 3], a = 1.5, o = [-3.0, -2.0, 0.8];
+  const P = (i, j, k) => [o[0] + i * a, o[1] + j * a, o[2] + k * a];
+  const cols = [[220, 70, 70, 255], [235, 235, 235, 255], [70, 120, 230, 255]];
+  for (let i = 0; i < N[0]; i++) for (let j = 0; j < N[1]; j++) for (let k = 0; k < N[2]; k++) {
+    const t = (i + j + k) % 3;
+    spheres.add(P(i, j, k), [t === 1 ? 0.28 : 0.42, 0, 0], null, 0, cols[t]);
+    if (i + 1 < N[0]) rods.add(P(i, j, k), [0.09, 0, 0], P(i + 1, j, k), 0, [170, 175, 185, 255]);
+    if (j + 1 < N[1]) rods.add(P(i, j, k), [0.09, 0, 0], P(i, j + 1, k), 0, [170, 175, 185, 255]);
+    if (k + 1 < N[2]) rods.add(P(i, j, k), [0.09, 0, 0], P(i, j, k + 1), 0, [170, 175, 185, 255]);
+  }
+  // A diagonal rod, to check a general axis, and a vertical one (the basis's other branch).
+  rods.add([-6.5, -1.5, 0.2], [0.18, 0, 0], [-4.6, -0.2, 2.6], 0, [240, 200, 60, 255]);
+  rods.add([-5.0, -2.6, 0.0], [0.15, 0, 0], [-5.0, -2.6, 1.8], 0, [60, 200, 160, 255]);
+  // Coarse (low-poly) spheres, to see the cheaper mesh.
+  coarse.add([-6.6, 0.6, 0.5], [0.5, 0, 0], null, 0, [240, 150, 40, 255], 2);
+  coarse.add([-5.4, 0.9, 0.5], [0.5, 0, 0], null, 0, [240, 150, 40, 255], 2);
+
+  // The cell's 12 edges as lines.
+  const lo = [o[0] - 0.75, o[1] - 0.75, o[2] - 0.75];
+  const hi = [o[0] + (N[0] - 1) * a + 0.75, o[1] + (N[1] - 1) * a + 0.75, o[2] + (N[2] - 1) * a + 0.75];
+  const C = (b) => [b & 1 ? hi[0] : lo[0], b & 2 ? hi[1] : lo[1], b & 4 ? hi[2] : lo[2]];
+  for (let b = 0; b < 8; b++) for (const bit of [1, 2, 4]) if (!(b & bit)) lines.add(C(b), [0.04, 0, 0], C(b | bit), 0, [250, 250, 160, 255]);
+  // One fat line across the floor.
+  lines.add([-7, 5, 0.05], [0.12, 0, 0], [7, 5.4, 0.05], 0, [255, 90, 160, 255]);
+
+  // A translucent sphere, last (blending is in the order given).
+  glass.add([5.8, -0.6, 1.9], [0.9, 0, 0], null, 0, [120, 200, 255, 110]);
+
+  return { OFF, batches: [floor, quads, discs, boxes, prisms, spheres, coarse, rods, lines, glass] };
+}
+
+// ---- camera (column-major) ----
+function mul(a, b) {
+  const o = new Float32Array(16);
+  for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++) {
+    let s = 0;
+    for (let k = 0; k < 4; k++) s += a[k * 4 + r] * b[c * 4 + k];
+    o[c * 4 + r] = s;
+  }
+  return o;
+}
+function lookAt(eye, at, up) {
+  const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+  const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+  const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+  const norm = (a) => { const l = Math.hypot(...a); return [a[0] / l, a[1] / l, a[2] / l]; };
+  const f = norm(sub(at, eye)), s = norm(cross(f, up)), u = cross(s, f);
+  return new Float32Array([s[0], u[0], -f[0], 0, s[1], u[1], -f[1], 0, s[2], u[2], -f[2], 0, -dot(s, eye), -dot(u, eye), dot(f, eye), 1]);
+}
+function perspective(fovy, aspect, n, f) {
+  const t = 1 / Math.tan(fovy / 2);
+  return new Float32Array([t / aspect, 0, 0, 0, 0, t, 0, 0, 0, 0, (f + n) / (n - f), -1, 0, 0, (2 * f * n) / (n - f), 0]);
+}
+function ortho(h, aspect, n, f) {
+  return new Float32Array([1 / (h * aspect), 0, 0, 0, 0, 1 / h, 0, 0, 0, 0, 2 / (n - f), 0, 0, 0, (f + n) / (n - f), 1]);
+}
+
+const { OFF, batches } = scene();
+let drawer;
+try {
+  drawer = createDrawer(gl);
+} catch (e) {
+  info.textContent = String(e); document.body.dataset.error = String(e); throw e;
+}
+let az = (+(q.get('az') || 35) * Math.PI) / 180;
+const el = (+(q.get('el') || 28) * Math.PI) / 180;
+const dist = 19;
+
+function frame(tms) {
+  if (q.get('spin') === '1') az += 0.004;
+  const at = [OFF[0], OFF[1], OFF[2] + 1.2];
+  const eye = [at[0] + dist * Math.cos(el) * Math.sin(az), at[1] - dist * Math.cos(el) * Math.cos(az), at[2] + dist * Math.sin(el)];
+  const aspect = canvas.width / canvas.height;
+  const proj = q.get('ortho') === '1' ? ortho(6.2, aspect, 0.1, 100) : perspective((38 * Math.PI) / 180, aspect, 0.1, 100);
+  const vp = mul(proj, lookAt(eye, at, [0, 0, 1]));
+
+  gl.viewport(0, 0, canvas.width, canvas.height);
+  gl.clearColor(0.063, 0.078, 0.11, 1);
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  const t0 = performance.now();
+  drawer.draw(batches, vp, { light: [0.35, -0.5, 0.8], ambient: 0.25 });
+  const ms = performance.now() - t0;
+  const s = drawer.stats(), err = gl.getError();
+  const ver = gl.getParameter(gl.VERSION);
+  info.textContent = `${ver} | instancing: ${drawer.instancing} | vertex arrays: ${drawer.vertexArrays} | draw calls ${s.drawCalls}, instances ${s.instances}, bytes ${s.bytesUploaded} | gl error ${err} | draw() ${ms.toFixed(2)} ms`;
+  document.body.dataset.stats = JSON.stringify({ ...s, glError: err, version: ver, instancing: drawer.instancing, vertexArrays: drawer.vertexArrays });
+  document.body.dataset.ready = '1';
+  if (q.get('spin') === '1') requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>

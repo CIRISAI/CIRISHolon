@@ -81,6 +81,13 @@ jobs:
         continue-on-error: true
         run: ./engine/crates/holon-render-3d/build-web.sh
 
+      # The same atom world drawn by holon-draw instead of Bevy (docs/atoms-draw): about
+      # 0.9 MB of wasm against Bevy's ~30 MB per backend, built here like the Bevy bundle
+      # and never committed. Not guarded by continue-on-error: it is small, fast to build,
+      # and in the engine workspace, where ci-gates.sh already tests it.
+      - name: Build the holon-draw atom world
+        run: sh engine/crates/holon-draw-atoms/build-web.sh
+
       # THE SWALLOWED FAILURE HAS TO GO OFF SOMEWHERE A READER MEETS IT.
       #
       # `continue-on-error` above is deliberate and stays: a broken 3D bundle should not

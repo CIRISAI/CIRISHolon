@@ -507,6 +507,18 @@ cargo test -q -p holon-draw 2>/dev/null >/dev/null \
   && ok "holon-draw: a pick names one instance, detail coarsens a tagged mark and never removes it, a modal layer takes every pick, a stale tile not drawn, a far origin keeps its precision" \
   || no "holon-draw: a pick names one instance, detail coarsens a tagged mark and never removes it, a modal layer takes every pick, a stale tile not drawn, a far origin keeps its precision"
 
+# holon-draw-atoms: the 3D atom world through holon-draw instead of Bevy. RELEASE: its tests
+# solve the hydrogen curves at load (2.5 s in release; the twelve presets together took
+# 629 s, so only the two hydrogen scenes are tested here and the heavier dimers are left to
+# the page).
+n_hda=$(cargo test -q --release -p holon-draw-atoms -- --list 2>/dev/null | grep -c ': test$')
+[ "${n_hda:-0}" -gt 0 ] \
+  && ok "holon-draw-atoms reaches $n_hda tests" \
+  || no "holon-draw-atoms reaches 0 tests (gate 9's disease: passing without covering anything)"
+cargo test -q --release -p holon-draw-atoms 2>/dev/null >/dev/null \
+  && ok "holon-draw-atoms: the hydrogen scenes load and draw one picked sphere per atom; a held atom follows the pointer" \
+  || no "holon-draw-atoms: the hydrogen scenes load and draw one picked sphere per atom; a held atom follows the pointer"
+
 # 12. A CROSS-REFERENCE IS A WARRANT ONLY IF ITS TARGET EXISTS (team-lead's ruling,
 #     2026-08-24). Q10_PREREG.md §10 cites "M1-M6 carry over from Q9's brief unchanged" —
 #     there is no Q9 file anywhere in the repository, so that citation warrants nothing,

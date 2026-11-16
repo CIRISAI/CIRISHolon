@@ -527,3 +527,11 @@ way to lift it for oneself; `waiting` on whom; `refused` the reason token.
 it would take the pick of the very Action that sends the write. A preview is content of the
 card, beside the sending Action, and it needs an owner and a tag form, which §9 does not
 give it.
+
+## 11. CORRECTION 2026-11-15 — a disc is flat
+
+§1's D4 said a disc faces the camera. The backend as built draws a disc flat in the plane
+`z = pos.z`, which is what a map needs (a tree's crown seen from above, a lot's corner).
+A disc that faces the camera, if one is wanted, is a `variant`. The backend also reads
+COARSE per batch, not per record (§8 item 3's flag is carried in the record and not yet
+read by the backend).

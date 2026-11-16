@@ -1,0 +1,7122 @@
+{
+ "caveat": "Rendering is SwiftShader (CPU rasterisation in headless Chromium), so absolute frame times are not a GPU device's. The comparison between pages measured under the same conditions is what this measures.",
+ "chromium_args": [
+  "--use-angle=swiftshader",
+  "--enable-unsafe-swiftshader",
+  "--ignore-gpu-blocklist",
+  "--enable-precise-memory-info"
+ ],
+ "modes": {
+  "desktop": {
+   "viewport": {
+    "width": 1280,
+    "height": 800
+   },
+   "device_scale_factor": 1,
+   "is_mobile": false,
+   "has_touch": false,
+   "cpu_throttle": 1
+  },
+  "phone": {
+   "viewport": {
+    "width": 390,
+    "height": 844
+   },
+   "device_scale_factor": 3,
+   "is_mobile": true,
+   "has_touch": true,
+   "cpu_throttle": 6
+  }
+ },
+ "pages": {
+  "before_head": {
+   "root": "/tmp/claude-1000/-home-emoore-CIRISHolon/4066a70d-c28a-428f-932b-46e9476d96db/scratchpad/compare/before_head_root",
+   "page": "atoms3d/index.html",
+   "ready": "!!document.getElementById(\"boot\") && document.getElementById(\"boot\").hidden",
+   "fail": "!!document.querySelector(\"#boot-note.error\")"
+  },
+  "after": {
+   "root": "/home/emoore/CIRISHolon/docs",
+   "page": "atoms-draw/index.html",
+   "ready": "document.body.dataset.ready === \"1\"",
+   "fail": "(document.body.dataset.engine || \"\").startsWith(\"failed\")"
+  },
+  "after_dpr1": {
+   "root": "/home/emoore/CIRISHolon/docs",
+   "page": "atoms-draw/index.html?dpr=1",
+   "ready": "document.body.dataset.ready === \"1\"",
+   "fail": "(document.body.dataset.engine || \"\").startsWith(\"failed\")"
+  }
+ },
+ "window_s": 10,
+ "pixels_selector": "canvas",
+ "interleaved": "within each mode, one run of each page in turn, a new browser process per run",
+ "pooled": "sweeps 2 and 3 pooled (both with the heartbeat stall measure); host load 21-38",
+ "sweep1_quiet_host": {
+  "note": "medians (median,min,max) transcribed from the run log; raw JSON overwritten; no heartbeat in that sweep",
+  "cells": {
+   "before_head|desktop": {
+    "ready_pixels_ms": [
+     2634.6,
+     2507.7,
+     3991.5
+    ],
+    "fps": [
+     31.78,
+     31.09,
+     32.29
+    ],
+    "frame_median_ms": [
+     30.8,
+     30.5,
+     31.4
+    ],
+    "frame_p95_ms": [
+     36.6,
+     34.6,
+     40.9
+    ],
+    "cb": [
+     4.3,
+     4.2,
+     4.4
+    ],
+    "load": [
+     7.54,
+     20.51
+    ]
+   },
+   "after|desktop": {
+    "ready_pixels_ms": [
+     1446.9,
+     1257.1,
+     2042.8
+    ],
+    "fps": [
+     59.98,
+     58.48,
+     60.08
+    ],
+    "frame_median_ms": [
+     16.7,
+     16.7,
+     16.7
+    ],
+    "frame_p95_ms": [
+     16.8,
+     16.8,
+     17.9
+    ],
+    "cb": [
+     0.2,
+     0.2,
+     0.2
+    ],
+    "load": [
+     11.61,
+     20.39
+    ]
+   },
+   "before_head|phone": {
+    "ready_pixels_ms": [
+     13176.6,
+     10955.2,
+     13184
+    ],
+    "fps": [
+     48.89,
+     48.86,
+     50.93
+    ],
+    "frame_median_ms": [
+     19.1,
+     18.6,
+     19.3
+    ],
+    "frame_p95_ms": [
+     27.4,
+     26.7,
+     28.6
+    ],
+    "cb": [
+     17.8,
+     17.3,
+     18.1
+    ],
+    "load": [
+     10.78,
+     18.0
+    ]
+   },
+   "after|phone": {
+    "ready_pixels_ms": [
+     6524.9,
+     5912,
+     6569.2
+    ],
+    "fps": [
+     59.98,
+     59.97,
+     60.07
+    ],
+    "frame_median_ms": [
+     16.7,
+     16.7,
+     16.7
+    ],
+    "frame_p95_ms": [
+     17.6,
+     17.6,
+     17.7
+    ],
+    "cb": [
+     1.0,
+     0.9,
+     1.0
+    ],
+    "load": [
+     9.92,
+     19.7
+    ]
+   },
+   "after_dpr1|phone": {
+    "ready_pixels_ms": [
+     6590.2,
+     6302.1,
+     6822.8
+    ],
+    "fps": [
+     59.97,
+     59.97,
+     59.98
+    ],
+    "frame_median_ms": [
+     16.7,
+     16.6,
+     16.7
+    ],
+    "frame_p95_ms": [
+     17.7,
+     17.7,
+     17.7
+    ],
+    "cb": [
+     0.8,
+     0.6,
+     1.1
+    ],
+    "load": [
+     9.29,
+     16.76
+    ]
+   }
+  }
+ },
+ "cells": {
+  "before_head|desktop": {
+   "runs_ok": 10,
+   "runs": 10,
+   "summary": {
+    "ready_js_ms": {
+     "median": 4179.25,
+     "min": 2278.2,
+     "max": 7793.3
+    },
+    "ready_pixels_ms": {
+     "median": 4195.0,
+     "min": 2492.2,
+     "max": 8337
+    },
+    "ready_ms": {
+     "median": 4195.0,
+     "min": 2492.2,
+     "max": 8337
+    },
+    "transfer_bytes": {
+     "median": 31849726.0,
+     "min": 31849726,
+     "max": 31849726
+    },
+    "decoded_bytes": {
+     "median": 31848826.0,
+     "min": 31848826,
+     "max": 31848826
+    },
+    "gzip6_bytes_estimate": {
+     "median": 9742842.0,
+     "min": 9742842,
+     "max": 9742842
+    },
+    "resource_count": {
+     "median": 3.0,
+     "min": 3,
+     "max": 3
+    },
+    "longest_task_to_ready_ms": {
+     "median": 2456.0,
+     "min": 1487,
+     "max": 5051
+    },
+    "tasks_over_50ms_to_ready": {
+     "median": 3.0,
+     "min": 3,
+     "max": 5
+    },
+    "blocking_ms_to_ready": {
+     "median": 3636.0,
+     "min": 2113,
+     "max": 7378
+    },
+    "longest_stall_to_ready_ms": {
+     "median": 3608.5,
+     "min": 2107,
+     "max": 6988.7
+    },
+    "stalls_over_50ms_to_ready": {
+     "median": 3.0,
+     "min": 2,
+     "max": 6
+    },
+    "stalled_ms_to_ready": {
+     "median": 3877.35,
+     "min": 2317.2,
+     "max": 7865.2
+    },
+    "longest_stall_in_window_ms": {
+     "median": 92.2,
+     "min": 0.0,
+     "max": 5423.4
+    },
+    "stalls_over_50ms_in_window": {
+     "median": 1.0,
+     "min": 0,
+     "max": 3
+    },
+    "longest_task_in_window_ms": {
+     "median": 0.0,
+     "min": 0.0,
+     "max": 5413
+    },
+    "tasks_over_50ms_in_window": {
+     "median": 0.0,
+     "min": 0,
+     "max": 2
+    },
+    "longest_task_whole_run_ms": {
+     "median": 2867.0,
+     "min": 1487,
+     "max": 5413
+    },
+    "tasks_over_50ms_whole_run": {
+     "median": 4.0,
+     "min": 3,
+     "max": 10
+    },
+    "frame_median_ms": {
+     "median": 32.27,
+     "min": 19.5,
+     "max": 49.6
+    },
+    "frame_p95_ms": {
+     "median": 45.4,
+     "min": 33.6,
+     "max": 127.1
+    },
+    "frame_max_ms": {
+     "median": 200.25,
+     "min": 41.1,
+     "max": 5413.7
+    },
+    "fps": {
+     "median": 23.08,
+     "min": 13.07,
+     "max": 34.19
+    },
+    "page_raf_fps": {
+     "median": 23.08,
+     "min": 13.07,
+     "max": 34.19
+    },
+    "page_raf_callback_median_ms": {
+     "median": 4.85,
+     "min": 4.3,
+     "max": 5.7
+    },
+    "page_raf_callback_p95_ms": {
+     "median": 7.4,
+     "min": 5.1,
+     "max": 14.7
+    },
+    "js_heap_used_bytes": {
+     "median": 68428058.0,
+     "min": 66761430,
+     "max": 70288214
+    },
+    "wasm_memory_bytes": {
+     "median": 61014016.0,
+     "min": 59244544,
+     "max": 62652416
+    }
+   },
+   "canvases": [
+    {
+     "id": "atoms3d",
+     "width": 1280,
+     "height": 800,
+     "css": [
+      1280,
+      800
+     ]
+    }
+   ],
+   "engine": null,
+   "graphics_path": "webgl2",
+   "webgl_renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+   "host_load1": [
+    26.86,
+    25.52,
+    24.91,
+    34.79,
+    35.26,
+    38.47,
+    34.91,
+    30.06,
+    32.27,
+    37.54
+   ],
+   "console_errors": 0,
+   "resources": [
+    {
+     "url": "/atoms3d/index.html",
+     "transferSize": 13644,
+     "decodedBodySize": 13344,
+     "gzip6_bytes_estimate": 5232
+    },
+    {
+     "url": "/atoms3d/webgl2/atoms3d.js",
+     "transferSize": 106181,
+     "decodedBodySize": 105881,
+     "gzip6_bytes_estimate": 15377
+    },
+    {
+     "url": "/atoms3d/webgl2/atoms3d_bg.wasm",
+     "transferSize": 31729901,
+     "decodedBodySize": 31729601,
+     "gzip6_bytes_estimate": 9722233
+    }
+   ],
+   "runs_detail": [
+    {
+     "run": 1,
+     "mode": "desktop",
+     "error": null,
+     "host_load1_before": 26.86,
+     "screenshot_ready_plus_1s": "/tmp/claude-1000/-home-emoore-CIRISHolon/4066a70d-c28a-428f-932b-46e9476d96db/scratchpad/compare/before_head_desktop_ready1s.png",
+     "screenshot_end": "/tmp/claude-1000/-home-emoore-CIRISHolon/4066a70d-c28a-428f-932b-46e9476d96db/scratchpad/compare/before_head_desktop_end.png",
+     "url": "atoms3d/index.html",
+     "ready_js_ms": 4904.7,
+     "ready_pixels_ms": 5011.1,
+     "ready_ms": 5011.1,
+     "pixel_probe": {
+      "selector": "canvas",
+      "non_flat_fraction": 0.40744,
+      "distinct_colours": 3867,
+      "screenshots_taken": 1,
+      "last_blank_ms": null,
+      "shot_began_ms": 5011.1,
+      "shot_ended_ms": 7596.1,
+      "threshold": 0.002
+     },
+     "wall_s": 23.88,
+     "engine": null,
+     "graphics_path": "webgl2",
+     "webgpu_probe": "navigator.gpu, null adapter",
+     "webgl_renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+     "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+     "device_pixel_ratio": 1,
+     "canvases": [
+      {
+       "id": "atoms3d",
+       "width": 1280,
+       "height": 800,
+       "css": [
+        1280,
+        800
+       ]
+      }
+     ],
+     "resources": [
+      {
+       "url": "/atoms3d/index.html",
+       "initiator": "navigation",
+       "transferSize": 13644,
+       "encodedBodySize": 13344,
+       "decodedBodySize": 13344,
+       "start_ms": 0,
+       "duration_ms": 30.6,
+       "status": 200,
+       "content_type": "text/html",
+       "content_length": 13344,
+       "server_bytes_sent": 13344,
+       "gzip6_bytes_estimate": 5232
+      },
+      {
+       "url": "/atoms3d/webgl2/atoms3d.js",
+       "initiator": "script",
+       "transferSize": 106181,
+       "encodedBodySize": 105881,
+       "decodedBodySize": 105881,
+       "start_ms": 609.7,
+       "duration_ms": 2.5,
+       "status": 200,
+       "content_type": "text/javascript",
+       "content_length": 105881,
+       "server_bytes_sent": 105881,
+       "gzip6_bytes_estimate": 15377
+      },
+      {
+       "url": "/atoms3d/webgl2/atoms3d_bg.wasm",
+       "initiator": "fetch",
+       "transferSize": 31729901,
+       "encodedBodySize": 31729601,
+       "decodedBodySize": 31729601,
+       "start_ms": 624.5,
+       "duration_ms": 78.6,
+       "status": 200,
+       "content_type": "application/wasm",
+       "content_length": 31729601,
+       "server_bytes_sent": 31729601,
+       "gzip6_bytes_estimate": 9722233
+      }
+     ],
+     "resource_count": 3,
+     "transfer_bytes": 31849726,
+     "encoded_bytes": 31848826,
+     "decoded_bytes": 31848826,
+     "server_bytes_sent": 31848826,
+     "gzip6_bytes_estimate": 9742842,
+     "js_heap_used_bytes": 70288214,
+     "js_heap_total_bytes": 72019894,
+     "wasm_memory_bytes": 62652416,
+     "longtask_supported": true,
+     "console_errors": [],
+     "page_errors": [],
+     "console_warnings": [
+      "No available adapters.",
+      "navigator.gpu exists but requestAdapter() returned null",
+      "No available adapters."
+     ],
+     "console_warning_count": 3,
+     "fail_expression_true_at_ms": null,
+     "host_load1_after": 28.6,
+     "longtasks_to_ready": {
+      "count_over_50ms": 4,
+      "longest_ms": 2302,
+      "total_ms": 4227,
+      "blocking_ms": 4027
+     },
+     "longtasks_in_window": {
+      "count_over_50ms": 2,
+      "longest_ms": 5413,
+      "total_ms": 6622,
+      "blocking_ms": 6522
+     },
+     "longtasks_whole_run": {
+      "count_over_50ms": 8,
+      "longest_ms": 5413,
+      "total_ms": 13660,
+      "blocking_ms": 13260
+     },
+     "stalls_to_ready": {
+      "count_over_50ms": 3,
+      "longest_ms": 3973.3,
+      "total_ms": 4376.8,
+      "blocking_ms": 4226.8
+     },
+     "stalls_in_window": {
+      "count_over_50ms": 2,
+      "longest_ms": 5423.4,
+      "total_ms": 6656.3,
+      "blocking_ms": 6556.3
+     },
+     "window_ms": [
+      11671.6,
+      22309.2
+     ],
+     "frames_harness_clock": {
+      "frames": 139,
+      "fps": 13.07,
+      "median_ms": 30.8,
+      "p95_ms": 42.6,
+      "max_ms": 5413.7
+     },
+     "frames_page_raf": {
+      "frames": 139,
+      "fps": 13.07,
+      "median_ms": 30.8,
+      "p95_ms": 42.6,
+      "max_ms": 5413.6,
+      "callback_median_ms": 4.6,
+      "callback_p95_ms": 6.4,
+      "callback_max_ms": 5413.1,
+      "callback_total_ms": 7261.5
+     },
+     "label": "before_head",
+     "order": "18:57:01",
+     "sweep": 2
+    },
+    {
+     "run": 2,
+     "mode": "desktop",
+     "error": null,
+     "host_load1_before": 25.52,
+     "url": "atoms3d/index.html",
+     "ready_js_ms": 2278.2,
+     "ready_pixels_ms": 2492.2,
+     "ready_ms": 2492.2,
+     "pixel_probe": {
+      "selector": "canvas",
+      "non_flat_fraction": 0.40745,
+      "distinct_colours": 3880,
+      "screenshots_taken": 1,
+      "last_blank_ms": null,
+      "shot_began_ms": 2492.2,
+      "shot_ended_ms": 3049.8,
+      "threshold": 0.002
+     },
+     "wall_s": 14.19,
+     "engine": null,
+     "graphics_path": "webgl2",
+     "webgpu_probe": "navigator.gpu, null adapter",
+     "webgl_renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+     "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+     "device_pixel_ratio": 1,
+     "canvases": [
+      {
+       "id": "atoms3d",
+       "width": 1280,
+       "height": 800,
+       "css": [
+        1280,
+        800
+       ]
+      }
+     ],
+     "resources": [
+      {
+       "url": "/atoms3d/index.html",
+       "initiator": "navigation",
+       "transferSize": 13644,
+       "encodedBodySize": 13344,
+       "decodedBodySize": 13344,
+       "start_ms": 0,
+       "duration_ms": 8.9,
+       "status": 200,
+       "content_type": "text/html",
+       "content_length": 13344,
+       "server_bytes_sent": 13344,
+       "gzip6_bytes_estimate": 5232
+      },
+      {
+       "url": "/atoms3d/webgl2/atoms3d.js",
+       "initiator": "script",
+       "transferSize": 106181,
+       "encodedBodySize": 105881,
+       "decodedBodySize": 105881,
+       "start_ms": 107.6,
+       "duration_ms": 2,
+       "status": 200,
+       "content_type": "text/javascript",
+       "content_length": 105881,
+       "server_bytes_sent": 105881,
+       "gzip6_bytes_estimate": 15377
+      },
+      {
+       "url": "/atoms3d/webgl2/atoms3d_bg.wasm",
+       "initiator": "fetch",
+       "transferSize": 31729901,
+       "encodedBodySize": 31729601,
+       "decodedBodySize": 31729601,
+       "start_ms": 113.2,
+       "duration_ms": 83.6,
+       "status": 200,
+       "content_type": "application/wasm",
+       "content_length": 31729601,
+       "server_bytes_sent": 31729601,
+       "gzip6_bytes_estimate": 9722233
+      }
+     ],
+     "resource_count": 3,
+     "transfer_bytes": 31849726,
+     "encoded_bytes": 31848826,
+     "decoded_bytes": 31848826,
+     "server_bytes_sent": 31848826,
+     "gzip6_bytes_estimate": 9742842,
+     "js_heap_used_bytes": 66761430,
+     "js_heap_total_bytes": 68530102,
+     "wasm_memory_bytes": 59244544,
+     "longtask_supported": true,
+     "console_errors": [],
+     "page_errors": [],
+     "console_warnings": [
+      "No available adapters.",
+      "navigator.gpu exists but requestAdapter() returned null",
+      "No available adapters."
+     ],
+     "console_warning_count": 3,
+     "fail_expression_true_at_ms": null,
+     "host_load1_after": 24.89,
+     "longtasks_to_ready": {
+      "count_over_50ms": 3,
+      "longest_ms": 1487,
+      "total_ms": 2263,
+      "blocking_ms": 2113
+     },
+     "longtasks_in_window": {
+      "count_over_50ms": 0,
+      "longest_ms": 0.0,
+      "total_ms": 0,
+      "blocking_ms": 0
+     },
+     "longtasks_whole_run": {
+      "count_over_50ms": 3,
+      "longest_ms": 1487,
+      "total_ms": 2263,
+      "blocking_ms": 2113
+     },
+     "stalls_to_ready": {
+      "count_over_50ms": 2,
+      "longest_ms": 2107,
+      "total_ms": 2317.2,
+      "blocking_ms": 2217.2
+     },
+     "stalls_in_window": {
+      "count_over_50ms": 0,
+      "longest_ms": 0.0,
+      "total_ms": 0,
+      "blocking_ms": 0
+     },
+     "window_ms": [
+      4092.4,
+      14095.5
+     ],
+     "frames_harness_clock": {
+      "frames": 315,
+      "fps": 31.49,
+      "median_ms": 31.25,
+      "p95_ms": 36.1,
+      "max_ms": 41.1
+     },
+     "frames_page_raf": {
+      "frames": 315,
+      "fps": 31.49,
+      "median_ms": 31.2,
+      "p95_ms": 36.1,
+      "max_ms": 41.1,
+      "callback_median_ms": 4.5,
+      "callback_p95_ms": 5.1,
+      "callback_max_ms": 12.9,
+      "callback_total_ms": 1391.5
+     },
+     "label": "before_head",
+     "order": "18:57:29",
+     "sweep": 2
+    },
+    {
+     "run": 3,
+     "mode": "desktop",
+     "error": null,
+     "host_load1_before": 24.91,
+     "url": "atoms3d/index.html",
+     "ready_js_ms": 3578.2,
+     "ready_pixels_ms": 3823.4,
+     "ready_ms": 3823.4,
+     "pixel_probe": {
+      "selector": "canvas",
+      "non_flat_fraction": 0.40745,
+      "distinct_colours": 3879,
+      "screenshots_taken": 1,
+      "last_blank_ms": null,
+      "shot_began_ms": 3823.4,
+      "shot_ended_ms": 4442.1,
+      "threshold": 0.002
+     },
+     "wall_s": 15.85,
+     "engine": null,
+     "graphics_path": "webgl2",
+     "webgpu_probe": "navigator.gpu, null adapter",
+     "webgl_renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+     "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+     "device_pixel_ratio": 1,
+     "canvases": [
+      {
+       "id": "atoms3d",
+       "width": 1280,
+       "height": 800,
+       "css": [
+        1280,
+        800
+       ]
+      }
+     ],
+     "resources": [
+      {
+       "url": "/atoms3d/index.html",
+       "initiator": "navigation",
+       "transferSize": 13644,
+       "encodedBodySize": 13344,
+       "decodedBodySize": 13344,
+       "start_ms": 0,
+       "duration_ms": 12.3,
+       "status": 200,
+       "content_type": "text/html",
+       "content_length": 13344,
+       "server_bytes_sent": 13344,
+       "gzip6_bytes_estimate": 5232
+      },
+      {
+       "url": "/atoms3d/webgl2/atoms3d.js",
+       "initiator": "script",
+       "transferSize": 106181,
+       "encodedBodySize": 105881,
+       "decodedBodySize": 105881,
+       "start_ms": 122.1,
+       "duration_ms": 3,
+       "status": 200,
+       "content_type": "text/javascript",
+       "content_length": 105881,
+       "server_bytes_sent": 105881,
+       "gzip6_bytes_estimate": 15377
+      },
+      {
+       "url": "/atoms3d/webgl2/atoms3d_bg.wasm",
+       "initiator": "fetch",
+       "transferSize": 31729901,
+       "encodedBodySize": 31729601,
+       "decodedBodySize": 31729601,
+       "start_ms": 129,
+       "duration_ms": 98.2,
+       "status": 200,
+       "content_type": "application/wasm",
+       "content_length": 31729601,
+       "server_bytes_sent": 31729601,
+       "gzip6_bytes_estimate": 9722233
+      }
+     ],
+     "resource_count": 3,
+     "transfer_bytes": 31849726,
+     "encoded_bytes": 31848826,
+     "decoded_bytes": 31848826,
+     "server_bytes_sent": 31848826,
+     "gzip6_bytes_estimate": 9742842,
+     "js_heap_used_bytes": 69954770,
+     "js_heap_total_bytes": 72527798,
+     "wasm_memory_bytes": 62193664,
+     "longtask_supported": true,
+     "console_errors": [],
+     "page_errors": [],
+     "console_warnings": [
+      "No available adapters.",
+      "navigator.gpu exists but requestAdapter() returned null",
+      "No available adapters."
+     ],
+     "console_warning_count": 3,
+     "fail_expression_true_at_ms": null,
+     "host_load1_after": 26.25,
+     "longtasks_to_ready": {
+      "count_over_50ms": 3,
+      "longest_ms": 1703,
+      "total_ms": 3548,
+      "blocking_ms": 3398
+     },
+     "longtasks_in_window": {
+      "count_over_50ms": 0,
+      "longest_ms": 0.0,
+      "total_ms": 0,
+      "blocking_ms": 0
+     },
+     "longtasks_whole_run": {
+      "count_over_50ms": 4,
+      "longest_ms": 1703,
+      "total_ms": 4163,
+      "blocking_ms": 3963
+     },
+     "stalls_to_ready": {
+      "count_over_50ms": 2,
+      "longest_ms": 3390.3,
+      "total_ms": 3629.8,
+      "blocking_ms": 3529.8
+     },
+     "stalls_in_window": {
+      "count_over_50ms": 1,
+      "longest_ms": 75.3,
+      "total_ms": 75.3,
+      "blocking_ms": 25.3
+     },
+     "window_ms": [
+      5760.8,
+      15763.9
+     ],
+     "frames_harness_clock": {
+      "frames": 342,
+      "fps": 34.19,
+      "median_ms": 30.2,
+      "p95_ms": 33.6,
+      "max_ms": 42.7
+     },
+     "frames_page_raf": {
+      "frames": 342,
+      "fps": 34.19,
+      "median_ms": 30.2,
+      "p95_ms": 33.7,
+      "max_ms": 42.7,
+      "callback_median_ms": 4.3,
+      "callback_p95_ms": 5.1,
+      "callback_max_ms": 7.7,
+      "callback_total_ms": 1473.8
+     },
+     "label": "before_head",
+     "order": "18:57:58",
+     "sweep": 2
+    },
+    {
+     "run": 4,
+     "mode": "desktop",
+     "error": null,
+     "host_load1_before": 34.79,
+     "url": "atoms3d/index.html",
+     "ready_js_ms": 7574.7,
+     "ready_pixels_ms": 7626.5,
+     "ready_ms": 7626.5,
+     "pixel_probe": {
+      "selector": "canvas",
+      "non_flat_fraction": 0.40745,
+      "distinct_colours": 3878,
+      "screenshots_taken": 1,
+      "last_blank_ms": null,
+      "shot_began_ms": 7626.5,
+      "shot_ended_ms": 10316.7,
+      "threshold": 0.002
+     },
+     "wall_s": 21.56,
+     "engine": null,
+     "graphics_path": "webgl2",
+     "webgpu_probe": "navigator.gpu, null adapter",
+     "webgl_renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+     "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+     "device_pixel_ratio": 1,
+     "canvases": [
+      {
+       "id": "atoms3d",
+       "width": 1280,
+       "height": 800,
+       "css": [
+        1280,
+        800
+       ]
+      }
+     ],
+     "resources": [
+      {
+       "url": "/atoms3d/index.html",
+       "initiator": "navigation",
+       "transferSize": 13644,
+       "encodedBodySize": 13344,
+       "decodedBodySize": 13344,
+       "start_ms": 0,
+       "duration_ms": 31.3,
+       "status": 200,
+       "content_type": "text/html",
+       "content_length": 13344,
+       "server_bytes_sent": 13344,
+       "gzip6_bytes_estimate": 5232
+      },
+      {
+       "url": "/atoms3d/webgl2/atoms3d.js",
+       "initiator": "script",
+       "transferSize": 106181,
+       "encodedBodySize": 105881,
+       "decodedBodySize": 105881,
+       "start_ms": 439,
+       "duration_ms": 3.6,
+       "status": 200,
+       "content_type": "text/javascript",
+       "content_length": 105881,
+       "server_bytes_sent": 105881,
+       "gzip6_bytes_estimate": 15377
+      },
+      {
+       "url": "/atoms3d/webgl2/atoms3d_bg.wasm",
+       "initiator": "fetch",
+       "transferSize": 31729901,
+       "encodedBodySize": 31729601,
+       "decodedBodySize": 31729601,
+       "start_ms": 450.8,
+       "duration_ms": 189.7,
+       "status": 200,
+       "content_type": "application/wasm",
+       "content_length": 31729601,
+       "server_bytes_sent": 31729601,
+       "gzip6_bytes_estimate": 9722233
+      }
+     ],
+     "resource_count": 3,
+     "transfer_bytes": 31849726,
+     "encoded_bytes": 31848826,
+     "decoded_bytes": 31848826,
+     "server_bytes_sent": 31848826,
+     "gzip6_bytes_estimate": 9742842,
+     "js_heap_used_bytes": 69506118,
+     "js_heap_total_bytes": 70692790,
+     "wasm_memory_bytes": 61931520,
+     "longtask_supported": true,
+     "console_errors": [],
+     "page_errors": [],
+     "console_warnings": [
+      "No available adapters.",
+      "navigator.gpu exists but requestAdapter() returned null",
+      "No available adapters."
+     ],
+     "console_warning_count": 3,
+     "fail_expression_true_at_ms": null,
+     "host_load1_after": 38.23,
+     "longtasks_to_ready": {
+      "count_over_50ms": 4,
+      "longest_ms": 4512,
+      "total_ms": 6923,
+      "blocking_ms": 6723
+     },
+     "longtasks_in_window": {
+      "count_over_50ms": 0,
+      "longest_ms": 0.0,
+      "total_ms": 0,
+      "blocking_ms": 0
+     },
+     "longtasks_whole_run": {
+      "count_over_50ms": 4,
+      "longest_ms": 4512,
+      "total_ms": 6923,
+      "blocking_ms": 6723
+     },
+     "stalls_to_ready": {
+      "count_over_50ms": 3,
+      "longest_ms": 6267.6,
+      "total_ms": 7004.9,
+      "blocking_ms": 6854.9
+     },
+     "stalls_in_window": {
+      "count_over_50ms": 0,
+      "longest_ms": 0.0,
+      "total_ms": 0,
+      "blocking_ms": 0
+     },
+     "window_ms": [
+      11364.5,
+      21367.9
+     ],
+     "frames_harness_clock": {
+      "frames": 230,
+      "fps": 22.99,
+      "median_ms": 33.3,
+      "p95_ms": 127.1,
+      "max_ms": 238.6
+     },
+     "frames_page_raf": {
+      "frames": 230,
+      "fps": 22.99,
+      "median_ms": 33.3,
+      "p95_ms": 127.0,
+      "max_ms": 238.5,
+      "callback_median_ms": 4.8,
+      "callback_p95_ms": 8.2,
+      "callback_max_ms": 17.1,
+      "callback_total_ms": 1212.9
+     },
+     "label": "before_head",
+     "order": "18:58:38",
+     "sweep": 2
+    },
+    {
+     "run": 5,
+     "mode": "desktop",
+     "error": null,
+     "host_load1_before": 35.26,
+     "url": "atoms3d/index.html",
+     "ready_js_ms": 3754,
+     "ready_pixels_ms": 3767.6,
+     "ready_ms": 3767.6,
+     "pixel_probe": {
+      "selector": "canvas",
+      "non_flat_fraction": 0.40744,
+      "distinct_colours": 3880,
+      "screenshots_taken": 1,
+      "last_blank_ms": null,
+      "shot_began_ms": 3767.6,
+      "shot_ended_ms": 4399.5,
+      "threshold": 0.002
+     },
+     "wall_s": 16.01,
+     "engine": null,
+     "graphics_path": "webgl2",
+     "webgpu_probe": "navigator.gpu, null adapter",
+     "webgl_renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+     "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+     "device_pixel_ratio": 1,
+     "canvases": [
+      {
+       "id": "atoms3d",
+       "width": 1280,
+       "height": 800,
+       "css": [
+        1280,
+        800
+       ]
+      }
+     ],
+     "resources": [
+      {
+       "url": "/atoms3d/index.html",
+       "initiator": "navigation",
+       "transferSize": 13644,
+       "encodedBodySize": 13344,
+       "decodedBodySize": 13344,
+       "start_ms": 0,
+       "duration_ms": 10,
+       "status": 200,
+       "content_type": "text/html",
+       "content_length": 13344,
+       "server_bytes_sent": 13344,
+       "gzip6_bytes_estimate": 5232
+      },
+      {
+       "url": "/atoms3d/webgl2/atoms3d.js",
+       "initiator": "script",
+       "transferSize": 106181,
+       "encodedBodySize": 105881,
+       "decodedBodySize": 105881,
+       "start_ms": 113.6,
+       "duration_ms": 2,
+       "status": 200,
+       "content_type": "text/javascript",
+       "content_length": 105881,
+       "server_bytes_sent": 105881,
+       "gzip6_bytes_estimate": 15377
+      },
+      {
+       "url": "/atoms3d/webgl2/atoms3d_bg.wasm",
+       "initiator": "fetch",
+       "transferSize": 31729901,
+       "encodedBodySize": 31729601,
+       "decodedBodySize": 31729601,
+       "start_ms": 119.9,
+       "duration_ms": 77.2,
+       "status": 200,
+       "content_type": "application/wasm",
+       "content_length": 31729601,
+       "server_bytes_sent": 31729601,
+       "gzip6_bytes_estimate": 9722233
+      }
+     ],
+     "resource_count": 3,
+     "transfer_bytes": 31849726,
+     "encoded_bytes": 31848826,
+     "decoded_bytes": 31848826,
+     "server_bytes_sent": 31848826,
+     "gzip6_bytes_estimate": 9742842,
+     "js_heap_used_bytes": 67600118,
+     "js_heap_total_bytes": 69803958,
+     "wasm_memory_bytes": 60227584,
+     "longtask_supported": true,
+     "console_errors": [],
+     "page_errors": [],
+     "console_warnings": [
+      "No available adapters.",
+      "navigator.gpu exists but requestAdapter() returned null",
+      "No available adapters."
+     ],
+     "console_warning_count": 3,
+     "fail_expression_true_at_ms": null,
+     "host_load1_after": 35.19,
+     "longtasks_to_ready": {
+      "count_over_50ms": 3,
+      "longest_ms": 2584,
+      "total_ms": 3530,
+      "blocking_ms": 3380
+     },
+     "longtasks_in_window": {
+      "count_over_50ms": 0,
+      "longest_ms": 0.0,
+      "total_ms": 0,
+      "blocking_ms": 0
+     },
+     "longtasks_whole_run": {
+      "count_over_50ms": 3,
+      "longest_ms": 2584,
+      "total_ms": 3530,
+      "blocking_ms": 3380
+     },
+     "stalls_to_ready": {
+      "count_over_50ms": 2,
+      "longest_ms": 3344.3,
+      "total_ms": 3606.3,
+      "blocking_ms": 3506.3
+     },
+     "stalls_in_window": {
+      "count_over_50ms": 0,
+      "longest_ms": 0.0,
+      "total_ms": 0,
+      "blocking_ms": 0
+     },
+     "window_ms": [
+      5447.7,
+      15459.9
+     ],
+     "frames_harness_clock": {
+      "frames": 232,
+      "fps": 23.17,
+      "median_ms": 40.6,
+      "p95_ms": 61.8,
+      "max_ms": 161.9
+     },
+     "frames_page_raf": {
+      "frames": 232,
+      "fps": 23.17,
+      "median_ms": 40.6,
+      "p95_ms": 61.9,
+      "max_ms": 161.9,
+      "callback_median_ms": 5.0,
+      "callback_p95_ms": 8.8,
+      "callback_max_ms": 16.4,
+      "callback_total_ms": 1288.9
+     },
+     "label": "before_head",
+     "order": "18:59:09",
+     "sweep": 2
+    },
+    {
+     "run": 1,
+     "mode": "desktop",
+     "error": null,
+     "host_load1_before": 38.47,
+     "screenshot_ready_plus_1s": "/tmp/claude-1000/-home-emoore-CIRISHolon/4066a70d-c28a-428f-932b-46e9476d96db/scratchpad/compare/before_head_desktop_ready1s.png",
+     "screenshot_end": "/tmp/claude-1000/-home-emoore-CIRISHolon/4066a70d-c28a-428f-932b-46e9476d96db/scratchpad/compare/before_head_desktop_end.png",
+     "url": "atoms3d/index.html",
+     "ready_js_ms": 4463.7,
+     "ready_pixels_ms": 4475.8,
+     "ready_ms": 4475.8,
+     "pixel_probe": {
+      "selector": "canvas",
+      "non_flat_fraction": 0.40744,
+      "distinct_colours": 3879,
+      "screenshots_taken": 1,
+      "last_blank_ms": null,
+      "shot_began_ms": 4475.8,
+      "shot_ended_ms": 5104.7,
+      "threshold": 0.002
+     },
+     "wall_s": 20.91,
+     "engine": null,
+     "graphics_path": "webgl2",
+     "webgpu_probe": "navigator.gpu, null adapter",
+     "webgl_renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+     "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+     "device_pixel_ratio": 1,
+     "canvases": [
+      {
+       "id": "atoms3d",
+       "width": 1280,
+       "height": 800,
+       "css": [
+        1280,
+        800
+       ]
+      }
+     ],
+     "resources": [
+      {
+       "url": "/atoms3d/index.html",
+       "initiator": "navigation",
+       "transferSize": 13644,
+       "encodedBodySize": 13344,
+       "decodedBodySize": 13344,
+       "start_ms": 0,
+       "duration_ms": 37.7,
+       "status": 200,
+       "content_type": "text/html",
+       "content_length": 13344,
+       "server_bytes_sent": 13344,
+       "gzip6_bytes_estimate": 5232
+      },
+      {
+       "url": "/atoms3d/webgl2/atoms3d.js",
+       "initiator": "script",
+       "transferSize": 106181,
+       "encodedBodySize": 105881,
+       "decodedBodySize": 105881,
+       "start_ms": 187.6,
+       "duration_ms": 6,
+       "status": 200,
+       "content_type": "text/javascript",
+       "content_length": 105881,
+       "server_bytes_sent": 105881,
+       "gzip6_bytes_estimate": 15377
+      },
+      {
+       "url": "/atoms3d/webgl2/atoms3d_bg.wasm",
+       "initiator": "fetch",
+       "transferSize": 31729901,
+       "encodedBodySize": 31729601,
+       "decodedBodySize": 31729601,
+       "start_ms": 197.5,
+       "duration_ms": 207.7,
+       "status": 200,
+       "content_type": "application/wasm",
+       "content_length": 31729601,
+       "server_bytes_sent": 31729601,
+       "gzip6_bytes_estimate": 9722233
+      }
+     ],
+     "resource_count": 3,
+     "transfer_bytes": 31849726,
+     "encoded_bytes": 31848826,
+     "decoded_bytes": 31848826,
+     "server_bytes_sent": 31848826,
+     "gzip6_bytes_estimate": 9742842,
+     "js_heap_used_bytes": 67479194,
+     "js_heap_total_bytes": 69808054,
+     "wasm_memory_bytes": 59965440,
+     "longtask_supported": true,
+     "console_errors": [],
+     "page_errors": [],
+     "console_warnings": [
+      "No available adapters.",
+      "navigator.gpu exists but requestAdapter() returned null",
+      "No available adapters."
+     ],
+     "console_warning_count": 3,
+     "fail_expression_true_at_ms": null,
+     "host_load1_after": 36.77,
+     "longtasks_to_ready": {
+      "count_over_50ms": 3,
+      "longest_ms": 3150,
+      "total_ms": 4024,
+      "blocking_ms": 3874
+     },
+     "longtasks_in_window": {
+      "count_over_50ms": 0,
+      "longest_ms": 0.0,
+      "total_ms": 0,
+      "blocking_ms": 0
+     },
+     "longtasks_whole_run": {
+      "count_over_50ms": 3,
+      "longest_ms": 3150,
+      "total_ms": 4024,
+      "blocking_ms": 3874
+     },
+     "stalls_to_ready": {
+      "count_over_50ms": 3,
+      "longest_ms": 3826.7,
+      "total_ms": 4124.9,
+      "blocking_ms": 3974.9
+     },
+     "stalls_in_window": {
+      "count_over_50ms": 1,
+      "longest_ms": 109.1,
+      "total_ms": 109.1,
+      "blocking_ms": 59.1
+     },
+     "window_ms": [
+      7262.5,
+      17265.8
+     ],
+     "frames_harness_clock": {
+      "frames": 157,
+      "fps": 15.69,
+      "median_ms": 49.6,
+      "p95_ms": 124.7,
+      "max_ms": 147.2
+     },
+     "frames_page_raf": {
+      "frames": 157,
+      "fps": 15.69,
+      "median_ms": 49.6,
+      "p95_ms": 124.6,
+      "max_ms": 147.3,
+      "callback_median_ms": 5.7,
+      "callback_p95_ms": 14.7,
+      "callback_max_ms": 20.4,
+      "callback_total_ms": 1134.6
+     },
+     "label": "before_head",
+     "order": "19:03:56",
+     "sweep": 3
+    },
+    {
+     "run": 2,
+     "mode": "desktop",
+     "error": null,
+     "host_load1_before": 34.91,
+     "url": "atoms3d/index.html",
+     "ready_js_ms": 3894.8,
+     "ready_pixels_ms": 3914.2,
+     "ready_ms": 3914.2,
+     "pixel_probe": {
+      "selector": "canvas",
+      "non_flat_fraction": 0.40743,
+      "distinct_colours": 3881,
+      "screenshots_taken": 1,
+      "last_blank_ms": null,
+      "shot_began_ms": 3914.2,
+      "shot_ended_ms": 4579.2,
+      "threshold": 0.002
+     },
+     "wall_s": 15.75,
+     "engine": null,
+     "graphics_path": "webgl2",
+     "webgpu_probe": "navigator.gpu, null adapter",
+     "webgl_renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+     "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+     "device_pixel_ratio": 1,
+     "canvases": [
+      {
+       "id": "atoms3d",
+       "width": 1280,
+       "height": 800,
+       "css": [
+        1280,
+        800
+       ]
+      }
+     ],
+     "resources": [
+      {
+       "url": "/atoms3d/index.html",
+       "initiator": "navigation",
+       "transferSize": 13644,
+       "encodedBodySize": 13344,
+       "decodedBodySize": 13344,
+       "start_ms": 0,
+       "duration_ms": 11.9,
+       "status": 200,
+       "content_type": "text/html",
+       "content_length": 13344,
+       "server_bytes_sent": 13344,
+       "gzip6_bytes_estimate": 5232
+      },
+      {
+       "url": "/atoms3d/webgl2/atoms3d.js",
+       "initiator": "script",
+       "transferSize": 106181,
+       "encodedBodySize": 105881,
+       "decodedBodySize": 105881,
+       "start_ms": 204.6,
+       "duration_ms": 10.9,
+       "status": 200,
+       "content_type": "text/javascript",
+       "content_length": 105881,
+       "server_bytes_sent": 105881,
+       "gzip6_bytes_estimate": 15377
+      },
+      {
+       "url": "/atoms3d/webgl2/atoms3d_bg.wasm",
+       "initiator": "fetch",
+       "transferSize": 31729901,
+       "encodedBodySize": 31729601,
+       "decodedBodySize": 31729601,
+       "start_ms": 222.1,
+       "duration_ms": 185.8,
+       "status": 200,
+       "content_type": "application/wasm",
+       "content_length": 31729601,
+       "server_bytes_sent": 31729601,
+       "gzip6_bytes_estimate": 9722233
+      }
+     ],
+     "resource_count": 3,
+     "transfer_bytes": 31849726,
+     "encoded_bytes": 31848826,
+     "decoded_bytes": 31848826,
+     "server_bytes_sent": 31848826,
+     "gzip6_bytes_estimate": 9742842,
+     "js_heap_used_bytes": 69155810,
+     "js_heap_total_bytes": 71577526,
+     "wasm_memory_bytes": 61472768,
+     "longtask_supported": true,
+     "console_errors": [],
+     "page_errors": [],
+     "console_warnings": [
+      "No available adapters.",
+      "navigator.gpu exists but requestAdapter() returned null",
+      "No available adapters."
+     ],
+     "console_warning_count": 3,
+     "fail_expression_true_at_ms": null,
+     "host_load1_after": 32.88,
+     "longtasks_to_ready": {
+      "count_over_50ms": 3,
+      "longest_ms": 2328,
+      "total_ms": 3454,
+      "blocking_ms": 3304
+     },
+     "longtasks_in_window": {
+      "count_over_50ms": 0,
+      "longest_ms": 0.0,
+      "total_ms": 0,
+      "blocking_ms": 0
+     },
+     "longtasks_whole_run": {
+      "count_over_50ms": 3,
+      "longest_ms": 2328,
+      "total_ms": 3454,
+      "blocking_ms": 3304
+     },
+     "stalls_to_ready": {
+      "count_over_50ms": 2,
+      "longest_ms": 3197.3,
+      "total_ms": 3488.5,
+      "blocking_ms": 3388.5
+     },
+     "stalls_in_window": {
+      "count_over_50ms": 0,
+      "longest_ms": 0.0,
+      "total_ms": 0,
+      "blocking_ms": 0
+     },
+     "window_ms": [
+      5625.4,
+      15628.8
+     ],
+     "frames_harness_clock": {
+      "frames": 289,
+      "fps": 28.89,
+      "median_ms": 34.2,
+      "p95_ms": 39.4,
+      "max_ms": 64.8
+     },
+     "frames_page_raf": {
+      "frames": 289,
+      "fps": 28.89,
+      "median_ms": 34.2,
+      "p95_ms": 39.4,
+      "max_ms": 64.9,
+      "callback_median_ms": 4.9,
+      "callback_p95_ms": 5.5,
+      "callback_max_ms": 8.2,
+      "callback_total_ms": 1383.7
+     },
+     "label": "before_head",
+     "order": "19:04:26",
+     "sweep": 3
+    },
+    {
+     "run": 3,
+     "mode": "desktop",
+     "error": null,
+     "host_load1_before": 30.06,
+     "url": "atoms3d/index.html",
+     "ready_js_ms": 2672.1,
+     "ready_pixels_ms": 2949.5,
+     "ready_ms": 2949.5,
+     "pixel_probe": {
+      "selector": "canvas",
+      "non_flat_fraction": 0.40746,
+      "distinct_colours": 3865,
+      "screenshots_taken": 1,
+      "last_blank_ms": null,
+      "shot_began_ms": 2949.5,
+      "shot_ended_ms": 3873.8,
+      "threshold": 0.002
+     },
+     "wall_s": 15.07,
+     "engine": null,
+     "graphics_path": "webgl2",
+     "webgpu_probe": "navigator.gpu, null adapter",
+     "webgl_renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+     "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+     "device_pixel_ratio": 1,
+     "canvases": [
+      {
+       "id": "atoms3d",
+       "width": 1280,
+       "height": 800,
+       "css": [
+        1280,
+        800
+       ]
+      }
+     ],
+     "resources": [
+      {
+       "url": "/atoms3d/index.html",
+       "initiator": "navigation",
+       "transferSize": 13644,
+       "encodedBodySize": 13344,
+       "decodedBodySize": 13344,
+       "start_ms": 0,
+       "duration_ms": 10.3,
+       "status": 200,
+       "content_type": "text/html",
+       "content_length": 13344,
+       "server_bytes_sent": 13344,
+       "gzip6_bytes_estimate": 5232
+      },
+      {
+       "url": "/atoms3d/webgl2/atoms3d.js",
+       "initiator": "script",
+       "transferSize": 106181,
+       "encodedBodySize": 105881,
+       "decodedBodySize": 105881,
+       "start_ms": 110,
+       "duration_ms": 1.6,
+       "status": 200,
+       "content_type": "text/javascript",
+       "content_length": 105881,
+       "server_bytes_sent": 105881,
+       "gzip6_bytes_estimate": 15377
+      },
+      {
+       "url": "/atoms3d/webgl2/atoms3d_bg.wasm",
+       "initiator": "fetch",
+       "transferSize": 31729901,
+       "encodedBodySize": 31729601,
+       "decodedBodySize": 31729601,
+       "start_ms": 116.3,
+       "duration_ms": 80.3,
+       "status": 200,
+       "content_type": "application/wasm",
+       "content_length": 31729601,
+       "server_bytes_sent": 31729601,
+       "gzip6_bytes_estimate": 9722233
+      }
+     ],
+     "resource_count": 3,
+     "transfer_bytes": 31849726,
+     "encoded_bytes": 31848826,
+     "decoded_bytes": 31848826,
+     "server_bytes_sent": 31848826,
+     "gzip6_bytes_estimate": 9742842,
+     "js_heap_used_bytes": 68819950,
+     "js_heap_total_bytes": 70692790,
+     "wasm_memory_bytes": 61407232,
+     "longtask_supported": true,
+     "console_errors": [],
+     "page_errors": [],
+     "console_warnings": [
+      "No available adapters.",
+      "navigator.gpu exists but requestAdapter() returned null",
+      "No available adapters."
+     ],
+     "console_warning_count": 3,
+     "fail_expression_true_at_ms": null,
+     "host_load1_after": 29.05,
+     "longtasks_to_ready": {
+      "count_over_50ms": 3,
+      "longest_ms": 1738,
+      "total_ms": 2700,
+      "blocking_ms": 2550
+     },
+     "longtasks_in_window": {
+      "count_over_50ms": 2,
+      "longest_ms": 833,
+      "total_ms": 1163,
+      "blocking_ms": 1063
+     },
+     "longtasks_whole_run": {
+      "count_over_50ms": 5,
+      "longest_ms": 1738,
+      "total_ms": 3863,
+      "blocking_ms": 3613
+     },
+     "stalls_to_ready": {
+      "count_over_50ms": 3,
+      "longest_ms": 2450.8,
+      "total_ms": 2792.0,
+      "blocking_ms": 2642.0
+     },
+     "stalls_in_window": {
+      "count_over_50ms": 2,
+      "longest_ms": 842.7,
+      "total_ms": 1183.4,
+      "blocking_ms": 1083.4
+     },
+     "window_ms": [
+      4920.1,
+      14926.8
+     ],
+     "frames_harness_clock": {
+      "frames": 261,
+      "fps": 26.08,
+      "median_ms": 36.8,
+      "p95_ms": 48.5,
+      "max_ms": 845.8
+     },
+     "frames_page_raf": {
+      "frames": 261,
+      "fps": 26.08,
+      "median_ms": 36.85,
+      "p95_ms": 48.5,
+      "max_ms": 845.8,
+      "callback_median_ms": 5.1,
+      "callback_p95_ms": 7.6,
+      "callback_max_ms": 832.8,
+      "callback_total_ms": 2510.0
+     },
+     "label": "before_head",
+     "order": "19:04:55",
+     "sweep": 3
+    },
+    {
+     "run": 4,
+     "mode": "desktop",
+     "error": null,
+     "host_load1_before": 32.27,
+     "url": "atoms3d/index.html",
+     "ready_js_ms": 7624.9,
+     "ready_pixels_ms": 8217.2,
+     "ready_ms": 8217.2,
+     "pixel_probe": {
+      "selector": "canvas",
+      "non_flat_fraction": 0.40746,
+      "distinct_colours": 3873,
+      "screenshots_taken": 1,
+      "last_blank_ms": null,
+      "shot_began_ms": 8217.2,
+      "shot_ended_ms": 13637.4,
+      "threshold": 0.002
+     },
+     "wall_s": 26.77,
+     "engine": null,
+     "graphics_path": "webgl2",
+     "webgpu_probe": "navigator.gpu, null adapter",
+     "webgl_renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+     "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+     "device_pixel_ratio": 1,
+     "canvases": [
+      {
+       "id": "atoms3d",
+       "width": 1280,
+       "height": 800,
+       "css": [
+        1280,
+        800
+       ]
+      }
+     ],
+     "resources": [
+      {
+       "url": "/atoms3d/index.html",
+       "initiator": "navigation",
+       "transferSize": 13644,
+       "encodedBodySize": 13344,
+       "decodedBodySize": 13344,
+       "start_ms": 0,
+       "duration_ms": 68,
+       "status": 200,
+       "content_type": "text/html",
+       "content_length": 13344,
+       "server_bytes_sent": 13344,
+       "gzip6_bytes_estimate": 5232
+      },
+      {
+       "url": "/atoms3d/webgl2/atoms3d.js",
+       "initiator": "script",
+       "transferSize": 106181,
+       "encodedBodySize": 105881,
+       "decodedBodySize": 105881,
+       "start_ms": 326.8,
+       "duration_ms": 6.9,
+       "status": 200,
+       "content_type": "text/javascript",
+       "content_length": 105881,
+       "server_bytes_sent": 105881,
+       "gzip6_bytes_estimate": 15377
+      },
+      {
+       "url": "/atoms3d/webgl2/atoms3d_bg.wasm",
+       "initiator": "fetch",
+       "transferSize": 31729901,
+       "encodedBodySize": 31729601,
+       "decodedBodySize": 31729601,
+       "start_ms": 339.5,
+       "duration_ms": 284.3,
+       "status": 200,
+       "content_type": "application/wasm",
+       "content_length": 31729601,
+       "server_bytes_sent": 31729601,
+       "gzip6_bytes_estimate": 9722233
+      }
+     ],
+     "resource_count": 3,
+     "transfer_bytes": 31849726,
+     "encoded_bytes": 31848826,
+     "decoded_bytes": 31848826,
+     "server_bytes_sent": 31848826,
+     "gzip6_bytes_estimate": 9742842,
+     "js_heap_used_bytes": 68036166,
+     "js_heap_total_bytes": 70430646,
+     "wasm_memory_bytes": 60620800,
+     "longtask_supported": true,
+     "console_errors": [],
+     "page_errors": [],
+     "console_warnings": [
+      "No available adapters.",
+      "navigator.gpu exists but requestAdapter() returned null",
+      "No available adapters."
+     ],
+     "console_warning_count": 3,
+     "fail_expression_true_at_ms": null,
+     "host_load1_after": 37.83,
+     "longtasks_to_ready": {
+      "count_over_50ms": 5,
+      "longest_ms": 3717,
+      "total_ms": 7628,
+      "blocking_ms": 7378
+     },
+     "longtasks_in_window": {
+      "count_over_50ms": 2,
+      "longest_ms": 2516,
+      "total_ms": 4136,
+      "blocking_ms": 4036
+     },
+     "longtasks_whole_run": {
+      "count_over_50ms": 10,
+      "longest_ms": 3717,
+      "total_ms": 15002,
+      "blocking_ms": 14502
+     },
+     "stalls_to_ready": {
+      "count_over_50ms": 6,
+      "longest_ms": 6877.3,
+      "total_ms": 7862.8,
+      "blocking_ms": 7562.8
+     },
+     "stalls_in_window": {
+      "count_over_50ms": 2,
+      "longest_ms": 2525.1,
+      "total_ms": 4153.5,
+      "blocking_ms": 4053.5
+     },
+     "window_ms": [
+      14690,
+      24699.4
+     ],
+     "frames_harness_clock": {
+      "frames": 219,
+      "fps": 21.88,
+      "median_ms": 28.9,
+      "p95_ms": 39.6,
+      "max_ms": 2516.7
+     },
+     "frames_page_raf": {
+      "frames": 219,
+      "fps": 21.88,
+      "median_ms": 28.85,
+      "p95_ms": 39.6,
+      "max_ms": 2516.7,
+      "callback_median_ms": 4.5,
+      "callback_p95_ms": 7.2,
+      "callback_max_ms": 2516.5,
+      "callback_total_ms": 5153.0
+     },
+     "label": "before_head",
+     "order": "19:05:38",
+     "sweep": 3
+    },
+    {
+     "run": 5,
+     "mode": "desktop",
+     "error": null,
+     "host_load1_before": 37.54,
+     "url": "atoms3d/index.html",
+     "ready_js_ms": 7793.3,
+     "ready_pixels_ms": 8337,
+     "ready_ms": 8337,
+     "pixel_probe": {
+      "selector": "canvas",
+      "non_flat_fraction": 0.40747,
+      "distinct_colours": 3869,
+      "screenshots_taken": 1,
+      "last_blank_ms": null,
+      "shot_began_ms": 8337,
+      "shot_ended_ms": 10131.5,
+      "threshold": 0.002
+     },
+     "wall_s": 21.48,
+     "engine": null,
+     "graphics_path": "webgl2",
+     "webgpu_probe": "navigator.gpu, null adapter",
+     "webgl_renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+     "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+     "device_pixel_ratio": 1,
+     "canvases": [
+      {
+       "id": "atoms3d",
+       "width": 1280,
+       "height": 800,
+       "css": [
+        1280,
+        800
+       ]
+      }
+     ],
+     "resources": [
+      {
+       "url": "/atoms3d/index.html",
+       "initiator": "navigation",
+       "transferSize": 13644,
+       "encodedBodySize": 13344,
+       "decodedBodySize": 13344,
+       "start_ms": 0,
+       "duration_ms": 311.9,
+       "status": 200,
+       "content_type": "text/html",
+       "content_length": 13344,
+       "server_bytes_sent": 13344,
+       "gzip6_bytes_estimate": 5232
+      },
+      {
+       "url": "/atoms3d/webgl2/atoms3d.js",
+       "initiator": "script",
+       "transferSize": 106181,
+       "encodedBodySize": 105881,
+       "decodedBodySize": 105881,
+       "start_ms": 401.6,
+       "duration_ms": 8.3,
+       "status": 200,
+       "content_type": "text/javascript",
+       "content_length": 105881,
+       "server_bytes_sent": 105881,
+       "gzip6_bytes_estimate": 15377
+      },
+      {
+       "url": "/atoms3d/webgl2/atoms3d_bg.wasm",
+       "initiator": "fetch",
+       "transferSize": 31729901,
+       "encodedBodySize": 31729601,
+       "decodedBodySize": 31729601,
+       "start_ms": 415.9,
+       "duration_ms": 302.7,
+       "status": 200,
+       "content_type": "application/wasm",
+       "content_length": 31729601,
+       "server_bytes_sent": 31729601,
+       "gzip6_bytes_estimate": 9722233
+      }
+     ],
+     "resource_count": 3,
+     "transfer_bytes": 31849726,
+     "encoded_bytes": 31848826,
+     "decoded_bytes": 31848826,
+     "server_bytes_sent": 31848826,
+     "gzip6_bytes_estimate": 9742842,
+     "js_heap_used_bytes": 67837278,
+     "js_heap_total_bytes": 69935030,
+     "wasm_memory_bytes": 60358656,
+     "longtask_supported": true,
+     "console_errors": [],
+     "page_errors": [],
+     "console_warnings": [
+      "No available adapters.",
+      "navigator.gpu exists but requestAdapter() returned null",
+      "No available adapters."
+     ],
+     "console_warning_count": 3,
+     "fail_expression_true_at_ms": null,
+     "host_load1_after": 44.34,
+     "longtasks_to_ready": {
+      "count_over_50ms": 5,
+      "longest_ms": 5051,
+      "total_ms": 7544,
+      "blocking_ms": 7294
+     },
+     "longtasks_in_window": {
+      "count_over_50ms": 1,
+      "longest_ms": 1709,
+      "total_ms": 1709,
+      "blocking_ms": 1659
+     },
+     "longtasks_whole_run": {
+      "count_over_50ms": 6,
+      "longest_ms": 5051,
+      "total_ms": 9253,
+      "blocking_ms": 8953
+     },
+     "stalls_to_ready": {
+      "count_over_50ms": 5,
+      "longest_ms": 6988.7,
+      "total_ms": 7865.2,
+      "blocking_ms": 7615.2
+     },
+     "stalls_in_window": {
+      "count_over_50ms": 3,
+      "longest_ms": 1726.1,
+      "total_ms": 2746.5,
+      "blocking_ms": 2596.5
+     },
+     "window_ms": [
+      11227.7,
+      21233.5
+     ],
+     "frames_harness_clock": {
+      "frames": 187,
+      "fps": 18.69,
+      "median_ms": 19.5,
+      "p95_ms": 48.2,
+      "max_ms": 2554.7
+     },
+     "frames_page_raf": {
+      "frames": 187,
+      "fps": 18.69,
+      "median_ms": 19.5,
+      "p95_ms": 48.2,
+      "max_ms": 2554.7,
+      "callback_median_ms": 4.9,
+      "callback_p95_ms": 8.4,
+      "callback_max_ms": 1709.4,
+      "callback_total_ms": 2681.7
+     },
+     "label": "before_head",
+     "order": "19:06:39",
+     "sweep": 3
+    }
+   ]
+  },
+  "after|desktop": {
+   "runs_ok": 10,
+   "runs": 10,
+   "summary": {
+    "ready_js_ms": {
+     "median": 1764.25,
+     "min": 1387.9,
+     "max": 2531.1
+    },
+    "ready_pixels_ms": {
+     "median": 1768.8,
+     "min": 1392.3,
+     "max": 2542.6
+    },
+    "ready_ms": {
+     "median": 1768.8,
+     "min": 1392.3,
+     "max": 2542.6
+    },
+    "transfer_bytes": {
+     "median": 912403.0,
+     "min": 912403,
+     "max": 912403
+    },
+    "decoded_bytes": {
+     "median": 911503.0,
+     "min": 911503,
+     "max": 911503
+    },
+    "gzip6_bytes_estimate": {
+     "median": 326331.0,
+     "min": 326331,
+     "max": 326331
+    },
+    "resource_count": {
+     "median": 3.0,
+     "min": 3,
+     "max": 3
+    },
+    "longest_task_to_ready_ms": {
+     "median": 99.0,
+     "min": 67,
+     "max": 523
+    },
+    "tasks_over_50ms_to_ready": {
+     "median": 1.0,
+     "min": 1,
+     "max": 1
+    },
+    "blocking_ms_to_ready": {
+     "median": 49.0,
+     "min": 17,
+     "max": 473
+    },
+    "longest_stall_to_ready_ms": {
+     "median": 1594.6,
+     "min": 1278,
+     "max": 2359.5
+    },
+    "stalls_over_50ms_to_ready": {
+     "median": 2.0,
+     "min": 2,
+     "max": 2
+    },
+    "stalled_ms_to_ready": {
+     "median": 1755.2,
+     "min": 1377,
+     "max": 2479.3
+    },
+    "longest_stall_in_window_ms": {
+     "median": 0.0,
+     "min": 0.0,
+     "max": 2643.7
+    },
+    "stalls_over_50ms_in_window": {
+     "median": 0.0,
+     "min": 0,
+     "max": 3
+    },
+    "longest_task_in_window_ms": {
+     "median": 0.0,
+     "min": 0.0,
+     "max": 2634
+    },
+    "tasks_over_50ms_in_window": {
+     "median": 0.0,
+     "min": 0,
+     "max": 3
+    },
+    "longest_task_whole_run_ms": {
+     "median": 128.0,
+     "min": 80,
+     "max": 2634
+    },
+    "tasks_over_50ms_whole_run": {
+     "median": 1.0,
+     "min": 1,
+     "max": 4
+    },
+    "frame_median_ms": {
+     "median": 16.7,
+     "min": 16.7,
+     "max": 75.6
+    },
+    "frame_p95_ms": {
+     "median": 17.35,
+     "min": 16.8,
+     "max": 175.1
+    },
+    "frame_max_ms": {
+     "median": 163.6,
+     "min": 17.1,
+     "max": 2635.0
+    },
+    "fps": {
+     "median": 56.73,
+     "min": 12.19,
+     "max": 60.05
+    },
+    "page_raf_fps": {
+     "median": 56.73,
+     "min": 12.19,
+     "max": 60.05
+    },
+    "page_raf_callback_median_ms": {
+     "median": 0.2,
+     "min": 0.2,
+     "max": 0.3
+    },
+    "page_raf_callback_p95_ms": {
+     "median": 0.35,
+     "min": 0.3,
+     "max": 1.6
+    },
+    "js_heap_used_bytes": {
+     "median": 5553483.0,
+     "min": 5274627,
+     "max": 5623099
+    },
+    "wasm_memory_bytes": {
+     "median": 1572864.0,
+     "min": 1572864,
+     "max": 1572864
+    }
+   },
+   "canvases": [
+    {
+     "id": "c",
+     "width": 1280,
+     "height": 800,
+     "css": [
+      1280,
+      800
+     ]
+    }
+   ],
+   "engine": "holon-draw on webgl2",
+   "graphics_path": "holon-draw on webgl2",
+   "webgl_renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+   "host_load1": [
+    28.61,
+    24.89,
+    26.25,
+    37.98,
+    36.45,
+    36.77,
+    32.88,
+    29.05,
+    37.69,
+    41.76
+   ],
+   "console_errors": 0,
+   "resources": [
+    {
+     "url": "/atoms-draw/index.html",
+     "transferSize": 7139,
+     "decodedBodySize": 6839,
+     "gzip6_bytes_estimate": 2910
+    },
+    {
+     "url": "/atoms-draw/draw.js",
+     "transferSize": 23235,
+     "decodedBodySize": 22935,
+     "gzip6_bytes_estimate": 7971
+    },
+    {
+     "url": "/atoms-draw/holon_draw_atoms.wasm",
+     "transferSize": 882029,
+     "decodedBodySize": 881729,
+     "gzip6_bytes_estimate": 315450
+    }
+   ],
+   "runs_detail": [
+    {
+     "run": 1,
+     "mode": "desktop",
+     "error": null,
+     "host_load1_before": 28.61,
+     "screenshot_ready_plus_1s": "/tmp/claude-1000/-home-emoore-CIRISHolon/4066a70d-c28a-428f-932b-46e9476d96db/scratchpad/compare/after_desktop_ready1s.png",
+     "screenshot_end": "/tmp/claude-1000/-home-emoore-CIRISHolon/4066a70d-c28a-428f-932b-46e9476d96db/scratchpad/compare/after_desktop_end.png",
+     "url": "atoms-draw/index.html",
+     "ready_js_ms": 1387.9,
+     "ready_pixels_ms": 1392.3,
+     "ready_ms": 1392.3,
+     "pixel_probe": {
+      "selector": "canvas",
+      "non_flat_fraction": 0.05823,
+      "distinct_colours": 1136,
+      "screenshots_taken": 1,
+      "last_blank_ms": null,
+      "shot_began_ms": 1392.3,
+      "shot_ended_ms": 1538,
+      "threshold": 0.002
+     },
+     "wall_s": 13.1,
+     "engine": "holon-draw on webgl2",
+     "graphics_path": "holon-draw on webgl2",
+     "webgpu_probe": "navigator.gpu, null adapter",
+     "webgl_renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+     "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+     "device_pixel_ratio": 1,
+     "canvases": [
+      {
+       "id": "c",
+       "width": 1280,
+       "height": 800,
+       "css": [
+        1280,
+        800
+       ]
+      }
+     ],
+     "resources": [
+      {
+       "url": "/atoms-draw/index.html",
+       "initiator": "navigation",
+       "transferSize": 7139,
+       "encodedBodySize": 6839,
+       "decodedBodySize": 6839,
+       "start_ms": 0,
+       "duration_ms": 99.3,
+       "status": 200,
+       "content_type": "text/html",
+       "content_length": 6839,
+       "server_bytes_sent": 6839,
+       "gzip6_bytes_estimate": 2910
+      },
+      {
+       "url": "/atoms-draw/draw.js",
+       "initiator": "script",
+       "transferSize": 23235,
+       "encodedBodySize": 22935,
+       "decodedBodySize": 22935,
+       "start_ms": 9.3,
+       "duration_ms": 1.6,
+       "status": 200,
+       "content_type": "text/javascript",
+       "content_length": 22935,
+       "server_bytes_sent": 22935,
+       "gzip6_bytes_estimate": 7971
+      },
+      {
+       "url": "/atoms-draw/holon_draw_atoms.wasm",
+       "initiator": "fetch",
+       "transferSize": 882029,
+       "encodedBodySize": 881729,
+       "decodedBodySize": 881729,
+       "start_ms": 92,
+       "duration_ms": 2.8,
+       "status": 200,
+       "content_type": "application/wasm",
+       "content_length": 881729,
+       "server_bytes_sent": 881729,
+       "gzip6_bytes_estimate": 315450
+      }
+     ],
+     "resource_count": 3,
+     "transfer_bytes": 912403,
+     "encoded_bytes": 911503,
+     "decoded_bytes": 911503,
+     "server_bytes_sent": 911503,
+     "gzip6_bytes_estimate": 326331,
+     "js_heap_used_bytes": 5609811,
+     "js_heap_total_bytes": 7316967,
+     "wasm_memory_bytes": 1572864,
+     "longtask_supported": true,
+     "console_errors": [],
+     "page_errors": [],
+     "console_warnings": [
+      "No available adapters."
+     ],
+     "console_warning_count": 1,
+     "fail_expression_true_at_ms": null,
+     "host_load1_after": 25.52,
+     "longtasks_to_ready": {
+      "count_over_50ms": 1,
+      "longest_ms": 87,
+      "total_ms": 87,
+      "blocking_ms": 37
+     },
+     "longtasks_in_window": {
+      "count_over_50ms": 1,
+      "longest_ms": 337,
+      "total_ms": 337,
+      "blocking_ms": 287
+     },
+     "longtasks_whole_run": {
+      "count_over_50ms": 2,
+      "longest_ms": 337,
+      "total_ms": 424,
+      "blocking_ms": 324
+     },
+     "stalls_to_ready": {
+      "count_over_50ms": 2,
+      "longest_ms": 1278,
+      "total_ms": 1377,
+      "blocking_ms": 1277
+     },
+     "stalls_in_window": {
+      "count_over_50ms": 1,
+      "longest_ms": 341.8,
+      "total_ms": 341.8,
+      "blocking_ms": 291.8
+     },
+     "window_ms": [
+      2923.2,
+      12926.1
+     ],
+     "frames_harness_clock": {
+      "frames": 581,
+      "fps": 58.08,
+      "median_ms": 16.7,
+      "p95_ms": 16.9,
+      "max_ms": 349.7
+     },
+     "frames_page_raf": {
+      "frames": 581,
+      "fps": 58.08,
+      "median_ms": 16.7,
+      "p95_ms": 16.9,
+      "max_ms": 349.7,
+      "callback_median_ms": 0.2,
+      "callback_p95_ms": 0.3,
+      "callback_max_ms": 336.4,
+      "callback_total_ms": 452.1
+     },
+     "label": "after",
+     "order": "18:57:14",
+     "sweep": 2
+    },
+    {
+     "run": 2,
+     "mode": "desktop",
+     "error": null,
+     "host_load1_before": 24.89,
+     "url": "atoms-draw/index.html",
+     "ready_js_ms": 1438.5,
+     "ready_pixels_ms": 1442.9,
+     "ready_ms": 1442.9,
+     "pixel_probe": {
+      "selector": "canvas",
+      "non_flat_fraction": 0.05823,
+      "distinct_colours": 1136,
+      "screenshots_taken": 1,
+      "last_blank_ms": null,
+      "shot_began_ms": 1442.9,
+      "shot_ended_ms": 1601.4,
+      "threshold": 0.002
+     },
+     "wall_s": 12.7,
+     "engine": "holon-draw on webgl2",
+     "graphics_path": "holon-draw on webgl2",
+     "webgpu_probe": "navigator.gpu, null adapter",
+     "webgl_renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+     "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+     "device_pixel_ratio": 1,
+     "canvases": [
+      {
+       "id": "c",
+       "width": 1280,
+       "height": 800,
+       "css": [
+        1280,
+        800
+       ]
+      }
+     ],
+     "resources": [
+      {
+       "url": "/atoms-draw/index.html",
+       "initiator": "navigation",
+       "transferSize": 7139,
+       "encodedBodySize": 6839,
+       "decodedBodySize": 6839,
+       "start_ms": 0,
+       "duration_ms": 100.8,
+       "status": 200,
+       "content_type": "text/html",
+       "content_length": 6839,
+       "server_bytes_sent": 6839,
+       "gzip6_bytes_estimate": 2910
+      },
+      {
+       "url": "/atoms-draw/draw.js",
+       "initiator": "script",
+       "transferSize": 23235,
+       "encodedBodySize": 22935,
+       "decodedBodySize": 22935,
+       "start_ms": 10.6,
+       "duration_ms": 1.8,
+       "status": 200,
+       "content_type": "text/javascript",
+       "content_length": 22935,
+       "server_bytes_sent": 22935,
+       "gzip6_bytes_estimate": 7971
+      },
+      {
+       "url": "/atoms-draw/holon_draw_atoms.wasm",
+       "initiator": "fetch",
+       "transferSize": 882029,
+       "encodedBodySize": 881729,
+       "decodedBodySize": 881729,
+       "start_ms": 90.4,
+       "duration_ms": 2.5,
+       "status": 200,
+       "content_type": "application/wasm",
+       "content_length": 881729,
+       "server_bytes_sent": 881729,
+       "gzip6_bytes_estimate": 315450
+      }
+     ],
+     "resource_count": 3,
+     "transfer_bytes": 912403,
+     "encoded_bytes": 911503,
+     "decoded_bytes": 911503,
+     "server_bytes_sent": 911503,
+     "gzip6_bytes_estimate": 326331,
+     "js_heap_used_bytes": 5576235,
+     "js_heap_total_bytes": 7316967,
+     "wasm_memory_bytes": 1572864,
+     "longtask_supported": true,
+     "console_errors": [],
+     "page_errors": [],
+     "console_warnings": [
+      "No available adapters."
+     ],
+     "console_warning_count": 1,
+     "fail_expression_true_at_ms": null,
+     "host_load1_after": 24.91,
+     "longtasks_to_ready": {
+      "count_over_50ms": 1,
+      "longest_ms": 87,
+      "total_ms": 87,
+      "blocking_ms": 37
+     },
+     "longtasks_in_window": {
+      "count_over_50ms": 0,
+      "longest_ms": 0.0,
+      "total_ms": 0,
+      "blocking_ms": 0
+     },
+     "longtasks_whole_run": {
+      "count_over_50ms": 1,
+      "longest_ms": 87,
+      "total_ms": 87,
+      "blocking_ms": 37
+     },
+     "stalls_to_ready": {
+      "count_over_50ms": 2,
+      "longest_ms": 1325.7,
+      "total_ms": 1429.5,
+      "blocking_ms": 1329.5
+     },
+     "stalls_in_window": {
+      "count_over_50ms": 0,
+      "longest_ms": 0.0,
+      "total_ms": 0,
+      "blocking_ms": 0
+     },
+     "window_ms": [
+      2639.1,
+      12642.7
+     ],
+     "frames_harness_clock": {
+      "frames": 600,
+      "fps": 59.98,
+      "median_ms": 16.7,
+      "p95_ms": 16.8,
+      "max_ms": 17.1
+     },
+     "frames_page_raf": {
+      "frames": 600,
+      "fps": 59.98,
+      "median_ms": 16.7,
+      "p95_ms": 16.8,
+      "max_ms": 17.1,
+      "callback_median_ms": 0.2,
+      "callback_p95_ms": 0.3,
+      "callback_max_ms": 0.7,
+      "callback_total_ms": 128.5
+     },
+     "label": "after",
+     "order": "18:57:42",
+     "sweep": 2
+    },
+    {
+     "run": 3,
+     "mode": "desktop",
+     "error": null,
+     "host_load1_before": 26.25,
+     "url": "atoms-draw/index.html",
+     "ready_js_ms": 2465.4,
+     "ready_pixels_ms": 2485.5,
+     "ready_ms": 2485.5,
+     "pixel_probe": {
+      "selector": "canvas",
+      "non_flat_fraction": 0.05824,
+      "distinct_colours": 1146,
+      "screenshots_taken": 1,
+      "last_blank_ms": null,
+      "shot_began_ms": 2485.5,
+      "shot_ended_ms": 3636.8,
+      "threshold": 0.002
+     },
+     "wall_s": 14.97,
+     "engine": "holon-draw on webgl2",
+     "graphics_path": "holon-draw on webgl2",
+     "webgpu_probe": "navigator.gpu, null adapter",
+     "webgl_renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+     "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+     "device_pixel_ratio": 1,
+     "canvases": [
+      {
+       "id": "c",
+       "width": 1280,
+       "height": 800,
+       "css": [
+        1280,
+        800
+       ]
+      }
+     ],
+     "resources": [
+      {
+       "url": "/atoms-draw/index.html",
+       "initiator": "navigation",
+       "transferSize": 7139,
+       "encodedBodySize": 6839,
+       "decodedBodySize": 6839,
+       "start_ms": 0,
+       "duration_ms": 95,
+       "status": 200,
+       "content_type": "text/html",
+       "content_length": 6839,
+       "server_bytes_sent": 6839,
+       "gzip6_bytes_estimate": 2910
+      },
+      {
+       "url": "/atoms-draw/draw.js",
+       "initiator": "script",
+       "transferSize": 23235,
+       "encodedBodySize": 22935,
+       "decodedBodySize": 22935,
+       "start_ms": 7,
+       "duration_ms": 3.1,
+       "status": 200,
+       "content_type": "text/javascript",
+       "content_length": 22935,
+       "server_bytes_sent": 22935,
+       "gzip6_bytes_estimate": 7971
+      },
+      {
+       "url": "/atoms-draw/holon_draw_atoms.wasm",
+       "initiator": "fetch",
+       "transferSize": 882029,
+       "encodedBodySize": 881729,
+       "decodedBodySize": 881729,
+       "start_ms": 87.2,
+       "duration_ms": 1.7,
+       "status": 200,
+       "content_type": "application/wasm",
+       "content_length": 881729,
+       "server_bytes_sent": 881729,
+       "gzip6_bytes_estimate": 315450
+      }
+     ],
+     "resource_count": 3,
+     "transfer_bytes": 912403,
+     "encoded_bytes": 911503,
+     "decoded_bytes": 911503,
+     "server_bytes_sent": 911503,
+     "gzip6_bytes_estimate": 326331,
+     "js_heap_used_bytes": 5274627,
+     "js_heap_total_bytes": 7054823,
+     "wasm_memory_bytes": 1572864,
+     "longtask_supported": true,
+     "console_errors": [],
+     "page_errors": [],
+     "console_warnings": [
+      "No available adapters."
+     ],
+     "console_warning_count": 1,
+     "fail_expression_true_at_ms": null,
+     "host_load1_after": 34.79,
+     "longtasks_to_ready": {
+      "count_over_50ms": 1,
+      "longest_ms": 84,
+      "total_ms": 84,
+      "blocking_ms": 34
+     },
+     "longtasks_in_window": {
+      "count_over_50ms": 0,
+      "longest_ms": 0.0,
+      "total_ms": 0,
+      "blocking_ms": 0
+     },
+     "longtasks_whole_run": {
+      "count_over_50ms": 1,
+      "longest_ms": 84,
+      "total_ms": 84,
+      "blocking_ms": 34
+     },
+     "stalls_to_ready": {
+      "count_over_50ms": 2,
+      "longest_ms": 2359.5,
+      "total_ms": 2456.3,
+      "blocking_ms": 2356.3
+     },
+     "stalls_in_window": {
+      "count_over_50ms": 0,
+      "longest_ms": 0.0,
+      "total_ms": 0,
+      "blocking_ms": 0
+     },
+     "window_ms": [
+      4735.9,
+      14743.4
+     ],
+     "frames_harness_clock": {
+      "frames": 122,
+      "fps": 12.19,
+      "median_ms": 75.6,
+      "p95_ms": 175.1,
+      "max_ms": 214.9
+     },
+     "frames_page_raf": {
+      "frames": 122,
+      "fps": 12.19,
+      "median_ms": 75.6,
+      "p95_ms": 175.0,
+      "max_ms": 215.0,
+      "callback_median_ms": 0.3,
+      "callback_p95_ms": 0.4,
+      "callback_max_ms": 0.5,
+      "callback_total_ms": 34.2
+     },
+     "label": "after",
+     "order": "18:58:16",
+     "sweep": 2
+    },
+    {
+     "run": 4,
+     "mode": "desktop",
+     "error": null,
+     "host_load1_before": 37.98,
+     "url": "atoms-draw/index.html",
+     "ready_js_ms": 1526.8,
+     "ready_pixels_ms": 1531.6,
+     "ready_ms": 1531.6,
+     "pixel_probe": {
+      "selector": "canvas",
+      "non_flat_fraction": 0.05823,
+      "distinct_colours": 1136,
+      "screenshots_taken": 1,
+      "last_blank_ms": null,
+      "shot_began_ms": 1531.6,
+      "shot_ended_ms": 1696.6,
+      "threshold": 0.002
+     },
+     "wall_s": 12.78,
+     "engine": "holon-draw on webgl2",
+     "graphics_path": "holon-draw on webgl2",
+     "webgpu_probe": "navigator.gpu, null adapter",
+     "webgl_renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+     "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+     "device_pixel_ratio": 1,
+     "canvases": [
+      {
+       "id": "c",
+       "width": 1280,
+       "height": 800,
+       "css": [
+        1280,
+        800
+       ]
+      }
+     ],
+     "resources": [
+      {
+       "url": "/atoms-draw/index.html",
+       "initiator": "navigation",
+       "transferSize": 7139,
+       "encodedBodySize": 6839,
+       "decodedBodySize": 6839,
+       "start_ms": 0,
+       "duration_ms": 91.2,
+       "status": 200,
+       "content_type": "text/html",
+       "content_length": 6839,
+       "server_bytes_sent": 6839,
+       "gzip6_bytes_estimate": 2910
+      },
+      {
+       "url": "/atoms-draw/draw.js",
+       "initiator": "script",
+       "transferSize": 23235,
+       "encodedBodySize": 22935,
+       "decodedBodySize": 22935,
+       "start_ms": 7.9,
+       "duration_ms": 1.9,
+       "status": 200,
+       "content_type": "text/javascript",
+       "content_length": 22935,
+       "server_bytes_sent": 22935,
+       "gzip6_bytes_estimate": 7971
+      },
+      {
+       "url": "/atoms-draw/holon_draw_atoms.wasm",
+       "initiator": "fetch",
+       "transferSize": 882029,
+       "encodedBodySize": 881729,
+       "decodedBodySize": 881729,
+       "start_ms": 82.6,
+       "duration_ms": 2.6,
+       "status": 200,
+       "content_type": "application/wasm",
+       "content_length": 881729,
+       "server_bytes_sent": 881729,
+       "gzip6_bytes_estimate": 315450
+      }
+     ],
+     "resource_count": 3,
+     "transfer_bytes": 912403,
+     "encoded_bytes": 911503,
+     "decoded_bytes": 911503,
+     "server_bytes_sent": 911503,
+     "gzip6_bytes_estimate": 326331,
+     "js_heap_used_bytes": 5528835,
+     "js_heap_total_bytes": 7579111,
+     "wasm_memory_bytes": 1572864,
+     "longtask_supported": true,
+     "console_errors": [],
+     "page_errors": [],
+     "console_warnings": [
+      "No available adapters."
+     ],
+     "console_warning_count": 1,
+     "fail_expression_true_at_ms": null,
+     "host_load1_after": 35.26,
+     "longtasks_to_ready": {
+      "count_over_50ms": 1,
+      "longest_ms": 80,
+      "total_ms": 80,
+      "blocking_ms": 30
+     },
+     "longtasks_in_window": {
+      "count_over_50ms": 0,
+      "longest_ms": 0.0,
+      "total_ms": 0,
+      "blocking_ms": 0
+     },
+     "longtasks_whole_run": {
+      "count_over_50ms": 1,
+      "longest_ms": 80,
+      "total_ms": 80,
+      "blocking_ms": 30
+     },
+     "stalls_to_ready": {
+      "count_over_50ms": 2,
+      "longest_ms": 1426.4,
+      "total_ms": 1520.1,
+      "blocking_ms": 1420.1
+     },
+     "stalls_in_window": {
+      "count_over_50ms": 0,
+      "longest_ms": 0.0,
+      "total_ms": 0,
+      "blocking_ms": 0
+     },
+     "window_ms": [
+      2737.2,
+      12740
+     ],
+     "frames_harness_clock": {
+      "frames": 543,
+      "fps": 54.28,
+      "median_ms": 16.7,
+      "p95_ms": 29.8,
+      "max_ms": 112.3
+     },
+     "frames_page_raf": {
+      "frames": 543,
+      "fps": 54.28,
+      "median_ms": 16.7,
+      "p95_ms": 29.8,
+      "max_ms": 112.3,
+      "callback_median_ms": 0.2,
+      "callback_p95_ms": 0.3,
+      "callback_max_ms": 1.1,
+      "callback_total_ms": 127.9
+     },
+     "label": "after",
+     "order": "18:58:51",
+     "sweep": 2
+    },
+    {
+     "run": 5,
+     "mode": "desktop",
+     "error": null,
+     "host_load1_before": 36.45,
+     "url": "atoms-draw/index.html",
+     "ready_js_ms": 1653.8,
+     "ready_pixels_ms": 1657.5,
+     "ready_ms": 1657.5,
+     "pixel_probe": {
+      "selector": "canvas",
+      "non_flat_fraction": 0.05823,
+      "distinct_colours": 1136,
+      "screenshots_taken": 1,
+      "last_blank_ms": null,
+      "shot_began_ms": 1657.5,
+      "shot_ended_ms": 1845,
+      "threshold": 0.002
+     },
+     "wall_s": 12.96,
+     "engine": "holon-draw on webgl2",
+     "graphics_path": "holon-draw on webgl2",
+     "webgpu_probe": "navigator.gpu, null adapter",
+     "webgl_renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+     "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+     "device_pixel_ratio": 1,
+     "canvases": [
+      {
+       "id": "c",
+       "width": 1280,
+       "height": 800,
+       "css": [
+        1280,
+        800
+       ]
+      }
+     ],
+     "resources": [
+      {
+       "url": "/atoms-draw/index.html",
+       "initiator": "navigation",
+       "transferSize": 7139,
+       "encodedBodySize": 6839,
+       "decodedBodySize": 6839,
+       "start_ms": 0,
+       "duration_ms": 146.1,
+       "status": 200,
+       "content_type": "text/html",
+       "content_length": 6839,
+       "server_bytes_sent": 6839,
+       "gzip6_bytes_estimate": 2910
+      },
+      {
+       "url": "/atoms-draw/draw.js",
+       "initiator": "script",
+       "transferSize": 23235,
+       "encodedBodySize": 22935,
+       "decodedBodySize": 22935,
+       "start_ms": 8.6,
+       "duration_ms": 2,
+       "status": 200,
+       "content_type": "text/javascript",
+       "content_length": 22935,
+       "server_bytes_sent": 22935,
+       "gzip6_bytes_estimate": 7971
+      },
+      {
+       "url": "/atoms-draw/holon_draw_atoms.wasm",
+       "initiator": "fetch",
+       "transferSize": 882029,
+       "encodedBodySize": 881729,
+       "decodedBodySize": 881729,
+       "start_ms": 134.5,
+       "duration_ms": 3,
+       "status": 200,
+       "content_type": "application/wasm",
+       "content_length": 881729,
+       "server_bytes_sent": 881729,
+       "gzip6_bytes_estimate": 315450
+      }
+     ],
+     "resource_count": 3,
+     "transfer_bytes": 912403,
+     "encoded_bytes": 911503,
+     "decoded_bytes": 911503,
+     "server_bytes_sent": 911503,
+     "gzip6_bytes_estimate": 326331,
+     "js_heap_used_bytes": 5571275,
+     "js_heap_total_bytes": 7316967,
+     "wasm_memory_bytes": 1572864,
+     "longtask_supported": true,
+     "console_errors": [],
+     "page_errors": [],
+     "console_warnings": [
+      "No available adapters."
+     ],
+     "console_warning_count": 1,
+     "fail_expression_true_at_ms": null,
+     "host_load1_after": 32.51,
+     "longtasks_to_ready": {
+      "count_over_50ms": 1,
+      "longest_ms": 134,
+      "total_ms": 134,
+      "blocking_ms": 84
+     },
+     "longtasks_in_window": {
+      "count_over_50ms": 0,
+      "longest_ms": 0.0,
+      "total_ms": 0,
+      "blocking_ms": 0
+     },
+     "longtasks_whole_run": {
+      "count_over_50ms": 1,
+      "longest_ms": 134,
+      "total_ms": 134,
+      "blocking_ms": 84
+     },
+     "stalls_to_ready": {
+      "count_over_50ms": 2,
+      "longest_ms": 1486.4,
+      "total_ms": 1640.3,
+      "blocking_ms": 1540.3
+     },
+     "stalls_in_window": {
+      "count_over_50ms": 0,
+      "longest_ms": 0.0,
+      "total_ms": 0,
+      "blocking_ms": 0
+     },
+     "window_ms": [
+      2888.3,
+      12897.4
+     ],
+     "frames_harness_clock": {
+      "frames": 601,
+      "fps": 60.05,
+      "median_ms": 16.7,
+      "p95_ms": 16.8,
+      "max_ms": 23.9
+     },
+     "frames_page_raf": {
+      "frames": 601,
+      "fps": 60.05,
+      "median_ms": 16.7,
+      "p95_ms": 16.9,
+      "max_ms": 24.0,
+      "callback_median_ms": 0.2,
+      "callback_p95_ms": 0.4,
+      "callback_max_ms": 0.7,
+      "callback_total_ms": 146.7
+     },
+     "label": "after",
+     "order": "18:59:23",
+     "sweep": 2
+    },
+    {
+     "run": 1,
+     "mode": "desktop",
+     "error": null,
+     "host_load1_before": 36.77,
+     "screenshot_ready_plus_1s": "/tmp/claude-1000/-home-emoore-CIRISHolon/4066a70d-c28a-428f-932b-46e9476d96db/scratchpad/compare/after_desktop_ready1s.png",
+     "screenshot_end": "/tmp/claude-1000/-home-emoore-CIRISHolon/4066a70d-c28a-428f-932b-46e9476d96db/scratchpad/compare/after_desktop_end.png",
+     "url": "atoms-draw/index.html",
+     "ready_js_ms": 1822.1,
+     "ready_pixels_ms": 1826.3,
+     "ready_ms": 1826.3,
+     "pixel_probe": {
+      "selector": "canvas",
+      "non_flat_fraction": 0.05823,
+      "distinct_colours": 1136,
+      "screenshots_taken": 1,
+      "last_blank_ms": null,
+      "shot_began_ms": 1826.3,
+      "shot_ended_ms": 1994.7,
+      "threshold": 0.002
+     },
+     "wall_s": 13.59,
+     "engine": "holon-draw on webgl2",
+     "graphics_path": "holon-draw on webgl2",
+     "webgpu_probe": "navigator.gpu, null adapter",
+     "webgl_renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+     "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+     "device_pixel_ratio": 1,
+     "canvases": [
+      {
+       "id": "c",
+       "width": 1280,
+       "height": 800,
+       "css": [
+        1280,
+        800
+       ]
+      }
+     ],
+     "resources": [
+      {
+       "url": "/atoms-draw/index.html",
+       "initiator": "navigation",
+       "transferSize": 7139,
+       "encodedBodySize": 6839,
+       "decodedBodySize": 6839,
+       "start_ms": 0,
+       "duration_ms": 198.7,
+       "status": 200,
+       "content_type": "text/html",
+       "content_length": 6839,
+       "server_bytes_sent": 6839,
+       "gzip6_bytes_estimate": 2910
+      },
+      {
+       "url": "/atoms-draw/draw.js",
+       "initiator": "script",
+       "transferSize": 23235,
+       "encodedBodySize": 22935,
+       "decodedBodySize": 22935,
+       "start_ms": 12.1,
+       "duration_ms": 2.7,
+       "status": 200,
+       "content_type": "text/javascript",
+       "content_length": 22935,
+       "server_bytes_sent": 22935,
+       "gzip6_bytes_estimate": 7971
+      },
+      {
+       "url": "/atoms-draw/holon_draw_atoms.wasm",
+       "initiator": "fetch",
+       "transferSize": 882029,
+       "encodedBodySize": 881729,
+       "decodedBodySize": 881729,
+       "start_ms": 186.4,
+       "duration_ms": 3.7,
+       "status": 200,
+       "content_type": "application/wasm",
+       "content_length": 881729,
+       "server_bytes_sent": 881729,
+       "gzip6_bytes_estimate": 315450
+      }
+     ],
+     "resource_count": 3,
+     "transfer_bytes": 912403,
+     "encoded_bytes": 911503,
+     "decoded_bytes": 911503,
+     "server_bytes_sent": 911503,
+     "gzip6_bytes_estimate": 326331,
+     "js_heap_used_bytes": 5623099,
+     "js_heap_total_bytes": 7316967,
+     "wasm_memory_bytes": 1572864,
+     "longtask_supported": true,
+     "console_errors": [],
+     "page_errors": [],
+     "console_warnings": [
+      "No available adapters."
+     ],
+     "console_warning_count": 1,
+     "fail_expression_true_at_ms": null,
+     "host_load1_after": 34.91,
+     "longtasks_to_ready": {
+      "count_over_50ms": 1,
+      "longest_ms": 182,
+      "total_ms": 182,
+      "blocking_ms": 132
+     },
+     "longtasks_in_window": {
+      "count_over_50ms": 0,
+      "longest_ms": 0.0,
+      "total_ms": 0,
+      "blocking_ms": 0
+     },
+     "longtasks_whole_run": {
+      "count_over_50ms": 1,
+      "longest_ms": 182,
+      "total_ms": 182,
+      "blocking_ms": 132
+     },
+     "stalls_to_ready": {
+      "count_over_50ms": 2,
+      "longest_ms": 1601.9,
+      "total_ms": 1805.8,
+      "blocking_ms": 1705.8
+     },
+     "stalls_in_window": {
+      "count_over_50ms": 0,
+      "longest_ms": 0.0,
+      "total_ms": 0,
+      "blocking_ms": 0
+     },
+     "window_ms": [
+      3382.5,
+      13386.4
+     ],
+     "frames_harness_clock": {
+      "frames": 600,
+      "fps": 59.98,
+      "median_ms": 16.7,
+      "p95_ms": 16.9,
+      "max_ms": 22.3
+     },
+     "frames_page_raf": {
+      "frames": 600,
+      "fps": 59.98,
+      "median_ms": 16.7,
+      "p95_ms": 16.9,
+      "max_ms": 22.2,
+      "callback_median_ms": 0.2,
+      "callback_p95_ms": 0.3,
+      "callback_max_ms": 0.9,
+      "callback_total_ms": 137.4
+     },
+     "label": "after",
+     "order": "19:04:09",
+     "sweep": 3
+    },
+    {
+     "run": 2,
+     "mode": "desktop",
+     "error": null,
+     "host_load1_before": 32.88,
+     "url": "atoms-draw/index.html",
+     "ready_js_ms": 1726,
+     "ready_pixels_ms": 1729.7,
+     "ready_ms": 1729.7,
+     "pixel_probe": {
+      "selector": "canvas",
+      "non_flat_fraction": 0.05823,
+      "distinct_colours": 1136,
+      "screenshots_taken": 1,
+      "last_blank_ms": null,
+      "shot_began_ms": 1729.7,
+      "shot_ended_ms": 1890.9,
+      "threshold": 0.002
+     },
+     "wall_s": 12.97,
+     "engine": "holon-draw on webgl2",
+     "graphics_path": "holon-draw on webgl2",
+     "webgpu_probe": "navigator.gpu, null adapter",
+     "webgl_renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+     "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+     "device_pixel_ratio": 1,
+     "canvases": [
+      {
+       "id": "c",
+       "width": 1280,
+       "height": 800,
+       "css": [
+        1280,
+        800
+       ]
+      }
+     ],
+     "resources": [
+      {
+       "url": "/atoms-draw/index.html",
+       "initiator": "navigation",
+       "transferSize": 7139,
+       "encodedBodySize": 6839,
+       "decodedBodySize": 6839,
+       "start_ms": 0,
+       "duration_ms": 126.2,
+       "status": 200,
+       "content_type": "text/html",
+       "content_length": 6839,
+       "server_bytes_sent": 6839,
+       "gzip6_bytes_estimate": 2910
+      },
+      {
+       "url": "/atoms-draw/draw.js",
+       "initiator": "script",
+       "transferSize": 23235,
+       "encodedBodySize": 22935,
+       "decodedBodySize": 22935,
+       "start_ms": 10,
+       "duration_ms": 3.4,
+       "status": 200,
+       "content_type": "text/javascript",
+       "content_length": 22935,
+       "server_bytes_sent": 22935,
+       "gzip6_bytes_estimate": 7971
+      },
+      {
+       "url": "/atoms-draw/holon_draw_atoms.wasm",
+       "initiator": "fetch",
+       "transferSize": 882029,
+       "encodedBodySize": 881729,
+       "decodedBodySize": 881729,
+       "start_ms": 115.6,
+       "duration_ms": 2.5,
+       "status": 200,
+       "content_type": "application/wasm",
+       "content_length": 881729,
+       "server_bytes_sent": 881729,
+       "gzip6_bytes_estimate": 315450
+      }
+     ],
+     "resource_count": 3,
+     "transfer_bytes": 912403,
+     "encoded_bytes": 911503,
+     "decoded_bytes": 911503,
+     "server_bytes_sent": 911503,
+     "gzip6_bytes_estimate": 326331,
+     "js_heap_used_bytes": 5548023,
+     "js_heap_total_bytes": 7316967,
+     "wasm_memory_bytes": 1572864,
+     "longtask_supported": true,
+     "console_errors": [],
+     "page_errors": [],
+     "console_warnings": [
+      "No available adapters."
+     ],
+     "console_warning_count": 1,
+     "fail_expression_true_at_ms": null,
+     "host_load1_after": 30.06,
+     "longtasks_to_ready": {
+      "count_over_50ms": 1,
+      "longest_ms": 111,
+      "total_ms": 111,
+      "blocking_ms": 61
+     },
+     "longtasks_in_window": {
+      "count_over_50ms": 0,
+      "longest_ms": 0.0,
+      "total_ms": 0,
+      "blocking_ms": 0
+     },
+     "longtasks_whole_run": {
+      "count_over_50ms": 1,
+      "longest_ms": 111,
+      "total_ms": 111,
+      "blocking_ms": 61
+     },
+     "stalls_to_ready": {
+      "count_over_50ms": 2,
+      "longest_ms": 1587.3,
+      "total_ms": 1717.8,
+      "blocking_ms": 1617.8
+     },
+     "stalls_in_window": {
+      "count_over_50ms": 0,
+      "longest_ms": 0.0,
+      "total_ms": 0,
+      "blocking_ms": 0
+     },
+     "window_ms": [
+      2928.2,
+      12931.1
+     ],
+     "frames_harness_clock": {
+      "frames": 600,
+      "fps": 59.98,
+      "median_ms": 16.7,
+      "p95_ms": 16.8,
+      "max_ms": 17.7
+     },
+     "frames_page_raf": {
+      "frames": 600,
+      "fps": 59.98,
+      "median_ms": 16.7,
+      "p95_ms": 16.8,
+      "max_ms": 17.7,
+      "callback_median_ms": 0.2,
+      "callback_p95_ms": 0.3,
+      "callback_max_ms": 0.6,
+      "callback_total_ms": 129.3
+     },
+     "label": "after",
+     "order": "19:04:39",
+     "sweep": 3
+    },
+    {
+     "run": 3,
+     "mode": "desktop",
+     "error": null,
+     "host_load1_before": 29.05,
+     "url": "atoms-draw/index.html",
+     "ready_js_ms": 1802.5,
+     "ready_pixels_ms": 1807.9,
+     "ready_ms": 1807.9,
+     "pixel_probe": {
+      "selector": "canvas",
+      "non_flat_fraction": 0.05824,
+      "distinct_colours": 1142,
+      "screenshots_taken": 1,
+      "last_blank_ms": null,
+      "shot_began_ms": 1807.9,
+      "shot_ended_ms": 2011.8,
+      "threshold": 0.002
+     },
+     "wall_s": 13.51,
+     "engine": "holon-draw on webgl2",
+     "graphics_path": "holon-draw on webgl2",
+     "webgpu_probe": "navigator.gpu, null adapter",
+     "webgl_renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+     "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+     "device_pixel_ratio": 1,
+     "canvases": [
+      {
+       "id": "c",
+       "width": 1280,
+       "height": 800,
+       "css": [
+        1280,
+        800
+       ]
+      }
+     ],
+     "resources": [
+      {
+       "url": "/atoms-draw/index.html",
+       "initiator": "navigation",
+       "transferSize": 7139,
+       "encodedBodySize": 6839,
+       "decodedBodySize": 6839,
+       "start_ms": 0,
+       "duration_ms": 137.3,
+       "status": 200,
+       "content_type": "text/html",
+       "content_length": 6839,
+       "server_bytes_sent": 6839,
+       "gzip6_bytes_estimate": 2910
+      },
+      {
+       "url": "/atoms-draw/draw.js",
+       "initiator": "script",
+       "transferSize": 23235,
+       "encodedBodySize": 22935,
+       "decodedBodySize": 22935,
+       "start_ms": 11.4,
+       "duration_ms": 2.4,
+       "status": 200,
+       "content_type": "text/javascript",
+       "content_length": 22935,
+       "server_bytes_sent": 22935,
+       "gzip6_bytes_estimate": 7971
+      },
+      {
+       "url": "/atoms-draw/holon_draw_atoms.wasm",
+       "initiator": "fetch",
+       "transferSize": 882029,
+       "encodedBodySize": 881729,
+       "decodedBodySize": 881729,
+       "start_ms": 125.9,
+       "duration_ms": 3.4,
+       "status": 200,
+       "content_type": "application/wasm",
+       "content_length": 881729,
+       "server_bytes_sent": 881729,
+       "gzip6_bytes_estimate": 315450
+      }
+     ],
+     "resource_count": 3,
+     "transfer_bytes": 912403,
+     "encoded_bytes": 911503,
+     "decoded_bytes": 911503,
+     "server_bytes_sent": 911503,
+     "gzip6_bytes_estimate": 326331,
+     "js_heap_used_bytes": 5363691,
+     "js_heap_total_bytes": 7316967,
+     "wasm_memory_bytes": 1572864,
+     "longtask_supported": true,
+     "console_errors": [],
+     "page_errors": [],
+     "console_warnings": [
+      "No available adapters."
+     ],
+     "console_warning_count": 1,
+     "fail_expression_true_at_ms": null,
+     "host_load1_after": 32.27,
+     "longtasks_to_ready": {
+      "count_over_50ms": 1,
+      "longest_ms": 122,
+      "total_ms": 122,
+      "blocking_ms": 72
+     },
+     "longtasks_in_window": {
+      "count_over_50ms": 0,
+      "longest_ms": 0.0,
+      "total_ms": 0,
+      "blocking_ms": 0
+     },
+     "longtasks_whole_run": {
+      "count_over_50ms": 1,
+      "longest_ms": 122,
+      "total_ms": 122,
+      "blocking_ms": 72
+     },
+     "stalls_to_ready": {
+      "count_over_50ms": 2,
+      "longest_ms": 1649.6,
+      "total_ms": 1792.6,
+      "blocking_ms": 1692.6
+     },
+     "stalls_in_window": {
+      "count_over_50ms": 1,
+      "longest_ms": 148.9,
+      "total_ms": 148.9,
+      "blocking_ms": 98.9
+     },
+     "window_ms": [
+      3044.6,
+      13051.6
+     ],
+     "frames_harness_clock": {
+      "frames": 415,
+      "fps": 41.47,
+      "median_ms": 16.7,
+      "p95_ms": 62.9,
+      "max_ms": 234.7
+     },
+     "frames_page_raf": {
+      "frames": 415,
+      "fps": 41.47,
+      "median_ms": 16.7,
+      "p95_ms": 62.9,
+      "max_ms": 234.7,
+      "callback_median_ms": 0.3,
+      "callback_p95_ms": 0.5,
+      "callback_max_ms": 3.6,
+      "callback_total_ms": 133.7
+     },
+     "label": "after",
+     "order": "19:05:09",
+     "sweep": 3
+    },
+    {
+     "run": 4,
+     "mode": "desktop",
+     "error": null,
+     "host_load1_before": 37.69,
+     "url": "atoms-draw/index.html",
+     "ready_js_ms": 2531.1,
+     "ready_pixels_ms": 2542.6,
+     "ready_ms": 2542.6,
+     "pixel_probe": {
+      "selector": "canvas",
+      "non_flat_fraction": 0.05824,
+      "distinct_colours": 1136,
+      "screenshots_taken": 1,
+      "last_blank_ms": null,
+      "shot_began_ms": 2542.6,
+      "shot_ended_ms": 2848.5,
+      "threshold": 0.002
+     },
+     "wall_s": 14.04,
+     "engine": "holon-draw on webgl2",
+     "graphics_path": "holon-draw on webgl2",
+     "webgpu_probe": "navigator.gpu, null adapter",
+     "webgl_renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+     "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+     "device_pixel_ratio": 1,
+     "canvases": [
+      {
+       "id": "c",
+       "width": 1280,
+       "height": 800,
+       "css": [
+        1280,
+        800
+       ]
+      }
+     ],
+     "resources": [
+      {
+       "url": "/atoms-draw/index.html",
+       "initiator": "navigation",
+       "transferSize": 7139,
+       "encodedBodySize": 6839,
+       "decodedBodySize": 6839,
+       "start_ms": 0,
+       "duration_ms": 557.5,
+       "status": 200,
+       "content_type": "text/html",
+       "content_length": 6839,
+       "server_bytes_sent": 6839,
+       "gzip6_bytes_estimate": 2910
+      },
+      {
+       "url": "/atoms-draw/draw.js",
+       "initiator": "script",
+       "transferSize": 23235,
+       "encodedBodySize": 22935,
+       "decodedBodySize": 22935,
+       "start_ms": 25,
+       "duration_ms": 6.6,
+       "status": 200,
+       "content_type": "text/javascript",
+       "content_length": 22935,
+       "server_bytes_sent": 22935,
+       "gzip6_bytes_estimate": 7971
+      },
+      {
+       "url": "/atoms-draw/holon_draw_atoms.wasm",
+       "initiator": "fetch",
+       "transferSize": 882029,
+       "encodedBodySize": 881729,
+       "decodedBodySize": 881729,
+       "start_ms": 534.8,
+       "duration_ms": 5.6,
+       "status": 200,
+       "content_type": "application/wasm",
+       "content_length": 881729,
+       "server_bytes_sent": 881729,
+       "gzip6_bytes_estimate": 315450
+      }
+     ],
+     "resource_count": 3,
+     "transfer_bytes": 912403,
+     "encoded_bytes": 911503,
+     "decoded_bytes": 911503,
+     "server_bytes_sent": 911503,
+     "gzip6_bytes_estimate": 326331,
+     "js_heap_used_bytes": 5366655,
+     "js_heap_total_bytes": 7316967,
+     "wasm_memory_bytes": 1572864,
+     "longtask_supported": true,
+     "console_errors": [],
+     "page_errors": [],
+     "console_warnings": [
+      "No available adapters."
+     ],
+     "console_warning_count": 1,
+     "fail_expression_true_at_ms": null,
+     "host_load1_after": 37.54,
+     "longtasks_to_ready": {
+      "count_over_50ms": 1,
+      "longest_ms": 523,
+      "total_ms": 523,
+      "blocking_ms": 473
+     },
+     "longtasks_in_window": {
+      "count_over_50ms": 3,
+      "longest_ms": 2634,
+      "total_ms": 2881,
+      "blocking_ms": 2731
+     },
+     "longtasks_whole_run": {
+      "count_over_50ms": 4,
+      "longest_ms": 2634,
+      "total_ms": 3404,
+      "blocking_ms": 3204
+     },
+     "stalls_to_ready": {
+      "count_over_50ms": 2,
+      "longest_ms": 1930,
+      "total_ms": 2479.3,
+      "blocking_ms": 2379.3
+     },
+     "stalls_in_window": {
+      "count_over_50ms": 3,
+      "longest_ms": 2643.7,
+      "total_ms": 2902.3,
+      "blocking_ms": 2752.3
+     },
+     "window_ms": [
+      3894.2,
+      13900.3
+     ],
+     "frames_harness_clock": {
+      "frames": 410,
+      "fps": 40.98,
+      "median_ms": 16.7,
+      "p95_ms": 17.8,
+      "max_ms": 2635.0
+     },
+     "frames_page_raf": {
+      "frames": 410,
+      "fps": 40.98,
+      "median_ms": 16.7,
+      "p95_ms": 17.8,
+      "max_ms": 2634.9,
+      "callback_median_ms": 0.3,
+      "callback_p95_ms": 0.6,
+      "callback_max_ms": 2633.6,
+      "callback_total_ms": 3004.2
+     },
+     "label": "after",
+     "order": "19:05:52",
+     "sweep": 3
+    },
+    {
+     "run": 5,
+     "mode": "desktop",
+     "error": null,
+     "host_load1_before": 41.76,
+     "url": "atoms-draw/index.html",
+     "ready_js_ms": 2038.9,
+     "ready_pixels_ms": 2043.7,
+     "ready_ms": 2043.7,
+     "pixel_probe": {
+      "selector": "canvas",
+      "non_flat_fraction": 0.05824,
+      "distinct_colours": 1142,
+      "screenshots_taken": 1,
+      "last_blank_ms": null,
+      "shot_began_ms": 2043.7,
+      "shot_ended_ms": 2272.1,
+      "threshold": 0.002
+     },
+     "wall_s": 14.14,
+     "engine": "holon-draw on webgl2",
+     "graphics_path": "holon-draw on webgl2",
+     "webgpu_probe": "navigator.gpu, null adapter",
+     "webgl_renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+     "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+     "device_pixel_ratio": 1,
+     "canvases": [
+      {
+       "id": "c",
+       "width": 1280,
+       "height": 800,
+       "css": [
+        1280,
+        800
+       ]
+      }
+     ],
+     "resources": [
+      {
+       "url": "/atoms-draw/index.html",
+       "initiator": "navigation",
+       "transferSize": 7139,
+       "encodedBodySize": 6839,
+       "decodedBodySize": 6839,
+       "start_ms": 0,
+       "duration_ms": 209,
+       "status": 200,
+       "content_type": "text/html",
+       "content_length": 6839,
+       "server_bytes_sent": 6839,
+       "gzip6_bytes_estimate": 2910
+      },
+      {
+       "url": "/atoms-draw/draw.js",
+       "initiator": "script",
+       "transferSize": 23235,
+       "encodedBodySize": 22935,
+       "decodedBodySize": 22935,
+       "start_ms": 124.3,
+       "duration_ms": 2.1,
+       "status": 200,
+       "content_type": "text/javascript",
+       "content_length": 22935,
+       "server_bytes_sent": 22935,
+       "gzip6_bytes_estimate": 7971
+      },
+      {
+       "url": "/atoms-draw/holon_draw_atoms.wasm",
+       "initiator": "fetch",
+       "transferSize": 882029,
+       "encodedBodySize": 881729,
+       "decodedBodySize": 881729,
+       "start_ms": 208.9,
+       "duration_ms": 3.3,
+       "status": 200,
+       "content_type": "application/wasm",
+       "content_length": 881729,
+       "server_bytes_sent": 881729,
+       "gzip6_bytes_estimate": 315450
+      }
+     ],
+     "resource_count": 3,
+     "transfer_bytes": 912403,
+     "encoded_bytes": 911503,
+     "decoded_bytes": 911503,
+     "server_bytes_sent": 911503,
+     "gzip6_bytes_estimate": 326331,
+     "js_heap_used_bytes": 5558943,
+     "js_heap_total_bytes": 7316967,
+     "wasm_memory_bytes": 1572864,
+     "longtask_supported": true,
+     "console_errors": [],
+     "page_errors": [],
+     "console_warnings": [
+      "No available adapters."
+     ],
+     "console_warning_count": 1,
+     "fail_expression_true_at_ms": null,
+     "host_load1_after": 42.61,
+     "longtasks_to_ready": {
+      "count_over_50ms": 1,
+      "longest_ms": 67,
+      "total_ms": 67,
+      "blocking_ms": 17
+     },
+     "longtasks_in_window": {
+      "count_over_50ms": 1,
+      "longest_ms": 701,
+      "total_ms": 701,
+      "blocking_ms": 651
+     },
+     "longtasks_whole_run": {
+      "count_over_50ms": 2,
+      "longest_ms": 701,
+      "total_ms": 768,
+      "blocking_ms": 668
+     },
+     "stalls_to_ready": {
+      "count_over_50ms": 2,
+      "longest_ms": 1822.2,
+      "total_ms": 1895.2,
+      "blocking_ms": 1795.2
+     },
+     "stalls_in_window": {
+      "count_over_50ms": 2,
+      "longest_ms": 725,
+      "total_ms": 1435.1,
+      "blocking_ms": 1335.1
+     },
+     "window_ms": [
+      3315.5,
+      13318.7
+     ],
+     "frames_harness_clock": {
+      "frames": 554,
+      "fps": 55.38,
+      "median_ms": 16.7,
+      "p95_ms": 19,
+      "max_ms": 703.9
+     },
+     "frames_page_raf": {
+      "frames": 554,
+      "fps": 55.38,
+      "median_ms": 16.7,
+      "p95_ms": 19.0,
+      "max_ms": 703.9,
+      "callback_median_ms": 0.3,
+      "callback_p95_ms": 1.6,
+      "callback_max_ms": 701.2,
+      "callback_total_ms": 976.4
+     },
+     "label": "after",
+     "order": "19:06:56",
+     "sweep": 3
+    }
+   ]
+  },
+  "before_head|phone": {
+   "runs_ok": 6,
+   "runs": 6,
+   "summary": {
+    "ready_js_ms": {
+     "median": 16464.75,
+     "min": 15773.1,
+     "max": 27345.1
+    },
+    "ready_pixels_ms": {
+     "median": 18058.25,
+     "min": 17025.8,
+     "max": 28481.4
+    },
+    "ready_ms": {
+     "median": 18058.25,
+     "min": 17025.8,
+     "max": 28481.4
+    },
+    "transfer_bytes": {
+     "median": 31849726.0,
+     "min": 31849726,
+     "max": 31849726
+    },
+    "decoded_bytes": {
+     "median": 31848826.0,
+     "min": 31848826,
+     "max": 31848826
+    },
+    "gzip6_bytes_estimate": {
+     "median": 9742842.0,
+     "min": 9742842,
+     "max": 9742842
+    },
+    "resource_count": {
+     "median": 3.0,
+     "min": 3,
+     "max": 3
+    },
+    "longest_task_to_ready_ms": {
+     "median": 11670.5,
+     "min": 10391,
+     "max": 16802
+    },
+    "tasks_over_50ms_to_ready": {
+     "median": 5.0,
+     "min": 4,
+     "max": 5
+    },
+    "blocking_ms_to_ready": {
+     "median": 16999.0,
+     "min": 16097,
+     "max": 26191
+    },
+    "longest_stall_to_ready_ms": {
+     "median": 15764.4,
+     "min": 15118.4,
+     "max": 25316.7
+    },
+    "stalls_over_50ms_to_ready": {
+     "median": 7.0,
+     "min": 7,
+     "max": 8
+    },
+    "stalled_ms_to_ready": {
+     "median": 17978.05,
+     "min": 17021.0,
+     "max": 27114.9
+    },
+    "longest_stall_in_window_ms": {
+     "median": 205.55,
+     "min": 90.9,
+     "max": 1460
+    },
+    "stalls_over_50ms_in_window": {
+     "median": 97.5,
+     "min": 85,
+     "max": 127
+    },
+    "longest_task_in_window_ms": {
+     "median": 126.0,
+     "min": 0.0,
+     "max": 1435
+    },
+    "tasks_over_50ms_in_window": {
+     "median": 11.5,
+     "min": 0,
+     "max": 78
+    },
+    "longest_task_whole_run_ms": {
+     "median": 11670.5,
+     "min": 10391,
+     "max": 16802
+    },
+    "tasks_over_50ms_whole_run": {
+     "median": 17.5,
+     "min": 6,
+     "max": 119
+    },
+    "frame_median_ms": {
+     "median": 32.7,
+     "min": 27.1,
+     "max": 53.85
+    },
+    "frame_p95_ms": {
+     "median": 59.65,
+     "min": 36.2,
+     "max": 126.4
+    },
+    "frame_max_ms": {
+     "median": 223.5,
+     "min": 58.7,
+     "max": 1435.7
+    },
+    "fps": {
+     "median": 29.4,
+     "min": 15.15,
+     "max": 31.71
+    },
+    "page_raf_fps": {
+     "median": 29.4,
+     "min": 15.15,
+     "max": 31.71
+    },
+    "page_raf_callback_median_ms": {
+     "median": 30.9,
+     "min": 25.35,
+     "max": 44.3
+    },
+    "page_raf_callback_p95_ms": {
+     "median": 47.25,
+     "min": 33.5,
+     "max": 93.8
+    },
+    "js_heap_used_bytes": {
+     "median": 59710884.0,
+     "min": 56402864,
+     "max": 64096438
+    },
+    "wasm_memory_bytes": {
+     "median": 52559872.0,
+     "min": 49020928,
+     "max": 57081856
+    }
+   },
+   "canvases": [
+    {
+     "id": "atoms3d",
+     "width": 390,
+     "height": 844,
+     "css": [
+      390,
+      844
+     ]
+    }
+   ],
+   "engine": null,
+   "graphics_path": "webgl2",
+   "webgl_renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+   "host_load1": [
+    32.51,
+    28.65,
+    25.79,
+    42.61,
+    30.28,
+    23.19
+   ],
+   "console_errors": 0,
+   "resources": [
+    {
+     "url": "/atoms3d/index.html",
+     "transferSize": 13644,
+     "decodedBodySize": 13344,
+     "gzip6_bytes_estimate": 5232
+    },
+    {
+     "url": "/atoms3d/webgl2/atoms3d.js",
+     "transferSize": 106181,
+     "decodedBodySize": 105881,
+     "gzip6_bytes_estimate": 15377
+    },
+    {
+     "url": "/atoms3d/webgl2/atoms3d_bg.wasm",
+     "transferSize": 31729901,
+     "decodedBodySize": 31729601,
+     "gzip6_bytes_estimate": 9722233
+    }
+   ],
+   "runs_detail": [
+    {
+     "run": 1,
+     "mode": "phone",
+     "error": null,
+     "host_load1_before": 32.51,
+     "screenshot_ready_plus_1s": "/tmp/claude-1000/-home-emoore-CIRISHolon/4066a70d-c28a-428f-932b-46e9476d96db/scratchpad/compare/before_head_phone_ready1s.png",
+     "screenshot_end": "/tmp/claude-1000/-home-emoore-CIRISHolon/4066a70d-c28a-428f-932b-46e9476d96db/scratchpad/compare/before_head_phone_end.png",
+     "url": "atoms3d/index.html",
+     "ready_js_ms": 17472.2,
+     "ready_pixels_ms": 18559.1,
+     "ready_ms": 18559.1,
+     "pixel_probe": {
+      "selector": "canvas",
+      "non_flat_fraction": 0.52408,
+      "distinct_colours": 5562,
+      "screenshots_taken": 1,
+      "last_blank_ms": null,
+      "shot_began_ms": 18559.1,
+      "shot_ended_ms": 19634.4,
+      "threshold": 0.002
+     },
+     "wall_s": 32.11,
+     "engine": null,
+     "graphics_path": "webgl2",
+     "webgpu_probe": "navigator.gpu, null adapter",
+     "webgl_renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+     "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+     "device_pixel_ratio": 3,
+     "canvases": [
+      {
+       "id": "atoms3d",
+       "width": 390,
+       "height": 844,
+       "css": [
+        390,
+        844
+       ]
+      }
+     ],
+     "resources": [
+      {
+       "url": "/atoms3d/index.html",
+       "initiator": "navigation",
+       "transferSize": 13644,
+       "encodedBodySize": 13344,
+       "decodedBodySize": 13344,
+       "start_ms": 0,
+       "duration_ms": 48,
+       "status": 200,
+       "content_type": "text/html",
+       "content_length": 13344,
+       "server_bytes_sent": 13344,
+       "gzip6_bytes_estimate": 5232
+      },
+      {
+       "url": "/atoms3d/webgl2/atoms3d.js",
+       "initiator": "script",
+       "transferSize": 106181,
+       "encodedBodySize": 105881,
+       "decodedBodySize": 105881,
+       "start_ms": 172.4,
+       "duration_ms": 2,
+       "status": 200,
+       "content_type": "text/javascript",
+       "content_length": 105881,
+       "server_bytes_sent": 105881,
+       "gzip6_bytes_estimate": 15377
+      },
+      {
+       "url": "/atoms3d/webgl2/atoms3d_bg.wasm",
+       "initiator": "fetch",
+       "transferSize": 31729901,
+       "encodedBodySize": 31729601,
+       "decodedBodySize": 31729601,
+       "start_ms": 197.3,
+       "duration_ms": 541.2,
+       "status": 200,
+       "content_type": "application/wasm",
+       "content_length": 31729601,
+       "server_bytes_sent": 31729601,
+       "gzip6_bytes_estimate": 9722233
+      }
+     ],
+     "resource_count": 3,
+     "transfer_bytes": 31849726,
+     "encoded_bytes": 31848826,
+     "decoded_bytes": 31848826,
+     "server_bytes_sent": 31848826,
+     "gzip6_bytes_estimate": 9742842,
+     "js_heap_used_bytes": 64096438,
+     "js_heap_total_bytes": 64647094,
+     "wasm_memory_bytes": 57081856,
+     "longtask_supported": true,
+     "console_errors": [],
+     "page_errors": [],
+     "console_warnings": [
+      "No available adapters.",
+      "navigator.gpu exists but requestAdapter() returned null",
+      "No available adapters."
+     ],
+     "console_warning_count": 3,
+     "fail_expression_true_at_ms": null,
+     "host_load1_after": 32.57,
+     "longtasks_to_ready": {
+      "count_over_50ms": 5,
+      "longest_ms": 12921,
+      "total_ms": 17799,
+      "blocking_ms": 17549
+     },
+     "longtasks_in_window": {
+      "count_over_50ms": 20,
+      "longest_ms": 122,
+      "total_ms": 1462,
+      "blocking_ms": 462
+     },
+     "longtasks_whole_run": {
+      "count_over_50ms": 26,
+      "longest_ms": 12921,
+      "total_ms": 19347,
+      "blocking_ms": 18047
+     },
+     "stalls_to_ready": {
+      "count_over_50ms": 8,
+      "longest_ms": 16706.7,
+      "total_ms": 18466.1,
+      "blocking_ms": 18066.1
+     },
+     "stalls_in_window": {
+      "count_over_50ms": 94,
+      "longest_ms": 173.4,
+      "total_ms": 6710.5,
+      "blocking_ms": 2010.5
+     },
+     "window_ms": [
+      21498.4,
+      31525.6
+     ],
+     "frames_harness_clock": {
+      "frames": 289,
+      "fps": 28.82,
+      "median_ms": 30.8,
+      "p95_ms": 77.2,
+      "max_ms": 187.2
+     },
+     "frames_page_raf": {
+      "frames": 289,
+      "fps": 28.82,
+      "median_ms": 30.9,
+      "p95_ms": 74.1,
+      "max_ms": 187.2,
+      "callback_median_ms": 28.9,
+      "callback_p95_ms": 55.2,
+      "callback_max_ms": 113.9,
+      "callback_total_ms": 8775.4
+     },
+     "label": "before_head",
+     "order": "18:59:55",
+     "sweep": 2
+    },
+    {
+     "run": 2,
+     "mode": "phone",
+     "error": null,
+     "host_load1_before": 28.65,
+     "url": "atoms3d/index.html",
+     "ready_js_ms": 16717.4,
+     "ready_pixels_ms": 17557.4,
+     "ready_ms": 17557.4,
+     "pixel_probe": {
+      "selector": "canvas",
+      "non_flat_fraction": 0.52439,
+      "distinct_colours": 5560,
+      "screenshots_taken": 1,
+      "last_blank_ms": null,
+      "shot_began_ms": 17557.4,
+      "shot_ended_ms": 18585.5,
+      "threshold": 0.002
+     },
+     "wall_s": 29.94,
+     "engine": null,
+     "graphics_path": "webgl2",
+     "webgpu_probe": "navigator.gpu, null adapter",
+     "webgl_renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+     "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+     "device_pixel_ratio": 3,
+     "canvases": [
+      {
+       "id": "atoms3d",
+       "width": 390,
+       "height": 844,
+       "css": [
+        390,
+        844
+       ]
+      }
+     ],
+     "resources": [
+      {
+       "url": "/atoms3d/index.html",
+       "initiator": "navigation",
+       "transferSize": 13644,
+       "encodedBodySize": 13344,
+       "decodedBodySize": 13344,
+       "start_ms": 0,
+       "duration_ms": 70.3,
+       "status": 200,
+       "content_type": "text/html",
+       "content_length": 13344,
+       "server_bytes_sent": 13344,
+       "gzip6_bytes_estimate": 5232
+      },
+      {
+       "url": "/atoms3d/webgl2/atoms3d.js",
+       "initiator": "script",
+       "transferSize": 106181,
+       "encodedBodySize": 105881,
+       "decodedBodySize": 105881,
+       "start_ms": 200.3,
+       "duration_ms": 3.1,
+       "status": 200,
+       "content_type": "text/javascript",
+       "content_length": 105881,
+       "server_bytes_sent": 105881,
+       "gzip6_bytes_estimate": 15377
+      },
+      {
+       "url": "/atoms3d/webgl2/atoms3d_bg.wasm",
+       "initiator": "fetch",
+       "transferSize": 31729901,
+       "encodedBodySize": 31729601,
+       "decodedBodySize": 31729601,
+       "start_ms": 222.8,
+       "duration_ms": 456,
+       "status": 200,
+       "content_type": "application/wasm",
+       "content_length": 31729601,
+       "server_bytes_sent": 31729601,
+       "gzip6_bytes_estimate": 9722233
+      }
+     ],
+     "resource_count": 3,
+     "transfer_bytes": 31849726,
+     "encoded_bytes": 31848826,
+     "decoded_bytes": 31848826,
+     "server_bytes_sent": 31848826,
+     "gzip6_bytes_estimate": 9742842,
+     "js_heap_used_bytes": 58472038,
+     "js_heap_total_bytes": 60141494,
+     "wasm_memory_bytes": 51380224,
+     "longtask_supported": true,
+     "console_errors": [],
+     "page_errors": [],
+     "console_warnings": [
+      "No available adapters.",
+      "navigator.gpu exists but requestAdapter() returned null",
+      "No available adapters."
+     ],
+     "console_warning_count": 3,
+     "fail_expression_true_at_ms": null,
+     "host_load1_after": 30.64,
+     "longtasks_to_ready": {
+      "count_over_50ms": 5,
+      "longest_ms": 12020,
+      "total_ms": 16835,
+      "blocking_ms": 16585
+     },
+     "longtasks_in_window": {
+      "count_over_50ms": 3,
+      "longest_ms": 57,
+      "total_ms": 160,
+      "blocking_ms": 10
+     },
+     "longtasks_whole_run": {
+      "count_over_50ms": 9,
+      "longest_ms": 12020,
+      "total_ms": 17054,
+      "blocking_ms": 16604
+     },
+     "stalls_to_ready": {
+      "count_over_50ms": 7,
+      "longest_ms": 16007.5,
+      "total_ms": 17358.1,
+      "blocking_ms": 17008.1
+     },
+     "stalls_in_window": {
+      "count_over_50ms": 116,
+      "longest_ms": 90.9,
+      "total_ms": 7556.4,
+      "blocking_ms": 1756.4
+     },
+     "window_ms": [
+      19713,
+      29738.4
+     ],
+     "frames_harness_clock": {
+      "frames": 313,
+      "fps": 31.22,
+      "median_ms": 31.8,
+      "p95_ms": 41.7,
+      "max_ms": 58.7
+     },
+     "frames_page_raf": {
+      "frames": 313,
+      "fps": 31.22,
+      "median_ms": 31.8,
+      "p95_ms": 41.6,
+      "max_ms": 58.7,
+      "callback_median_ms": 30,
+      "callback_p95_ms": 39.1,
+      "callback_max_ms": 56.8,
+      "callback_total_ms": 9368.6
+     },
+     "label": "before_head",
+     "order": "19:01:09",
+     "sweep": 2
+    },
+    {
+     "run": 3,
+     "mode": "phone",
+     "error": null,
+     "host_load1_before": 25.79,
+     "url": "atoms3d/index.html",
+     "ready_js_ms": 16212.1,
+     "ready_pixels_ms": 17548.8,
+     "ready_ms": 17548.8,
+     "pixel_probe": {
+      "selector": "canvas",
+      "non_flat_fraction": 0.52468,
+      "distinct_colours": 5531,
+      "screenshots_taken": 1,
+      "last_blank_ms": null,
+      "shot_began_ms": 17548.8,
+      "shot_ended_ms": 20627.6,
+      "threshold": 0.002
+     },
+     "wall_s": 32.67,
+     "engine": null,
+     "graphics_path": "webgl2",
+     "webgpu_probe": "navigator.gpu, null adapter",
+     "webgl_renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+     "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+     "device_pixel_ratio": 3,
+     "canvases": [
+      {
+       "id": "atoms3d",
+       "width": 390,
+       "height": 844,
+       "css": [
+        390,
+        844
+       ]
+      }
+     ],
+     "resources": [
+      {
+       "url": "/atoms3d/index.html",
+       "initiator": "navigation",
+       "transferSize": 13644,
+       "encodedBodySize": 13344,
+       "decodedBodySize": 13344,
+       "start_ms": 0,
+       "duration_ms": 47,
+       "status": 200,
+       "content_type": "text/html",
+       "content_length": 13344,
+       "server_bytes_sent": 13344,
+       "gzip6_bytes_estimate": 5232
+      },
+      {
+       "url": "/atoms3d/webgl2/atoms3d.js",
+       "initiator": "script",
+       "transferSize": 106181,
+       "encodedBodySize": 105881,
+       "decodedBodySize": 105881,
+       "start_ms": 163,
+       "duration_ms": 2.6,
+       "status": 200,
+       "content_type": "text/javascript",
+       "content_length": 105881,
+       "server_bytes_sent": 105881,
+       "gzip6_bytes_estimate": 15377
+      },
+      {
+       "url": "/atoms3d/webgl2/atoms3d_bg.wasm",
+       "initiator": "fetch",
+       "transferSize": 31729901,
+       "encodedBodySize": 31729601,
+       "decodedBodySize": 31729601,
+       "start_ms": 179.8,
+       "duration_ms": 473,
+       "status": 200,
+       "content_type": "application/wasm",
+       "content_length": 31729601,
+       "server_bytes_sent": 31729601,
+       "gzip6_bytes_estimate": 9722233
+      }
+     ],
+     "resource_count": 3,
+     "transfer_bytes": 31849726,
+     "encoded_bytes": 31848826,
+     "decoded_bytes": 31848826,
+     "server_bytes_sent": 31848826,
+     "gzip6_bytes_estimate": 9742842,
+     "js_heap_used_bytes": 63418394,
+     "js_heap_total_bytes": 64139190,
+     "wasm_memory_bytes": 56426496,
+     "longtask_supported": true,
+     "console_errors": [],
+     "page_errors": [],
+     "console_warnings": [
+      "No available adapters.",
+      "navigator.gpu exists but requestAdapter() returned null",
+      "No available adapters."
+     ],
+     "console_warning_count": 3,
+     "fail_expression_true_at_ms": null,
+     "host_load1_after": 31.45,
+     "longtasks_to_ready": {
+      "count_over_50ms": 4,
+      "longest_ms": 11215,
+      "total_ms": 16803,
+      "blocking_ms": 16603
+     },
+     "longtasks_in_window": {
+      "count_over_50ms": 78,
+      "longest_ms": 130,
+      "total_ms": 5922,
+      "blocking_ms": 2022
+     },
+     "longtasks_whole_run": {
+      "count_over_50ms": 119,
+      "longest_ms": 11215,
+      "total_ms": 26277,
+      "blocking_ms": 20327
+     },
+     "stalls_to_ready": {
+      "count_over_50ms": 7,
+      "longest_ms": 15521.3,
+      "total_ms": 17493.0,
+      "blocking_ms": 17143.0
+     },
+     "stalls_in_window": {
+      "count_over_50ms": 85,
+      "longest_ms": 237.7,
+      "total_ms": 8681.6,
+      "blocking_ms": 4431.6
+     },
+     "window_ms": [
+      21947.3,
+      32045.6
+     ],
+     "frames_harness_clock": {
+      "frames": 153,
+      "fps": 15.15,
+      "median_ms": 53.85,
+      "p95_ms": 126.4,
+      "max_ms": 266.8
+     },
+     "frames_page_raf": {
+      "frames": 153,
+      "fps": 15.15,
+      "median_ms": 53.95,
+      "p95_ms": 126.4,
+      "max_ms": 266.8,
+      "callback_median_ms": 44.3,
+      "callback_p95_ms": 93.8,
+      "callback_max_ms": 124.4,
+      "callback_total_ms": 7998.2
+     },
+     "label": "before_head",
+     "order": "19:02:25",
+     "sweep": 2
+    },
+    {
+     "run": 1,
+     "mode": "phone",
+     "error": null,
+     "host_load1_before": 42.61,
+     "screenshot_ready_plus_1s": "/tmp/claude-1000/-home-emoore-CIRISHolon/4066a70d-c28a-428f-932b-46e9476d96db/scratchpad/compare/before_head_phone_ready1s.png",
+     "screenshot_end": "/tmp/claude-1000/-home-emoore-CIRISHolon/4066a70d-c28a-428f-932b-46e9476d96db/scratchpad/compare/before_head_phone_end.png",
+     "url": "atoms3d/index.html",
+     "ready_js_ms": 27345.1,
+     "ready_pixels_ms": 28481.4,
+     "ready_ms": 28481.4,
+     "pixel_probe": {
+      "selector": "canvas",
+      "non_flat_fraction": 0.52436,
+      "distinct_colours": 5537,
+      "screenshots_taken": 1,
+      "last_blank_ms": null,
+      "shot_began_ms": 28481.4,
+      "shot_ended_ms": 30021.9,
+      "threshold": 0.002
+     },
+     "wall_s": 43.26,
+     "engine": null,
+     "graphics_path": "webgl2",
+     "webgpu_probe": "navigator.gpu, null adapter",
+     "webgl_renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+     "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+     "device_pixel_ratio": 3,
+     "canvases": [
+      {
+       "id": "atoms3d",
+       "width": 390,
+       "height": 844,
+       "css": [
+        390,
+        844
+       ]
+      }
+     ],
+     "resources": [
+      {
+       "url": "/atoms3d/index.html",
+       "initiator": "navigation",
+       "transferSize": 13644,
+       "encodedBodySize": 13344,
+       "decodedBodySize": 13344,
+       "start_ms": 0,
+       "duration_ms": 225.1,
+       "status": 200,
+       "content_type": "text/html",
+       "content_length": 13344,
+       "server_bytes_sent": 13344,
+       "gzip6_bytes_estimate": 5232
+      },
+      {
+       "url": "/atoms3d/webgl2/atoms3d.js",
+       "initiator": "script",
+       "transferSize": 106181,
+       "encodedBodySize": 105881,
+       "decodedBodySize": 105881,
+       "start_ms": 1316.5,
+       "duration_ms": 4.5,
+       "status": 200,
+       "content_type": "text/javascript",
+       "content_length": 105881,
+       "server_bytes_sent": 105881,
+       "gzip6_bytes_estimate": 15377
+      },
+      {
+       "url": "/atoms3d/webgl2/atoms3d_bg.wasm",
+       "initiator": "fetch",
+       "transferSize": 31729901,
+       "encodedBodySize": 31729601,
+       "decodedBodySize": 31729601,
+       "start_ms": 1351.7,
+       "duration_ms": 610.9,
+       "status": 200,
+       "content_type": "application/wasm",
+       "content_length": 31729601,
+       "server_bytes_sent": 31729601,
+       "gzip6_bytes_estimate": 9722233
+      }
+     ],
+     "resource_count": 3,
+     "transfer_bytes": 31849726,
+     "encoded_bytes": 31848826,
+     "decoded_bytes": 31848826,
+     "server_bytes_sent": 31848826,
+     "gzip6_bytes_estimate": 9742842,
+     "js_heap_used_bytes": 60949730,
+     "js_heap_total_bytes": 62500790,
+     "wasm_memory_bytes": 53739520,
+     "longtask_supported": true,
+     "console_errors": [],
+     "page_errors": [],
+     "console_warnings": [
+      "No available adapters.",
+      "navigator.gpu exists but requestAdapter() returned null",
+      "No available adapters."
+     ],
+     "console_warning_count": 3,
+     "fail_expression_true_at_ms": null,
+     "host_load1_after": 44.84,
+     "longtasks_to_ready": {
+      "count_over_50ms": 5,
+      "longest_ms": 16802,
+      "total_ms": 26441,
+      "blocking_ms": 26191
+     },
+     "longtasks_in_window": {
+      "count_over_50ms": 42,
+      "longest_ms": 255,
+      "total_ms": 3465,
+      "blocking_ms": 1365
+     },
+     "longtasks_whole_run": {
+      "count_over_50ms": 64,
+      "longest_ms": 16802,
+      "total_ms": 30949,
+      "blocking_ms": 27749
+     },
+     "stalls_to_ready": {
+      "count_over_50ms": 7,
+      "longest_ms": 25316.7,
+      "total_ms": 27114.9,
+      "blocking_ms": 26764.9
+     },
+     "stalls_in_window": {
+      "count_over_50ms": 101,
+      "longest_ms": 268,
+      "total_ms": 8703.6,
+      "blocking_ms": 3653.6
+     },
+     "window_ms": [
+      32649.9,
+      42659.8
+     ],
+     "frames_harness_clock": {
+      "frames": 221,
+      "fps": 22.08,
+      "median_ms": 39.2,
+      "p95_ms": 93.3,
+      "max_ms": 259.8
+     },
+     "frames_page_raf": {
+      "frames": 221,
+      "fps": 22.08,
+      "median_ms": 39.25,
+      "p95_ms": 93.3,
+      "max_ms": 263,
+      "callback_median_ms": 35.1,
+      "callback_p95_ms": 82.4,
+      "callback_max_ms": 237.6,
+      "callback_total_ms": 8930.2
+     },
+     "label": "before_head",
+     "order": "19:07:40",
+     "sweep": 3
+    },
+    {
+     "run": 2,
+     "mode": "phone",
+     "error": null,
+     "host_load1_before": 30.28,
+     "url": "atoms3d/index.html",
+     "ready_js_ms": 16147.1,
+     "ready_pixels_ms": 18559.5,
+     "ready_ms": 18559.5,
+     "pixel_probe": {
+      "selector": "canvas",
+      "non_flat_fraction": 0.52437,
+      "distinct_colours": 5544,
+      "screenshots_taken": 1,
+      "last_blank_ms": null,
+      "shot_began_ms": 18559.5,
+      "shot_ended_ms": 19618.1,
+      "threshold": 0.002
+     },
+     "wall_s": 30.96,
+     "engine": null,
+     "graphics_path": "webgl2",
+     "webgpu_probe": "navigator.gpu, null adapter",
+     "webgl_renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+     "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+     "device_pixel_ratio": 3,
+     "canvases": [
+      {
+       "id": "atoms3d",
+       "width": 390,
+       "height": 844,
+       "css": [
+        390,
+        844
+       ]
+      }
+     ],
+     "resources": [
+      {
+       "url": "/atoms3d/index.html",
+       "initiator": "navigation",
+       "transferSize": 13644,
+       "encodedBodySize": 13344,
+       "decodedBodySize": 13344,
+       "start_ms": 0,
+       "duration_ms": 170.2,
+       "status": 200,
+       "content_type": "text/html",
+       "content_length": 13344,
+       "server_bytes_sent": 13344,
+       "gzip6_bytes_estimate": 5232
+      },
+      {
+       "url": "/atoms3d/webgl2/atoms3d.js",
+       "initiator": "script",
+       "transferSize": 106181,
+       "encodedBodySize": 105881,
+       "decodedBodySize": 105881,
+       "start_ms": 237.4,
+       "duration_ms": 17.8,
+       "status": 200,
+       "content_type": "text/javascript",
+       "content_length": 105881,
+       "server_bytes_sent": 105881,
+       "gzip6_bytes_estimate": 15377
+      },
+      {
+       "url": "/atoms3d/webgl2/atoms3d_bg.wasm",
+       "initiator": "fetch",
+       "transferSize": 31729901,
+       "encodedBodySize": 31729601,
+       "decodedBodySize": 31729601,
+       "start_ms": 264.4,
+       "duration_ms": 635.9,
+       "status": 200,
+       "content_type": "application/wasm",
+       "content_length": 31729601,
+       "server_bytes_sent": 31729601,
+       "gzip6_bytes_estimate": 9722233
+      }
+     ],
+     "resource_count": 3,
+     "transfer_bytes": 31849726,
+     "encoded_bytes": 31848826,
+     "decoded_bytes": 31848826,
+     "server_bytes_sent": 31848826,
+     "gzip6_bytes_estimate": 9742842,
+     "js_heap_used_bytes": 56422960,
+     "js_heap_total_bytes": 58964972,
+     "wasm_memory_bytes": 49020928,
+     "longtask_supported": true,
+     "console_errors": [],
+     "page_errors": [],
+     "console_warnings": [
+      "No available adapters.",
+      "navigator.gpu exists but requestAdapter() returned null",
+      "No available adapters."
+     ],
+     "console_warning_count": 3,
+     "fail_expression_true_at_ms": null,
+     "host_load1_after": 28.03,
+     "longtasks_to_ready": {
+      "count_over_50ms": 5,
+      "longest_ms": 11321,
+      "total_ms": 17645,
+      "blocking_ms": 17395
+     },
+     "longtasks_in_window": {
+      "count_over_50ms": 1,
+      "longest_ms": 1435,
+      "total_ms": 1435,
+      "blocking_ms": 1385
+     },
+     "longtasks_whole_run": {
+      "count_over_50ms": 6,
+      "longest_ms": 11321,
+      "total_ms": 19080,
+      "blocking_ms": 18780
+     },
+     "stalls_to_ready": {
+      "count_over_50ms": 8,
+      "longest_ms": 15118.4,
+      "total_ms": 18463.1,
+      "blocking_ms": 18063.1
+     },
+     "stalls_in_window": {
+      "count_over_50ms": 89,
+      "longest_ms": 1460,
+      "total_ms": 6681.6,
+      "blocking_ms": 2231.6
+     },
+     "window_ms": [
+      20751.8,
+      30781.4
+     ],
+     "frames_harness_clock": {
+      "frames": 318,
+      "fps": 31.71,
+      "median_ms": 27.1,
+      "p95_ms": 36.2,
+      "max_ms": 1435.7
+     },
+     "frames_page_raf": {
+      "frames": 318,
+      "fps": 31.71,
+      "median_ms": 27.1,
+      "p95_ms": 36.2,
+      "max_ms": 1435.8,
+      "callback_median_ms": 25.35,
+      "callback_p95_ms": 33.5,
+      "callback_max_ms": 1434.3,
+      "callback_total_ms": 9453.9
+     },
+     "label": "before_head",
+     "order": "19:08:57",
+     "sweep": 3
+    },
+    {
+     "run": 3,
+     "mode": "phone",
+     "error": null,
+     "host_load1_before": 23.19,
+     "url": "atoms3d/index.html",
+     "ready_js_ms": 15773.1,
+     "ready_pixels_ms": 17025.8,
+     "ready_ms": 17025.8,
+     "pixel_probe": {
+      "selector": "canvas",
+      "non_flat_fraction": 0.52443,
+      "distinct_colours": 5554,
+      "screenshots_taken": 1,
+      "last_blank_ms": null,
+      "shot_began_ms": 17025.8,
+      "shot_ended_ms": 18322,
+      "threshold": 0.002
+     },
+     "wall_s": 29.62,
+     "engine": null,
+     "graphics_path": "webgl2",
+     "webgpu_probe": "navigator.gpu, null adapter",
+     "webgl_renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+     "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+     "device_pixel_ratio": 3,
+     "canvases": [
+      {
+       "id": "atoms3d",
+       "width": 390,
+       "height": 844,
+       "css": [
+        390,
+        844
+       ]
+      }
+     ],
+     "resources": [
+      {
+       "url": "/atoms3d/index.html",
+       "initiator": "navigation",
+       "transferSize": 13644,
+       "encodedBodySize": 13344,
+       "decodedBodySize": 13344,
+       "start_ms": 0,
+       "duration_ms": 49.2,
+       "status": 200,
+       "content_type": "text/html",
+       "content_length": 13344,
+       "server_bytes_sent": 13344,
+       "gzip6_bytes_estimate": 5232
+      },
+      {
+       "url": "/atoms3d/webgl2/atoms3d.js",
+       "initiator": "script",
+       "transferSize": 106181,
+       "encodedBodySize": 105881,
+       "decodedBodySize": 105881,
+       "start_ms": 161.1,
+       "duration_ms": 3.4,
+       "status": 200,
+       "content_type": "text/javascript",
+       "content_length": 105881,
+       "server_bytes_sent": 105881,
+       "gzip6_bytes_estimate": 15377
+      },
+      {
+       "url": "/atoms3d/webgl2/atoms3d_bg.wasm",
+       "initiator": "fetch",
+       "transferSize": 31729901,
+       "encodedBodySize": 31729601,
+       "decodedBodySize": 31729601,
+       "start_ms": 185.1,
+       "duration_ms": 378.4,
+       "status": 200,
+       "content_type": "application/wasm",
+       "content_length": 31729601,
+       "server_bytes_sent": 31729601,
+       "gzip6_bytes_estimate": 9722233
+      }
+     ],
+     "resource_count": 3,
+     "transfer_bytes": 31849726,
+     "encoded_bytes": 31848826,
+     "decoded_bytes": 31848826,
+     "server_bytes_sent": 31848826,
+     "gzip6_bytes_estimate": 9742842,
+     "js_heap_used_bytes": 56402864,
+     "js_heap_total_bytes": 58964972,
+     "wasm_memory_bytes": 49020928,
+     "longtask_supported": true,
+     "console_errors": [],
+     "page_errors": [],
+     "console_warnings": [
+      "No available adapters.",
+      "navigator.gpu exists but requestAdapter() returned null",
+      "No available adapters."
+     ],
+     "console_warning_count": 3,
+     "fail_expression_true_at_ms": null,
+     "host_load1_after": 23.18,
+     "longtasks_to_ready": {
+      "count_over_50ms": 4,
+      "longest_ms": 10391,
+      "total_ms": 16297,
+      "blocking_ms": 16097
+     },
+     "longtasks_in_window": {
+      "count_over_50ms": 0,
+      "longest_ms": 0.0,
+      "total_ms": 0,
+      "blocking_ms": 0
+     },
+     "longtasks_whole_run": {
+      "count_over_50ms": 6,
+      "longest_ms": 10391,
+      "total_ms": 16520,
+      "blocking_ms": 16220
+     },
+     "stalls_to_ready": {
+      "count_over_50ms": 7,
+      "longest_ms": 15334.1,
+      "total_ms": 17021.0,
+      "blocking_ms": 16671.0
+     },
+     "stalls_in_window": {
+      "count_over_50ms": 127,
+      "longest_ms": 91.5,
+      "total_ms": 8637.3,
+      "blocking_ms": 2287.3
+     },
+     "window_ms": [
+      19430.5,
+      29469.8
+     ],
+     "frames_harness_clock": {
+      "frames": 301,
+      "fps": 29.98,
+      "median_ms": 33.6,
+      "p95_ms": 42.1,
+      "max_ms": 82.0
+     },
+     "frames_page_raf": {
+      "frames": 301,
+      "fps": 29.98,
+      "median_ms": 33.6,
+      "p95_ms": 42.2,
+      "max_ms": 82.0,
+      "callback_median_ms": 31.8,
+      "callback_p95_ms": 39.3,
+      "callback_max_ms": 49.1,
+      "callback_total_ms": 9411.0
+     },
+     "label": "before_head",
+     "order": "19:10:13",
+     "sweep": 3
+    }
+   ]
+  },
+  "after|phone": {
+   "runs_ok": 6,
+   "runs": 6,
+   "summary": {
+    "ready_js_ms": {
+     "median": 9554.6,
+     "min": 8141.5,
+     "max": 12305.1
+    },
+    "ready_pixels_ms": {
+     "median": 9584.95,
+     "min": 8162.2,
+     "max": 12333.4
+    },
+    "ready_ms": {
+     "median": 9584.95,
+     "min": 8162.2,
+     "max": 12333.4
+    },
+    "transfer_bytes": {
+     "median": 912403.0,
+     "min": 912403,
+     "max": 912403
+    },
+    "decoded_bytes": {
+     "median": 911503.0,
+     "min": 911503,
+     "max": 911503
+    },
+    "gzip6_bytes_estimate": {
+     "median": 326331.0,
+     "min": 326331,
+     "max": 326331
+    },
+    "resource_count": {
+     "median": 3.0,
+     "min": 3,
+     "max": 3
+    },
+    "longest_task_to_ready_ms": {
+     "median": 71.5,
+     "min": 57,
+     "max": 3028
+    },
+    "tasks_over_50ms_to_ready": {
+     "median": 1.0,
+     "min": 1,
+     "max": 2
+    },
+    "blocking_ms_to_ready": {
+     "median": 21.5,
+     "min": 9,
+     "max": 2996
+    },
+    "longest_stall_to_ready_ms": {
+     "median": 8723.7,
+     "min": 7884.8,
+     "max": 11622.1
+    },
+    "stalls_over_50ms_to_ready": {
+     "median": 3.5,
+     "min": 3,
+     "max": 4
+    },
+    "stalled_ms_to_ready": {
+     "median": 9526.45,
+     "min": 8047.1,
+     "max": 12175.4
+    },
+    "longest_stall_in_window_ms": {
+     "median": 156.8,
+     "min": 55.7,
+     "max": 2676.9
+    },
+    "stalls_over_50ms_in_window": {
+     "median": 1.0,
+     "min": 1,
+     "max": 3
+    },
+    "longest_task_in_window_ms": {
+     "median": 123.0,
+     "min": 0.0,
+     "max": 2670
+    },
+    "tasks_over_50ms_in_window": {
+     "median": 1.0,
+     "min": 0,
+     "max": 2
+    },
+    "longest_task_whole_run_ms": {
+     "median": 185.5,
+     "min": 69,
+     "max": 3028
+    },
+    "tasks_over_50ms_whole_run": {
+     "median": 2.0,
+     "min": 1,
+     "max": 4
+    },
+    "frame_median_ms": {
+     "median": 17.15,
+     "min": 16.6,
+     "max": 20.25
+    },
+    "frame_p95_ms": {
+     "median": 40.7,
+     "min": 17.7,
+     "max": 59.9
+    },
+    "frame_max_ms": {
+     "median": 194.45,
+     "min": 53.1,
+     "max": 2683.2
+    },
+    "fps": {
+     "median": 48.22,
+     "min": 29.18,
+     "max": 51.08
+    },
+    "page_raf_fps": {
+     "median": 48.22,
+     "min": 29.18,
+     "max": 51.08
+    },
+    "page_raf_callback_median_ms": {
+     "median": 1.3,
+     "min": 1.1,
+     "max": 1.4
+    },
+    "page_raf_callback_p95_ms": {
+     "median": 2.1,
+     "min": 2,
+     "max": 5.2
+    },
+    "js_heap_used_bytes": {
+     "median": 4106898.0,
+     "min": 4051852,
+     "max": 4440889
+    },
+    "wasm_memory_bytes": {
+     "median": 1572864.0,
+     "min": 1572864,
+     "max": 1572864
+    }
+   },
+   "canvases": [
+    {
+     "id": "c",
+     "width": 1170,
+     "height": 2532,
+     "css": [
+      390,
+      844
+     ]
+    }
+   ],
+   "engine": "holon-draw on webgl2",
+   "graphics_path": "holon-draw on webgl2",
+   "webgl_renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+   "host_load1": [
+    32.57,
+    30.64,
+    31.45,
+    44.84,
+    28.03,
+    23.18
+   ],
+   "console_errors": 0,
+   "resources": [
+    {
+     "url": "/atoms-draw/index.html",
+     "transferSize": 7139,
+     "decodedBodySize": 6839,
+     "gzip6_bytes_estimate": 2910
+    },
+    {
+     "url": "/atoms-draw/draw.js",
+     "transferSize": 23235,
+     "decodedBodySize": 22935,
+     "gzip6_bytes_estimate": 7971
+    },
+    {
+     "url": "/atoms-draw/holon_draw_atoms.wasm",
+     "transferSize": 882029,
+     "decodedBodySize": 881729,
+     "gzip6_bytes_estimate": 315450
+    }
+   ],
+   "runs_detail": [
+    {
+     "run": 1,
+     "mode": "phone",
+     "error": null,
+     "host_load1_before": 32.57,
+     "screenshot_ready_plus_1s": "/tmp/claude-1000/-home-emoore-CIRISHolon/4066a70d-c28a-428f-932b-46e9476d96db/scratchpad/compare/after_phone_ready1s.png",
+     "screenshot_end": "/tmp/claude-1000/-home-emoore-CIRISHolon/4066a70d-c28a-428f-932b-46e9476d96db/scratchpad/compare/after_phone_end.png",
+     "url": "atoms-draw/index.html",
+     "ready_js_ms": 8141.5,
+     "ready_pixels_ms": 8162.2,
+     "ready_ms": 8162.2,
+     "pixel_probe": {
+      "selector": "canvas",
+      "non_flat_fraction": 0.0967,
+      "distinct_colours": 1562,
+      "screenshots_taken": 1,
+      "last_blank_ms": null,
+      "shot_began_ms": 8162.2,
+      "shot_ended_ms": 8552.9,
+      "threshold": 0.002
+     },
+     "wall_s": 20.83,
+     "engine": "holon-draw on webgl2",
+     "graphics_path": "holon-draw on webgl2",
+     "webgpu_probe": "navigator.gpu, null adapter",
+     "webgl_renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+     "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+     "device_pixel_ratio": 3,
+     "canvases": [
+      {
+       "id": "c",
+       "width": 1170,
+       "height": 2532,
+       "css": [
+        390,
+        844
+       ]
+      }
+     ],
+     "resources": [
+      {
+       "url": "/atoms-draw/index.html",
+       "initiator": "navigation",
+       "transferSize": 7139,
+       "encodedBodySize": 6839,
+       "decodedBodySize": 6839,
+       "start_ms": 0,
+       "duration_ms": 230.7,
+       "status": 200,
+       "content_type": "text/html",
+       "content_length": 6839,
+       "server_bytes_sent": 6839,
+       "gzip6_bytes_estimate": 2910
+      },
+      {
+       "url": "/atoms-draw/draw.js",
+       "initiator": "script",
+       "transferSize": 23235,
+       "encodedBodySize": 22935,
+       "decodedBodySize": 22935,
+       "start_ms": 120.9,
+       "duration_ms": 2.7,
+       "status": 200,
+       "content_type": "text/javascript",
+       "content_length": 22935,
+       "server_bytes_sent": 22935,
+       "gzip6_bytes_estimate": 7971
+      },
+      {
+       "url": "/atoms-draw/holon_draw_atoms.wasm",
+       "initiator": "fetch",
+       "transferSize": 882029,
+       "encodedBodySize": 881729,
+       "decodedBodySize": 881729,
+       "start_ms": 229.6,
+       "duration_ms": 2.5,
+       "status": 200,
+       "content_type": "application/wasm",
+       "content_length": 881729,
+       "server_bytes_sent": 881729,
+       "gzip6_bytes_estimate": 315450
+      }
+     ],
+     "resource_count": 3,
+     "transfer_bytes": 912403,
+     "encoded_bytes": 911503,
+     "decoded_bytes": 911503,
+     "server_bytes_sent": 911503,
+     "gzip6_bytes_estimate": 326331,
+     "js_heap_used_bytes": 4115056,
+     "js_heap_total_bytes": 4845532,
+     "wasm_memory_bytes": 1572864,
+     "longtask_supported": true,
+     "console_errors": [],
+     "page_errors": [],
+     "console_warnings": [
+      "No available adapters."
+     ],
+     "console_warning_count": 1,
+     "fail_expression_true_at_ms": null,
+     "host_load1_after": 28.29,
+     "longtasks_to_ready": {
+      "count_over_50ms": 1,
+      "longest_ms": 59,
+      "total_ms": 59,
+      "blocking_ms": 9
+     },
+     "longtasks_in_window": {
+      "count_over_50ms": 1,
+      "longest_ms": 183,
+      "total_ms": 183,
+      "blocking_ms": 133
+     },
+     "longtasks_whole_run": {
+      "count_over_50ms": 2,
+      "longest_ms": 183,
+      "total_ms": 242,
+      "blocking_ms": 142
+     },
+     "stalls_to_ready": {
+      "count_over_50ms": 3,
+      "longest_ms": 7884.8,
+      "total_ms": 8047.1,
+      "blocking_ms": 7897.1
+     },
+     "stalls_in_window": {
+      "count_over_50ms": 1,
+      "longest_ms": 187.7,
+      "total_ms": 187.7,
+      "blocking_ms": 137.7
+     },
+     "window_ms": [
+      10230.4,
+      20234.7
+     ],
+     "frames_harness_clock": {
+      "frames": 511,
+      "fps": 51.08,
+      "median_ms": 16.9,
+      "p95_ms": 36.7,
+      "max_ms": 199.3
+     },
+     "frames_page_raf": {
+      "frames": 511,
+      "fps": 51.08,
+      "median_ms": 16.9,
+      "p95_ms": 36.7,
+      "max_ms": 199.3,
+      "callback_median_ms": 1.2,
+      "callback_p95_ms": 2.1,
+      "callback_max_ms": 180.8,
+      "callback_total_ms": 804.5
+     },
+     "label": "after",
+     "order": "19:00:16",
+     "sweep": 2
+    },
+    {
+     "run": 2,
+     "mode": "phone",
+     "error": null,
+     "host_load1_before": 30.64,
+     "url": "atoms-draw/index.html",
+     "ready_js_ms": 8580.4,
+     "ready_pixels_ms": 8642.7,
+     "ready_ms": 8642.7,
+     "pixel_probe": {
+      "selector": "canvas",
+      "non_flat_fraction": 0.09671,
+      "distinct_colours": 1577,
+      "screenshots_taken": 1,
+      "last_blank_ms": null,
+      "shot_began_ms": 8642.7,
+      "shot_ended_ms": 9227.8,
+      "threshold": 0.002
+     },
+     "wall_s": 20.48,
+     "engine": "holon-draw on webgl2",
+     "graphics_path": "holon-draw on webgl2",
+     "webgpu_probe": "navigator.gpu, null adapter",
+     "webgl_renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+     "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+     "device_pixel_ratio": 3,
+     "canvases": [
+      {
+       "id": "c",
+       "width": 1170,
+       "height": 2532,
+       "css": [
+        390,
+        844
+       ]
+      }
+     ],
+     "resources": [
+      {
+       "url": "/atoms-draw/index.html",
+       "initiator": "navigation",
+       "transferSize": 7139,
+       "encodedBodySize": 6839,
+       "decodedBodySize": 6839,
+       "start_ms": 0,
+       "duration_ms": 282,
+       "status": 200,
+       "content_type": "text/html",
+       "content_length": 6839,
+       "server_bytes_sent": 6839,
+       "gzip6_bytes_estimate": 2910
+      },
+      {
+       "url": "/atoms-draw/draw.js",
+       "initiator": "script",
+       "transferSize": 23235,
+       "encodedBodySize": 22935,
+       "decodedBodySize": 22935,
+       "start_ms": 154,
+       "duration_ms": 3.1,
+       "status": 200,
+       "content_type": "text/javascript",
+       "content_length": 22935,
+       "server_bytes_sent": 22935,
+       "gzip6_bytes_estimate": 7971
+      },
+      {
+       "url": "/atoms-draw/holon_draw_atoms.wasm",
+       "initiator": "fetch",
+       "transferSize": 882029,
+       "encodedBodySize": 881729,
+       "decodedBodySize": 881729,
+       "start_ms": 281,
+       "duration_ms": 34,
+       "status": 200,
+       "content_type": "application/wasm",
+       "content_length": 881729,
+       "server_bytes_sent": 881729,
+       "gzip6_bytes_estimate": 315450
+      }
+     ],
+     "resource_count": 3,
+     "transfer_bytes": 912403,
+     "encoded_bytes": 911503,
+     "decoded_bytes": 911503,
+     "server_bytes_sent": 911503,
+     "gzip6_bytes_estimate": 326331,
+     "js_heap_used_bytes": 4051852,
+     "js_heap_total_bytes": 4845532,
+     "wasm_memory_bytes": 1572864,
+     "longtask_supported": true,
+     "console_errors": [],
+     "page_errors": [],
+     "console_warnings": [
+      "No available adapters."
+     ],
+     "console_warning_count": 1,
+     "fail_expression_true_at_ms": null,
+     "host_load1_after": 25.85,
+     "longtasks_to_ready": {
+      "count_over_50ms": 1,
+      "longest_ms": 69,
+      "total_ms": 69,
+      "blocking_ms": 19
+     },
+     "longtasks_in_window": {
+      "count_over_50ms": 0,
+      "longest_ms": 0.0,
+      "total_ms": 0,
+      "blocking_ms": 0
+     },
+     "longtasks_whole_run": {
+      "count_over_50ms": 1,
+      "longest_ms": 69,
+      "total_ms": 69,
+      "blocking_ms": 19
+     },
+     "stalls_to_ready": {
+      "count_over_50ms": 3,
+      "longest_ms": 8237.5,
+      "total_ms": 8446.5,
+      "blocking_ms": 8296.5
+     },
+     "stalls_in_window": {
+      "count_over_50ms": 1,
+      "longest_ms": 125.9,
+      "total_ms": 125.9,
+      "blocking_ms": 75.9
+     },
+     "window_ms": [
+      10297.3,
+      20302.9
+     ],
+     "frames_harness_clock": {
+      "frames": 487,
+      "fps": 48.67,
+      "median_ms": 17.2,
+      "p95_ms": 41.1,
+      "max_ms": 53.1
+     },
+     "frames_page_raf": {
+      "frames": 487,
+      "fps": 48.67,
+      "median_ms": 17.2,
+      "p95_ms": 41.1,
+      "max_ms": 53.2,
+      "callback_median_ms": 1.3,
+      "callback_p95_ms": 2,
+      "callback_max_ms": 3.6,
+      "callback_total_ms": 625.1
+     },
+     "label": "after",
+     "order": "19:01:30",
+     "sweep": 2
+    },
+    {
+     "run": 3,
+     "mode": "phone",
+     "error": null,
+     "host_load1_before": 31.45,
+     "url": "atoms-draw/index.html",
+     "ready_js_ms": 8847.3,
+     "ready_pixels_ms": 8865,
+     "ready_ms": 8865,
+     "pixel_probe": {
+      "selector": "canvas",
+      "non_flat_fraction": 0.0967,
+      "distinct_colours": 1547,
+      "screenshots_taken": 1,
+      "last_blank_ms": null,
+      "shot_began_ms": 8865,
+      "shot_ended_ms": 9292.1,
+      "threshold": 0.002
+     },
+     "wall_s": 20.8,
+     "engine": "holon-draw on webgl2",
+     "graphics_path": "holon-draw on webgl2",
+     "webgpu_probe": "navigator.gpu, null adapter",
+     "webgl_renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+     "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+     "device_pixel_ratio": 3,
+     "canvases": [
+      {
+       "id": "c",
+       "width": 1170,
+       "height": 2532,
+       "css": [
+        390,
+        844
+       ]
+      }
+     ],
+     "resources": [
+      {
+       "url": "/atoms-draw/index.html",
+       "initiator": "navigation",
+       "transferSize": 7139,
+       "encodedBodySize": 6839,
+       "decodedBodySize": 6839,
+       "start_ms": 0,
+       "duration_ms": 282.6,
+       "status": 200,
+       "content_type": "text/html",
+       "content_length": 6839,
+       "server_bytes_sent": 6839,
+       "gzip6_bytes_estimate": 2910
+      },
+      {
+       "url": "/atoms-draw/draw.js",
+       "initiator": "script",
+       "transferSize": 23235,
+       "encodedBodySize": 22935,
+       "decodedBodySize": 22935,
+       "start_ms": 144.2,
+       "duration_ms": 1.7,
+       "status": 200,
+       "content_type": "text/javascript",
+       "content_length": 22935,
+       "server_bytes_sent": 22935,
+       "gzip6_bytes_estimate": 7971
+      },
+      {
+       "url": "/atoms-draw/holon_draw_atoms.wasm",
+       "initiator": "fetch",
+       "transferSize": 882029,
+       "encodedBodySize": 881729,
+       "decodedBodySize": 881729,
+       "start_ms": 281.5,
+       "duration_ms": 4.5,
+       "status": 200,
+       "content_type": "application/wasm",
+       "content_length": 881729,
+       "server_bytes_sent": 881729,
+       "gzip6_bytes_estimate": 315450
+      }
+     ],
+     "resource_count": 3,
+     "transfer_bytes": 912403,
+     "encoded_bytes": 911503,
+     "decoded_bytes": 911503,
+     "server_bytes_sent": 911503,
+     "gzip6_bytes_estimate": 326331,
+     "js_heap_used_bytes": 4440889,
+     "js_heap_total_bytes": 6156297,
+     "wasm_memory_bytes": 1572864,
+     "longtask_supported": true,
+     "console_errors": [],
+     "page_errors": [],
+     "console_warnings": [
+      "No available adapters."
+     ],
+     "console_warning_count": 1,
+     "fail_expression_true_at_ms": null,
+     "host_load1_after": 29.34,
+     "longtasks_to_ready": {
+      "count_over_50ms": 1,
+      "longest_ms": 74,
+      "total_ms": 74,
+      "blocking_ms": 24
+     },
+     "longtasks_in_window": {
+      "count_over_50ms": 1,
+      "longest_ms": 63,
+      "total_ms": 63,
+      "blocking_ms": 13
+     },
+     "longtasks_whole_run": {
+      "count_over_50ms": 2,
+      "longest_ms": 74,
+      "total_ms": 137,
+      "blocking_ms": 37
+     },
+     "stalls_to_ready": {
+      "count_over_50ms": 4,
+      "longest_ms": 8521.8,
+      "total_ms": 8774.4,
+      "blocking_ms": 8574.4
+     },
+     "stalls_in_window": {
+      "count_over_50ms": 3,
+      "longest_ms": 78.7,
+      "total_ms": 189.4,
+      "blocking_ms": 39.4
+     },
+     "window_ms": [
+      10393.4,
+      20400
+     ],
+     "frames_harness_clock": {
+      "frames": 347,
+      "fps": 34.68,
+      "median_ms": 20.25,
+      "p95_ms": 59.9,
+      "max_ms": 215.3
+     },
+     "frames_page_raf": {
+      "frames": 347,
+      "fps": 34.68,
+      "median_ms": 20.7,
+      "p95_ms": 60.1,
+      "max_ms": 214.9,
+      "callback_median_ms": 1.4,
+      "callback_p95_ms": 5.2,
+      "callback_max_ms": 28.9,
+      "callback_total_ms": 697.2
+     },
+     "label": "after",
+     "order": "19:02:47",
+     "sweep": 2
+    },
+    {
+     "run": 1,
+     "mode": "phone",
+     "error": null,
+     "host_load1_before": 44.84,
+     "screenshot_ready_plus_1s": "/tmp/claude-1000/-home-emoore-CIRISHolon/4066a70d-c28a-428f-932b-46e9476d96db/scratchpad/compare/after_phone_ready1s.png",
+     "screenshot_end": "/tmp/claude-1000/-home-emoore-CIRISHolon/4066a70d-c28a-428f-932b-46e9476d96db/scratchpad/compare/after_phone_end.png",
+     "url": "atoms-draw/index.html",
+     "ready_js_ms": 10261.9,
+     "ready_pixels_ms": 10304.9,
+     "ready_ms": 10304.9,
+     "pixel_probe": {
+      "selector": "canvas",
+      "non_flat_fraction": 0.0967,
+      "distinct_colours": 1570,
+      "screenshots_taken": 1,
+      "last_blank_ms": null,
+      "shot_began_ms": 10304.9,
+      "shot_ended_ms": 10920.5,
+      "threshold": 0.002
+     },
+     "wall_s": 23.24,
+     "engine": "holon-draw on webgl2",
+     "graphics_path": "holon-draw on webgl2",
+     "webgpu_probe": "navigator.gpu, null adapter",
+     "webgl_renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+     "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+     "device_pixel_ratio": 3,
+     "canvases": [
+      {
+       "id": "c",
+       "width": 1170,
+       "height": 2532,
+       "css": [
+        390,
+        844
+       ]
+      }
+     ],
+     "resources": [
+      {
+       "url": "/atoms-draw/index.html",
+       "initiator": "navigation",
+       "transferSize": 7139,
+       "encodedBodySize": 6839,
+       "decodedBodySize": 6839,
+       "start_ms": 0,
+       "duration_ms": 275.7,
+       "status": 200,
+       "content_type": "text/html",
+       "content_length": 6839,
+       "server_bytes_sent": 6839,
+       "gzip6_bytes_estimate": 2910
+      },
+      {
+       "url": "/atoms-draw/draw.js",
+       "initiator": "script",
+       "transferSize": 23235,
+       "encodedBodySize": 22935,
+       "decodedBodySize": 22935,
+       "start_ms": 156.5,
+       "duration_ms": 2.9,
+       "status": 200,
+       "content_type": "text/javascript",
+       "content_length": 22935,
+       "server_bytes_sent": 22935,
+       "gzip6_bytes_estimate": 7971
+      },
+      {
+       "url": "/atoms-draw/holon_draw_atoms.wasm",
+       "initiator": "fetch",
+       "transferSize": 882029,
+       "encodedBodySize": 881729,
+       "decodedBodySize": 881729,
+       "start_ms": 274.3,
+       "duration_ms": 3.7,
+       "status": 200,
+       "content_type": "application/wasm",
+       "content_length": 881729,
+       "server_bytes_sent": 881729,
+       "gzip6_bytes_estimate": 315450
+      }
+     ],
+     "resource_count": 3,
+     "transfer_bytes": 912403,
+     "encoded_bytes": 911503,
+     "decoded_bytes": 911503,
+     "server_bytes_sent": 911503,
+     "gzip6_bytes_estimate": 326331,
+     "js_heap_used_bytes": 4098740,
+     "js_heap_total_bytes": 4845532,
+     "wasm_memory_bytes": 1572864,
+     "longtask_supported": true,
+     "console_errors": [],
+     "page_errors": [],
+     "console_warnings": [
+      "No available adapters."
+     ],
+     "console_warning_count": 1,
+     "fail_expression_true_at_ms": null,
+     "host_load1_after": 36.83,
+     "longtasks_to_ready": {
+      "count_over_50ms": 2,
+      "longest_ms": 57,
+      "total_ms": 109,
+      "blocking_ms": 9
+     },
+     "longtasks_in_window": {
+      "count_over_50ms": 1,
+      "longest_ms": 188,
+      "total_ms": 188,
+      "blocking_ms": 138
+     },
+     "longtasks_whole_run": {
+      "count_over_50ms": 3,
+      "longest_ms": 188,
+      "total_ms": 297,
+      "blocking_ms": 147
+     },
+     "stalls_to_ready": {
+      "count_over_50ms": 4,
+      "longest_ms": 9941.7,
+      "total_ms": 10278.5,
+      "blocking_ms": 10078.5
+     },
+     "stalls_in_window": {
+      "count_over_50ms": 1,
+      "longest_ms": 195.3,
+      "total_ms": 195.3,
+      "blocking_ms": 145.3
+     },
+     "window_ms": [
+      12974.5,
+      22979.9
+     ],
+     "frames_harness_clock": {
+      "frames": 481,
+      "fps": 48.07,
+      "median_ms": 17.1,
+      "p95_ms": 41.8,
+      "max_ms": 189.6
+     },
+     "frames_page_raf": {
+      "frames": 481,
+      "fps": 48.07,
+      "median_ms": 17.1,
+      "p95_ms": 41.8,
+      "max_ms": 189.6,
+      "callback_median_ms": 1.3,
+      "callback_p95_ms": 2.8,
+      "callback_max_ms": 184.8,
+      "callback_total_ms": 810.5
+     },
+     "label": "after",
+     "order": "19:08:03",
+     "sweep": 3
+    },
+    {
+     "run": 2,
+     "mode": "phone",
+     "error": null,
+     "host_load1_before": 28.03,
+     "url": "atoms-draw/index.html",
+     "ready_js_ms": 12305.1,
+     "ready_pixels_ms": 12333.4,
+     "ready_ms": 12333.4,
+     "pixel_probe": {
+      "selector": "canvas",
+      "non_flat_fraction": 0.0967,
+      "distinct_colours": 1555,
+      "screenshots_taken": 1,
+      "last_blank_ms": null,
+      "shot_began_ms": 12333.4,
+      "shot_ended_ms": 12890.2,
+      "threshold": 0.002
+     },
+     "wall_s": 24.09,
+     "engine": "holon-draw on webgl2",
+     "graphics_path": "holon-draw on webgl2",
+     "webgpu_probe": "navigator.gpu, null adapter",
+     "webgl_renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+     "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+     "device_pixel_ratio": 3,
+     "canvases": [
+      {
+       "id": "c",
+       "width": 1170,
+       "height": 2532,
+       "css": [
+        390,
+        844
+       ]
+      }
+     ],
+     "resources": [
+      {
+       "url": "/atoms-draw/index.html",
+       "initiator": "navigation",
+       "transferSize": 7139,
+       "encodedBodySize": 6839,
+       "decodedBodySize": 6839,
+       "start_ms": 0,
+       "duration_ms": 3315,
+       "status": 200,
+       "content_type": "text/html",
+       "content_length": 6839,
+       "server_bytes_sent": 6839,
+       "gzip6_bytes_estimate": 2910
+      },
+      {
+       "url": "/atoms-draw/draw.js",
+       "initiator": "script",
+       "transferSize": 23235,
+       "encodedBodySize": 22935,
+       "decodedBodySize": 22935,
+       "start_ms": 254.8,
+       "duration_ms": 18,
+       "status": 200,
+       "content_type": "text/javascript",
+       "content_length": 22935,
+       "server_bytes_sent": 22935,
+       "gzip6_bytes_estimate": 7971
+      },
+      {
+       "url": "/atoms-draw/holon_draw_atoms.wasm",
+       "initiator": "fetch",
+       "transferSize": 882029,
+       "encodedBodySize": 881729,
+       "decodedBodySize": 881729,
+       "start_ms": 3314.8,
+       "duration_ms": 5.2,
+       "status": 200,
+       "content_type": "application/wasm",
+       "content_length": 881729,
+       "server_bytes_sent": 881729,
+       "gzip6_bytes_estimate": 315450
+      }
+     ],
+     "resource_count": 3,
+     "transfer_bytes": 912403,
+     "encoded_bytes": 911503,
+     "decoded_bytes": 911503,
+     "server_bytes_sent": 911503,
+     "gzip6_bytes_estimate": 326331,
+     "js_heap_used_bytes": 4055012,
+     "js_heap_total_bytes": 4845532,
+     "wasm_memory_bytes": 1572864,
+     "longtask_supported": true,
+     "console_errors": [],
+     "page_errors": [],
+     "console_warnings": [
+      "No available adapters."
+     ],
+     "console_warning_count": 1,
+     "fail_expression_true_at_ms": null,
+     "host_load1_after": 26.89,
+     "longtasks_to_ready": {
+      "count_over_50ms": 2,
+      "longest_ms": 3028,
+      "total_ms": 3096,
+      "blocking_ms": 2996
+     },
+     "longtasks_in_window": {
+      "count_over_50ms": 0,
+      "longest_ms": 0.0,
+      "total_ms": 0,
+      "blocking_ms": 0
+     },
+     "longtasks_whole_run": {
+      "count_over_50ms": 2,
+      "longest_ms": 3028,
+      "total_ms": 3096,
+      "blocking_ms": 2996
+     },
+     "stalls_to_ready": {
+      "count_over_50ms": 4,
+      "longest_ms": 8925.6,
+      "total_ms": 12175.4,
+      "blocking_ms": 11975.4
+     },
+     "stalls_in_window": {
+      "count_over_50ms": 1,
+      "longest_ms": 55.7,
+      "total_ms": 55.7,
+      "blocking_ms": 5.7
+     },
+     "window_ms": [
+      13958.8,
+      23964
+     ],
+     "frames_harness_clock": {
+      "frames": 484,
+      "fps": 48.37,
+      "median_ms": 17.2,
+      "p95_ms": 40.3,
+      "max_ms": 58.5
+     },
+     "frames_page_raf": {
+      "frames": 484,
+      "fps": 48.37,
+      "median_ms": 17.3,
+      "p95_ms": 40.3,
+      "max_ms": 58.5,
+      "callback_median_ms": 1.3,
+      "callback_p95_ms": 2.1,
+      "callback_max_ms": 4.8,
+      "callback_total_ms": 601.9
+     },
+     "label": "after",
+     "order": "19:09:21",
+     "sweep": 3
+    },
+    {
+     "run": 3,
+     "mode": "phone",
+     "error": null,
+     "host_load1_before": 23.18,
+     "url": "atoms-draw/index.html",
+     "ready_js_ms": 11874.1,
+     "ready_pixels_ms": 11905.1,
+     "ready_ms": 11905.1,
+     "pixel_probe": {
+      "selector": "canvas",
+      "non_flat_fraction": 0.0967,
+      "distinct_colours": 1570,
+      "screenshots_taken": 1,
+      "last_blank_ms": null,
+      "shot_began_ms": 11905.1,
+      "shot_ended_ms": 17392.7,
+      "threshold": 0.002
+     },
+     "wall_s": 28.56,
+     "engine": "holon-draw on webgl2",
+     "graphics_path": "holon-draw on webgl2",
+     "webgpu_probe": "navigator.gpu, null adapter",
+     "webgl_renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+     "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+     "device_pixel_ratio": 3,
+     "canvases": [
+      {
+       "id": "c",
+       "width": 1170,
+       "height": 2532,
+       "css": [
+        390,
+        844
+       ]
+      }
+     ],
+     "resources": [
+      {
+       "url": "/atoms-draw/index.html",
+       "initiator": "navigation",
+       "transferSize": 7139,
+       "encodedBodySize": 6839,
+       "decodedBodySize": 6839,
+       "start_ms": 0,
+       "duration_ms": 207.7,
+       "status": 200,
+       "content_type": "text/html",
+       "content_length": 6839,
+       "server_bytes_sent": 6839,
+       "gzip6_bytes_estimate": 2910
+      },
+      {
+       "url": "/atoms-draw/draw.js",
+       "initiator": "script",
+       "transferSize": 23235,
+       "encodedBodySize": 22935,
+       "decodedBodySize": 22935,
+       "start_ms": 34.4,
+       "duration_ms": 3.9,
+       "status": 200,
+       "content_type": "text/javascript",
+       "content_length": 22935,
+       "server_bytes_sent": 22935,
+       "gzip6_bytes_estimate": 7971
+      },
+      {
+       "url": "/atoms-draw/holon_draw_atoms.wasm",
+       "initiator": "fetch",
+       "transferSize": 882029,
+       "encodedBodySize": 881729,
+       "decodedBodySize": 881729,
+       "start_ms": 177.2,
+       "duration_ms": 3.7,
+       "status": 200,
+       "content_type": "application/wasm",
+       "content_length": 881729,
+       "server_bytes_sent": 881729,
+       "gzip6_bytes_estimate": 315450
+      }
+     ],
+     "resource_count": 3,
+     "transfer_bytes": 912403,
+     "encoded_bytes": 911503,
+     "decoded_bytes": 911503,
+     "server_bytes_sent": 911503,
+     "gzip6_bytes_estimate": 326331,
+     "js_heap_used_bytes": 4346661,
+     "js_heap_total_bytes": 5632009,
+     "wasm_memory_bytes": 1572864,
+     "longtask_supported": true,
+     "console_errors": [],
+     "page_errors": [],
+     "console_warnings": [
+      "No available adapters."
+     ],
+     "console_warning_count": 1,
+     "fail_expression_true_at_ms": null,
+     "host_load1_after": 22.93,
+     "longtasks_to_ready": {
+      "count_over_50ms": 1,
+      "longest_ms": 123,
+      "total_ms": 123,
+      "blocking_ms": 73
+     },
+     "longtasks_in_window": {
+      "count_over_50ms": 2,
+      "longest_ms": 2670,
+      "total_ms": 5154,
+      "blocking_ms": 5054
+     },
+     "longtasks_whole_run": {
+      "count_over_50ms": 4,
+      "longest_ms": 2884,
+      "total_ms": 8161,
+      "blocking_ms": 7961
+     },
+     "stalls_to_ready": {
+      "count_over_50ms": 3,
+      "longest_ms": 11622.1,
+      "total_ms": 11826.5,
+      "blocking_ms": 11676.5
+     },
+     "stalls_in_window": {
+      "count_over_50ms": 2,
+      "longest_ms": 2676.9,
+      "total_ms": 5172.4,
+      "blocking_ms": 5072.4
+     },
+     "window_ms": [
+      18467.2,
+      28472.4
+     ],
+     "frames_harness_clock": {
+      "frames": 292,
+      "fps": 29.18,
+      "median_ms": 16.6,
+      "p95_ms": 17.7,
+      "max_ms": 2683.2
+     },
+     "frames_page_raf": {
+      "frames": 292,
+      "fps": 29.18,
+      "median_ms": 16.6,
+      "p95_ms": 17.8,
+      "max_ms": 2683.2,
+      "callback_median_ms": 1.1,
+      "callback_p95_ms": 2,
+      "callback_max_ms": 2667.8,
+      "callback_total_ms": 5466.7
+     },
+     "label": "after",
+     "order": "19:10:41",
+     "sweep": 3
+    }
+   ]
+  },
+  "after_dpr1|phone": {
+   "runs_ok": 6,
+   "runs": 6,
+   "summary": {
+    "ready_js_ms": {
+     "median": 9587.9,
+     "min": 8026.9,
+     "max": 15840.3
+    },
+    "ready_pixels_ms": {
+     "median": 9609.2,
+     "min": 8043.4,
+     "max": 15853.8
+    },
+    "ready_ms": {
+     "median": 9609.2,
+     "min": 8043.4,
+     "max": 15853.8
+    },
+    "transfer_bytes": {
+     "median": 912403.0,
+     "min": 912403,
+     "max": 912403
+    },
+    "decoded_bytes": {
+     "median": 911503.0,
+     "min": 911503,
+     "max": 911503
+    },
+    "gzip6_bytes_estimate": {
+     "median": 326331.0,
+     "min": 326331,
+     "max": 326331
+    },
+    "resource_count": {
+     "median": 3.0,
+     "min": 3,
+     "max": 3
+    },
+    "longest_task_to_ready_ms": {
+     "median": 144.5,
+     "min": 66,
+     "max": 1648
+    },
+    "tasks_over_50ms_to_ready": {
+     "median": 1.0,
+     "min": 1,
+     "max": 2
+    },
+    "blocking_ms_to_ready": {
+     "median": 110.5,
+     "min": 16,
+     "max": 1598
+    },
+    "longest_stall_to_ready_ms": {
+     "median": 9312.8,
+     "min": 7801.7,
+     "max": 15002.5
+    },
+    "stalls_over_50ms_to_ready": {
+     "median": 3.0,
+     "min": 2,
+     "max": 5
+    },
+    "stalled_ms_to_ready": {
+     "median": 9520.5,
+     "min": 7911.5,
+     "max": 15672.7
+    },
+    "longest_stall_in_window_ms": {
+     "median": 262.85,
+     "min": 0.0,
+     "max": 805.5
+    },
+    "stalls_over_50ms_in_window": {
+     "median": 2.0,
+     "min": 0,
+     "max": 5
+    },
+    "longest_task_in_window_ms": {
+     "median": 218.5,
+     "min": 0.0,
+     "max": 797
+    },
+    "tasks_over_50ms_in_window": {
+     "median": 0.5,
+     "min": 0,
+     "max": 2
+    },
+    "longest_task_whole_run_ms": {
+     "median": 378.5,
+     "min": 66,
+     "max": 1648
+    },
+    "tasks_over_50ms_whole_run": {
+     "median": 2.0,
+     "min": 1,
+     "max": 3
+    },
+    "frame_median_ms": {
+     "median": 16.7,
+     "min": 16.7,
+     "max": 16.7
+    },
+    "frame_p95_ms": {
+     "median": 17.8,
+     "min": 17.6,
+     "max": 22.9
+    },
+    "frame_max_ms": {
+     "median": 238.55,
+     "min": 21.1,
+     "max": 799.7
+    },
+    "fps": {
+     "median": 58.17,
+     "min": 51.37,
+     "max": 59.97
+    },
+    "page_raf_fps": {
+     "median": 58.17,
+     "min": 51.37,
+     "max": 59.97
+    },
+    "page_raf_callback_median_ms": {
+     "median": 1.3,
+     "min": 1.1,
+     "max": 1.4
+    },
+    "page_raf_callback_p95_ms": {
+     "median": 2.05,
+     "min": 1.8,
+     "max": 5.6
+    },
+    "js_heap_used_bytes": {
+     "median": 5631532.0,
+     "min": 5477694,
+     "max": 5669542
+    },
+    "wasm_memory_bytes": {
+     "median": 1572864.0,
+     "min": 1572864,
+     "max": 1572864
+    }
+   },
+   "canvases": [
+    {
+     "id": "c",
+     "width": 390,
+     "height": 844,
+     "css": [
+      390,
+      844
+     ]
+    }
+   ],
+   "engine": "holon-draw on webgl2",
+   "graphics_path": "holon-draw on webgl2",
+   "webgl_renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+   "host_load1": [
+    28.29,
+    25.85,
+    29.34,
+    36.83,
+    26.89,
+    22.93
+   ],
+   "console_errors": 0,
+   "resources": [
+    {
+     "url": "/atoms-draw/index.html?dpr=1",
+     "transferSize": 7139,
+     "decodedBodySize": 6839,
+     "gzip6_bytes_estimate": 2910
+    },
+    {
+     "url": "/atoms-draw/draw.js",
+     "transferSize": 23235,
+     "decodedBodySize": 22935,
+     "gzip6_bytes_estimate": 7971
+    },
+    {
+     "url": "/atoms-draw/holon_draw_atoms.wasm",
+     "transferSize": 882029,
+     "decodedBodySize": 881729,
+     "gzip6_bytes_estimate": 315450
+    }
+   ],
+   "runs_detail": [
+    {
+     "run": 1,
+     "mode": "phone",
+     "error": null,
+     "host_load1_before": 28.29,
+     "screenshot_ready_plus_1s": "/tmp/claude-1000/-home-emoore-CIRISHolon/4066a70d-c28a-428f-932b-46e9476d96db/scratchpad/compare/after_dpr1_phone_ready1s.png",
+     "screenshot_end": "/tmp/claude-1000/-home-emoore-CIRISHolon/4066a70d-c28a-428f-932b-46e9476d96db/scratchpad/compare/after_dpr1_phone_end.png",
+     "url": "atoms-draw/index.html?dpr=1",
+     "ready_js_ms": 8110.5,
+     "ready_pixels_ms": 8132.5,
+     "ready_ms": 8132.5,
+     "pixel_probe": {
+      "selector": "canvas",
+      "non_flat_fraction": 0.09251,
+      "distinct_colours": 1596,
+      "screenshots_taken": 1,
+      "last_blank_ms": null,
+      "shot_began_ms": 8132.5,
+      "shot_ended_ms": 8479.9,
+      "threshold": 0.002
+     },
+     "wall_s": 22.83,
+     "engine": "holon-draw on webgl2",
+     "graphics_path": "holon-draw on webgl2",
+     "webgpu_probe": "navigator.gpu, null adapter",
+     "webgl_renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+     "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+     "device_pixel_ratio": 3,
+     "canvases": [
+      {
+       "id": "c",
+       "width": 390,
+       "height": 844,
+       "css": [
+        390,
+        844
+       ]
+      }
+     ],
+     "resources": [
+      {
+       "url": "/atoms-draw/index.html?dpr=1",
+       "initiator": "navigation",
+       "transferSize": 7139,
+       "encodedBodySize": 6839,
+       "decodedBodySize": 6839,
+       "start_ms": 0,
+       "duration_ms": 175.5,
+       "status": 200,
+       "content_type": "text/html",
+       "content_length": 6839,
+       "server_bytes_sent": 6839,
+       "gzip6_bytes_estimate": 2910
+      },
+      {
+       "url": "/atoms-draw/draw.js",
+       "initiator": "script",
+       "transferSize": 23235,
+       "encodedBodySize": 22935,
+       "decodedBodySize": 22935,
+       "start_ms": 30.3,
+       "duration_ms": 2.3,
+       "status": 200,
+       "content_type": "text/javascript",
+       "content_length": 22935,
+       "server_bytes_sent": 22935,
+       "gzip6_bytes_estimate": 7971
+      },
+      {
+       "url": "/atoms-draw/holon_draw_atoms.wasm",
+       "initiator": "fetch",
+       "transferSize": 882029,
+       "encodedBodySize": 881729,
+       "decodedBodySize": 881729,
+       "start_ms": 175.4,
+       "duration_ms": 2.8,
+       "status": 200,
+       "content_type": "application/wasm",
+       "content_length": 881729,
+       "server_bytes_sent": 881729,
+       "gzip6_bytes_estimate": 315450
+      }
+     ],
+     "resource_count": 3,
+     "transfer_bytes": 912403,
+     "encoded_bytes": 911503,
+     "decoded_bytes": 911503,
+     "server_bytes_sent": 911503,
+     "gzip6_bytes_estimate": 326331,
+     "js_heap_used_bytes": 5669542,
+     "js_heap_total_bytes": 7316978,
+     "wasm_memory_bytes": 1572864,
+     "longtask_supported": true,
+     "console_errors": [],
+     "page_errors": [],
+     "console_warnings": [
+      "No available adapters."
+     ],
+     "console_warning_count": 1,
+     "fail_expression_true_at_ms": null,
+     "host_load1_after": 28.65,
+     "longtasks_to_ready": {
+      "count_over_50ms": 1,
+      "longest_ms": 68,
+      "total_ms": 68,
+      "blocking_ms": 18
+     },
+     "longtasks_in_window": {
+      "count_over_50ms": 1,
+      "longest_ms": 561,
+      "total_ms": 561,
+      "blocking_ms": 511
+     },
+     "longtasks_whole_run": {
+      "count_over_50ms": 2,
+      "longest_ms": 561,
+      "total_ms": 629,
+      "blocking_ms": 529
+     },
+     "stalls_to_ready": {
+      "count_over_50ms": 3,
+      "longest_ms": 7908.7,
+      "total_ms": 8067.0,
+      "blocking_ms": 7917.0
+     },
+     "stalls_in_window": {
+      "count_over_50ms": 3,
+      "longest_ms": 570.4,
+      "total_ms": 678.0,
+      "blocking_ms": 528.0
+     },
+     "window_ms": [
+      9988.9,
+      19998.7
+     ],
+     "frames_harness_clock": {
+      "frames": 559,
+      "fps": 55.85,
+      "median_ms": 16.7,
+      "p95_ms": 22.9,
+      "max_ms": 568.1
+     },
+     "frames_page_raf": {
+      "frames": 559,
+      "fps": 55.85,
+      "median_ms": 16.7,
+      "p95_ms": 22.7,
+      "max_ms": 568.1,
+      "callback_median_ms": 1.4,
+      "callback_p95_ms": 5.6,
+      "callback_max_ms": 558.1,
+      "callback_total_ms": 1529.4
+     },
+     "label": "after_dpr1",
+     "order": "19:00:39",
+     "sweep": 2
+    },
+    {
+     "run": 2,
+     "mode": "phone",
+     "error": null,
+     "host_load1_before": 25.85,
+     "url": "atoms-draw/index.html?dpr=1",
+     "ready_js_ms": 10054,
+     "ready_pixels_ms": 10072.3,
+     "ready_ms": 10072.3,
+     "pixel_probe": {
+      "selector": "canvas",
+      "non_flat_fraction": 0.09249,
+      "distinct_colours": 1592,
+      "screenshots_taken": 1,
+      "last_blank_ms": null,
+      "shot_began_ms": 10072.3,
+      "shot_ended_ms": 10403,
+      "threshold": 0.002
+     },
+     "wall_s": 21.58,
+     "engine": "holon-draw on webgl2",
+     "graphics_path": "holon-draw on webgl2",
+     "webgpu_probe": "navigator.gpu, null adapter",
+     "webgl_renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+     "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+     "device_pixel_ratio": 3,
+     "canvases": [
+      {
+       "id": "c",
+       "width": 390,
+       "height": 844,
+       "css": [
+        390,
+        844
+       ]
+      }
+     ],
+     "resources": [
+      {
+       "url": "/atoms-draw/index.html?dpr=1",
+       "initiator": "navigation",
+       "transferSize": 7139,
+       "encodedBodySize": 6839,
+       "decodedBodySize": 6839,
+       "start_ms": 0,
+       "duration_ms": 261.1,
+       "status": 200,
+       "content_type": "text/html",
+       "content_length": 6839,
+       "server_bytes_sent": 6839,
+       "gzip6_bytes_estimate": 2910
+      },
+      {
+       "url": "/atoms-draw/draw.js",
+       "initiator": "script",
+       "transferSize": 23235,
+       "encodedBodySize": 22935,
+       "decodedBodySize": 22935,
+       "start_ms": 136.1,
+       "duration_ms": 1.9,
+       "status": 200,
+       "content_type": "text/javascript",
+       "content_length": 22935,
+       "server_bytes_sent": 22935,
+       "gzip6_bytes_estimate": 7971
+      },
+      {
+       "url": "/atoms-draw/holon_draw_atoms.wasm",
+       "initiator": "fetch",
+       "transferSize": 882029,
+       "encodedBodySize": 881729,
+       "decodedBodySize": 881729,
+       "start_ms": 259.9,
+       "duration_ms": 7.2,
+       "status": 200,
+       "content_type": "application/wasm",
+       "content_length": 881729,
+       "server_bytes_sent": 881729,
+       "gzip6_bytes_estimate": 315450
+      }
+     ],
+     "resource_count": 3,
+     "transfer_bytes": 912403,
+     "encoded_bytes": 911503,
+     "decoded_bytes": 911503,
+     "server_bytes_sent": 911503,
+     "gzip6_bytes_estimate": 326331,
+     "js_heap_used_bytes": 5653430,
+     "js_heap_total_bytes": 7316978,
+     "wasm_memory_bytes": 1572864,
+     "longtask_supported": true,
+     "console_errors": [],
+     "page_errors": [],
+     "console_warnings": [
+      "No available adapters."
+     ],
+     "console_warning_count": 1,
+     "fail_expression_true_at_ms": null,
+     "host_load1_after": 25.79,
+     "longtasks_to_ready": {
+      "count_over_50ms": 1,
+      "longest_ms": 66,
+      "total_ms": 66,
+      "blocking_ms": 16
+     },
+     "longtasks_in_window": {
+      "count_over_50ms": 0,
+      "longest_ms": 0.0,
+      "total_ms": 0,
+      "blocking_ms": 0
+     },
+     "longtasks_whole_run": {
+      "count_over_50ms": 1,
+      "longest_ms": 66,
+      "total_ms": 66,
+      "blocking_ms": 16
+     },
+     "stalls_to_ready": {
+      "count_over_50ms": 3,
+      "longest_ms": 9743.8,
+      "total_ms": 9941.9,
+      "blocking_ms": 9791.9
+     },
+     "stalls_in_window": {
+      "count_over_50ms": 0,
+      "longest_ms": 0.0,
+      "total_ms": 0,
+      "blocking_ms": 0
+     },
+     "window_ms": [
+      11486.4,
+      21491.6
+     ],
+     "frames_harness_clock": {
+      "frames": 600,
+      "fps": 59.97,
+      "median_ms": 16.7,
+      "p95_ms": 17.7,
+      "max_ms": 21.1
+     },
+     "frames_page_raf": {
+      "frames": 600,
+      "fps": 59.97,
+      "median_ms": 16.7,
+      "p95_ms": 17.7,
+      "max_ms": 21.2,
+      "callback_median_ms": 1.3,
+      "callback_p95_ms": 2.2,
+      "callback_max_ms": 5.9,
+      "callback_total_ms": 769.7
+     },
+     "label": "after_dpr1",
+     "order": "19:01:52",
+     "sweep": 2
+    },
+    {
+     "run": 3,
+     "mode": "phone",
+     "error": null,
+     "host_load1_before": 29.34,
+     "url": "atoms-draw/index.html?dpr=1",
+     "ready_js_ms": 15840.3,
+     "ready_pixels_ms": 15853.8,
+     "ready_ms": 15853.8,
+     "pixel_probe": {
+      "selector": "canvas",
+      "non_flat_fraction": 0.09251,
+      "distinct_colours": 1606,
+      "screenshots_taken": 1,
+      "last_blank_ms": null,
+      "shot_began_ms": 15853.8,
+      "shot_ended_ms": 16137.7,
+      "threshold": 0.002
+     },
+     "wall_s": 27.53,
+     "engine": "holon-draw on webgl2",
+     "graphics_path": "holon-draw on webgl2",
+     "webgpu_probe": "navigator.gpu, null adapter",
+     "webgl_renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+     "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+     "device_pixel_ratio": 3,
+     "canvases": [
+      {
+       "id": "c",
+       "width": 390,
+       "height": 844,
+       "css": [
+        390,
+        844
+       ]
+      }
+     ],
+     "resources": [
+      {
+       "url": "/atoms-draw/index.html?dpr=1",
+       "initiator": "navigation",
+       "transferSize": 7139,
+       "encodedBodySize": 6839,
+       "decodedBodySize": 6839,
+       "start_ms": 0,
+       "duration_ms": 735.1,
+       "status": 200,
+       "content_type": "text/html",
+       "content_length": 6839,
+       "server_bytes_sent": 6839,
+       "gzip6_bytes_estimate": 2910
+      },
+      {
+       "url": "/atoms-draw/draw.js",
+       "initiator": "script",
+       "transferSize": 23235,
+       "encodedBodySize": 22935,
+       "decodedBodySize": 22935,
+       "start_ms": 377.5,
+       "duration_ms": 8.2,
+       "status": 200,
+       "content_type": "text/javascript",
+       "content_length": 22935,
+       "server_bytes_sent": 22935,
+       "gzip6_bytes_estimate": 7971
+      },
+      {
+       "url": "/atoms-draw/holon_draw_atoms.wasm",
+       "initiator": "fetch",
+       "transferSize": 882029,
+       "encodedBodySize": 881729,
+       "decodedBodySize": 881729,
+       "start_ms": 729.1,
+       "duration_ms": 7.3,
+       "status": 200,
+       "content_type": "application/wasm",
+       "content_length": 881729,
+       "server_bytes_sent": 881729,
+       "gzip6_bytes_estimate": 315450
+      }
+     ],
+     "resource_count": 3,
+     "transfer_bytes": 912403,
+     "encoded_bytes": 911503,
+     "decoded_bytes": 911503,
+     "server_bytes_sent": 911503,
+     "gzip6_bytes_estimate": 326331,
+     "js_heap_used_bytes": 5633214,
+     "js_heap_total_bytes": 7316978,
+     "wasm_memory_bytes": 1572864,
+     "longtask_supported": true,
+     "console_errors": [],
+     "page_errors": [],
+     "console_warnings": [
+      "No available adapters."
+     ],
+     "console_warning_count": 1,
+     "fail_expression_true_at_ms": null,
+     "host_load1_after": 32.97,
+     "longtasks_to_ready": {
+      "count_over_50ms": 2,
+      "longest_ms": 196,
+      "total_ms": 299,
+      "blocking_ms": 199
+     },
+     "longtasks_in_window": {
+      "count_over_50ms": 0,
+      "longest_ms": 0.0,
+      "total_ms": 0,
+      "blocking_ms": 0
+     },
+     "longtasks_whole_run": {
+      "count_over_50ms": 2,
+      "longest_ms": 196,
+      "total_ms": 299,
+      "blocking_ms": 199
+     },
+     "stalls_to_ready": {
+      "count_over_50ms": 5,
+      "longest_ms": 15002.5,
+      "total_ms": 15672.7,
+      "blocking_ms": 15422.7
+     },
+     "stalls_in_window": {
+      "count_over_50ms": 5,
+      "longest_ms": 74.3,
+      "total_ms": 299.7,
+      "blocking_ms": 49.7
+     },
+     "window_ms": [
+      17222.1,
+      27225.6
+     ],
+     "frames_harness_clock": {
+      "frames": 589,
+      "fps": 58.88,
+      "median_ms": 16.7,
+      "p95_ms": 22.2,
+      "max_ms": 40.6
+     },
+     "frames_page_raf": {
+      "frames": 589,
+      "fps": 58.88,
+      "median_ms": 16.7,
+      "p95_ms": 22.7,
+      "max_ms": 40.7,
+      "callback_median_ms": 1.3,
+      "callback_p95_ms": 3.3,
+      "callback_max_ms": 14.1,
+      "callback_total_ms": 867.8
+     },
+     "label": "after_dpr1",
+     "order": "19:03:15",
+     "sweep": 2
+    },
+    {
+     "run": 1,
+     "mode": "phone",
+     "error": null,
+     "host_load1_before": 36.83,
+     "screenshot_ready_plus_1s": "/tmp/claude-1000/-home-emoore-CIRISHolon/4066a70d-c28a-428f-932b-46e9476d96db/scratchpad/compare/after_dpr1_phone_ready1s.png",
+     "screenshot_end": "/tmp/claude-1000/-home-emoore-CIRISHolon/4066a70d-c28a-428f-932b-46e9476d96db/scratchpad/compare/after_dpr1_phone_end.png",
+     "url": "atoms-draw/index.html?dpr=1",
+     "ready_js_ms": 9743.2,
+     "ready_pixels_ms": 9759.6,
+     "ready_ms": 9759.6,
+     "pixel_probe": {
+      "selector": "canvas",
+      "non_flat_fraction": 0.09251,
+      "distinct_colours": 1606,
+      "screenshots_taken": 1,
+      "last_blank_ms": null,
+      "shot_began_ms": 9759.6,
+      "shot_ended_ms": 10044.2,
+      "threshold": 0.002
+     },
+     "wall_s": 21.88,
+     "engine": "holon-draw on webgl2",
+     "graphics_path": "holon-draw on webgl2",
+     "webgpu_probe": "navigator.gpu, null adapter",
+     "webgl_renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+     "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+     "device_pixel_ratio": 3,
+     "canvases": [
+      {
+       "id": "c",
+       "width": 390,
+       "height": 844,
+       "css": [
+        390,
+        844
+       ]
+      }
+     ],
+     "resources": [
+      {
+       "url": "/atoms-draw/index.html?dpr=1",
+       "initiator": "navigation",
+       "transferSize": 7139,
+       "encodedBodySize": 6839,
+       "decodedBodySize": 6839,
+       "start_ms": 0,
+       "duration_ms": 318.5,
+       "status": 200,
+       "content_type": "text/html",
+       "content_length": 6839,
+       "server_bytes_sent": 6839,
+       "gzip6_bytes_estimate": 2910
+      },
+      {
+       "url": "/atoms-draw/draw.js",
+       "initiator": "script",
+       "transferSize": 23235,
+       "encodedBodySize": 22935,
+       "decodedBodySize": 22935,
+       "start_ms": 41.5,
+       "duration_ms": 1.7,
+       "status": 200,
+       "content_type": "text/javascript",
+       "content_length": 22935,
+       "server_bytes_sent": 22935,
+       "gzip6_bytes_estimate": 7971
+      },
+      {
+       "url": "/atoms-draw/holon_draw_atoms.wasm",
+       "initiator": "fetch",
+       "transferSize": 882029,
+       "encodedBodySize": 881729,
+       "decodedBodySize": 881729,
+       "start_ms": 292.8,
+       "duration_ms": 3,
+       "status": 200,
+       "content_type": "application/wasm",
+       "content_length": 881729,
+       "server_bytes_sent": 881729,
+       "gzip6_bytes_estimate": 315450
+      }
+     ],
+     "resource_count": 3,
+     "transfer_bytes": 912403,
+     "encoded_bytes": 911503,
+     "decoded_bytes": 911503,
+     "server_bytes_sent": 911503,
+     "gzip6_bytes_estimate": 326331,
+     "js_heap_used_bytes": 5629850,
+     "js_heap_total_bytes": 7316978,
+     "wasm_memory_bytes": 1572864,
+     "longtask_supported": true,
+     "console_errors": [],
+     "page_errors": [],
+     "console_warnings": [
+      "No available adapters."
+     ],
+     "console_warning_count": 1,
+     "fail_expression_true_at_ms": null,
+     "host_load1_after": 30.28,
+     "longtasks_to_ready": {
+      "count_over_50ms": 1,
+      "longest_ms": 228,
+      "total_ms": 228,
+      "blocking_ms": 178
+     },
+     "longtasks_in_window": {
+      "count_over_50ms": 2,
+      "longest_ms": 797,
+      "total_ms": 1469,
+      "blocking_ms": 1369
+     },
+     "longtasks_whole_run": {
+      "count_over_50ms": 3,
+      "longest_ms": 797,
+      "total_ms": 1697,
+      "blocking_ms": 1547
+     },
+     "stalls_to_ready": {
+      "count_over_50ms": 2,
+      "longest_ms": 9379.1,
+      "total_ms": 9627.8,
+      "blocking_ms": 9527.8
+     },
+     "stalls_in_window": {
+      "count_over_50ms": 3,
+      "longest_ms": 805.5,
+      "total_ms": 1533.6,
+      "blocking_ms": 1383.6
+     },
+     "window_ms": [
+      11571.7,
+      21576.6
+     ],
+     "frames_harness_clock": {
+      "frames": 514,
+      "fps": 51.37,
+      "median_ms": 16.7,
+      "p95_ms": 17.9,
+      "max_ms": 799.7
+     },
+     "frames_page_raf": {
+      "frames": 514,
+      "fps": 51.37,
+      "median_ms": 16.7,
+      "p95_ms": 17.9,
+      "max_ms": 799.7,
+      "callback_median_ms": 1.2,
+      "callback_p95_ms": 1.9,
+      "callback_max_ms": 794.7,
+      "callback_total_ms": 2063.5
+     },
+     "label": "after_dpr1",
+     "order": "19:08:25",
+     "sweep": 3
+    },
+    {
+     "run": 2,
+     "mode": "phone",
+     "error": null,
+     "host_load1_before": 26.89,
+     "url": "atoms-draw/index.html?dpr=1",
+     "ready_js_ms": 9432.6,
+     "ready_pixels_ms": 9458.8,
+     "ready_ms": 9458.8,
+     "pixel_probe": {
+      "selector": "canvas",
+      "non_flat_fraction": 0.0924,
+      "distinct_colours": 1593,
+      "screenshots_taken": 1,
+      "last_blank_ms": null,
+      "shot_began_ms": 9458.8,
+      "shot_ended_ms": 9770.9,
+      "threshold": 0.002
+     },
+     "wall_s": 21.03,
+     "engine": "holon-draw on webgl2",
+     "graphics_path": "holon-draw on webgl2",
+     "webgpu_probe": "navigator.gpu, null adapter",
+     "webgl_renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+     "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+     "device_pixel_ratio": 3,
+     "canvases": [
+      {
+       "id": "c",
+       "width": 390,
+       "height": 844,
+       "css": [
+        390,
+        844
+       ]
+      }
+     ],
+     "resources": [
+      {
+       "url": "/atoms-draw/index.html?dpr=1",
+       "initiator": "navigation",
+       "transferSize": 7139,
+       "encodedBodySize": 6839,
+       "decodedBodySize": 6839,
+       "start_ms": 0,
+       "duration_ms": 168.2,
+       "status": 200,
+       "content_type": "text/html",
+       "content_length": 6839,
+       "server_bytes_sent": 6839,
+       "gzip6_bytes_estimate": 2910
+      },
+      {
+       "url": "/atoms-draw/draw.js",
+       "initiator": "script",
+       "transferSize": 23235,
+       "encodedBodySize": 22935,
+       "decodedBodySize": 22935,
+       "start_ms": 122.6,
+       "duration_ms": 3.1,
+       "status": 200,
+       "content_type": "text/javascript",
+       "content_length": 22935,
+       "server_bytes_sent": 22935,
+       "gzip6_bytes_estimate": 7971
+      },
+      {
+       "url": "/atoms-draw/holon_draw_atoms.wasm",
+       "initiator": "fetch",
+       "transferSize": 882029,
+       "encodedBodySize": 881729,
+       "decodedBodySize": 881729,
+       "start_ms": 167.5,
+       "duration_ms": 2.3,
+       "status": 200,
+       "content_type": "application/wasm",
+       "content_length": 881729,
+       "server_bytes_sent": 881729,
+       "gzip6_bytes_estimate": 315450
+      }
+     ],
+     "resource_count": 3,
+     "transfer_bytes": 912403,
+     "encoded_bytes": 911503,
+     "decoded_bytes": 911503,
+     "server_bytes_sent": 911503,
+     "gzip6_bytes_estimate": 326331,
+     "js_heap_used_bytes": 5477694,
+     "js_heap_total_bytes": 7316978,
+     "wasm_memory_bytes": 1572864,
+     "longtask_supported": true,
+     "console_errors": [],
+     "page_errors": [],
+     "console_warnings": [
+      "No available adapters."
+     ],
+     "console_warning_count": 1,
+     "fail_expression_true_at_ms": null,
+     "host_load1_after": 23.19,
+     "longtasks_to_ready": {
+      "count_over_50ms": 1,
+      "longest_ms": 1648,
+      "total_ms": 1648,
+      "blocking_ms": 1598
+     },
+     "longtasks_in_window": {
+      "count_over_50ms": 1,
+      "longest_ms": 437,
+      "total_ms": 437,
+      "blocking_ms": 387
+     },
+     "longtasks_whole_run": {
+      "count_over_50ms": 2,
+      "longest_ms": 1648,
+      "total_ms": 2085,
+      "blocking_ms": 1985
+     },
+     "stalls_to_ready": {
+      "count_over_50ms": 3,
+      "longest_ms": 9246.5,
+      "total_ms": 9413.2,
+      "blocking_ms": 9263.2
+     },
+     "stalls_in_window": {
+      "count_over_50ms": 1,
+      "longest_ms": 451.4,
+      "total_ms": 451.4,
+      "blocking_ms": 401.4
+     },
+     "window_ms": [
+      10847.1,
+      20852.3
+     ],
+     "frames_harness_clock": {
+      "frames": 575,
+      "fps": 57.47,
+      "median_ms": 16.7,
+      "p95_ms": 17.7,
+      "max_ms": 436.5
+     },
+     "frames_page_raf": {
+      "frames": 575,
+      "fps": 57.47,
+      "median_ms": 16.7,
+      "p95_ms": 17.7,
+      "max_ms": 436.5,
+      "callback_median_ms": 1.3,
+      "callback_p95_ms": 1.9,
+      "callback_max_ms": 431.7,
+      "callback_total_ms": 1123.7
+     },
+     "label": "after_dpr1",
+     "order": "19:09:43",
+     "sweep": 3
+    },
+    {
+     "run": 3,
+     "mode": "phone",
+     "error": null,
+     "host_load1_before": 22.93,
+     "url": "atoms-draw/index.html?dpr=1",
+     "ready_js_ms": 8026.9,
+     "ready_pixels_ms": 8043.4,
+     "ready_ms": 8043.4,
+     "pixel_probe": {
+      "selector": "canvas",
+      "non_flat_fraction": 0.09251,
+      "distinct_colours": 1606,
+      "screenshots_taken": 1,
+      "last_blank_ms": null,
+      "shot_began_ms": 8043.4,
+      "shot_ended_ms": 8327.4,
+      "threshold": 0.002
+     },
+     "wall_s": 19.52,
+     "engine": "holon-draw on webgl2",
+     "graphics_path": "holon-draw on webgl2",
+     "webgpu_probe": "navigator.gpu, null adapter",
+     "webgl_renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+     "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+     "device_pixel_ratio": 3,
+     "canvases": [
+      {
+       "id": "c",
+       "width": 390,
+       "height": 844,
+       "css": [
+        390,
+        844
+       ]
+      }
+     ],
+     "resources": [
+      {
+       "url": "/atoms-draw/index.html?dpr=1",
+       "initiator": "navigation",
+       "transferSize": 7139,
+       "encodedBodySize": 6839,
+       "decodedBodySize": 6839,
+       "start_ms": 0,
+       "duration_ms": 185,
+       "status": 200,
+       "content_type": "text/html",
+       "content_length": 6839,
+       "server_bytes_sent": 6839,
+       "gzip6_bytes_estimate": 2910
+      },
+      {
+       "url": "/atoms-draw/draw.js",
+       "initiator": "script",
+       "transferSize": 23235,
+       "encodedBodySize": 22935,
+       "decodedBodySize": 22935,
+       "start_ms": 38.6,
+       "duration_ms": 2.7,
+       "status": 200,
+       "content_type": "text/javascript",
+       "content_length": 22935,
+       "server_bytes_sent": 22935,
+       "gzip6_bytes_estimate": 7971
+      },
+      {
+       "url": "/atoms-draw/holon_draw_atoms.wasm",
+       "initiator": "fetch",
+       "transferSize": 882029,
+       "encodedBodySize": 881729,
+       "decodedBodySize": 881729,
+       "start_ms": 163.1,
+       "duration_ms": 3.1,
+       "status": 200,
+       "content_type": "application/wasm",
+       "content_length": 881729,
+       "server_bytes_sent": 881729,
+       "gzip6_bytes_estimate": 315450
+      }
+     ],
+     "resource_count": 3,
+     "transfer_bytes": 912403,
+     "encoded_bytes": 911503,
+     "decoded_bytes": 911503,
+     "server_bytes_sent": 911503,
+     "gzip6_bytes_estimate": 326331,
+     "js_heap_used_bytes": 5592502,
+     "js_heap_total_bytes": 7316978,
+     "wasm_memory_bytes": 1572864,
+     "longtask_supported": true,
+     "console_errors": [],
+     "page_errors": [],
+     "console_warnings": [
+      "No available adapters."
+     ],
+     "console_warning_count": 1,
+     "fail_expression_true_at_ms": null,
+     "host_load1_after": 20.95,
+     "longtasks_to_ready": {
+      "count_over_50ms": 1,
+      "longest_ms": 93,
+      "total_ms": 93,
+      "blocking_ms": 43
+     },
+     "longtasks_in_window": {
+      "count_over_50ms": 0,
+      "longest_ms": 0.0,
+      "total_ms": 0,
+      "blocking_ms": 0
+     },
+     "longtasks_whole_run": {
+      "count_over_50ms": 1,
+      "longest_ms": 93,
+      "total_ms": 93,
+      "blocking_ms": 43
+     },
+     "stalls_to_ready": {
+      "count_over_50ms": 2,
+      "longest_ms": 7801.7,
+      "total_ms": 7911.5,
+      "blocking_ms": 7811.5
+     },
+     "stalls_in_window": {
+      "count_over_50ms": 0,
+      "longest_ms": 0.0,
+      "total_ms": 0,
+      "blocking_ms": 0
+     },
+     "window_ms": [
+      9392.4,
+      19396.7
+     ],
+     "frames_harness_clock": {
+      "frames": 600,
+      "fps": 59.97,
+      "median_ms": 16.7,
+      "p95_ms": 17.6,
+      "max_ms": 23.1
+     },
+     "frames_page_raf": {
+      "frames": 600,
+      "fps": 59.97,
+      "median_ms": 16.7,
+      "p95_ms": 17.6,
+      "max_ms": 23.1,
+      "callback_median_ms": 1.1,
+      "callback_p95_ms": 1.8,
+      "callback_max_ms": 2.9,
+      "callback_total_ms": 648.9
+     },
+     "label": "after_dpr1",
+     "order": "19:11:01",
+     "sweep": 3
+    }
+   ]
+  }
+ }
+}

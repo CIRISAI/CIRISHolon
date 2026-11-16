@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#17201d" />
+    <meta name="description" content="The same 3D atom world as atoms3d, drawn by holon-draw instead of Bevy: hydrogen and other first-row atoms in a box under exact pair potentials." />
+    <title>CIRISHolon · atom world (holon-draw)</title>
+    <style>
+      :root { --ink: #17201d; --paper: #ede9df; --muted: #69736e; --green: #236957; --mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace; --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+      * { box-sizing: border-box; }
+      html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: var(--ink); color: var(--paper); font-family: var(--sans); -webkit-user-select: none; user-select: none; }
+      canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+      #hud { position: fixed; left: 16px; top: 16px; max-width: calc(100vw - 32px); font: 13px/1.5 var(--mono); background: rgba(23, 32, 29, 0.78); border: 1px solid #2c3833; border-radius: 6px; padding: 10px 12px; }
+      #hud b { font-family: var(--sans); font-size: 14px; }
+      #hud select { font: inherit; background: #222d29; color: var(--paper); border: 1px solid #3a4842; border-radius: 4px; }
+      #hud .muted { color: var(--muted); }
+      #err { position: fixed; inset: 0; display: none; place-items: center; padding: 24px; text-align: center; }
+    </style>
+  </head>
+  <body data-engine="loading">
+    <canvas id="c"></canvas>
+    <div id="hud">
+      <b>Atom world · holon-draw</b><br />
+      <label>scene <select id="preset"></select></label><br />
+      <span id="counts">—</span><br />
+      <span id="rate" class="muted">—</span><br />
+      <span id="held" class="muted">drag an atom to hold it; drag empty space to turn; wheel to zoom</span>
+    </div>
+    <div id="err"></div>
+    <script type="module">
+      import { createDrawer } from "./draw.js";
+      const NAMES = ["H₂ (2 atoms, approach)", "16-H Quench Gas (3-body active)", "LiH", "HF", "Li₂", "N₂", "F₂", "CO", "He₂ (closed-shell bounce)", "Ne₂ (closed-shell bounce)", "HCl (2 species)", "Mixed gas: 8 H + 8 He"];
+      const $ = (id) => document.getElementById(id);
+      const canvas = $("c");
+      const fail = (msg) => { $("err").style.display = "grid"; $("err").textContent = msg; document.body.dataset.engine = "failed: " + msg; };
+      const gl = canvas.getContext("webgl2", { antialias: true }) || canvas.getContext("webgl", { antialias: true });
+      if (!gl) fail("This browser offers no WebGL.");
+      const bytes = await (await fetch("holon_draw_atoms.wasm")).arrayBuffer();
+      const { instance } = await WebAssembly.instantiate(bytes, {});
+      const w = instance.exports;
+      const drawer = createDrawer(gl);
+      const view = { yaw: Math.PI / 4, pitch: 0.42, dist: 24 * 2.1 };
+      const sel = $("preset");
+      NAMES.forEach((n, i) => sel.add(new Option(n, String(i))));
+      function load(p) {
+        const st = w.ha_load(p);
+        if (st !== 0) { $("counts").textContent = "this scene's curve did not generate (status " + st + ")"; return; }
+        // the calibration burst, timed here: wasm has no clock (holon-render-3d's on-load measurement)
+        const t0 = performance.now(); w.ha_burst(20000); const s = (performance.now() - t0) / 1000;
+        if (s > 0) w.ha_calibrated(20000 / s);
+      }
+      load(0);
+      sel.onchange = () => load(Number(sel.value));
+      let pointer = null;
+      const px = (e) => { const r = canvas.getBoundingClientRect(); const d = canvas.width / Math.max(1, r.width); return [(e.clientX - r.left) * d, (e.clientY - r.top) * d]; };
+      canvas.addEventListener("pointerdown", (e) => {
+        canvas.setPointerCapture(e.pointerId);
+        const [x, y] = px(e), held = w.ha_grab_at(x, y);
+        pointer = { x: e.clientX, y: e.clientY, held };
+        $("held").textContent = held ? "holding atom " + held : "turning";
+      });
+      canvas.addEventListener("pointermove", (e) => {
+        if (!pointer) return;
+        if (pointer.held) { const [x, y] = px(e); w.ha_drag_to(x, y); }
+        else { view.yaw -= (e.clientX - pointer.x) * 0.006; view.pitch = Math.max(-1.45, Math.min(1.45, view.pitch + (e.clientY - pointer.y) * 0.006)); }
+        pointer.x = e.clientX; pointer.y = e.clientY;
+      });
+      const up = () => { if (pointer && pointer.held) w.ha_release(); pointer = null; $("held").textContent = "drag an atom to hold it; drag empty space to turn; wheel to zoom"; };
+      canvas.addEventListener("pointerup", up); canvas.addEventListener("pointercancel", up);
+      canvas.addEventListener("wheel", (e) => { e.preventDefault(); view.dist = Math.max(24, Math.min(24 * 6, view.dist * Math.exp(e.deltaY * 0.001))); }, { passive: false });
+      const DPR = new URLSearchParams(location.search).get("dpr") ? Number(new URLSearchParams(location.search).get("dpr")) : devicePixelRatio;
+      const batches = [];
+      let last = performance.now(), frames = 0, shown = false, tFps = last, fps = 0;
+      function frame(now) {
+        const dt = Math.min(0.1, (now - last) / 1000); last = now;
+        w.ha_advance(dt);
+        const W = canvas.clientWidth * DPR | 0, H = canvas.clientHeight * DPR | 0;
+        if (canvas.width !== W || canvas.height !== H) { canvas.width = W; canvas.height = H; }
+        const n = w.ha_view(view.yaw, view.pitch, view.dist, W, H);
+        batches.length = 0;
+        for (let i = 0; i < n; i++) {
+          const count = w.ha_batch_count(i);
+          batches.push({ kind: w.ha_batch_kind(i), offset: [w.ha_batch_offset(i, 0), w.ha_batch_offset(i, 1), w.ha_batch_offset(i, 2)], count, bytes: new Uint8Array(w.memory.buffer, w.ha_batch_ptr(i), count * 52) });
+        }
+        const vp = new Float32Array(w.memory.buffer, w.ha_vp(), 16);
+        gl.viewport(0, 0, W, H);
+        gl.clearColor(0.09, 0.125, 0.114, 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        drawer.draw(batches, vp, {});
+        frames++;
+        if (now - tFps > 500) { fps = frames * 1000 / (now - tFps); frames = 0; tFps = now; }
+        $("counts").textContent = w.ha_atoms() + " atoms · " + w.ha_bonds() + " bonded";
+        const st = drawer.stats();
+        $("rate").textContent = fps.toFixed(0) + " frames/s · " + st.drawCalls + " draw calls · " + st.instances + " marks";
+        if (!shown) { shown = true; document.body.dataset.engine = "holon-draw on " + (gl instanceof WebGL2RenderingContext ? "webgl2" : "webgl1"); document.body.dataset.ready = "1"; }
+        requestAnimationFrame(frame);
+      }
+      requestAnimationFrame(frame);
+    </script>
+  </body>
+</html>

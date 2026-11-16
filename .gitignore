@@ -27,3 +27,7 @@ conformance/omega/engine_probe/target/
 # enough that having the exact deployed bytes in the record is worth the diff noise.)
 docs/atoms3d/webgpu/
 docs/atoms3d/webgl2/
+# holon-draw's atom world: built by pages.yml (engine/crates/holon-draw-atoms/build-web.sh),
+# with its copy of draw.js. Only the page itself is record.
+docs/atoms-draw/holon_draw_atoms.wasm
+docs/atoms-draw/draw.js

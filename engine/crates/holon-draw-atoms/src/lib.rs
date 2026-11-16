@@ -150,7 +150,10 @@ pub const ACT_HUD: u32 = 10;
 /// Bevy's overlay rewrites its text every frame.
 pub const HUD_REBUILD_SECONDS: f64 = 0.25;
 
+// The import module is named, so the linker records an import instead of an undefined symbol
+// (rust-lld on the site's toolchain refused the bare form: "undefined symbol: host_text").
 #[cfg(target_arch = "wasm32")]
+#[link(wasm_import_module = "env")]
 extern "C" {
     /// The host's text provider (module `env`): rasterise `len` UTF-8 bytes at `ptr` in
     /// `style` and write `[w, h, u0, v0, u1, v1, page]` (7 f32, device pixels) at `out`.

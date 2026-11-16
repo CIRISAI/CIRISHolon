@@ -122,7 +122,7 @@ impl Ladder {
                 t.params[PARAM_DIM + 3] *= weight as f32;
             }
             let _ = dpr;
-            let frame = DrawScene { tiles, modal: None }.frame(&cam, 1, &Ring, u64::MAX).unwrap_or(Frame { batches: Vec::new(), marks: Vec::new(), fine: 0, coarse: 0, stale: 0, modal: None });
+            let frame = DrawScene { tiles, modal: None }.frame(&cam, 1, &Ring, u64::MAX).unwrap_or(Frame { batches: Vec::new(), marks: Vec::new(), fine: 0, coarse: 0, stale: 0, modal: None, remainder_px: 0.0 });
             out.push(Pass { rung: i, weight, camera: cam, frame });
         }
         out

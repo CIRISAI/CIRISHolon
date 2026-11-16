@@ -4,6 +4,10 @@
 //!
 //! Single-threaded by construction (one static state): a host that builds in a worker
 //! instantiates the module there.
+//!
+//! MEMORY CAN MOVE: `hd_in` and `hd_build_leaf` may grow the module's memory, which detaches
+//! every view a host holds on the old buffer. Take `memory.buffer` AFTER the call that returns
+//! the pointer, never before (the twin found this on its first integration).
 use crate::twin::{build_leaf, Leaf, Style};
 use std::cell::RefCell;
 

@@ -34,7 +34,8 @@ const consts = [
   grab(/const TL_ROOF_TONES = [^\n]*\n/, "TL_ROOF_TONES"),
   styleLine,
 ].join("");
-const TL_STYLE = styleLine ? new Function(styleLine + "return TL_STYLE;")() : null;
+// TL_STYLE is built from TL_PPH, TL_ROAD and TL_ROOF_TONES, so it is evaluated with them
+const TL_STYLE = styleLine ? new Function("TL_PPH", consts + "return TL_STYLE;")(2.5) : null;
 if (TL_STYLE && TL_STYLE.length !== 97) { console.error("TL_STYLE has " + TL_STYLE.length + " numbers, not 97"); process.exit(2); }
 
 // a small deterministic generator (not the twin's hash)
@@ -84,7 +85,7 @@ const tlCentre = (x) => x.tile ? [x.of.laT, x.of.loT] : [x.laL, x.loL];
 const tlTree = () => null, tlContext = () => new Float64Array(33);
 const TL_PPH = 2.5;
 const tlBuildLeaf = new Function("wasm", "mem", "HOLON", "tlCentre", "tlTree", "tlContext", "TL_PPH", consts + fn + "\nreturn tlBuildLeaf;")(wasm, mem, HOLON, tlCentre, tlTree, tlContext, TL_PPH);
-const TL_ROAD = new Function(consts + "return TL_ROAD;")();
+const TL_ROAD = new Function("TL_PPH", consts + "return TL_ROAD;")(TL_PPH);
 
 const theirs = [], lines = [];
 for (const L of leaves) {

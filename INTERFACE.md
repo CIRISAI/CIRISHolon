@@ -493,3 +493,37 @@ the `run` mark with its string digest.** Until it and the rest of §8 item 5 exi
 **No card-level checker exists to target** in the constitution's repository: its checker
 reads the registry against the other manifests, and its screen model reads no card. The
 client holds a card checker; its input format has not been asked for yet.
+
+## 10. The constitution session's second pass (at `c8133ef`), recorded 2026-11-15; the UI layer is parked while the twin is the first consumer, so these are OWED, not fixed
+
+As given: mostly closed; all 60 slots of §9 checked by hand against the registry, none
+missing or invented, `keyed` right on all 24, shell tags right. The generating script was
+not committed and so not checked (owed: commit it).
+
+**Wrong, to be fixed when §9 is next generated.**
+1. Slot before key. The grammar is `prefix_surface_instance[__slot][.key]`. §9 appends a
+   slot to a root that already ends in `[.key]`, which would write `row_s_i.k__flag`, and
+   everything after the first `.` is the key, so the slot is lost. Correct form:
+   `row_s_i__flag.k`.
+2. §8 item 5 and §9 disagree on the digest. §9 holds: the core's digest of drawn bytes is
+   comparable to nothing in the standard.
+
+**Limits on the L12 check as §9 words it.** Where a value is drawn through a label, compare
+with the digest of the label string derived from the value, not of the value. And checking
+the values a write SENDS is L12's; that the item's facts and cost were drawn is L6's, shown
+by the ConfirmSheet. Each check names its law.
+
+**Partly closed.** (3) §6's "with budget enough" contradicts §8 item 3, which holds; and the
+allocator's budget must not be a measured frame time, or what is drawn depends on something
+the card does not declare (L8): the budget is an input the host states. (4) Which modal
+wins when one is opened from another is unstated (the later, higher layer; to be written),
+and the focus and screen-reader path is open. (6) `withheld`, `waiting` and `refused` need
+more than a glyph and a run: `withheld` its ground, who acted, when the window closes and a
+way to lift it for oneself; `waiting` on whom; `refused` the reason token.
+
+**Open.** The L5 form for a disabled Action whose card writes `reason: null`.
+
+**New.** A preview is NOT modal and §8 item 4 was wrong to put it in the modal layer: there
+it would take the pick of the very Action that sends the write. A preview is content of the
+card, beside the sending Action, and it needs an owner and a tag form, which §9 does not
+give it.

@@ -378,3 +378,118 @@ PolicyLens; one covers Choice, Ceremony and StepFlow and another QrCode and Code
 its StateBlock has 8 states, one of them non-standard; Action, Metric, Field, Transcript,
 Document and Media are missing. Re-basing it on draft 3 is the lead's call and the CEWPOS
 side's work; profile B here is written against the 24.
+
+
+## 9. The whole-screen table, per slot, generated against the registry (2026-11-15; supersedes §3a's table)
+
+*Each primitive's prefixes, slots and whether it is keyed are READ from the registry (draft
+3, `181c48a`) by a script, which fails if this table names a slot the registry does not or
+misses one it does: 24 primitives, 60 slots. The marks column is this file's. Every row is its own
+instance with the tag form shown; `…` stands for the root tag; the UI layer builds the
+string and the core holds a handle to it. `run` is an already-shaped text run (D11).*
+
+| primitive | prefix | tag form | marks |
+|---|---|---|---|
+| **CardShell** | `card` | `card_<surface>_<instance>` | `quad` (radius); its own tile |
+| | | `…__title` | `run` |
+| **FieldRow** | `txt` | `txt_<surface>_<instance>` | `run` label |
+| | | `…__wire` | `run`: the value as sent, or the fixed "not sent" form |
+| | | `…__gloss` | `run` |
+| **ItemRow** | `row` | `row_<surface>_<instance>[.key]` | `quad` + `run`s; in a canvas, the mark(s) of the same instance |
+| | | `…__flag` | `glyph` + `run` |
+| | | `…__act` | holds an Action (`btn`), which is its own instance |
+| **ScopePill** | `scope` | `scope_<surface>_<instance>` | `quad` (radius) + `run` |
+| | | `…__group` | `run`, present when the circle has more than one group |
+| **Chip** | `chip` | `chip_<surface>_<instance>` | `quad` (radius) + `glyph` + `run`: the token as sent |
+| **Action** | `btn`, `mi` | `btn_<surface>_<instance>`, `mi_<surface>_<instance>` | `quad` + `run`; `mi` is the same inside a menu tile (a layer above the scene) |
+| | | `…__reason` | `run`, drawn when present and disabled |
+| **ReceiptSheet** | `receipt` | `receipt_<surface>_<instance>[.key]` | a modal-layer tile: `quad` |
+| | | `…__open` | `quad` + `glyph`: the control that opens it |
+| | | `…__fact_1` | `run` |
+| | | `…__fact_2` | `run` |
+| | | `…__fact_3` | `run` |
+| | | `…__fact_4` | `run` |
+| | | `…__fact_5` | `run` |
+| | | `…__holders` | `run`s |
+| | | `…__notes` | `run`s |
+| | | `…__acts` | Actions, each its own instance |
+| **StateBlock** | `state` | `state_<surface>_<instance>` | no mark of its own: its value is the state's name, held by the UI layer |
+| | | `…__<state>` for each of the 17 | one form per state, 17 in all (`glyph` + `run`; `loading_known` adds a `quad` bar); exactly one drawn |
+| | | `…__freshness` | `run` |
+| **Metric** | `stat` | `stat_<surface>_<instance>` | `run`: the number, or an em dash when not sent or not read |
+| | | `…__unit` | `run` |
+| | | `…__source` | `run` |
+| **ConfirmSheet** | `sheet` | `sheet_<surface>_<instance>` | a modal-layer tile: `quad`; takes every pick while open |
+| | | `…__fact_1` | `run` |
+| | | `…__fact_2` | `run` |
+| | | `…__fact_3` | `run` |
+| | | `…__note` | `run` |
+| | | `…__confirm` | `quad` + `run`; never coarsened |
+| | | `…__cancel` | `quad` + `run`; never coarsened |
+| **Choice** | `opt` | `opt_<surface>_<instance>[.key]` | the question `run`; each option is a key: `quad` + `run` + `glyph` mark; none marked unless the card names the default and its cost |
+| | | `…__cost` | `run` |
+| | | `…__tally` | `run` (+ `quad` bar) |
+| **DestinationPicker** | `pick` | `pick_<surface>_<instance>[.key]` | each destination is a key: `quad` + `run` |
+| | | `…__group` | `run` |
+| **Field** | `input` | `input_<surface>_<instance>` | `quad` + `run` (the text as it will be sent) + caret `line`; input itself is outside the core |
+| | | `…__ceiling` | `run`: the byte ceiling, shown before the node refuses |
+| | | `…__error` | `run` |
+| **StepFlow** | `step` | `step_<surface>_<instance>[.key]` | each step is a key: `disc` + `run`, joined by `line`s; a skipped step is absent |
+| | | `…__next` | `quad` + `run` + `glyph` (mirrored in right-to-left) |
+| | | `…__back` | `quad` + `run` + `glyph` (mirrored) |
+| **Ceremony** | `ceremony` | `ceremony_<surface>_<instance>[.key]` | a tile: `quad` |
+| | | `…__act_price` | `run`: from the node's answer or the governance policy manifest |
+| | | `…__undo_price` | `run`: likewise |
+| | | `…__window` | `run` |
+| | | `…__threshold` | `run` |
+| | | `…__signer` | keyed by who: `quad` + `run` + `glyph` |
+| **LineageChain** | `chain` | `chain_<surface>_<instance>[.key]` | a tile |
+| | | `…__link` | keyed: `disc` + `run`, joined by `arc` |
+| | | `…__cascade` | `run` (+ `line`s) |
+| **CodeCompare** | `code` | `code_<surface>_<instance>` | a tile |
+| | | `…__words` | large `run`s |
+| | | `…__digits` | large `run`s |
+| | | `…__verdict` | `glyph` + `run` |
+| **QrCode** | `qr`, `scan` | `qr_<surface>_<instance>`, `scan_<surface>_<instance>` | `qr`: `image` with nearest sampling, or a grid of `quad`s. `scan`: the platform's camera view; a scan fills a Field and never submits |
+| | | `…__paste` | `quad` + `run`: an Action-like control that fills the same Field |
+| **Transcript** | `msg`, `note` | `msg_<surface>_<instance>[.key]`, `note_<surface>_<instance>[.key]` | `msg`, `note`: keyed `run`s in a scrolling tile |
+| | | `…__receipt` | `glyph` + `run` |
+| | | `…__fetch` | `quad` + `run` |
+| **ConscienceStep** | `conscience` | `conscience_<surface>_<instance>[.key]` | a row: `glyph` + `run` |
+| | | `…__cost` | `run` |
+| | | `…__faculty` | keyed, 4 faculties: `glyph` + `run` |
+| **PolicyLens** | `lens` | `lens_<surface>_<instance>` | a bar: `quad` + `run`; what it hides is ABSENT |
+| | | `…__hidden_count` | `run` |
+| | | `…__helpers` | `run`s |
+| | | `…__depth` | `run` |
+| **GraphView** | `canvas` | `canvas_<surface>_<instance>` | `canvas`: tiles of marks; every pickable mark belongs to an ItemRow instance; the rest is decoration |
+| | | `…__twin` | the list: ItemRow instances, the same instances as the canvas marks |
+| **Document** | `doc` | `doc_<surface>_<instance>[.key]` | `run`s in a scrolling tile |
+| | | `…__claim` | keyed `run`s |
+| | | `…__recant` | the claim's `run` with a `line` through it and its reason `run` beside it; never removed |
+| | | `…__revision` | `run` |
+| | | `…__cite` | `run` + `glyph` |
+| **Media** | `media` | `media_<surface>_<instance>[.key]` | `image`, drawable only with both slots below present |
+| | | `…__alt` | `run` (required) |
+| | | `…__ai_disclosure` | `run` + `glyph` (required) |
+| | | `…__blur` | the `image` drawn blurred until asked |
+| | | `…__class` | `run` |
+
+Shell prefixes, which a whole screen must also draw, each its own `pin`ned tile of
+`quad` + `run` (+ `glyph`): `circle_<name>`, `tab_<name>`, `nav_<name>`, `screen_<name>`.
+
+**A digest of what was drawn is not the standard's `shown_digest` (the constitution
+session's answer, the same day).** `shown_digest` is the SHA-256 of the choice item as the
+node served it, computed by the UI layer from the item. The core's per-instance digest of
+packed bytes is evidence about a frame and is comparable to nothing in the standard. What
+L12 needs is the link, and it is the UI layer's: for each value a write sends, the instance
+bound to it drew exactly that string on the presented frame. The core holds no strings, so
+a `run` carries a digest of its SOURCE STRING, supplied by whoever shaped it, and the
+report returns that digest per instance; the UI layer compares it with the item's value and
+puts `shown_digest` on an answer only when every sent value passed. **Owed in `holon-draw`:
+the `run` mark with its string digest.** Until it and the rest of §8 item 5 exist,
+`legible` licenses no send.
+
+**No card-level checker exists to target** in the constitution's repository: its checker
+reads the registry against the other manifests, and its screen model reads no card. The
+client holds a card checker; its input format has not been asked for yet.

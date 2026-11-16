@@ -44,6 +44,7 @@
 
 pub mod abi;
 pub mod alloc;
+pub mod ladder;
 pub mod twin;
 pub mod ui;
 
@@ -181,7 +182,7 @@ pub struct Tile {
 }
 
 /// The settings groups of a tile, by index of their first number.
-pub const PARAM_DIM: usize = 0; // rgb multiplier on every colour of the tile (night); w unused
+pub const PARAM_DIM: usize = 0; // rgb multiplier on every colour of the tile (night); w multiplies alpha (a cross-fade)
 pub const PARAM_RAMP0: usize = 4; // the colour at t = 0 of COLOUR_RAMP
 pub const PARAM_RAMP1: usize = 8; // the colour at t = 1 of COLOUR_RAMP
 pub const PARAM_TINT: usize = 12; // rgb multiplier for COLOUR_TINT (roofs)
@@ -195,6 +196,7 @@ pub const PARAMS_NEUTRAL: [f32; 32] = {
     p[0] = 1.0;
     p[1] = 1.0;
     p[2] = 1.0;
+    p[3] = 1.0;
     p[12] = 1.0;
     p[13] = 1.0;
     p[14] = 1.0;

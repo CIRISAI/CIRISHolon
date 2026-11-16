@@ -259,3 +259,58 @@ state a number; an earlier message of mine said 4×, which was wrong). The witne
 replacement must run green are the twin's own (its story, layer, texture-switch, no-highp
 and service-worker tests). And the twin was wound down today at the lead's request: whether
 it switches to this engine is the lead's decision, and gating a switch is the twin's.
+
+## 7. CORRECTION 2026-11-15 — from the twin's street-renderer owner (as relayed by the twin's lead; refs are the twin's, at its `5de796a`)
+
+**§4.6 was wrong for the twin as it stands.** Medium precision is NOT survivable in its
+street tier today: a uniform declared in both stages links only if its precision agrees,
+and one does not, so a phone with no high precision in the fragment stage has no street
+tier (the twin is fixing it). Rules this engine takes from that: no uniform is declared in
+both stages unless its precision is pinned; and the no-high-precision test undefines the
+`GL_FRAGMENT_PRECISION_HIGH` macro in the shader source, since the precision query alone
+does not show the failure.
+
+**§4.7, the digest.** The twin's digest is over the LAYOUT record against its native
+simulation, not over vertices. The gate for a replacement is two digests: the layout's,
+unchanged, and this engine's instance digest against what the twin's leaf builder emits.
+
+**§4.4.** "Spans 2 pixels" is tested nowhere in the twin. What it has is an alpha per kind,
+a radial fade at the edge of its ring, and a floor that keeps a street at least 1 pixel.
+A replacement reproduces those three; the 2-pixel rule stays a rule of this file, untested.
+
+**What the instance record of §1 loses, and so must carry** (it has room: `aux` and
+`variant` are free on a box or prism, and a tile needs a slot it does not yet have):
+- dwelling units per building (they choose the roof colour where there is no tone);
+- the leaf's seed with the building's index (they place yards and garden trees), and the
+  lot density that switches yards on;
+- the canopy flag;
+- RAW tone, not final colour: ground and roof colours are mixed per tile from terrain and
+  night values. So a tile carries per-tile UNIFORMS (origin and scale, night, two terrain
+  colours and a roof factor, a noise origin, a texture switch), and a mark's colour may be
+  an index into them. **Owed in `holon-draw`: a uniform block on the tile, and a rule for
+  which of a mark's fields a consumer may define.**
+- streets are not buildings: segments with a width class and end kinds (cap or flush), and
+  a casing pass. That is `line` with a `variant` for its ends, drawn twice.
+
+**A street-tier-only first slice brings these with it:** the mosaic uses the same program;
+there is one GL context whose land stencil and draw order are shared with the relief and
+data-map passes, so a second canvas loses the clip and the order (this engine must draw
+INTO a host's context between the host's passes, not own the canvas); the layout cache is
+read by five other places in the twin; picking is not in the street tier at all (it is a 2D
+overlay); cache keys and the service worker's stamp must name any new file.
+
+**A worker:** the layout may move to one only if the worker's kernel holds the same
+population chain and table versions as the main one; uploads, version checks, the story's
+timing and picking stay on the main thread; a worker adds a frame of latency per leaf.
+
+**Added to §4, the twin's numbers:** a hold drift of at most 3,000 ms; at least 0.98 of
+street frames drawn with their neighbours; the street step's waits (60 s, 15 s); a longest
+task of 200 ms on the dive and the pull-back, never widened; timing at 390 px, 6× throttle,
+cold, 5 runs, each started under a 1-minute load of 2 with the load logged. And §4.8's
+inverse: a generated feature never lands on real geography.
+
+**The gate before any switch** is the twin's list, all asserted: its story, zoom (plain and
+delayed), planet-arc, layer-zoom (3 forms), texture-switch and every page test including
+the layout cross-check and the service worker's; its evidence crate's tests; the
+no-high-precision boot with the macro undefined; and texture-off frames by eye with a
+tolerance, since two loads already differ by leaf order.

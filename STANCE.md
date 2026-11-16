@@ -533,3 +533,27 @@ as arithmetic and has, after five carriers, re-found the known object each time 
 discovered none. That is a validated instrument and not yet a discovering one; the one
 freeze that could change the sentence is the selection principle stated as arithmetic and
 tested blind.
+
+*Appended 2026-11-15 (issues #3 and #4; the lessons of the generated-world work).* In this
+file's vocabulary (proved, measured, wager, open):
+
+- **Proved** (`SceneCert.lean`, in the axiom audit): a generator's section law and its
+  stacking; a budget belongs to an (observable, consumer) pair (`mean_reading_le`); matching
+  marginals do not certify a consumer that reads a joint (`marginals_match_joint_differs`);
+  the stacked bound and its four hypotheses (`stacked_le`). **Proved elsewhere, one lemma in
+  two places:** the causal kernel's checkpoint is a closed view under arrival, and two
+  coarsenings side by side compose only under a separation condition (CIRISKernel).
+- **Measured, once, on a carrier not this engine's:** the gate's price is not the realised
+  cost of removal (`LESSONS.md` rule 18). REPLACE-1's sentence above, "carried = not
+  removable within budget", is a statement about a price.
+- **W4, reworded:** read "the sector the level above carries, selected by the law it owes"
+  as "the sector its CONSUMER carries"; the law the level above owes is one consumer. The
+  kills stand unchanged.
+- **Wager, not run:** the selection rule in compression form with its threshold from the
+  null's floor (`OBJECT.md`, CORRECTION 2026-11-15). SELECT-1 is still unwritten as a
+  freeze. The first forward reading proposed is a renderer's frame, where the consumer is
+  declared and a summary can be removed and the frame looked at.
+- **Open, unchanged:** whether the tower fixes its own consumers. In the form above the
+  consumer is an input. That is a weakness for the metaphysics and none for an engine.
+- **Count corrected:** the Lean tree holds 36 files, not the 31 stated at the head of this
+  file.

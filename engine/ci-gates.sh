@@ -519,6 +519,17 @@ cargo test -q --release -p holon-draw-atoms 2>/dev/null >/dev/null \
   && ok "holon-draw-atoms: the hydrogen scenes load and draw one picked sphere per atom; a held atom follows the pointer" \
   || no "holon-draw-atoms: the hydrogen scenes load and draw one picked sphere per atom; a held atom follows the pointer"
 
+# holon-draw-ladder: one zoom from the hadron chain to the cosmic web, each rung labelled with
+# where what it shows comes from. Its tests include the window-size identity at every zoom and
+# a live 1+1D QCD solve; the timing test is #[ignore]d.
+n_hdl=$(cargo test -q -p holon-draw-ladder -- --list 2>/dev/null | grep -c ': test$')
+[ "${n_hdl:-0}" -gt 0 ] \
+  && ok "holon-draw-ladder reaches $n_hdl tests" \
+  || no "holon-draw-ladder reaches 0 tests (gate 9's disease: passing without covering anything)"
+cargo test -q -p holon-draw-ladder 2>/dev/null >/dev/null \
+  && ok "holon-draw-ladder: rungs tile the range, a pixel spans the same metres on every window, the hadron chain solves and steps" \
+  || no "holon-draw-ladder: rungs tile the range, a pixel spans the same metres on every window, the hadron chain solves and steps"
+
 # 12. A CROSS-REFERENCE IS A WARRANT ONLY IF ITS TARGET EXISTS (team-lead's ruling,
 #     2026-08-24). Q10_PREREG.md §10 cites "M1-M6 carry over from Q9's brief unchanged" —
 #     there is no Q9 file anywhere in the repository, so that citation warrants nothing,

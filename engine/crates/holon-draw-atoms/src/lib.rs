@@ -323,6 +323,44 @@ impl World {
         self.status == holon_render::TABLE_OK && self.sim.pairs_ready()
     }
 
+    /// Load hydrogen's pair curve from knots the caller already holds, WITHOUT solving it,
+    /// and place `n` hydrogen atoms: the file door of `holon-render` (`holon_table_begin`,
+    /// `holon_table_knot`, `holon_table_finish`), for a host that cannot spend the solve's
+    /// second on load. `force[i]` is the force at `r[i]` (so `dE/dR = -force`). No
+    /// three-body table is loaded. Returns the curve's status (`holon_render::TABLE_OK` is
+    /// success); the preset is left at 0 (H2). [`World::load`] is unchanged and still solves.
+    pub fn load_curve(&mut self, r: &[f64], e: &[f64], force: &[f64], r_e: f64, d_e: f64, e_asymptote: f64, n: usize) -> u32 {
+        self.sim.clear_bank();
+        let refused = u32::MAX - 1;
+        if r.len() != e.len() || r.len() != force.len() {
+            self.status = refused;
+            return refused;
+        }
+        let t = self.sim.table_mut();
+        if !t.begin(r.len()) {
+            self.status = refused;
+            return refused;
+        }
+        for i in 0..r.len() {
+            if !t.knot(i, r[i], e[i], force[i]) {
+                self.status = refused;
+                return refused;
+            }
+        }
+        let status = if t.finish(r_e, d_e, e_asymptote) == holon_render::table::LoadStatus::Ok { holon_render::TABLE_OK } else { refused };
+        if status == holon_render::TABLE_OK {
+            self.sim.adopt_table_timescale();
+        }
+        self.sim.reset(n);
+        for i in 0..self.sim.n {
+            self.sim.atoms[i].species = HYDROGEN;
+        }
+        self.preset = 0;
+        self.status = status;
+        self.overlay.dirty = true;
+        status
+    }
+
     /// The calibration burst of `holon-render-3d` (`AtomWorld::calibration_burst`): the
     /// host times it and hands the rate back with [`World::calibrated`].
     pub fn burst(&mut self, substeps: u32) {

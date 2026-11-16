@@ -221,6 +221,11 @@ pub extern "C" fn hl_batch_ptr(p: u32, i: u32) -> *const u8 {
 pub extern "C" fn hl_batch_screen(p: u32, i: u32) -> u32 {
     batch(p, i, 0, |b| b.screen as u32)
 }
+/// 1 if the batch's tile was drawn coarse (a backend may use its cheaper meshes).
+#[no_mangle]
+pub extern "C" fn hl_batch_coarse(p: u32, i: u32) -> u32 {
+    batch(p, i, 0, |b| b.coarse as u32)
+}
 #[no_mangle]
 pub extern "C" fn hl_batch_offset(p: u32, i: u32, axis: u32) -> f32 {
     batch(p, i, 0.0, |b| b.offset.get(axis as usize).copied().unwrap_or(0.0))

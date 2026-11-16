@@ -9,7 +9,7 @@
 //! The scenes live in `scenes/`, one module each. Adding a rung is adding a module and a line
 //! in [`Ladder::standard`].
 use holon_draw::ladder::{host_weight, rung_camera, visible, Band, Rung, Status, Z_MAX, Z_MIN};
-use holon_draw::{Camera, Frame, Ring, Scene as DrawScene, Tile, PARAM_DIM};
+use holon_draw::{Acuity, Camera, Frame, Scene as DrawScene, Tile, PARAM_DIM};
 
 pub mod abi;
 pub mod scenes;
@@ -122,7 +122,8 @@ impl Ladder {
                 t.params[PARAM_DIM + 3] *= weight as f32;
             }
             let _ = dpr;
-            let frame = DrawScene { tiles, modal: None }.frame(&cam, 1, &Ring, u64::MAX).unwrap_or(Frame { batches: Vec::new(), marks: Vec::new(), fine: 0, coarse: 0, stale: 0, modal: None, remainder_px: 0.0 });
+            // the pixel is the acuity: a tile whose detail spans under a pixel is drawn coarse
+            let frame = DrawScene { tiles, modal: None }.frame(&cam, 1, &Acuity { eps_px: 1.0 }, u64::MAX).unwrap_or(Frame { batches: Vec::new(), marks: Vec::new(), fine: 0, coarse: 0, stale: 0, modal: None, remainder_px: 0.0 });
             out.push(Pass { rung: i, weight, camera: cam, frame });
         }
         out

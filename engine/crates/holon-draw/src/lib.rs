@@ -344,6 +344,9 @@ pub struct Batch {
     pub screen: bool,
     /// The tile's settings ([`Tile::params`]).
     pub params: [f32; 32],
+    /// The tile was drawn COARSE by the allocator: a backend may use its cheaper meshes
+    /// (spheres and rods) for every mark of the batch.
+    pub coarse: bool,
 }
 
 /// What is said of one mark of a tagged instance.
@@ -494,7 +497,7 @@ impl Scene {
                     }
                 }
                 if count > 0 {
-                    frame.batches.push(Batch { tile: t.id, offset, kind, count, bytes, screen: t.screen, params: t.params });
+                    frame.batches.push(Batch { tile: t.id, offset, kind, count, bytes, screen: t.screen, params: t.params, coarse: !t.screen && !is_fine });
                 }
             }
         }

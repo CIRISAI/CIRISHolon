@@ -76,7 +76,7 @@
           const m = w.hl_pass_batches(p); batches.length = 0;
           for (let i = 0; i < m; i++) {
             const b = pool[i] || (pool[i] = { offset: [0, 0, 0] });
-            b.kind = w.hl_batch_kind(p, i); b.count = w.hl_batch_count(p, i); b.screen = !!w.hl_batch_screen(p, i);
+            b.kind = w.hl_batch_kind(p, i); b.count = w.hl_batch_count(p, i); b.screen = !!w.hl_batch_screen(p, i); b.coarse = !!w.hl_batch_coarse(p, i);
             b.offset[0] = w.hl_batch_offset(p, i, 0); b.offset[1] = w.hl_batch_offset(p, i, 1); b.offset[2] = w.hl_batch_offset(p, i, 2);
             b.bytes = new Uint8Array(w.memory.buffer, w.hl_batch_ptr(p, i), b.count * 52);
             b.params = new Float32Array(w.memory.buffer, w.hl_batch_params(p, i), 32);

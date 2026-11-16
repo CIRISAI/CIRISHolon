@@ -62,9 +62,14 @@ pub enum Kind {
     Rod = 8,
     Patch = 9,
     Glyph = 10,
+    /// A run of text already shaped and rasterised by the host's text provider into an atlas:
+    /// a rectangle `size[0]` by `size[1]` centred at `pos`, sampling the atlas rectangle
+    /// `aux[0], aux[1]` (u0, v0) to `aux[2], angle` (u1, v1) on atlas page `variant`, tinted
+    /// by `rgba`. The core holds no string and no font (`INTERFACE.md` §1, D11).
+    Run = 11,
 }
 
-pub const KINDS: [Kind; 10] = [Kind::Quad, Kind::Line, Kind::Arc, Kind::Disc, Kind::Box, Kind::Prism, Kind::Sphere, Kind::Rod, Kind::Patch, Kind::Glyph];
+pub const KINDS: [Kind; 11] = [Kind::Quad, Kind::Line, Kind::Arc, Kind::Disc, Kind::Box, Kind::Prism, Kind::Sphere, Kind::Rod, Kind::Patch, Kind::Glyph, Kind::Run];
 
 /// The bytes of one packed instance.
 pub const INSTANCE_BYTES: usize = 52;
@@ -162,6 +167,10 @@ pub struct Tile {
     pub version: u64,
     /// Draw order and pick order: a higher layer is over a lower one.
     pub layer: u8,
+    /// A SCREEN tile's marks are in device pixels from the viewport's top left (`origin` is
+    /// added), drawn after every world tile with no depth test, in order. Panels, text and
+    /// buttons are screen tiles. A world tile's marks are in world units.
+    pub screen: bool,
     pub marks: Vec<Instance>,
 }
 
@@ -259,6 +268,8 @@ pub struct Batch {
     pub kind: Kind,
     pub count: u32,
     pub bytes: Vec<u8>,
+    /// A screen tile's batch: positions are device pixels, `offset` is the tile's origin.
+    pub screen: bool,
 }
 
 /// What is said of one mark of a tagged instance.
@@ -276,6 +287,8 @@ pub struct Mark {
     pub legible: bool,
     /// A fold of this mark's packed bytes as drawn.
     pub shown: u64,
+    /// A screen mark's exact rectangle (left, top, right, bottom); a pick inside it hits.
+    pub rect: Option<[f64; 4]>,
 }
 
 /// What is said of one instance: every mark that carries its tag.
@@ -337,6 +350,12 @@ impl Scene {
                     return Err(Refusal::NotFinite { tile: t.id, index: i });
                 }
             }
+            if t.screen {
+                // always drawn whole; not the allocator's
+                cands.push(Candidate { distance: 0.0, work: 0, read: 0 });
+                live.push((t, [t.origin[0], t.origin[1], t.origin[2]]));
+                continue;
+            }
             let d = [t.origin[0] - cam.focus[0], t.origin[1] - cam.focus[1], t.origin[2] - cam.focus[2]];
             // drawing a tile fine adds its detailed decoration and the fine forms of its tagged marks
             let work = t.marks.iter().filter(|m| m.detail > 0 && !m.pin).count() as u64;
@@ -347,7 +366,7 @@ impl Scene {
         let fine = alloc.allocate(&cands, budget);
         let mut frame = Frame { batches: Vec::new(), marks: Vec::new(), fine: 0, coarse: 0, stale, modal: self.modal };
         let mut order: Vec<usize> = (0..live.len()).collect();
-        order.sort_by_key(|&k| (live[k].0.layer, k));
+        order.sort_by_key(|&k| (live[k].0.screen, live[k].0.layer, k));
         for k in order {
             let (t, d) = &live[k];
             let is_fine = fine.get(k).copied().unwrap_or(false);
@@ -368,7 +387,17 @@ impl Scene {
                     let at = bytes.len();
                     m.pack_as(&mut bytes, !whole);
                     count += 1;
-                    if m.tag != 0 {
+                    if m.tag != 0 && t.screen {
+                        let shown = fnv(0xcbf2_9ce4_8422_2325, &bytes[at..]);
+                        let (cx, cy) = (t.origin[0] + m.pos[0] as f64, t.origin[1] + m.pos[1] as f64);
+                        let (hw, hh) = match m.kind {
+                            Kind::Disc | Kind::Glyph => (m.size[0].abs() as f64, m.size[0].abs() as f64),
+                            _ => (0.5 * m.size[0].abs() as f64, 0.5 * m.size[1].abs() as f64),
+                        };
+                        let rect = [cx - hw, cy - hh, cx + hw, cy + hh];
+                        let on = rect[2] >= 0.0 && rect[0] <= cam.width && rect[3] >= 0.0 && rect[1] <= cam.height;
+                        frame.marks.push(Mark { tag: m.tag, layer: t.layer, coarse: false, on_screen: on, x: cx, y: cy, r: hw.max(hh), depth: f64::NEG_INFINITY, legible: on && hh >= 0.5 * LEGIBLE_PX, shown, rect: Some(rect) });
+                    } else if m.tag != 0 {
                         let shown = fnv(0xcbf2_9ce4_8422_2325, &bytes[at..]);
                         let world = [t.origin[0] + m.pos[0] as f64, t.origin[1] + m.pos[1] as f64, t.origin[2] + m.pos[2] as f64];
                         let r = m.bound() as f64 * cam.scale;
@@ -376,11 +405,11 @@ impl Scene {
                             Some(p) => (p[0], p[1], p[2], p[0] + r >= 0.0 && p[0] - r <= cam.width && p[1] + r >= 0.0 && p[1] - r <= cam.height),
                             None => (f64::NAN, f64::NAN, f64::INFINITY, false),
                         };
-                        frame.marks.push(Mark { tag: m.tag, layer: t.layer, coarse: !whole, on_screen: on, x, y, r, depth, legible: on && 2.0 * r >= LEGIBLE_PX, shown });
+                        frame.marks.push(Mark { tag: m.tag, layer: t.layer, coarse: !whole, on_screen: on, x, y, r, depth, legible: on && 2.0 * r >= LEGIBLE_PX, shown, rect: None });
                     }
                 }
                 if count > 0 {
-                    frame.batches.push(Batch { tile: t.id, offset, kind, count, bytes });
+                    frame.batches.push(Batch { tile: t.id, offset, kind, count, bytes, screen: t.screen });
                 }
             }
         }
@@ -396,14 +425,27 @@ impl Frame {
         let mut best: Option<(&Mark, f64)> = None;
         for m in self.marks.iter().filter(|m| m.on_screen && self.modal.map_or(true, |l| m.layer == l)) {
             let d2 = (m.x - x) * (m.x - x) + (m.y - y) * (m.y - y);
-            let r = m.r.max(LEGIBLE_PX);
-            if d2 > r * r {
-                continue;
+            match m.rect {
+                Some(r) => {
+                    if x < r[0] || x > r[2] || y < r[1] || y > r[3] {
+                        continue;
+                    }
+                }
+                None => {
+                    let r = m.r.max(LEGIBLE_PX);
+                    if d2 > r * r {
+                        continue;
+                    }
+                }
             }
             let better = match best {
                 None => true,
                 Some((b, bd2)) => {
-                    m.layer > b.layer || (m.layer == b.layer && (m.depth < b.depth || (m.depth == b.depth && (d2 < bd2 || (d2 == bd2 && m.tag < b.tag)))))
+                    // a screen mark (on a panel) is over the world under it
+                    let (ms, bs) = (m.rect.is_some(), b.rect.is_some());
+                    (ms && !bs)
+                        || (ms == bs
+                            && (m.layer > b.layer || (m.layer == b.layer && (m.depth < b.depth || (m.depth == b.depth && (d2 < bd2 || (d2 == bd2 && m.tag < b.tag)))))))
                 }
             };
             if better {
@@ -417,7 +459,7 @@ impl Frame {
         let mut out: Option<Shown> = None;
         let mut widest = 0.0f64;
         for m in self.marks.iter().filter(|m| m.tag == tag) {
-            let b = [m.x - m.r, m.y - m.r, m.x + m.r, m.y + m.r];
+            let b = m.rect.unwrap_or([m.x - m.r, m.y - m.r, m.x + m.r, m.y + m.r]);
             widest = widest.max(2.0 * m.r);
             out = Some(match out {
                 None => Shown { tag, marks: 1, on_screen: m.on_screen, legible: false, coarse: m.coarse, bounds: b, shown: fnv(0xcbf2_9ce4_8422_2325, &m.shown.to_le_bytes()) },
@@ -475,7 +517,7 @@ mod tests {
             // a garden tree beside it: decoration, detailed
             marks.push(Instance::new(Kind::Disc, [p[0] + 3.0, p[1], 0.0], [1.0, 0.0, 0.0]).detail(1));
         }
-        Tile { id, origin: [ox, 0.0, 0.0], version: 7, layer: 0, marks }
+        Tile { id, origin: [ox, 0.0, 0.0], version: 7, layer: 0, screen: false, marks }
     }
     fn cam() -> Camera {
         Camera::map([50.0, 50.0, 0.0], 4.0, 800.0, 600.0)
@@ -509,7 +551,7 @@ mod tests {
     fn an_instance_is_every_mark_with_its_tag_and_a_pick_names_it() {
         let mut s = scene(vec![tile(1, 0.0, 40, 100)]);
         // instance 113 gains a second mark (a flag beside the building), in a second tile
-        s.tiles.push(Tile { id: 2, origin: [0.0; 3], version: 7, layer: 0, marks: vec![Instance::new(Kind::Glyph, [40.0, 18.0, 0.0], [1.0, 0.0, 0.0]).tagged(113)] });
+        s.tiles.push(Tile { id: 2, origin: [0.0; 3], version: 7, layer: 0, screen: false, marks: vec![Instance::new(Kind::Glyph, [40.0, 18.0, 0.0], [1.0, 0.0, 0.0]).tagged(113)] });
         let f = s.frame(&cam(), 7, &Ring, 1000).unwrap();
         // mark 100+13 sits at local (34, 18): on screen at ((34-50)*4+400, 300-(18-50)*4)
         assert_eq!(f.pick(336.0, 428.0), Some(113));
@@ -551,7 +593,7 @@ mod tests {
     #[test]
     fn an_open_modal_layer_takes_every_pick() {
         let mut s = scene(vec![tile(1, 0.0, 40, 100)]);
-        let sheet = Tile { id: 9, origin: [0.0; 3], version: 7, layer: 5, marks: vec![Instance::new(Kind::Quad, [70.0, 70.0, 0.0], [6.0, 4.0, 0.0]).tagged(900).pinned()] };
+        let sheet = Tile { id: 9, origin: [0.0; 3], version: 7, layer: 5, screen: false, marks: vec![Instance::new(Kind::Quad, [70.0, 70.0, 0.0], [6.0, 4.0, 0.0]).tagged(900).pinned()] };
         s.tiles.push(sheet);
         let f = s.frame(&cam(), 7, &Ring, 1000).unwrap();
         assert_eq!(f.pick(336.0, 428.0), Some(113), "no modal: the scene is picked");
@@ -561,6 +603,30 @@ mod tests {
         assert_eq!(f.pick(336.0, 428.0), None, "under an open sheet nothing is picked");
         assert_eq!(f.pick(480.0, 220.0), Some(900));
         assert_eq!(f.batches.last().unwrap().tile, 9, "the highest layer is drawn last");
+    }
+
+    #[test]
+    fn a_screen_tile_is_over_the_world_and_is_picked_by_its_exact_rectangle() {
+        let mut s = scene(vec![tile(1, 0.0, 40, 100)]);
+        // a panel 200 by 40 px centred at (300, 420), holding a button (tag 7) 80 by 24 at
+        // its left, over the building whose centre is at (336, 428)
+        let mut button = Instance::new(Kind::Quad, [-50.0, 0.0, 0.0], [80.0, 24.0, 0.0]).tagged(7);
+        button.aux = [6.0, 0.0, 0.0];
+        let label = Instance::new(Kind::Run, [-50.0, 0.0, 0.0], [52.0, 14.0, 0.0]);
+        s.tiles.push(Tile { id: 50, origin: [300.0, 420.0, 0.0], version: 7, layer: 0, screen: true, marks: vec![Instance::new(Kind::Quad, [0.0; 3], [200.0, 40.0, 0.0]), button, label] });
+        let f = s.frame(&cam(), 7, &Ring, 1000).unwrap();
+        assert_eq!(f.pick(260.0, 425.0), Some(7), "the button, inside its rectangle");
+        assert_eq!(f.pick(212.0, 425.0), Some(7));
+        assert_eq!(f.pick(205.0, 425.0), None, "outside the rectangle, on the untagged panel");
+        // the building under the panel's right half is still picked: the panel is decoration
+        assert_eq!(f.pick(336.0, 428.0), Some(113));
+        let r = f.report(7).unwrap();
+        assert_eq!(r.bounds, [210.0, 408.0, 290.0, 432.0]);
+        assert!(r.legible);
+        // screen batches come last, flagged, with the origin as their offset
+        let last = f.batches.last().unwrap();
+        assert!(last.screen && last.kind == Kind::Run && last.offset == [300.0, 420.0, 0.0]);
+        assert!(f.batches.iter().take_while(|b| !b.screen).count() >= 2);
     }
 
     #[test]
@@ -598,7 +664,7 @@ mod tests {
         // 20,000 km from the world's origin, two marks 1 unit apart: the offset the GPU adds
         // is taken from the focus in 64-bit, so they land 4 pixels apart at 4 pixels a unit
         let far = 2.0e7;
-        let t = Tile { id: 1, origin: [far, far, 0.0], version: 1, layer: 0, marks: vec![
+        let t = Tile { id: 1, origin: [far, far, 0.0], version: 1, layer: 0, screen: false, marks: vec![
             Instance::new(Kind::Disc, [0.0, 0.0, 0.0], [0.4, 0.0, 0.0]).tagged(1),
             Instance::new(Kind::Disc, [1.0, 0.0, 0.0], [0.4, 0.0, 0.0]).tagged(2),
         ] };

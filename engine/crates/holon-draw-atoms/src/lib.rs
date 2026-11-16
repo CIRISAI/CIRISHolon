@@ -10,6 +10,7 @@
 //! The boundary is plain `extern "C"` (`ha_*`), as `holon-draw`'s is.
 use holon_chem::elements::{Species, CARBON, CHLORINE, FLUORINE, HELIUM, HYDROGEN, LITHIUM, NEON, NITROGEN, OXYGEN};
 use holon_draw::{Camera, Frame, Instance, Kind, Ring, Scene, Tile};
+use holon_render::clock::{Rung, AU_TO_FS};
 use holon_render::sim::{Boundary, Dims, Sim, DEFAULT_SCENE_ATOMS};
 use std::cell::RefCell;
 
@@ -22,10 +23,114 @@ const CURVE_KNOTS: usize = 492;
 /// The presets, in `holon-render-3d`'s order.
 pub const PRESETS: [&str; 12] = ["H2", "Quench16", "LiH", "HF", "Li2", "N2", "F2", "CO", "He2", "Ne2", "HCl", "MixedGas"];
 
+/// Multiplicative step per press of the sim-speed buttons (`holon-render-3d`'s `SPEED_STEP`).
+pub const SPEED_STEP: f64 = 1.5;
+/// Substeps in the calibration burst (`holon-render-3d`'s `CALIBRATION_SUBSTEPS`).
+pub const CALIBRATION_SUBSTEPS: u32 = 20_000;
+
+/// The length of the array [`World::fill_hud`] fills and `ha_hud` points at.
+pub const HUD_LEN: usize = 71;
+
+/// Where each number of the overlay sits in the HUD array. Every one is READ from the `Sim`
+/// by the same function or field `holon-render-3d/src/hud.rs` reads; none is recomputed.
+/// Flags are 0.0 or 1.0; counts and indices are whole numbers held in an f64.
+pub mod hud {
+    // the status line
+    pub const TABLE_OK: usize = 0; // every curve the scene needs is loaded
+    pub const TABLE_STATUS: usize = 1; // the curve's status code (0 is success)
+    pub const PRESET: usize = 2; // index into PRESETS
+    pub const ATOMS: usize = 3; // sim.n
+    pub const TIME_AU: usize = 4; // sim.time
+    pub const TIME_FS: usize = 5; // sim.time * AU_TO_FS
+    pub const CLUSTERS: usize = 6; // sim.cluster_count().0
+    pub const BONDED_PAIRS: usize = 7; // sim.bonded_count()
+    // gate 1, energy
+    pub const ENERGY_PASS: usize = 8; // sim.energy_gate()
+    pub const E_KIN: usize = 9;
+    pub const E_PAIR: usize = 10;
+    pub const E_WALL: usize = 11;
+    pub const E_SPRING: usize = 12;
+    pub const W_EXT: usize = 13;
+    pub const LEDGER: usize = 14; // sim.ledger(), E - W_ext
+    pub const ORIGIN: usize = 15; // sim.l0
+    pub const DRIFT_PEAK: usize = 16;
+    pub const DRIFT_BOUND: usize = 17; // sim.drift_bound()
+    pub const DRIFT_RATIO: usize = 18; // peak / bound, 0 when the bound is not positive
+    // gate 2, momentum
+    pub const MOMENTUM_PASS: usize = 19; // sim.momentum_gate()
+    pub const P_MAG: usize = 20;
+    pub const PX: usize = 21;
+    pub const PY: usize = 22;
+    pub const PZ: usize = 23;
+    pub const P_RESIDUAL: usize = 24; // sim.momentum_residual_peak
+    pub const P_BOUND: usize = 25; // sim.momentum_bound(), "roundoff"
+    pub const P_RATIO: usize = 26;
+    // the three clocks
+    pub const RUNG: usize = 27; // 0 exact, 1 time dilated, 2 accuracy declared, 3 refused
+    pub const DT: usize = 28;
+    pub const DT_REFERENCE: usize = 29;
+    pub const OMEGA_E: usize = 30;
+    pub const OMEGA_ENV: usize = 31;
+    pub const OMEGA_DT: usize = 32;
+    pub const FRAME_MS: usize = 33; // the last advanced frame's wall interval
+    pub const SUBSTEPS: usize = 34; // substeps that frame took
+    pub const SIM_SPEED: usize = 35; // fs per wall second
+    pub const VIBRATION_S: usize = 36; // wall seconds per vibration (+inf at zero speed)
+    pub const DILATION: usize = 37;
+    // the curve
+    pub const R_E: usize = 38;
+    pub const D_E: usize = 39;
+    pub const ASYMPTOTE: usize = 40;
+    pub const KNOTS: usize = 41;
+    pub const PAIR_PRESENT: usize = 42; // 0 when the scene has no pair
+    pub const PAIR_I: usize = 43;
+    pub const PAIR_J: usize = 44;
+    pub const PAIR_Z_I: usize = 45; // nuclear charge of atom i (the host maps it to a symbol)
+    pub const PAIR_Z_J: usize = 46;
+    pub const PAIR_R: usize = 47;
+    pub const PAIR_E_REL: usize = 48;
+    pub const PAIR_R_OUTER: usize = 49; // +inf for an unbound pair, as the Sim holds it
+    pub const PAIR_BONDED: usize = 50;
+    pub const TEMPERATURE: usize = 51;
+    pub const DOF: usize = 52;
+    // the holon census
+    pub const CENSUS_ATOMS: usize = 53;
+    pub const CENSUS_MOLECULES: usize = 54;
+    pub const CENSUS_CANDIDATES: usize = 55;
+    pub const CENSUS_VIEWS: usize = 56;
+    pub const CENSUS_FORMATIONS: usize = 57;
+    pub const CENSUS_DISSOLUTIONS: usize = 58;
+    pub const CENSUS_NOT_CLOSED: usize = 59;
+    pub const BOND_SECTOR_ENERGY: usize = 60;
+    // this device
+    pub const SUBSTEPS_PER_SEC: usize = 61;
+    pub const PAIRS_PER_SEC: usize = 62;
+    pub const REQUIRED_PER_SEC: usize = 63;
+    pub const N_MAX: usize = 64;
+    pub const CALIBRATION: usize = 65; // 0 pending, 1 measured, 2 no usable clock
+    // the button labels
+    pub const BOUNDARY: usize = 66; // 0 walls, 1 open, 2 periodic
+    pub const THERMOSTAT: usize = 67;
+    pub const COMPOSITE: usize = 68; // sim.holons.enabled
+    pub const DT_GROWTH: usize = 69; // timescale.allow_dt_growth
+    pub const GRABBED: usize = 70; // the held atom's index plus one, or 0
+}
+
+/// `holon-render-3d`'s `Calibration`, as the number the HUD array carries.
+pub const CALIBRATION_PENDING: u32 = 0;
+pub const CALIBRATION_DONE: u32 = 1;
+pub const CALIBRATION_UNAVAILABLE: u32 = 2;
+
 pub struct World {
     pub sim: Box<Sim>,
     pub status: u32,
     pub preset: u32,
+    /// Where the device measurement has got to (`CALIBRATION_*`).
+    pub calibration: u32,
+    /// Substeps the last advanced frame took, and its measured wall interval.
+    pub last_substeps: u32,
+    pub last_frame_seconds: f64,
+    pub hud: [f64; HUD_LEN],
     pub frame: Option<Frame>,
     pub camera: Option<Camera>,
     pub vp: [f32; 16],
@@ -40,7 +145,7 @@ impl World {
         sim.height = BOX_SIDE;
         sim.depth = BOX_SIDE;
         sim.wall_inset = ATOM_RADIUS;
-        World { sim, status: u32::MAX, preset: 0, frame: None, camera: None, vp: [0.0; 16] }
+        World { sim, status: u32::MAX, preset: 0, calibration: CALIBRATION_PENDING, last_substeps: 0, last_frame_seconds: 0.0, hud: [0.0; HUD_LEN], frame: None, camera: None, vp: [0.0; 16] }
     }
 
     fn dimer(&mut self, a: Species, b: Species) -> u32 {
@@ -136,7 +241,182 @@ impl World {
         if substeps_per_second.is_finite() && substeps_per_second > 0.0 {
             self.sim.timescale.substeps_per_second = substeps_per_second;
             self.sim.timescale.calibrated = true;
+            self.calibration = CALIBRATION_DONE;
+        } else {
+            self.calibration = CALIBRATION_UNAVAILABLE;
         }
+    }
+
+    /// `AtomWorld::pairs_per_second`: the calibration rate times the calibration scene's pairs.
+    pub fn pairs_per_second(&self) -> f64 {
+        self.sim.timescale.substeps_per_second * holon_render::sim::complete_pairs(DEFAULT_SCENE_ATOMS) as f64
+    }
+
+    /// `AtomWorld::n_max`: the default scene size until the device has been measured.
+    pub fn n_max(&self) -> f64 {
+        if !self.sim.timescale.calibrated {
+            return DEFAULT_SCENE_ATOMS as f64;
+        }
+        holon_render::clock::n_max(self.pairs_per_second(), self.sim.timescale.required_substeps_per_second())
+    }
+
+    /// `AtomWorld::reset`: `n` atoms, clamped to what this device was measured to sustain.
+    pub fn reset(&mut self, n: usize) {
+        let cap = (self.n_max() as usize).max(2);
+        self.sim.reset(n.max(2).min(cap));
+    }
+
+    /// `AtomWorld::wall_seconds_per_vibration`.
+    pub fn wall_seconds_per_vibration(&self) -> f64 {
+        let speed = self.sim.timescale.sim_speed_fs_per_wallsec;
+        if speed > 0.0 {
+            self.sim.timescale.period * AU_TO_FS / speed
+        } else {
+            f64::INFINITY
+        }
+    }
+
+    // The button row of `holon-render-3d/src/hud.rs` (`handle_actions`), arm for arm.
+
+    pub fn next_preset(&mut self) -> u32 {
+        self.load((self.preset + 1) % PRESETS.len() as u32)
+    }
+    pub fn fewer_atoms(&mut self) {
+        let n = self.sim.n.saturating_sub(1).max(2);
+        self.reset(n);
+    }
+    pub fn more_atoms(&mut self) {
+        let n = (self.sim.n + 1).min(DEFAULT_SCENE_ATOMS);
+        self.reset(n);
+    }
+    /// Walls -> Open -> Periodic -> Walls, and the ledger re-based, since the edit changes
+    /// the scene and the drift should measure the integrator, not the edit.
+    pub fn cycle_boundary(&mut self) {
+        self.sim.boundary = match self.sim.boundary {
+            Boundary::Walls => Boundary::Open,
+            Boundary::Open => Boundary::Periodic,
+            Boundary::Periodic => Boundary::Walls,
+        };
+        self.sim.rebase();
+    }
+    /// Rung (ii) by explicit toggle; turning it off re-derives dt from the envelope at once.
+    pub fn toggle_dt_growth(&mut self) {
+        let on = !self.sim.timescale.allow_dt_growth;
+        self.sim.timescale.allow_dt_growth = on;
+        if on {
+            self.sim.timescale.set_dt_multiplier(2.0);
+        } else {
+            let e = self.sim.timescale.e_rel_max;
+            self.sim.timescale.e_rel_max = f64::NEG_INFINITY;
+            self.sim.timescale.k_env = 0.0;
+            let table = core::mem::replace(self.sim.table_mut(), holon_render::table::PotentialTable::empty());
+            self.sim.timescale.refresh_envelope(&table, e);
+            *self.sim.table_mut() = table;
+        }
+    }
+
+    /// Fill the HUD array (layout: [`hud`]) from the `Sim`, as `update_hud` reads it.
+    pub fn fill_hud(&mut self) {
+        use hud::*;
+        let ratio = |measured: f64, bound: f64| if bound > 0.0 { measured / bound } else { 0.0 };
+        let flag = |b: bool| if b { 1.0 } else { 0.0 };
+        let mut h = [0.0f64; HUD_LEN];
+        let s = &self.sim;
+        h[TABLE_OK] = flag(self.ready());
+        h[TABLE_STATUS] = self.status as f64;
+        h[PRESET] = self.preset as f64;
+        h[ATOMS] = s.n as f64;
+        h[TIME_AU] = s.time;
+        h[TIME_FS] = s.time * AU_TO_FS;
+        h[CLUSTERS] = s.cluster_count().0 as f64;
+        h[BONDED_PAIRS] = s.bonded_count() as f64;
+
+        let (drift_bound, momentum_bound) = (s.drift_bound(), s.momentum_bound());
+        h[ENERGY_PASS] = flag(s.energy_gate());
+        h[E_KIN] = s.e_kin;
+        h[E_PAIR] = s.e_pair;
+        h[E_WALL] = s.e_wall;
+        h[E_SPRING] = s.e_spring;
+        h[W_EXT] = s.w_ext;
+        h[LEDGER] = s.ledger();
+        h[ORIGIN] = s.l0;
+        h[DRIFT_PEAK] = s.drift_peak;
+        h[DRIFT_BOUND] = drift_bound;
+        h[DRIFT_RATIO] = ratio(s.drift_peak, drift_bound);
+
+        let (px, py, pz) = s.momentum();
+        h[MOMENTUM_PASS] = flag(s.momentum_gate());
+        h[P_MAG] = (px * px + py * py + pz * pz).sqrt();
+        h[PX] = px;
+        h[PY] = py;
+        h[PZ] = pz;
+        h[P_RESIDUAL] = s.momentum_residual_peak;
+        h[P_BOUND] = momentum_bound;
+        h[P_RATIO] = ratio(s.momentum_residual_peak, momentum_bound);
+
+        let t = &s.timescale;
+        h[RUNG] = match t.rung {
+            Rung::Exact => 0.0,
+            Rung::TimeDilated => 1.0,
+            Rung::AccuracyDeclared => 2.0,
+            Rung::Refused => 3.0,
+        };
+        h[DT] = t.dt;
+        h[DT_REFERENCE] = t.dt_reference;
+        h[OMEGA_E] = t.omega_e;
+        h[OMEGA_ENV] = t.omega_env;
+        h[OMEGA_DT] = t.omega_dt();
+        h[FRAME_MS] = self.last_frame_seconds * 1000.0;
+        h[SUBSTEPS] = self.last_substeps as f64;
+        h[SIM_SPEED] = t.sim_speed_fs_per_wallsec;
+        h[VIBRATION_S] = self.wall_seconds_per_vibration();
+        h[DILATION] = t.dilation;
+
+        h[R_E] = s.table().r_e;
+        h[D_E] = s.table().d_e;
+        h[ASYMPTOTE] = s.table().e_asymptote;
+        h[KNOTS] = s.table().knots() as f64;
+        // the closest pair: the one about to do something
+        if let Some(p) = s.pairs[..s.pair_count].iter().min_by(|a, b| a.r.total_cmp(&b.r)) {
+            h[PAIR_PRESENT] = 1.0;
+            h[PAIR_I] = p.i as f64;
+            h[PAIR_J] = p.j as f64;
+            h[PAIR_Z_I] = s.atoms[p.i].species.z as f64;
+            h[PAIR_Z_J] = s.atoms[p.j].species.z as f64;
+            h[PAIR_R] = p.r;
+            h[PAIR_E_REL] = p.e_rel;
+            h[PAIR_R_OUTER] = p.r_outer;
+            h[PAIR_BONDED] = flag(p.bonded);
+        }
+        h[TEMPERATURE] = s.temperature();
+        h[DOF] = s.dims.dof();
+
+        let c = &s.holons.census;
+        h[CENSUS_ATOMS] = c.atoms as f64;
+        h[CENSUS_MOLECULES] = c.molecules as f64;
+        h[CENSUS_CANDIDATES] = c.candidate_evaluations as f64;
+        h[CENSUS_VIEWS] = c.global_views as f64;
+        h[CENSUS_FORMATIONS] = c.formations as f64;
+        h[CENSUS_DISSOLUTIONS] = c.dissolutions as f64;
+        h[CENSUS_NOT_CLOSED] = c.closure_rejections as f64;
+        h[BOND_SECTOR_ENERGY] = s.holons.bond_sector_energy();
+
+        h[SUBSTEPS_PER_SEC] = t.substeps_per_second;
+        h[PAIRS_PER_SEC] = self.pairs_per_second();
+        h[REQUIRED_PER_SEC] = t.required_substeps_per_second();
+        h[N_MAX] = self.n_max() as u64 as f64;
+        h[CALIBRATION] = self.calibration as f64;
+
+        h[BOUNDARY] = match s.boundary {
+            Boundary::Walls => 0.0,
+            Boundary::Open => 1.0,
+            Boundary::Periodic => 2.0,
+        };
+        h[THERMOSTAT] = flag(s.thermostat_on);
+        h[COMPOSITE] = flag(s.holons.enabled);
+        h[DT_GROWTH] = flag(t.allow_dt_growth);
+        h[GRABBED] = s.grabbed.filter(|&g| g < s.n).map_or(0.0, |g| g as f64 + 1.0);
+        self.hud = h;
     }
 
     /// One frame of `wall_dt` measured seconds, as `AtomWorld::advance`.
@@ -147,6 +427,8 @@ impl World {
         let budget = self.sim.timescale.substep_budget(wall_dt);
         let plan = self.sim.timescale.plan_frame(wall_dt, budget);
         self.sim.step_frame(plan.substeps);
+        self.last_substeps = plan.substeps;
+        self.last_frame_seconds = wall_dt;
         plan.substeps
     }
 
@@ -193,7 +475,7 @@ impl World {
             marks.push(m);
             marks.push(Instance::new(Kind::Sphere, [x as f32, y as f32, z as f32], [0.18, 0.0, 0.0]).colour([233, 196, 106, 255]));
         }
-        Scene { tiles: vec![Tile { id: 1, origin: [0.0; 3], version: 1, layer: 0, marks }], modal: None }
+        Scene { tiles: vec![Tile { id: 1, origin: [0.0; 3], version: 1, layer: 0, screen: false, marks }], modal: None }
     }
 
     /// Build the frame for an orbit view about the box's centre.
@@ -332,6 +614,77 @@ pub extern "C" fn ha_frame_digest() -> f64 {
     with(|w| w.frame.as_ref().map_or(0.0, |f| (f.digest() >> 11) as f64))
 }
 
+/// Fill the HUD array from the `Sim` and return where its [`HUD_LEN`] f64 are (layout:
+/// the [`hud`] module). The address is fixed; the host calls this when it wants fresh text.
+#[no_mangle]
+pub extern "C" fn ha_hud() -> *const f64 {
+    W.with(|w| {
+        let mut w = w.borrow_mut();
+        w.fill_hud();
+        w.hud.as_ptr()
+    })
+}
+#[no_mangle]
+pub extern "C" fn ha_hud_len() -> u32 {
+    HUD_LEN as u32
+}
+/// 0 pending, 1 measured, 2 the host had no usable clock.
+#[no_mangle]
+pub extern "C" fn ha_calibration() -> u32 {
+    with(|w| w.calibration)
+}
+#[no_mangle]
+pub extern "C" fn ha_calibration_substeps() -> u32 {
+    CALIBRATION_SUBSTEPS
+}
+// The button row, each doing what `holon-render-3d`'s `handle_actions` does.
+/// Reset the scene at its present atom count.
+#[no_mangle]
+pub extern "C" fn ha_reset() {
+    with(|w| {
+        let n = w.sim.n;
+        w.reset(n)
+    })
+}
+/// Load the next preset; returns the curve's status.
+#[no_mangle]
+pub extern "C" fn ha_next_preset() -> u32 {
+    with(|w| w.next_preset())
+}
+#[no_mangle]
+pub extern "C" fn ha_fewer_atoms() {
+    with(|w| w.fewer_atoms())
+}
+#[no_mangle]
+pub extern "C" fn ha_more_atoms() {
+    with(|w| w.more_atoms())
+}
+#[no_mangle]
+pub extern "C" fn ha_slower() {
+    with(|w| w.sim.timescale.sim_speed_fs_per_wallsec /= SPEED_STEP)
+}
+#[no_mangle]
+pub extern "C" fn ha_faster() {
+    with(|w| w.sim.timescale.sim_speed_fs_per_wallsec *= SPEED_STEP)
+}
+/// Walls -> open -> periodic -> walls.
+#[no_mangle]
+pub extern "C" fn ha_cycle_boundary() {
+    with(|w| w.cycle_boundary())
+}
+#[no_mangle]
+pub extern "C" fn ha_toggle_thermostat() {
+    with(|w| w.sim.thermostat_on = !w.sim.thermostat_on)
+}
+#[no_mangle]
+pub extern "C" fn ha_toggle_composite() {
+    with(|w| w.sim.holons.enabled = !w.sim.holons.enabled)
+}
+#[no_mangle]
+pub extern "C" fn ha_toggle_dt_growth() {
+    with(|w| w.toggle_dt_growth())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -377,5 +730,83 @@ mod tests {
         w.sim.release();
         assert!(w.sim.grabbed.is_none());
         assert_eq!(w.grab_at(5.0, 5.0), 0, "a corner of the screen holds no atom");
+    }
+
+    /// Every slot finite, bar the two the `Sim` itself holds as +inf.
+    fn assert_hud_finite(w: &World, when: &str) {
+        for (i, v) in w.hud.iter().enumerate() {
+            let may_be_inf = i == hud::PAIR_R_OUTER || i == hud::VIBRATION_S;
+            assert!(v.is_finite() || (may_be_inf && *v == f64::INFINITY), "{when}: hud[{i}] = {v}");
+        }
+    }
+
+    #[test]
+    fn the_hud_array_is_finite_and_both_gates_pass_on_h2() {
+        let mut w = World::new();
+        assert_eq!(w.load(0), holon_render::TABLE_OK);
+        w.fill_hud();
+        assert_hud_finite(&w, "before calibration");
+        assert_eq!(w.hud[hud::CALIBRATION], CALIBRATION_PENDING as f64);
+        assert_eq!(w.hud[hud::N_MAX], DEFAULT_SCENE_ATOMS as f64, "unmeasured: the default scene");
+        w.burst(200);
+        w.calibrated(2.0e5);
+        for _ in 0..600 {
+            w.advance(1.0 / 60.0);
+        }
+        w.fill_hud();
+        assert_hud_finite(&w, "after 600 frames");
+        let h = &w.hud;
+        assert_eq!(h[hud::TABLE_OK], 1.0);
+        assert_eq!(h[hud::ATOMS], 2.0);
+        assert!(h[hud::TIME_AU] > 0.0 && h[hud::SUBSTEPS] >= 1.0);
+        assert_eq!(h[hud::ENERGY_PASS], 1.0, "drift {} against bound {}", h[hud::DRIFT_PEAK], h[hud::DRIFT_BOUND]);
+        assert!(h[hud::DRIFT_BOUND] > 0.0 && h[hud::DRIFT_RATIO] <= 1.0);
+        assert_eq!(h[hud::MOMENTUM_PASS], 1.0, "residual {} against bound {}", h[hud::P_RESIDUAL], h[hud::P_BOUND]);
+        // the array is what the Sim says, not a second derivation
+        assert_eq!(h[hud::ENERGY_PASS] == 1.0, w.sim.energy_gate());
+        assert_eq!(h[hud::LEDGER], w.sim.ledger());
+        assert_eq!(h[hud::KNOTS], CURVE_KNOTS as f64);
+        assert_eq!(h[hud::PAIR_PRESENT], 1.0);
+        assert_eq!((h[hud::PAIR_Z_I], h[hud::PAIR_Z_J]), (1.0, 1.0));
+        assert_eq!(h[hud::CALIBRATION], CALIBRATION_DONE as f64);
+        assert_eq!(h[hud::DOF], 3.0);
+    }
+
+    #[test]
+    fn the_buttons_do_what_the_bevy_handlers_do() {
+        let mut w = World::new();
+        w.load(0);
+        w.calibrated(2.0e5);
+        w.more_atoms();
+        assert_eq!(w.sim.n, 3);
+        w.fewer_atoms();
+        w.fewer_atoms();
+        assert_eq!(w.sim.n, 2, "never fewer than two");
+        for _ in 0..40 {
+            w.more_atoms();
+        }
+        assert_eq!(w.sim.n, DEFAULT_SCENE_ATOMS.min(w.n_max() as usize));
+        let speed = w.sim.timescale.sim_speed_fs_per_wallsec;
+        w.sim.timescale.sim_speed_fs_per_wallsec *= SPEED_STEP;
+        w.sim.timescale.sim_speed_fs_per_wallsec /= SPEED_STEP;
+        assert!((w.sim.timescale.sim_speed_fs_per_wallsec - speed).abs() < 1e-12 * speed);
+        let mut seen = Vec::new();
+        for _ in 0..3 {
+            w.cycle_boundary();
+            w.fill_hud();
+            seen.push(w.hud[hud::BOUNDARY]);
+            assert_eq!(w.sim.drift_peak, 0.0, "the ledger is re-based by the edit");
+        }
+        assert_eq!(seen, [1.0, 2.0, 0.0], "walls -> open -> periodic -> walls");
+        let dt = w.sim.timescale.dt;
+        w.toggle_dt_growth();
+        assert!(w.sim.timescale.allow_dt_growth && w.sim.timescale.dt > dt);
+        w.toggle_dt_growth();
+        assert!(!w.sim.timescale.allow_dt_growth);
+        assert!((w.sim.timescale.dt - dt).abs() < 1e-12, "dt is re-derived, not left grown");
+        assert_eq!(w.next_preset(), holon_render::TABLE_OK);
+        assert_eq!((w.preset, w.sim.n), (1, DEFAULT_SCENE_ATOMS));
+        w.calibrated(f64::NAN);
+        assert_eq!(w.calibration, CALIBRATION_UNAVAILABLE);
     }
 }

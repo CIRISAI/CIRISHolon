@@ -535,3 +535,16 @@ give it.
 A disc that faces the camera, if one is wanted, is a `variant`. The backend also reads
 COARSE per batch, not per record (§8 item 3's flag is carried in the record and not yet
 read by the backend).
+
+## 12. Panels and text are the engine's (the lead's ruling, 2026-11-15)
+
+"Draw needs to handle panels natively like we did with bevy." So §1's "no text in the core"
+and §3's "the host draws text" are WITHDRAWN for the engine's own pages: the engine draws
+panels, text and buttons, in SCREEN tiles (device pixels, drawn after the world, picked by
+exact rectangle). What stays true is that the core holds no font and shapes nothing: a
+text run (`Kind::Run`, D11) is rasterised by a TEXT PROVIDER on the host's side of the
+boundary (on the web, the browser's own 2D canvas, which shapes, orders and falls back for
+every script) into an atlas, and the core places and draws it. Layout (panels, rows,
+wrapping, buttons, the narrow-screen arrangement) is Rust (`holon-draw::ui`), measured
+through the provider. The screen standard's requirements in §2, §8 and §10 now bind the
+engine directly rather than a host.

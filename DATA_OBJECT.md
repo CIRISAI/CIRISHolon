@@ -181,3 +181,15 @@ against the theory and is reported upstream as a finding, not patched around:
    identity scheme.
 4. **Certification** (`Certificate` + the battery pattern): one shape for
    exact-by-construction and receipt-backed tiers alike.
+
+## CORRECTION 2026-11-15 — a side list beside a frozen record is not a bespoke mechanism
+
+The DRY law above calls a tier's bespoke alternative to a shared mechanism a design defect.
+A consumer of this engine (the CEWP twin) keeps a building's 8-number record frozen and
+carries a new per-building attribute (roof tone) as a separate list at the same index, so
+that every digest over the record is unchanged. That is Identity used as intended (an
+append-only key joining two lists), not a second mechanism, and it is the pattern
+`INTERFACE.md` now requires at a seam. Two further notes: "budgets are data" (the universal
+object) is read with the clause that a budget belongs to an (observable, consumer) pair;
+and the `cert` slot of a generated scene holds two objects, a section law and a match
+against a frozen reference (`OBJECT.md` "The scene certificate").

@@ -28,10 +28,14 @@
 //! the twin's own function from the twin's tree; it is not asserted here. Cosine, sine and
 //! the base-10 logarithm come from two different libraries on the two sides, so a float may
 //! differ in its last place before it is rounded to 32 bits; the check counts such floats.
-//! The style constants in [`Style`] are the twin's display choices as of its `bb58ce2` and
-//! are inputs, not facts.
+//! Every display constant is an input ([`Style`], passed across the boundary as one flat
+//! array; the twin lead's request, 2026-11-15: one source of truth). [`Style::default`] is
+//! the twin's values at its `bb58ce2`, used by the check.
 
-/// The twin's display constants.
+/// The twin's display constants, ALL of them, as inputs. The twin's rule is one source of
+/// truth for every model constant; [`Style::from_flat`] takes them as one flat array in the
+/// order of [`STYLE_FIELDS`], so the twin can keep the numbers in one place and hand them to
+/// both builders. [`Style::default`] is the twin's values at its `bb58ce2`, for the check.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Style {
     /// Persons per household (the twin's `TL_PPH`).
@@ -40,6 +44,99 @@ pub struct Style {
     pub road: [f64; 3],
     /// Roof colours by tone, index 0 unused (neutral).
     pub tones: Vec<[f64; 3]>,
+    pub ground_alpha: f64,
+    /// Persons a square km above which a leaf has no scattered trees, and above which they
+    /// are sparser.
+    pub no_trees_pkm: f64,
+    pub sparse_trees_pkm: f64,
+    /// Square metres of leaf per scattered tree, sparse and otherwise; the cap.
+    pub tree_area_sparse: f64,
+    pub tree_area: f64,
+    pub tree_cap: f64,
+    /// Square metres per mottling patch; the cap.
+    pub patch_area: f64,
+    pub patch_cap: f64,
+    pub patch_radius: [f64; 2],
+    pub patch_light: [f64; 3],
+    pub patch_dark: [f64; 3],
+    pub patch_alpha: f64,
+    pub tree_radius: [f64; 2],
+    /// A tree's colour is `base + gk * slope`.
+    pub tree_base: [f64; 3],
+    pub tree_slope: [f64; 3],
+    pub tree_alpha: f64,
+    /// Persons a square km below which buildings have yards.
+    pub lots_pkm: f64,
+    pub lot_margin: [f64; 2],
+    pub lot_colour: [f64; 3],
+    pub lot_alpha: f64,
+    pub garden_trees_max: f64,
+    pub garden_radius: [f64; 2],
+    pub garden_base: [f64; 3],
+    pub garden_slope_g: f64,
+    pub garden_alpha: f64,
+    pub arterial_width: f64,
+    pub collector_width: f64,
+    pub casing_extra: [f64; 2],
+    pub casing_colour: [f64; 3],
+    pub casing_alpha: f64,
+    pub arterial_colour: [f64; 3],
+    pub collector_colour: [f64; 3],
+    pub shadow: [f64; 2],
+    pub shadow_colour: [f64; 3],
+    pub shadow_alpha: f64,
+    pub roof_units: [f64; 3],
+    pub roof_no_units: [f64; 3],
+    pub roof_lit: f64,
+    pub roof_dark: f64,
+}
+
+/// The order of the flat array [`Style::from_flat`] reads, with each field's length.
+pub const STYLE_FIELDS: [(&str, usize); 42] = [
+    ("pph", 1), ("road", 3), ("tones", 24), ("ground_alpha", 1), ("no_trees_pkm", 1), ("sparse_trees_pkm", 1),
+    ("tree_area_sparse", 1), ("tree_area", 1), ("tree_cap", 1), ("patch_area", 1), ("patch_cap", 1), ("patch_radius", 2),
+    ("patch_light", 3), ("patch_dark", 3), ("patch_alpha", 1), ("tree_radius", 2), ("tree_base", 3), ("tree_slope", 3),
+    ("tree_alpha", 1), ("lots_pkm", 1), ("lot_margin", 2), ("lot_colour", 3), ("lot_alpha", 1), ("garden_trees_max", 1),
+    ("garden_radius", 2), ("garden_base", 3), ("garden_slope_g", 1), ("garden_alpha", 1), ("arterial_width", 1),
+    ("collector_width", 1), ("casing_extra", 2), ("casing_colour", 3), ("casing_alpha", 1), ("arterial_colour", 3),
+    ("collector_colour", 3), ("shadow", 2), ("shadow_colour", 3), ("shadow_alpha", 1), ("roof_units", 3),
+    ("roof_no_units", 3), ("roof_lit", 1), ("roof_dark", 1),
+];
+
+/// The length of the flat style array.
+pub fn style_len() -> usize {
+    STYLE_FIELDS.iter().map(|f| f.1).sum()
+}
+
+impl Style {
+    /// The style from a flat array in [`STYLE_FIELDS`]' order, or `None` if it is not
+    /// exactly [`style_len`] long. The tones are 8 colours, the first unused.
+    pub fn from_flat(v: &[f64]) -> Option<Style> {
+        if v.len() != style_len() {
+            return None;
+        }
+        let mut at = 0usize;
+        let mut one = || {
+            at += 1;
+            v[at - 1]
+        };
+        let mut s = Style::default();
+        s.pph = one();
+        s.road = [one(), one(), one()];
+        s.tones = (0..8).map(|_| [one(), one(), one()]).collect();
+        macro_rules! f {
+            ($($x:ident : $n:tt),*) => { $( f!(@ $x $n); )* };
+            (@ $x:ident 1) => { s.$x = one(); };
+            (@ $x:ident 2) => { s.$x = [one(), one()]; };
+            (@ $x:ident 3) => { s.$x = [one(), one(), one()]; };
+        }
+        f!(ground_alpha: 1, no_trees_pkm: 1, sparse_trees_pkm: 1, tree_area_sparse: 1, tree_area: 1, tree_cap: 1, patch_area: 1, patch_cap: 1, patch_radius: 2,
+           patch_light: 3, patch_dark: 3, patch_alpha: 1, tree_radius: 2, tree_base: 3, tree_slope: 3, tree_alpha: 1, lots_pkm: 1, lot_margin: 2, lot_colour: 3,
+           lot_alpha: 1, garden_trees_max: 1, garden_radius: 2, garden_base: 3, garden_slope_g: 1, garden_alpha: 1, arterial_width: 1, collector_width: 1,
+           casing_extra: 2, casing_colour: 3, casing_alpha: 1, arterial_colour: 3, collector_colour: 3, shadow: 2, shadow_colour: 3, shadow_alpha: 1,
+           roof_units: 3, roof_no_units: 3, roof_lit: 1, roof_dark: 1);
+        Some(s)
+    }
 }
 
 impl Default for Style {
@@ -49,6 +146,45 @@ impl Default for Style {
             pph: 2.5,
             road: [0.47, 0.49, 0.53],
             tones: vec![[0.0; 3], t(178.0, 98.0, 72.0), t(142.0, 122.0, 104.0), t(128.0, 112.0, 94.0), t(92.0, 100.0, 110.0), t(84.0, 82.0, 80.0), t(168.0, 172.0, 176.0), t(150.0, 150.0, 146.0)],
+            ground_alpha: 0.9,
+            no_trees_pkm: 6000.0,
+            sparse_trees_pkm: 1500.0,
+            tree_area_sparse: 1600.0,
+            tree_area: 700.0,
+            tree_cap: 70.0,
+            patch_area: 9000.0,
+            patch_cap: 14.0,
+            patch_radius: [8.0, 18.0],
+            patch_light: [0.5, 0.55, 0.36],
+            patch_dark: [0.04, 0.07, 0.04],
+            patch_alpha: 0.07,
+            tree_radius: [1.4, 2.2],
+            tree_base: [0.09, 0.17, 0.08],
+            tree_slope: [0.05, 0.08, 0.0],
+            tree_alpha: 0.8,
+            lots_pkm: 1500.0,
+            lot_margin: [2.0, 0.35],
+            lot_colour: [0.42, 0.5, 0.33],
+            lot_alpha: 0.16,
+            garden_trees_max: 3.0,
+            garden_radius: [1.6, 1.8],
+            garden_base: [0.11, 0.2, 0.1],
+            garden_slope_g: 0.06,
+            garden_alpha: 0.85,
+            arterial_width: 11.0,
+            collector_width: 7.0,
+            casing_extra: [1.6, 0.8],
+            casing_colour: [0.07, 0.08, 0.095],
+            casing_alpha: 0.9,
+            arterial_colour: [0.86, 0.78, 0.56],
+            collector_colour: [0.66, 0.66, 0.64],
+            shadow: [0.5, 1.0],
+            shadow_colour: [0.02, 0.025, 0.03],
+            shadow_alpha: 0.5,
+            roof_units: [0.44, 0.41, 0.36],
+            roof_no_units: [0.3, 0.29, 0.27],
+            roof_lit: 1.22,
+            roof_dark: 0.74,
         }
     }
 }
@@ -160,43 +296,44 @@ pub fn build_leaf(l: &Leaf, style: &Style) -> Vec<f32> {
     let (w, h, hh) = (l.meta[0], l.meta[1], l.meta[2]);
     let mut o = Out { v: Vec::new(), l };
     let km2 = (w * h / 1e6).max(1e-6);
-    o.quad([[-w / 2.0, -h / 2.0], [w / 2.0, -h / 2.0], [w / 2.0, h / 2.0], [-w / 2.0, h / 2.0]], [tone(hh / km2), 0.0, 0.0], 0.9, 0.0);
+    o.quad([[-w / 2.0, -h / 2.0], [w / 2.0, -h / 2.0], [w / 2.0, h / 2.0], [-w / 2.0, h / 2.0]], [tone(hh / km2), 0.0, 0.0], style.ground_alpha, 0.0);
     let seed = to_int32(l.id % 2_147_483_647.0) as f64;
     let xor = |a: f64, b: f64| (to_int32(a) ^ to_int32(b)) as f64;
     // over the whole leaf: soft mottling and scattered trees, fewer where it is dense
     {
         let area = w * h;
         let pkm = hh / (area / 1e6).max(1e-6) * style.pph;
-        let n_t = if pkm >= 6000.0 { 0.0 } else { round(area / if pkm >= 1500.0 { 1600.0 } else { 700.0 }).min(70.0) };
-        let n_p = round(area / 9000.0).min(14.0);
+        let n_t = if pkm >= style.no_trees_pkm { 0.0 } else { round(area / if pkm >= style.sparse_trees_pkm { style.tree_area_sparse } else { style.tree_area }).min(style.tree_cap) };
+        let n_p = round(area / style.patch_area).min(style.patch_cap);
         let mut k = 0.0;
         while k < n_p {
-            let (x, y, r) = ((hsh(seed, 9000.0 + k) - 0.5) * w, (hsh(9000.0 + k, seed) - 0.5) * h, 8.0 + 18.0 * hsh(xor(seed, k), 77.0));
-            o.disc(x, y, r, if hsh(k, seed) < 0.5 { [0.5, 0.55, 0.36] } else { [0.04, 0.07, 0.04] }, 0.07, 1.0);
+            let (x, y, r) = ((hsh(seed, 9000.0 + k) - 0.5) * w, (hsh(9000.0 + k, seed) - 0.5) * h, style.patch_radius[0] + style.patch_radius[1] * hsh(xor(seed, k), 77.0));
+            o.disc(x, y, r, if hsh(k, seed) < 0.5 { style.patch_light } else { style.patch_dark }, style.patch_alpha, 1.0);
             k += 1.0;
         }
         let mut k = 0.0;
         while k < n_t {
-            let (x, y, r, gk) = ((hsh(seed, k) - 0.5) * w, (hsh(k, seed + 1.0) - 0.5) * h, 1.4 + 2.2 * hsh(seed + 2.0, k), hsh(k, 31.0));
-            o.disc(x, y, r, [0.09 + 0.05 * gk, 0.17 + 0.08 * gk, 0.08], 0.8, 1.25);
+            let (x, y, r, gk) = ((hsh(seed, k) - 0.5) * w, (hsh(k, seed + 1.0) - 0.5) * h, style.tree_radius[0] + style.tree_radius[1] * hsh(seed + 2.0, k), hsh(k, 31.0));
+            let (tb, ts) = (style.tree_base, style.tree_slope);
+            o.disc(x, y, r, [tb[0] + ts[0] * gk, tb[1] + ts[1] * gk, tb[2] + ts[2] * gk], style.tree_alpha, 1.25);
             k += 1.0;
         }
     }
     let bb = l.buildings;
-    let lots = hh * style.pph / km2 < 1500.0;
+    let lots = hh * style.pph / km2 < style.lots_pkm;
     if lots {
         for b in (0..bb.len()).step_by(8) {
             let (cx, cy, bw, bd, ca, sa) = (bb[b], bb[b + 1], bb[b + 2] / 2.0, bb[b + 3] / 2.0, bb[b + 4].cos(), bb[b + 4].sin());
-            let (lw, ld) = (bw + 2.0 + 0.35 * bw, bd + 2.0 + 0.35 * bd);
+            let (lw, ld) = (bw + style.lot_margin[0] + style.lot_margin[1] * bw, bd + style.lot_margin[0] + style.lot_margin[1] * bd);
             let at = |u: f64, v: f64| [cx + ca * u - sa * v, cy + sa * u + ca * v];
-            o.quad([at(-lw, -ld), at(lw, -ld), at(lw, ld), at(-lw, ld)], [0.42, 0.5, 0.33], 0.16, 1.0);
+            o.quad([at(-lw, -ld), at(lw, -ld), at(lw, ld), at(-lw, ld)], style.lot_colour, style.lot_alpha, 1.0);
             let bf = b as f64;
-            let nt = (hsh(seed, bf) * 3.0).floor() as u32;
+            let nt = (hsh(seed, bf) * style.garden_trees_max).floor() as u32;
             for t in 0..nt {
                 let t = t as f64;
                 let side = to_int32(hsh(seed + t, bf) * 4.0);
                 let f = hsh(bf, seed + 7.0 * t) * 2.0 - 1.0;
-                let r = 1.6 + 1.8 * hsh(xor(seed, t), bf + 3.0);
+                let r = style.garden_radius[0] + style.garden_radius[1] * hsh(xor(seed, t), bf + 3.0);
                 let (u, v) = match side {
                     0 => (f * lw, ld - r * 0.6),
                     1 => (f * lw, -ld + r * 0.6),
@@ -204,21 +341,22 @@ pub fn build_leaf(l: &Leaf, style: &Style) -> Vec<f32> {
                     _ => (-lw + r * 0.6, f * ld),
                 };
                 let p = at(u, v);
-                o.disc(p[0], p[1], r, [0.11, 0.2 + 0.06 * hsh(t, bf), 0.1], 0.85, 1.25);
+                let g = style.garden_base;
+                o.disc(p[0], p[1], r, [g[0], g[1] + style.garden_slope_g * hsh(t, bf), g[2]], style.garden_alpha, 1.25);
             }
         }
     }
     // streets by width class, narrow first so wider ones cross over; casings, then streets
-    let rank = |r: usize| if l.roads[r + 4] >= 11.0 { 2 } else if l.roads[r + 4] >= 7.0 { 1 } else { 0 };
+    let rank = |r: usize| if l.roads[r + 4] >= style.arterial_width { 2 } else if l.roads[r + 4] >= style.collector_width { 1 } else { 0 };
     let mut order: Vec<usize> = (0..l.roads.len()).step_by(5).collect();
     order.sort_by_key(|&r| rank(r));
     for &r in &order {
-        o.road(r, if rank(r) == 2 { 1.6 } else { 0.8 }, [0.07, 0.08, 0.095], 0.9, 1.0);
+        o.road(r, if rank(r) == 2 { style.casing_extra[0] } else { style.casing_extra[1] }, style.casing_colour, style.casing_alpha, 1.0);
     }
     for &r in &order {
         let c = match rank(r) {
-            2 => [0.86, 0.78, 0.56],
-            1 => [0.66, 0.66, 0.64],
+            2 => style.arterial_colour,
+            1 => style.collector_colour,
             _ => style.road,
         };
         o.road(r, 0.0, c, 1.0, 2.0);
@@ -226,11 +364,11 @@ pub fn build_leaf(l: &Leaf, style: &Style) -> Vec<f32> {
     for b in (0..bb.len()).step_by(8) {
         let (cx, cy, bw, bd, ca, sa, units) = (bb[b], bb[b + 1], bb[b + 2] / 2.0, bb[b + 3] / 2.0, bb[b + 4].cos(), bb[b + 4].sin(), bb[b + 6]);
         let at = |u: f64, v: f64, dx: f64, dy: f64| [cx + dx + ca * u - sa * v, cy + dy + sa * u + ca * v];
-        let sh = 0.5 + 1.0 * bb[b + 5].max(1.0);
-        o.quad([at(-bw, -bd, sh, -sh), at(bw, -bd, sh, -sh), at(bw, bd, sh, -sh), at(-bw, bd, sh, -sh)], [0.02, 0.025, 0.03], 0.5, 1.0);
+        let sh = style.shadow[0] + style.shadow[1] * bb[b + 5].max(1.0);
+        o.quad([at(-bw, -bd, sh, -sh), at(bw, -bd, sh, -sh), at(bw, bd, sh, -sh), at(-bw, bd, sh, -sh)], style.shadow_colour, style.shadow_alpha, 1.0);
         let toned = l.tones.and_then(|t| t.get(b / 8)).map(|&t| to_int32(t)).filter(|&t| t > 0).and_then(|t| style.tones.get(t as usize)).copied();
-        let c0 = toned.unwrap_or(if units > 0.0 { [0.44, 0.41, 0.36] } else { [0.3, 0.29, 0.27] });
-        let (lit, dark) = (c0.map(|v| v * 1.22), c0.map(|v| v * 0.74));
+        let c0 = toned.unwrap_or(if units > 0.0 { style.roof_units } else { style.roof_no_units });
+        let (lit, dark) = (c0.map(|v| v * style.roof_lit), c0.map(|v| v * style.roof_dark));
         if bw >= bd {
             o.quad([at(-bw, 0.0, 0.0, 0.0), at(bw, 0.0, 0.0, 0.0), at(bw, bd, 0.0, 0.0), at(-bw, bd, 0.0, 0.0)], lit, 1.0, 3.0);
             o.quad([at(-bw, -bd, 0.0, 0.0), at(bw, -bd, 0.0, 0.0), at(bw, 0.0, 0.0, 0.0), at(-bw, 0.0, 0.0, 0.0)], dark, 1.0, 3.0);
@@ -287,6 +425,28 @@ mod tests {
         assert_eq!(roof[65], (slate * 0.74) as f32);
         // the same inputs give the same bytes
         assert_eq!(build_leaf(&l, &Style::default()), v);
+    }
+
+    #[test]
+    fn the_style_is_one_flat_array_and_the_default_round_trips() {
+        let d = Style::default();
+        let mut flat = vec![d.pph];
+        flat.extend(d.road);
+        for t in &d.tones {
+            flat.extend(t);
+        }
+        assert_eq!(style_len(), 97);
+        assert!(Style::from_flat(&flat).is_none(), "too short");
+        // build the rest by reading the default back through a known-good path: every
+        // other field, in order
+        let rest: Vec<f64> = vec![d.ground_alpha, d.no_trees_pkm, d.sparse_trees_pkm, d.tree_area_sparse, d.tree_area, d.tree_cap, d.patch_area, d.patch_cap]
+            .into_iter().chain(d.patch_radius).chain(d.patch_light).chain(d.patch_dark).chain([d.patch_alpha]).chain(d.tree_radius).chain(d.tree_base).chain(d.tree_slope)
+            .chain([d.tree_alpha, d.lots_pkm]).chain(d.lot_margin).chain(d.lot_colour).chain([d.lot_alpha, d.garden_trees_max]).chain(d.garden_radius).chain(d.garden_base)
+            .chain([d.garden_slope_g, d.garden_alpha, d.arterial_width, d.collector_width]).chain(d.casing_extra).chain(d.casing_colour).chain([d.casing_alpha])
+            .chain(d.arterial_colour).chain(d.collector_colour).chain(d.shadow).chain(d.shadow_colour).chain([d.shadow_alpha]).chain(d.roof_units).chain(d.roof_no_units)
+            .chain([d.roof_lit, d.roof_dark]).collect();
+        flat.extend(rest);
+        assert_eq!(Style::from_flat(&flat), Some(d));
     }
 
     #[test]

@@ -1,0 +1,18 @@
+[package]
+name = "holon-draw-atoms"
+version = "0.1.0"
+edition = "2021"
+license = "AGPL-3.0-or-later"
+publish = false
+description = "The 3D atoms scene drawn through holon-draw instead of Bevy: holon-render's Sim, its presets, and marks for atoms, bonds and the box"
+
+# The three crates the scene needs and nothing else. holon-render and holon-chem are the
+# physics the Bevy page (holon-render-3d) already ran; holon-draw is the draw core. No
+# graphics dependency: the browser's WebGL is driven from `holon-draw/web/draw.js`.
+[dependencies]
+holon-render = { path = "../holon-render" }
+holon-chem = { path = "../holon-chem" }
+holon-draw = { path = "../holon-draw" }
+
+[lib]
+crate-type = ["cdylib", "rlib"]

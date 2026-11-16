@@ -9,15 +9,17 @@ use std::cell::RefCell;
 
 #[derive(Default)]
 struct State {
-    input: [Vec<f64>; 5], // roads, buildings, meta, streets, tones
+    input: [Vec<f64>; 6], // roads, buildings, meta, streets, tones, style
     out: Vec<f32>,
+    style: Option<Style>,
 }
 
 thread_local! {
     static STATE: RefCell<State> = RefCell::new(State::default());
 }
 
-/// Size input buffer `which` (0 roads, 1 buildings, 2 meta, 3 streets, 4 tones) to `len`
+/// Size input buffer `which` (0 roads, 1 buildings, 2 meta, 3 streets, 4 tones, 5 the
+/// style as one flat array, then [`hd_style`]) to `len`
 /// doubles and return where to write them. A `which` out of range returns null.
 #[no_mangle]
 pub extern "C" fn hd_in(which: u32, len: u32) -> *mut f64 {
@@ -34,6 +36,29 @@ pub extern "C" fn hd_in(which: u32, len: u32) -> *mut f64 {
     })
 }
 
+/// Adopt the style written to input buffer 5 (in `twin::STYLE_FIELDS` order). Returns 1,
+/// or 0 if it is not `twin::style_len()` long, in which case the twin's defaults at its
+/// `bb58ce2` stay in force. A leaf's road colour and persons per household are still the
+/// arguments of [`hd_build_leaf`].
+#[no_mangle]
+pub extern "C" fn hd_style() -> u32 {
+    STATE.with(|s| {
+        let mut s = s.borrow_mut();
+        let st = crate::twin::Style::from_flat(&s.input[5]);
+        let ok = st.is_some() as u32;
+        if st.is_some() {
+            s.style = st;
+        }
+        ok
+    })
+}
+
+/// The length of the flat style array.
+#[no_mangle]
+pub extern "C" fn hd_style_len() -> u32 {
+    crate::twin::style_len() as u32
+}
+
 /// Build the leaf from the input buffers. Returns the number of floats in the output, or 0
 /// if the meta buffer holds fewer than 3 numbers or a road or building record is cut short.
 #[no_mangle]
@@ -42,12 +67,12 @@ pub extern "C" fn hd_build_leaf(id: f64, ox: f64, oy: f64, sx: f64, pph: f64, ro
     STATE.with(|s| {
         let mut s = s.borrow_mut();
         let st = &mut *s;
-        let [roads, buildings, meta, streets, tones] = &st.input;
+        let [roads, buildings, meta, streets, tones, _] = &st.input;
         if meta.len() < 3 || roads.len() % 5 != 0 || buildings.len() % 8 != 0 {
             st.out.clear();
             return 0;
         }
-        let style = Style { pph, road: [road_r, road_g, road_b], ..Style::default() };
+        let style = Style { pph, road: [road_r, road_g, road_b], ..st.style.clone().unwrap_or_default() };
         let leaf = Leaf { id, roads, buildings, meta, streets, tones: if has_tones != 0 { Some(tones) } else { None }, ox, oy, sx };
         st.out = build_leaf(&leaf, &style);
         st.out.len() as u32

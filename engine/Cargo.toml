@@ -29,6 +29,9 @@ members = [
   # holon-draw: ZERO dependencies, std only (the isolation profile of q-seam): the generic
   # draw core of INTERFACE.md. No graphics backend is in it.
   "crates/holon-draw",
+  # holon-draw-atoms: the 3D atoms scene through holon-draw instead of Bevy; depends on
+  # holon-render, holon-chem and holon-draw only, so no graphics crate enters the workspace.
+  "crates/holon-draw-atoms",
   # holon-swarm, holon-mesh: alloc-only (ciris-sim-core { features = ["alloc"] }),
   # holon-swarm has no other deps and holon-mesh's only other dep is holon-swarm — no
   # optional features to unify, so neither can perturb the core's feature resolution or

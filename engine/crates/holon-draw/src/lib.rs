@@ -184,6 +184,53 @@ impl Camera {
         let m = [sx, 0.0, 0.0, -sx * focus[0], 0.0, sy, 0.0, -sy * focus[1], 0.0, 0.0, -1e-6, 0.0, 0.0, 0.0, 0.0, 1.0];
         Camera { m, width, height, scale, focus }
     }
+    /// A perspective view from a point on a sphere about `focus`, with z up: `yaw` about z
+    /// from the x axis, `pitch` above the ground plane, `dist` from the focus, `fov_y` the
+    /// vertical field of view (radians).
+    #[allow(clippy::too_many_arguments)]
+    pub fn orbit(focus: [f64; 3], yaw: f64, pitch: f64, dist: f64, fov_y: f64, width: f64, height: f64) -> Camera {
+        let (cp, sp, cy, sy) = (pitch.cos(), pitch.sin(), yaw.cos(), yaw.sin());
+        let eye = [focus[0] + dist * cp * cy, focus[1] + dist * cp * sy, focus[2] + dist * sp];
+        let norm = |v: [f64; 3]| {
+            let l = (v[0] * v[0] + v[1] * v[1] + v[2] * v[2]).sqrt();
+            [v[0] / l, v[1] / l, v[2] / l]
+        };
+        let cross = |a: [f64; 3], b: [f64; 3]| [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+        let dot = |a: [f64; 3], b: [f64; 3]| a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+        let f = norm([focus[0] - eye[0], focus[1] - eye[1], focus[2] - eye[2]]);
+        let up = if f[2].abs() > 0.999 { [0.0, 1.0, 0.0] } else { [0.0, 0.0, 1.0] };
+        let s = norm(cross(f, up));
+        let u = cross(s, f);
+        let view = [s[0], s[1], s[2], -dot(s, eye), u[0], u[1], u[2], -dot(u, eye), -f[0], -f[1], -f[2], dot(f, eye), 0.0, 0.0, 0.0, 1.0];
+        let (near, far) = (dist * 0.02, dist * 20.0);
+        let t = 1.0 / (0.5 * fov_y).tan();
+        let aspect = width / height;
+        let proj = [t / aspect, 0.0, 0.0, 0.0, 0.0, t, 0.0, 0.0, 0.0, 0.0, (far + near) / (near - far), 2.0 * far * near / (near - far), 0.0, 0.0, -1.0, 0.0];
+        let mut m = [0.0; 16];
+        for r in 0..4 {
+            for c in 0..4 {
+                m[4 * r + c] = (0..4).map(|k| proj[4 * r + k] * view[4 * k + c]).sum();
+            }
+        }
+        Camera { m, width, height, scale: height * t / (2.0 * dist), focus }
+    }
+
+    /// The matrix a GPU uses: from a position RELATIVE to the focus (a batch's offset plus a
+    /// mark's position) to clip space, column-major, 32-bit. The focus is folded in here in
+    /// 64-bit, so a far origin does not lose its precision on the GPU.
+    pub fn relative(&self) -> [f32; 16] {
+        let m = &self.m;
+        let mut out = [0.0f32; 16];
+        for r in 0..4 {
+            for c in 0..3 {
+                out[c * 4 + r] = m[4 * r + c] as f32;
+            }
+            let t = m[4 * r + 3] + m[4 * r] * self.focus[0] + m[4 * r + 1] * self.focus[1] + m[4 * r + 2] * self.focus[2];
+            out[12 + r] = t as f32;
+        }
+        out
+    }
+
     /// World to pixels (origin top left) and a depth; `None` behind the view.
     pub fn project(&self, p: [f64; 3]) -> Option<[f64; 3]> {
         let m = &self.m;
@@ -523,6 +570,27 @@ mod tests {
         let f = s.frame(&cam(), 7, &Ring, 1000).unwrap();
         assert_eq!(f.stale, 1);
         assert!(f.report(205).is_none() && f.batches.iter().all(|b| b.tile == 1));
+    }
+
+    #[test]
+    fn an_orbit_camera_sees_its_focus_at_the_centre_and_nearer_is_shallower() {
+        let c = Camera::orbit([12.0, 12.0, 12.0], 0.7, 0.4, 40.0, 0.8, 1280.0, 800.0);
+        let p = c.project([12.0, 12.0, 12.0]).unwrap();
+        assert!((p[0] - 640.0).abs() < 1e-9 && (p[1] - 400.0).abs() < 1e-9);
+        // a point toward the eye is nearer in depth; up on the world is up on the screen
+        let toward = c.project([12.0 + 5.0 * 0.4f64.cos() * 0.7f64.cos(), 12.0 + 5.0 * 0.4f64.cos() * 0.7f64.sin(), 12.0 + 5.0 * 0.4f64.sin()]).unwrap();
+        assert!(toward[2] < p[2]);
+        assert!(c.project([12.0, 12.0, 14.0]).unwrap()[1] < 400.0);
+        // the relative matrix applied to (world - focus) agrees with the absolute one
+        let r = c.relative();
+        let q = [3.0f32, -2.0, 1.5];
+        let clip: Vec<f32> = (0..4).map(|row| r[row] * q[0] + r[4 + row] * q[1] + r[8 + row] * q[2] + r[12 + row]).collect();
+        let a = c.project([15.0, 10.0, 13.5]).unwrap();
+        let px = (clip[0] / clip[3] + 1.0) * 0.5 * 1280.0;
+        assert!((px as f64 - a[0]).abs() < 1e-3, "{px} {}", a[0]);
+        // a sphere of radius 1 at the focus is about `scale` pixels in radius
+        let edge = c.project([12.0, 12.0, 13.0]).unwrap();
+        assert!(((400.0 - edge[1]) / c.scale - 1.0).abs() < 0.1);
     }
 
     #[test]

@@ -22,6 +22,13 @@
 //! COST, refused by name rather than attempted: the sector dimension is `C(N, n_q/3)³` and
 //! grows fast — 3,375 at `N = 6, B = 1`, 175,616 at `N = 8, B = 1`, 9.3 million at `N = 10`.
 //! The door refuses above [`MAX_DET`] so a zoom gesture can never hang the page.
+//!
+//! CORRECTION 2026-11-15 (measured in release on one desktop core, user time equal to wall
+//! time): "instant" and "about a second" below and in [`MAX_DET`]'s note were not measured and
+//! are wrong. N = 4 solves both sectors in 3 to 10 ms and steps in 0.3 ms; N = 6 takes 0.35 to
+//! 0.45 s for B = 1 and 0.7 to 0.9 s for B = 0, and one `step` 60 ms; N = 8 takes 30 to 45 s for
+//! B = 1 and 57 to 84 s for B = 0. So only N = 4 can be solved inside a page's 200 ms long-task
+//! budget and stepped at frame rate; the ladder's hadron rungs use N = 4 for that reason.
 
 use std::sync::Mutex;
 

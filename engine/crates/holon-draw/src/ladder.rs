@@ -12,8 +12,9 @@
 //! to the next are all decided by what a pixel resolves, so a phone and a large screen at the
 //! same `z` show the same thing at the same sharpness, and a larger window shows more of it.
 //! The view's height in metres is `10^z` times its height in device pixels. The range runs
-//! from about -38 (a Planck length across a thousand pixels is -38) to about 24 (the
-//! observable universe, 8.8e26 m, across a thousand pixels). Nothing on the ladder is ever positioned in
+//! from -20 (the inner end of what this repository computes: the hadron tier's lattice, about
+//! a femtometre across a view) to about 24 (the observable universe, 8.8e26 m, across a
+//! thousand pixels). Nothing on the ladder is ever positioned in
 //! absolute metres. Each [`Rung`] has its own UNIT (10^`unit` metres) and its own origin;
 //! a rung's marks are f32 in that unit about that origin, and the camera is placed in the
 //! same unit in f64 and folded into the matrix on the CPU ([`crate::Camera::relative`]), so
@@ -120,7 +121,10 @@ impl Band {
 
 /// The ends of the ladder: the Planck length, and the diameter of the observable universe
 /// (about 8.8e26 m), each with a little room.
-pub const Z_MIN: f64 = -38.0;
+/// The inner end is where this repository's computation ends (the lead, 2026-11-15: the hadron
+/// tier below the atom is computed; an invented vacuum below it is not drawn): the 1+1D QCD
+/// chain's lattice spacing at about a femtometre across a view, not the Planck length.
+pub const Z_MIN: f64 = -20.0;
 pub const Z_MAX: f64 = 24.5;
 
 /// The view's height in metres for `z` (log10 metres per device pixel) on a viewport
@@ -211,7 +215,7 @@ mod tests {
     fn a_rung_camera_shows_its_view_height_at_every_scale() {
         // one rung unit spans 10^(unit - z) pixels at the focus, at every scale and for every
         // window: the camera's scale is pixels per unit
-        for (z, unit) in [(-12.5f64, -10i32), (23.0, 24), (-36.0, -35)] {
+        for (z, unit) in [(-12.5f64, -10i32), (23.0, 24), (-19.5, -18)] {
             let r = Rung { name: "", z_lo: z - 1.0, z_hi: z + 1.0, unit, status: Status::Illustration };
             for (w, h) in [(1000.0, 800.0), (390.0 * 3.0, 844.0 * 3.0)] {
                 let c = rung_camera(&r, z, [0.0; 3], 0.4, 0.3, 0.8, w, h);

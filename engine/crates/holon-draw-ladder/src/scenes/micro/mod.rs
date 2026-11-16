@@ -1,26 +1,26 @@
 //! The rungs finer than the street: from the ground underfoot to the vacuum.
 //!
-//! Seven kinds of scene, eleven rungs (the vacuum is one picture laid over five rungs, each
-//! with its own unit, so that no mark's coordinate leaves the range a 32-bit float and a
-//! shader's guards are happy with):
+//! Eight rungs, each with its own unit:
 //!
 //! | view height, log10 m (z + 3) | scene | unit | status |
 //! |---|---|---|---|
-//! | -2 .. 2        | the ground       | 1 cm   | illustration |
-//! | -7.5 .. -2     | a drop of water  | 1 µm   | illustration |
-//! | -9 .. -7.5     | liquid water     | 1 Å    | illustration |
-//! | -10.3 .. -9    | hydrogen, live   | 1 Å    | simulated    |
-//! | -14.5 .. -10.3 | atom to nucleus  | 1 fm   | declared     |
-//! | -16 .. -14.5   | the proton       | 0.1 fm | illustration |
-//! | -35 .. -16     | the vacuum (x5)  | varies | illustration |
+//! | -2 .. 2        | the ground            | 1 cm    | illustration |
+//! | -7.5 .. -2     | a drop of water       | 1 µm    | illustration |
+//! | -9 .. -7.5     | liquid water          | 1 Å     | illustration |
+//! | -10.3 .. -9    | hydrogen, live        | 1 Å     | simulated    |
+//! | -14.5 .. -10.3 | atom to nucleus       | 1 fm    | declared     |
+//! | -15.1 .. -14.5 | a baryon on a chain   | 0.1 fm  | simulated    |
+//! | -15.8 .. -15.1 | the sea               | 0.1 fm  | simulated    |
+//! | -17 .. -15.8   | the end of the record | 0.01 fm | simulated    |
 //!
 //! Every rung is centred on ONE point going in: the top of a dew drop on the paving, then a
-//! hydrogen atom of a water molecule at the drop's surface, then that atom's nucleus, then a
-//! point inside the proton. The hydrogen rung is the exception it has to be: this
-//! repository's live simulation is of H2, not of water, and the rung says so.
+//! hydrogen atom of a water molecule at the drop's surface, then that atom's nucleus, then
+//! the middle of the chain this engine solves below the atom. The hydrogen rung is the
+//! exception it has to be: this repository's live simulation is of H2, not of water, and the
+//! rung says so. The ladder ENDS where the record does: nothing is drawn below the chain.
 //!
 //! Nothing here is random at run time: every position comes from a seed, every motion from
-//! the host's clock.
+//! the host's clock or from an engine stepping.
 use crate::Scene;
 use holon_draw::{Instance, Kind, Tile, PARAMS_NEUTRAL};
 
@@ -29,24 +29,18 @@ mod drop;
 mod ground;
 mod hadron;
 mod nucleus;
-mod vacuum;
 mod water;
 
 pub use atoms::Atoms;
 pub use drop::Drop;
 pub use ground::Ground;
-pub use hadron::Hadron;
+pub use hadron::{End, Hadron, Sea};
 pub use nucleus::Nucleus;
-pub use vacuum::Vacuum;
 pub use water::Water;
 
 /// Every inward scene.
 pub fn inward() -> Vec<Box<dyn Scene>> {
-    let mut s: Vec<Box<dyn Scene>> = vec![Box::new(Ground::new()), Box::new(Drop::new()), Box::new(Water::new()), Box::new(Atoms::new()), Box::new(Nucleus::new()), Box::new(Hadron::new())];
-    for v in Vacuum::rungs() {
-        s.push(Box::new(v));
-    }
-    s
+    vec![Box::new(Ground::new()), Box::new(Drop::new()), Box::new(Water::new()), Box::new(Atoms::new()), Box::new(Nucleus::new()), Box::new(Hadron::new()), Box::new(Sea::new()), Box::new(End::new())]
 }
 
 /// A scene is handed `z` as log10 of the metres one device pixel spans. The scenes here are
@@ -115,16 +109,6 @@ pub(crate) fn mix(mut z: u64) -> u64 {
     z = (z ^ (z >> 30)).wrapping_mul(0xbf58_476d_1ce4_e5b9);
     z = (z ^ (z >> 27)).wrapping_mul(0x94d0_49bb_1331_11eb);
     z ^ (z >> 31)
-}
-
-/// A hash of four integers, for a value that belongs to a place rather than to a stream.
-pub(crate) fn hash(a: i64, b: i64, c: i64, d: i64) -> u64 {
-    mix(mix(mix(mix(a as u64 ^ 0x51_7c_c1_b7_27_22_0a_95).wrapping_add(b as u64)).wrapping_add(c as u64)).wrapping_add(d as u64))
-}
-
-/// A hash as a number in [0, 1).
-pub(crate) fn unit(h: u64) -> f64 {
-    (h >> 11) as f64 / (1u64 << 53) as f64
 }
 
 // ---- marks ----

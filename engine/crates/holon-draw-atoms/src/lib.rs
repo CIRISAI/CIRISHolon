@@ -11,6 +11,9 @@
 use holon_chem::elements::{Species, CARBON, CHLORINE, FLUORINE, HELIUM, HYDROGEN, LITHIUM, NEON, NITROGEN, OXYGEN};
 use holon_draw::ui::{self, Button, Hud, Item, Panel, Placed, Text};
 use holon_draw::{Camera, Frame, Instance, Kind, Ring, Scene, Tile};
+/// The sub-atom band's exact solver (`holon-render`'s `hadron` module), for a host of this
+/// crate that draws it: `holon_hadron_solve`, `_occ`, `_energy`, `_baryon_mass` and the rest.
+pub use holon_render::hadron;
 use holon_render::clock::{Rung, AU_TO_FS};
 use holon_render::sim::{Boundary, Dims, Sim, DEFAULT_SCENE_ATOMS};
 use std::cell::RefCell;

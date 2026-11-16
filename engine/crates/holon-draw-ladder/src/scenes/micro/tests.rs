@@ -8,6 +8,13 @@ fn marks(s: &mut dyn Scene, zv: f64, clock: f64) -> Vec<Instance> {
     s.tiles(zv - VIEW_DECADES, clock, 1.0).into_iter().flat_map(|t| t.marks).collect()
 }
 
+/// The sub-atom solver's state is one per process: the tests that solve or step it, or time a
+/// frame of it, take turns.
+static SOLVER: std::sync::Mutex<()> = std::sync::Mutex::new(());
+fn solver() -> std::sync::MutexGuard<'static, ()> {
+    SOLVER.lock().unwrap_or_else(|p| p.into_inner())
+}
+
 /// A clock like a host's: seconds since 1970.
 const NOW: f64 = 1.7e9;
 
@@ -15,7 +22,7 @@ const NOW: f64 = 1.7e9;
 fn the_rungs_cover_the_vacuum_to_the_street_with_no_gap() {
     let mut spans: Vec<(f64, f64)> = inward().iter().map(|s| s.span()).collect();
     spans.sort_by(|a, b| a.0.total_cmp(&b.0));
-    // from a Planck length across a thousand pixels (the ladder's Z_MIN) to a street: 0.1 m a pixel
+    // from the end of what is computed (the ladder's Z_MIN) to a street: 0.1 m a pixel
     assert_eq!(spans[0].0, Z_MIN);
     assert_eq!(spans.last().unwrap().1, -1.0);
     for w in spans.windows(2) {
@@ -24,7 +31,7 @@ fn the_rungs_cover_the_vacuum_to_the_street_with_no_gap() {
     // on the ladder, under a host whose street is at 0.1 m a pixel: every z below it is drawn, the
     // weights and the host's summing to one
     let l = Ladder::new(inward(), Band { z_lo: -1.0, z_hi: 4.2, clamp: false });
-    for k in 0..=3640 {
+    for k in 0..=1840 {
         let z = Z_MIN + 0.3 + k as f64 * 0.01;
         let host = holon_draw::ladder::host_weight(&l.band, z);
         let sum: f64 = visible(&l.rungs, z).iter().map(|x| x.1).sum();
@@ -35,7 +42,7 @@ fn the_rungs_cover_the_vacuum_to_the_street_with_no_gap() {
 #[test]
 fn every_rung_says_what_it_is_and_where_its_numbers_come_from() {
     let scenes = inward();
-    assert_eq!(scenes.len(), 11);
+    assert_eq!(scenes.len(), 8);
     for s in &scenes {
         assert!(!s.name().is_empty());
         assert!(s.source().len() > 80, "{}: a source line that says something", s.name());
@@ -46,19 +53,24 @@ fn every_rung_says_what_it_is_and_where_its_numbers_come_from() {
         assert!((s.unit() as f64) >= lo - 2.0 && (s.unit() as f64) <= hi + 2.0, "{}", s.name());
     }
     let status = |name: &str| scenes.iter().find(|s| s.name() == name).unwrap().status();
-    // only the live simulation says simulated; only the declared input says declared
-    assert_eq!(status("hydrogen, atom by atom"), Status::Simulated);
+    // what an engine computes in the page says simulated; the declared input says declared;
+    // the rest are pictures and say so
+    for n in ["hydrogen, atom by atom", "below the nucleus: a baryon on a chain", "the gauge vacuum: the sea", "the end of the record"] {
+        assert_eq!(status(n), Status::Simulated, "{n}");
+    }
     assert_eq!(status("inside the atom: the nucleus"), Status::Declared);
-    for n in ["the ground underfoot", "a drop of water", "liquid water, molecule by molecule", "inside the proton", "the vacuum"] {
+    for n in ["the ground underfoot", "a drop of water", "liquid water, molecule by molecule"] {
         assert_eq!(status(n), Status::Illustration, "{n}");
     }
-    assert_eq!(scenes.iter().filter(|s| s.status() == Status::Simulated).count(), 1);
     // the honest words are in the lines
     let source = |name: &str| scenes.iter().find(|s| s.name() == name).unwrap().source();
     assert!(source("liquid water, molecule by molecule").contains("NOT read from the measured trajectories"));
     assert!(source("hydrogen, atom by atom").contains("STO-3G") && source("hydrogen, atom by atom").contains("computed ahead of time") && source("hydrogen, atom by atom").contains("No three-body table"));
-    assert!(source("inside the proton").contains("one space dimension only"));
-    assert!(source("the vacuum").contains("Nothing in this repository computes"));
+    let baryon = source("below the nucleus: a baryon on a chain");
+    assert!(baryon.contains("ONE space dimension") && baryon.contains("NOT the proton") && baryon.contains("no transverse gluons") && baryon.contains("by choice"));
+    let sea = source("the gauge vacuum: the sea");
+    assert!(sea.contains("not the vacuum") && sea.contains("Schwinger") && sea.contains("GF1_RESULTS.md") && sea.contains("different model"));
+    assert!(source("the end of the record").contains("The record stops here") && source("the end of the record").contains("nothing in this repository computes"));
 }
 
 #[test]
@@ -94,11 +106,10 @@ fn a_scene_is_the_same_for_the_same_clock_and_moves_with_it() {
         let z = 0.5 * (a.span().0 + a.span().1);
         assert_eq!(a.tiles(z, NOW, 1.0), b.tiles(z, NOW, 1.0), "{}", a.name());
     }
-    for name in ["liquid water, molecule by molecule", "inside the proton", "the vacuum"] {
-        let mut s = inward().into_iter().find(|s| s.name() == name).unwrap();
-        let z = 0.5 * (s.span().0 + s.span().1);
-        assert_ne!(s.tiles(z, NOW, 1.0), s.tiles(z, NOW + 0.5, 1.0), "{name} moves");
-    }
+    // water moves on the clock; the others that move do so by an engine stepping in advance()
+    let mut s = Water::new();
+    let z = 0.5 * (s.span().0 + s.span().1);
+    assert_ne!(s.tiles(z, NOW, 1.0), s.tiles(z, NOW + 0.5, 1.0));
 }
 
 #[test]
@@ -236,72 +247,104 @@ fn the_nucleus_is_a_proton_at_its_radius_in_a_cloud_of_the_right_size() {
     assert_eq!(ring(&mut n, -14.2), 0);
 }
 
+
 #[test]
-fn the_proton_is_three_quarks_inside_its_radius_and_the_tubes_meet() {
-    assert!((hadron::PROTON_RADIUS - 8.414).abs() < 1e-5, "0.84 fm in tenths of a fm");
-    let mut h = Hadron::new();
-    for clock in [0.0, 7.7, NOW, NOW + 100.3] {
-        let q = Hadron::quarks(clock);
-        for p in q {
-            let r = (p[0] * p[0] + p[1] * p[1] + p[2] * p[2]).sqrt();
-            assert!(r < hadron::PROTON_RADIUS - 0.8, "{r}");
-        }
-        // the junction is where the summed length is least: no nearby point does better
-        let j = Hadron::junction(&q);
-        let total = |x: [f32; 3]| q.iter().map(|p| ((p[0] - x[0]).powi(2) + (p[1] - x[1]).powi(2) + (p[2] - x[2]).powi(2)).sqrt()).sum::<f32>();
-        for d in [[0.2, 0.0, 0.0], [-0.2, 0.0, 0.0], [0.0, 0.2, 0.0], [0.0, -0.2, 0.0], [0.0, 0.0, 0.2], [0.0, 0.0, -0.2]] {
-            assert!(total(j) <= total([j[0] + d[0], j[1] + d[1], j[2] + d[2]]) + 1e-4);
-        }
-        let m = marks(&mut h, -15.2, clock);
-        assert_eq!(m.iter().filter(|m| m.kind == Kind::Rod).count(), 3);
-        assert_eq!(m.iter().filter(|m| m.kind == Kind::Sphere).count(), 5, "three quarks, the junction, the shell");
-        assert!(m.iter().any(|m| m.kind == Kind::Sphere && m.size[0] == hadron::PROTON_RADIUS && m.rgba[3] < 80));
+fn the_chain_below_the_nucleus_is_the_engines_exact_solve() {
+    use hadron::*;
+    let _turn = solver();
+    // the solve itself, timed: both sectors of the 4-site chain
+    let t = Instant::now();
+    let r = Record::solve();
+    let took = t.elapsed();
+    println!("the 4-site chain, both sectors: solved in {took:?}");
+    if !cfg!(debug_assertions) {
+        assert!(took.as_secs_f64() < 0.05, "{took:?}");
     }
+    assert_eq!(r.exit, (0, 0), "both converged");
+    assert_eq!(r.n_det, (216.0, 64.0));
+    assert!(r.residual.0 < 1e-9 && r.residual.1 < 1e-9);
+    // the numbers the captions quote
+    assert!((r.e_sea - E_SEA).abs() < 1e-9 && (r.e_baryon - E_BARYON).abs() < 1e-9 && (r.mass - BARYON_MASS).abs() < 1e-9, "{r:?}");
+    assert!((r.mass - (r.e_baryon - r.e_sea) / (2.0 * X.sqrt())).abs() < 1e-12);
+    // the sea is half filling on every site; the baryon adds three quarks, mirror-symmetric
+    assert!(r.sea.iter().all(|v| (v - 1.5).abs() < 1e-9), "{:?}", r.sea);
+    assert!((r.baryon.iter().sum::<f64>() - 9.0).abs() < 1e-9);
+    assert!((r.baryon[0] - r.baryon[3]).abs() < 1e-8 && (r.baryon[1] - r.baryon[2]).abs() < 1e-8, "{:?}", r.baryon);
+    assert!(r.baryon.iter().zip(&r.sea).all(|(b, s)| b > s), "an excess on every site");
+    // the same again: the solve is deterministic
+    assert_eq!(Record::solve(), r);
+
+    // sizes: the chain is the proton's charge diameter long BY CHOICE, in tenths of a fm
+    assert!((CHAIN_FM - 1.6828).abs() < 1e-4 && (SPACING_FM - 0.4207).abs() < 1e-4);
+    assert!((site_fm(3) - site_fm(0) - 3.0 * SPACING_FM).abs() < 1e-12 && (site_fm(0) + site_fm(3)).abs() < 1e-12);
+    let mut h = Hadron::new();
+    let m = marks(&mut h, -14.8, 0.0);
+    let boxes: Vec<&Instance> = m.iter().filter(|m| m.kind == Kind::Box && m.pos[2] == 0.0 && m.rgba[3] == 255).collect();
+    assert_eq!(boxes.len(), 4, "a column per site up to the sea's level");
+    for (k, b) in boxes.iter().enumerate() {
+        assert!((b.pos[0] as f64 - 10.0 * site_fm(k as u32)).abs() < 1e-5);
+        assert!((b.size[2] as f64 - 1.5 * 10.0 * QUARK_FM).abs() < 1e-5, "1.5 quarks high");
+    }
+    // the excess over the sea stands on it and is three quarks in all
+    let excess: f64 = m.iter().filter(|m| m.kind == Kind::Box && m.pos[2] > 1.0).map(|m| m.size[2] as f64 / (10.0 * QUARK_FM)).sum();
+    assert!((excess - 3.0).abs() < 1e-5, "{excess}");
+    // the ring is the proton's charge radius
+    let ring = m.iter().filter(|m| m.kind == Kind::Line && m.rgba[3] == 150).map(|m| (m.pos[0].powi(2) + m.pos[1].powi(2)).sqrt()).fold(0.0f32, f32::max);
+    assert!((ring - 8.414).abs() < 1e-4);
+
+    // the sea rung: four equal columns; the last rung: the same chain in hundredths of a fm
+    let mut s = Sea::new();
+    let m = marks(&mut s, -15.4, 0.0);
+    assert_eq!(m.iter().filter(|m| m.kind == Kind::Box && (m.size[2] as f64 - 1.5 * 10.0 * QUARK_FM).abs() < 1e-5).count(), 4);
+    let mut e = End::new();
+    let m = marks(&mut e, -16.5, 0.0);
+    let link = m.iter().find(|m| m.kind == Kind::Line).unwrap();
+    assert!(((link.aux[0] - link.pos[0]) as f64 - 100.0 * 3.0 * SPACING_FM).abs() < 1e-3);
+    // nothing but the link is within a view of 0.03 fm about the origin
+    assert!(m.iter().filter(|m| m.kind != Kind::Line).all(|m| m.pos[0].abs() - if m.kind == Kind::Box { 0.5 * m.size[0] } else { m.size[0] } > 3.0), "the sites are off to either side");
 }
 
 #[test]
-fn the_vacuum_is_one_picture_over_five_rungs_and_stops_at_the_planck_length() {
-    let rungs = Vacuum::rungs();
-    assert_eq!(rungs.len(), 5);
-    // the Planck length in the last rung's unit (1e-33 m)
-    assert!((rungs[4].planck() - 0.016_162_55).abs() < 1e-9);
-    // the weights of the meshes change without a jump as the zoom passes a half-decade
-    for k in 0..3000 {
-        let z = -30.0 + k as f64 * 0.004;
-        let (a, b) = (Vacuum::meshes(z), Vacuum::meshes(z + 0.004));
-        for (ka, wa) in &a {
-            let wb = b.iter().find(|x| x.0 == *ka).map_or(0.0, |x| x.1);
-            assert!((wa - wb).abs() < 0.02, "z = {z}: mesh {ka} from {wa} to {wb}");
-        }
+fn the_baryon_moves_under_the_exact_hamiltonian_only_while_it_is_seen() {
+    use hadron::*;
+    let _turn = solver();
+    let mut h = Hadron::new();
+    let start = h.occ.clone();
+    // off screen: no step
+    h.advance(0.016);
+    assert_eq!((h.occ.clone(), h.time), (start.clone(), 0.0));
+    // on screen: 600 frames of a sixtieth of a second are 6 units of model time
+    let t = Instant::now();
+    let mut moved = 0.0f64;
+    for _ in 0..600 {
+        h.tiles(-17.8, 0.0, 1.0);
+        h.advance(1.0 / 60.0);
+        moved = moved.max(h.occ.iter().zip(&start).map(|(a, b)| (a - b).abs()).fold(0.0, f64::max));
+        // quarks are neither made nor lost, and the two readouts hold still
+        assert!((h.occ.iter().sum::<f64>() - 9.0).abs() < 1e-8);
+        assert!((h.norm - 1.0).abs() < 1e-8, "norm {}", h.norm);
     }
-    // no mesh finer than the Planck length; at the very bottom only the bar is left
-    for k in 0..400 {
-        let z = -35.25 + k as f64 * 0.01;
-        assert!(Vacuum::meshes(z).iter().all(|(k, _)| 10f64.powf(*k as f64 / 2.0) >= vacuum::PLANCK_M));
+    println!("the baryon rung: {:?} a frame; model time {:.3}; largest change of a site's density {moved:.3}; norm {:.12}", t.elapsed() / 600, h.time, h.norm);
+    assert!((h.time - 6.0).abs() < 1e-9, "{}", h.time);
+    assert!(moved > 0.01, "the pull moves the density: {moved}");
+    // the energy under the pulled Hamiltonian is conserved: one more stretch changes it by nothing
+    let e = h.energy;
+    for _ in 0..40 {
+        h.tiles(-17.8, 0.0, 1.0);
+        h.advance(0.05);
     }
-    let mut last = Vacuum::rungs().pop().unwrap();
-    let bar = |m: &[Instance]| m.iter().filter(|m| m.kind == Kind::Line && m.rgba == [250, 250, 246, 255]).map(|m| (m.aux[0] - m.pos[0]) as f64).fold(0.0, f64::max);
-    assert!((bar(&marks(&mut last, -34.0, NOW)) - last.planck()).abs() < 1e-8, "the bar is one Planck length");
-    assert_eq!(bar(&marks(&mut last, -31.5, NOW)), 0.0, "and is not drawn where it would be a speck");
-    // where two rungs meet they draw the same picture, each in its own unit
-    let (mut a, mut b) = { let mut r = Vacuum::rungs(); let b = r.remove(2); let a = r.remove(1); (a, b) };
-    let (ma, mb) = (marks(&mut a, -23.0, NOW), marks(&mut b, -23.0, NOW));
-    assert_eq!(ma.len(), mb.len());
-    let scale = 10f32.powi(a.unit() - b.unit());
-    for (x, y) in ma.iter().zip(&mb) {
-        assert_eq!((x.kind, x.rgba), (y.kind, y.rgba));
-        for c in 0..3 {
-            assert!((x.pos[c] * scale - y.pos[c]).abs() <= 2e-4 * y.pos[c].abs().max(1e-3), "{x:?} {y:?}");
-        }
-    }
+    assert!((h.energy - e).abs() < 1e-7, "{} against {e}", h.energy);
+    // and it is not the ground state's: the pull changed the Hamiltonian under the state
+    assert!((h.energy - E_BARYON).abs() > 0.1);
 }
 
 #[test]
 fn building_every_rung_and_drawing_a_frame_of_each_is_fast() {
+    let _turn = solver();
     let t = Instant::now();
     let mut scenes = inward();
     let built = t.elapsed();
-    println!("all eleven inward rungs built in {built:?}");
+    println!("all eight inward rungs built in {built:?}");
     let mut worst = (0.0f64, "");
     for s in scenes.iter_mut() {
         let (lo, hi) = s.span();
@@ -332,8 +375,8 @@ fn what_a_rung_draws_at_a_zoom_does_not_depend_on_the_windows_size() {
     // marks (a scene is never told the window's size), and only the camera differs
     let band = Band { z_lo: -1.0, z_hi: 4.2, clamp: false };
     let (mut small, mut large) = (Ladder::new(inward(), band), Ladder::new(inward(), band));
-    for k in 0..=74 {
-        let z = -37.9 + k as f64 * 0.5;
+    for k in 0..=37 {
+        let z = -19.9 + k as f64 * 0.5;
         let a = small.passes(z, 0.8, 0.42, 390.0, 844.0, 3.0, NOW);
         let b = large.passes(z, 0.8, 0.42, 2560.0, 1440.0, 1.0, NOW);
         assert_eq!(a.len(), b.len(), "z = {z}");

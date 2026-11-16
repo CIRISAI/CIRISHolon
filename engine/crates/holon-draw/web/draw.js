@@ -36,34 +36,68 @@
 // gl.getParameter(gl.VIEWPORT), which allocates: a host that draws screen batches every
 // frame passes `opts.viewport`.
 //
-// TILE SETTINGS (`batch.params`, 32 numbers = 8 groups of 4; absent means neutral):
-//   0 DIM    rgb multiplier on every colour of the tile, applied last (after lighting)
-//   1 RAMP0  2 RAMP1   the two ends of the tile's colour ramp
-//   3 TINT   rgb multiplier for TINT marks
-//   4 NOISE  x0, y0, sx, sy: field position = (x0, y0) + (sx, sy) * (the mark's local xy)
-//   5 TEX    x: the procedural field's strength, 0 off
-//   6, 7     the host's (uploaded, not read)
+// TILE SETTINGS (`batch.params`, 32 numbers = 8 groups of 4; absent means neutral). Slots:
+//   [0..2]   DIM     rgb multiplier on every colour of the tile, applied last (after lighting)
+//   [4..6]   RAMP0   the colour at t = 0        [8..10]  RAMP1   the colour at t = 1
+//   [12..14] TINT    rgb multiplier for TINT marks
+//   [16..19] NOISE   x0, y0, sx, sy: field position = (x0, y0) + (sx, sy) * (the mark's local xy)
+//   [20]     TEX     the procedural field's strength, 0 off
+//   [24]     FLOOR   a world line's or arc's least HALF width, in pixels; 0 off
+//   [25]     A_GROUND  [26] A_CASING  [27] A_ROAD  [28] A_ROOF   alpha multiplier per surface
+//                    class (below). 0 MEANS NOT SET, i.e. 1: neutral settings are all zero
+//                    here, and a class cannot be hidden by these (drop its marks instead).
+//   [29..31] RING    centre x, centre y, radius, in device pixels from the viewport's top-left,
+//                    y down: alpha *= 1 - smoothstep(0.85 r, r, distance), on every WORLD mark
+//                    of the tile; radius 0 off. Screen batches do not read it. The distance
+//                    is taken PER PIXEL (the twin takes it per vertex, which is the same on
+//                    its short segments and wrong on a long street or a large patch, whose
+//                    ends can all lie outside the ring while its middle crosses it).
+//   [3] [7] [11] [15] [21..23] are not read.
 // They are uploaded per batch only when their values differ from the last ones uploaded to
 // that program (compared number by number; nothing is allocated).
+//
 // COLOUR MODE, the top two bits of byte 51 (`variant`), for every kind but run:
 //   0x00 LITERAL  rgba as given
-//   0x40 RAMP     rgb = mix(RAMP0, RAMP1, t), t = clamp(aux[0], 0, 1); alpha from rgba
+//   0x40 RAMP     rgb = mix(RAMP0, RAMP1, clamp(t, 0, 1)); alpha from rgba
 //   0x80 TINT     rgb = rgba.rgb * TINT
-// then rgb *= DIM in every mode (runs too). NOTE: t is aux[0] for EVERY kind, as the core
-// defines it; on a line, arc or rod aux is the far end, and on a SCREEN quad aux[0] is the
-// corner radius, so RAMP on those reads a number that means something else.
-// THE GROUND FIELD (the twin's FSD/twin/texture.md, as its tiling.js TLF has it), on WORLD
-// quad and patch marks when TEX.x > 0: band-limited value noise on the grid of the field
-// position, octaves of 48, 12 and 3 units with amplitudes 0.10, 0.07 and 0.05, each times
-// (1 - density/2) where density is a RAMP mark's t (0 otherwise), each faded out between 4
-// and 2 pixels a cycle; rgb *= 1 + sum * TEX.x. Luminance only. The lattice repeats every
-// 4096 units. Pixels per field unit come from `opts.pixelsPerUnit` (pixels per WORLD unit,
-// exact for a map) or, without it, are estimated per vertex from `vp`, the clip w and the
-// viewport's height. Canopy and roof octaves are not here yet.
+// then rgb *= DIM in every mode (runs too). Where t is (the core's rule): aux[0] for world
+// quad, patch, disc, glyph, box, prism and sphere; `angle` for line, arc, rod and every
+// SCREEN mark.
+//
+// SURFACE CLASS of a WORLD mark, from its kind, its colour mode and bit 0 of `variant`.
+// It picks the alpha multiplier and the procedural field. A mark in no class has neither.
+//   GROUND  a patch (any mode); a quad in RAMP          A_GROUND   ground field
+//   ROOF    a quad, box or prism in TINT                 A_ROOF     roof field
+//   CASING  a literal quad (a cast shadow);              A_CASING   none
+//           a line or arc with bit 0 SET (a casing);     A_CASING   none
+//           a disc with bit 0 SET (a CANOPY)             A_CASING   canopy field
+//   ROAD    a line or arc with bit 0 clear               A_ROAD     none
+// (This is the twin's four kinds; its shadows and canopies ride in its casing kind.)
+// PROPOSED FLAG: bit 0 of `variant` (0x01) on a line or arc = casing, on a disc = canopy.
+// A glyph's variant is its shape and is left alone: a glyph is in no class.
+//
+// THE FIELD (the twin's FSD/twin/texture.md, as its tiling.js TLF has it), when TEX > 0:
+// band-limited value noise on the grid of the field position, each octave faded out between
+// 4 and 2 pixels a cycle; rgb *= 1 + sum * TEX. Luminance only. Octaves (cell, amplitude):
+//   ground  48 0.10, 12 0.07, 3 0.05, each times (1 - density/2), density = a RAMP mark's t
+//   canopy  6 0.16, 1.5 0.10
+//   roof    4 0.05, 1 0.04
+// The lattice repeats every 4096 units. THE HASH IS THE TWIN'S, BIT FOR BIT IN ITS
+// ARITHMETIC, ONLY WHERE THE FRAGMENT STAGE HAS HIGH PRECISION; without it a different hash
+// is used (see PRECISION), so the pattern differs there. Accepted by the lead, 2026-11-15.
+// Pixels per field unit, and the pixels of FLOOR, come from `opts.pixelsPerUnit` (pixels
+// per WORLD unit, exact for a map) or, without it, are estimated per vertex from `vp`, the
+// clip w and the viewport's height.
+//
+// A FLAT MAP (the twin's street tier): pass `opts.depthTest: false`. World batches are then
+// painted in the order given with no depth test, so a road lies over its casing and a roof
+// over a road by ORDER. With the depth test on, a line is a tube and a wider casing's top
+// is above its road's. Note the core emits a tile's kinds in a fixed order (quad, line,
+// arc, disc, ..., patch): what must be painted in another order goes in another tile.
 //
 // PRECISION (INTERFACE.md §7): NO UNIFORM NAME APPEARS IN BOTH SHADER STAGES, in either
 // program. World program: the vertex stage owns u_vp, u_offset, u_eye, u_mode, u_pix,
-// u_params; the fragment stage owns u_light, u_shade. Screen program: the vertex stage owns
+// u_wview, u_params; the fragment stage owns u_light, u_shade. Screen program: the vertex stage owns
 // u_view, u_soffset, u_smode, u_sparams; the fragment stage owns u_fmode, u_t0..u_t3. So
 // there is no pair whose precision could disagree at link. The tile settings are read in
 // the VERTEX stage only; what the fragment stage needs of them arrives as varyings.
@@ -86,7 +120,8 @@
 //   - BLEND enabled, blendFuncSeparate(SRC_ALPHA, ONE_MINUS_SRC_ALPHA, ONE, ONE_MINUS_SRC_ALPHA)
 //     (the blend equation is not touched: a host that uses another must restore FUNC_ADD first);
 //   - DEPTH_TEST enabled, depthFunc(LEQUAL), depthMask(true) (the test is off while screen
-//     batches are drawn and on again on return);
+//     batches are drawn, and for world batches under `opts.depthTest: false`; it is
+//     enabled again on return in every case);
 //   - CULL_FACE (left enabled), cullFace(BACK), frontFace(CCW);
 //   - ARRAY_BUFFER binding (left null);
 //   - the vertex array object binding, where one exists (WebGL 2 or OES_vertex_array_object):
@@ -102,8 +137,8 @@
 // Translucent records are blended in the order given and write depth; a host that needs
 // correct layering of translucent marks orders its batches back to front.
 //
-// A `vp` that mirrors the world (negative determinant) flips winding; closed meshes would
-// then be culled from the wrong side. Not handled.
+// A `vp` that mirrors the picture on screen flips winding; closed meshes would then be
+// culled from the wrong side. Not handled.
 
 export const INSTANCE_BYTES = 52;
 
@@ -142,6 +177,10 @@ const PF_HEAD_F = `#ifdef GL_FRAGMENT_PRECISION_HIGH
 #endif
 `;
 
+/** Where each setting is in a tile's 32 numbers (see TILE SETTINGS at the top). */
+export const PARAM = Object.freeze({ DIM: 0, RAMP0: 4, RAMP1: 8, TINT: 12, NOISE: 16, TEX: 20, FLOOR: 24, A_GROUND: 25, A_CASING: 26, A_ROAD: 27, A_ROOF: 28, RING: 29 });
+/** Bit 0 of `variant`: a line or arc is a casing, a disc is a canopy. */
+export const VARIANT_CASING = 0x01, VARIANT_CANOPY = 0x01;
 /** Tile settings that leave every colour as its record gives it (the core's PARAMS_NEUTRAL). */
 export const PARAMS_NEUTRAL = Object.freeze([1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
 export const COLOUR = Object.freeze({ LITERAL: 0x00, RAMP: 0x40, TINT: 0x80 });
@@ -160,15 +199,24 @@ uniform mat4 u_vp;
 uniform vec3 u_offset;
 uniform vec4 u_eye;        // homogeneous eye: xyz - p*w points from p to the viewer
 uniform vec2 u_mode;       // x: 0 sphere, 1 tube, 2 scaled-and-turned; y: radius scale
-uniform vec3 u_pix;        // half the viewport's height; pixels per world unit if given, else 0; 1 if this kind takes the field
+uniform vec3 u_pix;        // half the viewport's height; pixels per world unit if given, else 0; kind code
+                           // (0 other, 1 quad, 2 patch, 3 line or arc, 4 disc, 5 box or prism)
+uniform vec2 u_wview;      // the viewport's width and height in pixels
 uniform vec4 u_params[8];  // the tile's settings
 varying mediump vec3 v_n;
 varying mediump vec3 v_v;
 varying lowp vec4 v_c;
 varying mediump vec3 v_dim;
 varying PF vec2 v_np;      // the field's position
-varying PF vec2 v_fp;      // pixels per field unit; the field's amplitude (0 off)
+varying PF vec3 v_fp;      // pixels per field unit; the field's amplitude (0 off); which field (0 ground, 1 canopy, 2 roof)
+varying PF vec2 v_ring;    // (pixel - ring centre) / ring radius; 0 when the ring is off
+// Pixels per world unit at clip w.
+float ppuAt(float w) {
+  return u_pix.y > 0.0 ? u_pix.y
+    : u_pix.x * length(vec3(u_vp[0][1], u_vp[1][1], u_vp[2][1])) / max(w, 1e-6);
+}
 void main() {
+  float kc = u_pix.z;
   vec3 p;
   vec3 n;
   vec3 o = i_pos + u_offset;
@@ -183,6 +231,10 @@ void main() {
     vec3 bx = normalize(cross(up, dn));
     vec3 by = cross(dn, bx);
     float r = i_size.x * u_mode.y;
+    if (kc > 2.5 && kc < 3.5 && u_params[6].x > 0.0) {
+      // the street floor: at least FLOOR pixels of half width, measured on the centre line
+      r = max(r, u_params[6].x / ppuAt((u_vp * vec4(o + d * a_p.z, 1.0)).w));
+    }
     p = o + (bx * a_p.x + by * a_p.y) * r + d * a_p.z;
     n = bx * a_n.x + by * a_n.y + dn * a_n.z;
   } else {
@@ -195,28 +247,55 @@ void main() {
   }
   v_n = n;
   v_v = normalize(u_eye.xyz - p * u_eye.w);
-  float cm = floor(i_meta.w / 64.0 + 0.01);
+  float var = floor(i_meta.w + 0.5);
+  float cm = floor(var / 64.0);
+  float bit0 = mod(var, 2.0);
+  bool ramp = cm > 0.5 && cm < 1.5;
+  bool tint = cm > 1.5 && cm < 2.5;
+  bool tube = u_mode.x > 0.5 && u_mode.x < 1.5;
   vec3 rgb = i_color.rgb;
   float dens = 0.0;
-  if (cm > 0.5 && cm < 1.5) {
-    dens = clamp(i_aux.x, 0.0, 1.0);
+  if (ramp) {
+    dens = clamp(tube ? i_angle : i_aux.x, 0.0, 1.0);
     rgb = mix(u_params[1].rgb, u_params[2].rgb, dens);
-  } else if (cm > 1.5 && cm < 2.5) {
+  } else if (tint) {
     rgb *= u_params[3].rgb;
   }
-  v_c = vec4(rgb, i_color.a);
-  v_dim = u_params[0].rgb;
+  // The surface class: its alpha multiplier (0 = not set = 1) and its field (-1 none).
+  float am = 0.0;
+  float fk = -1.0;
+  float fa = 1.0;
+  if (kc > 1.5 && kc < 2.5 || kc > 0.5 && kc < 1.5 && ramp) {
+    am = u_params[6].y; fk = 0.0; fa = 1.0 - 0.5 * dens;                 // ground
+  } else if (tint && (kc > 0.5 && kc < 1.5 || kc > 4.5)) {
+    am = u_params[7].x; fk = 2.0;                                        // roof
+  } else if (kc > 0.5 && kc < 1.5) {
+    am = u_params[6].z;                                                  // a literal quad: a shadow
+  } else if (kc > 2.5 && kc < 3.5) {
+    am = bit0 > 0.5 ? u_params[6].z : u_params[6].w;                     // casing, road
+  } else if (kc > 3.5 && kc < 4.5 && bit0 > 0.5) {
+    am = u_params[6].z; fk = 1.0;                                        // canopy
+  }
+  if (am == 0.0) am = 1.0;
   gl_Position = u_vp * vec4(p, 1.0);
-  float amp = u_pix.z * u_params[5].x * (1.0 - 0.5 * dens);
+  // The ring: the pixel's place relative to the centre, in radii, for the fragment stage.
+  float ringR = u_params[7].w;
+  if (ringR > 0.0) {
+    vec2 px = vec2(0.5 + 0.5 * gl_Position.x / gl_Position.w, 0.5 - 0.5 * gl_Position.y / gl_Position.w) * u_wview;
+    v_ring = (px - u_params[7].yz) / ringR;
+  } else {
+    v_ring = vec2(0.0);
+  }
+  v_c = vec4(rgb, i_color.a * am);
+  v_dim = u_params[0].rgb;
+  float amp = fk < -0.5 ? 0.0 : u_params[5].x * fa;
   if (amp > 0.0) {
     vec2 pl = (p.xy - o.xy) + i_pos.xy;
     v_np = u_params[4].xy + u_params[4].zw * pl;
-    float ppu = u_pix.y > 0.0 ? u_pix.y
-      : u_pix.x * length(vec3(u_vp[0][1], u_vp[1][1], u_vp[2][1])) / max(gl_Position.w, 1e-6);
-    v_fp = vec2(ppu / max(abs(u_params[4].z), 1e-6), amp);
+    v_fp = vec3(ppuAt(gl_Position.w) / max(abs(u_params[4].z), 1e-6), amp, fk);
   } else {
     v_np = vec2(0.0);
-    v_fp = vec2(0.0);
+    v_fp = vec3(0.0);
   }
 }
 `;
@@ -230,7 +309,8 @@ varying mediump vec3 v_v;
 varying lowp vec4 v_c;
 varying mediump vec3 v_dim;
 varying PF vec2 v_np;
-varying PF vec2 v_fp;
+varying PF vec3 v_fp;
+varying PF vec2 v_ring;
 // Value noise on a lattice that repeats every 4096 units. The hash is taken on
 // mod(i, m) / m, which lies in [0, 1): at PF's better precision it is then the twin's own
 // hash; at mediump, one whose intermediate values stay under a few hundred, inside range.
@@ -268,11 +348,16 @@ void main() {
   float rim = pow(1.0 - max(dot(n, v), 0.0), 3.0) * u_shade.w;
   vec3 base = v_c.rgb;
   if (v_fp.y > 0.0) {
-    PF float s = oct(v_np, 48.0, 0.10) + oct(v_np, 12.0, 0.07) + oct(v_np, 3.0, 0.05);
+    PF float s;
+    if (v_fp.z < 0.5) s = oct(v_np, 48.0, 0.10) + oct(v_np, 12.0, 0.07) + oct(v_np, 3.0, 0.05);
+    else if (v_fp.z < 1.5) s = oct(v_np, 6.0, 0.16) + oct(v_np, 1.5, 0.10);
+    else s = oct(v_np, 4.0, 0.05) + oct(v_np, 1.0, 0.04);
     base *= 1.0 + s * v_fp.y;
   }
   vec3 shaded = base * (lit + rim) + vec3(sp);
-  gl_FragColor = vec4(mix(base, shaded, u_shade.x) * v_dim, v_c.a);
+  // min() keeps the length inside mediump's range far outside the ring
+  float ring = 1.0 - smoothstep(0.85, 1.0, length(min(abs(v_ring), vec2(8.0))));
+  gl_FragColor = vec4(mix(base, shaded, u_shade.x) * v_dim, v_c.a * ring);
 }
 `;
 
@@ -339,7 +424,7 @@ void main() {
   vec3 rgb = i_color.rgb;
   if (u_smode < 2.5) {
     float cm = floor(i_meta.w / 64.0 + 0.01);
-    if (cm > 0.5 && cm < 1.5) rgb = mix(u_sparams[1].rgb, u_sparams[2].rgb, clamp(i_aux.x, 0.0, 1.0));
+    if (cm > 0.5 && cm < 1.5) rgb = mix(u_sparams[1].rgb, u_sparams[2].rgb, clamp(i_angle, 0.0, 1.0));
     else if (cm > 1.5 && cm < 2.5) rgb *= u_sparams[3].rgb;
   }
   v_c = vec4(rgb * u_sparams[0].rgb, i_color.a);
@@ -471,6 +556,8 @@ function discMesh(sides) {
 
 // ---- slots: how a kind is drawn. Index = kind; 11 and 12 are the coarse sphere and rod. ----
 // mode: [vertex mode, radius scale or uniform-scale switch]; shade: [lit, specular, rim]; cull.
+// The vertex stage's kind code: 1 quad, 2 patch, 3 line or arc, 4 disc, 5 box or prism, 0 the rest.
+const KIND_CODE = [0, 1, 3, 3, 4, 5, 5, 0, 0, 2, 0, 0];
 const SLOT_COARSE_SPHERE = 11, SLOT_COARSE_ROD = 12, N_SLOT = 13;
 
 function compile(gl, type, src) {
@@ -561,6 +648,7 @@ export function createDrawer(gl, options) {
   const uLight = gl.getUniformLocation(program, 'u_light');
   const uShade = gl.getUniformLocation(program, 'u_shade');
   const uPix = gl.getUniformLocation(program, 'u_pix');
+  const uWView = gl.getUniformLocation(program, 'u_wview');
   const uParams = gl.getUniformLocation(program, 'u_params[0]');
 
   // The screen program.
@@ -621,7 +709,7 @@ export function createDrawer(gl, options) {
   // slot -> { mesh, kind (whose instance buffer), mode x, mode y, lit, spec, rim, cull, vao }
   const slots = new Array(N_SLOT).fill(null);
   const slot = (i, kind, m, mx, my, lit, spec, rim, cull) => {
-    slots[i] = { mesh: m, kind, mx, my, lit, spec, rim, cull, vao: null, field: i === KIND.QUAD || i === KIND.PATCH ? 1 : 0 };
+    slots[i] = { mesh: m, kind, mx, my, lit, spec, rim, cull, vao: null, kc: KIND_CODE[kind] };
   };
   slot(KIND.QUAD, KIND.QUAD, mQuad, 2, 0, 0, 0, 0, false);
   slot(KIND.PATCH, KIND.PATCH, mQuad, 2, 0, 0, 0, 0, false);
@@ -773,7 +861,7 @@ export function createDrawer(gl, options) {
   /**
    * @param {Array<{kind:number, offset?:ArrayLike<number>, count:number, bytes:Uint8Array, screen?:boolean, coarse?:boolean, params?:ArrayLike<number>}>} batches
    * @param {Float32Array} vp column-major, 16 (world batches only)
-   * @param {{light?:ArrayLike<number>, ambient?:number, flatLit?:boolean, viewport?:ArrayLike<number>, pixelsPerUnit?:number}} [opts]
+   * @param {{light?:ArrayLike<number>, ambient?:number, flatLit?:boolean, viewport?:ArrayLike<number>, pixelsPerUnit?:number, depthTest?:boolean}} [opts]
    */
   function draw(batches, vp, opts) {
     if (dead) throw new Error('holon-draw: draw() after destroy()');
@@ -835,7 +923,10 @@ export function createDrawer(gl, options) {
       ambient = ambient < 0 ? 0 : ambient > 1 ? 1 : ambient;
       const flatLit = !!(opts && opts.flatLit);
       const V = opts && opts.viewport;
-      const halfH = 0.5 * (V ? V[3] : gl.drawingBufferHeight);
+      const vw = V ? V[2] : gl.drawingBufferWidth, vh = V ? V[3] : gl.drawingBufferHeight;
+      const halfH = 0.5 * vh;
+      gl.uniform2f(uWView, vw, vh);
+      if (opts && opts.depthTest === false) gl.disable(gl.DEPTH_TEST);
       const ppu = opts && opts.pixelsPerUnit > 0 ? +opts.pixelsPerUnit : 0;
 
       let cur = null;
@@ -848,7 +939,7 @@ export function createDrawer(gl, options) {
           cur = s;
           if (hasVAO) bindVAO(s.vao); else meshAttribs(s.mesh);
           gl.uniform2f(uMode, s.mx, s.my);
-          gl.uniform3f(uPix, halfH, ppu, s.field);
+          gl.uniform3f(uPix, halfH, ppu, s.kc);
           gl.uniform4f(uShade, s.lit || flatLit ? 1 : 0, ambient, s.spec, s.rim);
           if (s.cull !== culling) {
             culling = s.cull;
@@ -908,8 +999,8 @@ export function createDrawer(gl, options) {
         if (o) gl.uniform3f(uSOffset, o[0], o[1], 0); else gl.uniform3f(uSOffset, 0, 0, 0);
         drawInstanced(mQuad.n, c);
       }
-      gl.enable(gl.DEPTH_TEST);
     }
+    gl.enable(gl.DEPTH_TEST);
 
     // Leave as documented at the top of this file.
     if (hasVAO) {

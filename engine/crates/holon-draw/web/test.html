@@ -14,9 +14,12 @@
 // ?dim=0.62 starts at night; ?tex=0 starts with the ground field off (both are also on the
 // settings panel: drag the slider, press the button); ?nohigh=1 is the twin's no-highp gate
 // (see below), ?nohigh=2 its macro rename alone;
-// ?page=N&pages=M shrinks the text atlas (to see eviction); ?mediump=1 writes mediump for the screen program's fragment precision; ?overlay=0 leaves
+// ?map=1 is a FLAT MAP of the same ground with streets, roofs and canopies on it, as the
+// twin's street tier draws one: top-down, no depth test, ?ppu=N pixels per world unit (CSS),
+// ?floor=H the streets' least half width in px (default 0.5), ?ring=1 the radial fade,
+// ?alphas=g,c,r,f the four class alphas; ?page=N&pages=M shrinks the text atlas (to see eviction); ?mediump=1 writes mediump for the screen program's fragment precision; ?overlay=0 leaves
 // the panels out. Every word on the page is drawn by the engine: there is no HTML text.
-import { createDrawer, KIND, INSTANCE_BYTES, PARAMS_NEUTRAL, COLOUR } from './draw.js';
+import { createDrawer, KIND, INSTANCE_BYTES, PARAMS_NEUTRAL, COLOUR, PARAM, VARIANT_CASING, VARIANT_CANOPY } from './draw.js';
 import { createTextProvider, STYLE } from './text.js';
 
 const q = new URLSearchParams(location.search);
@@ -161,9 +164,37 @@ function scene() {
   // A translucent sphere, last (blending is in the order given).
   glass.add([5.8, -0.6, 1.9], [0.9, 0, 0], null, 0, [120, 200, 255, 110]);
 
+  // The city tile, for ?map=1: canopies, then streets (every casing, then every road), then
+  // buildings (a shadow, then a roof in two tones). Painted in that order with no depth test.
+  const cDiscs = new Batch(KIND.DISC, OFF), cLines = new Batch(KIND.LINE, OFF), cQuads = new Batch(KIND.QUAD, OFF);
+  const pC = Float32Array.from(PARAMS_NEUTRAL);
+  pC.set([1.0, 0.86, 0.72, 1], PARAM.TINT); pC.set([0, 0, M, M], PARAM.NOISE);
+  for (const b of [cDiscs, cLines, cQuads]) b.params = pC;
+  let seed = 12345;
+  const rnd = () => ((seed = (seed * 1103515245 + 12345) >>> 0) / 4294967296);
+  const streets = [   // x0, y0, x1, y1, width (units; 20 m to a unit), rank
+    [-8, 0, 8, 0, 0.6, 2], [-4, -6, -4, 6, 0.35, 1], [3, -6, 3, 6, 0.35, 1],
+    [-8, 3, 8, 3, 0.2, 0], [-8, -3.5, 8, -3.5, 0.2, 0], [-0.5, -6, -0.5, 6, 0.2, 0], [6, -6, 6.6, 6, 0.2, 0], [-8, -6, -4, -3.5, 0.2, 0],
+  ];
+  const roadCol = [[122, 122, 128, 255], [168, 168, 163, 255], [219, 199, 143, 255]];
+  for (const [x0, y0, x1, y1, w] of streets) cLines.add([x0, y0, 0], [w + 0.16, 0, 0], [x1, y1, 0], 0, [18, 20, 24, 230], 0, VARIANT_CASING);
+  for (const rank of [0, 1, 2]) for (const [x0, y0, x1, y1, w, r] of streets) if (r === rank) cLines.add([x0, y0, 0], [w, 0, 0], [x1, y1, 0], 0, roadCol[r]);
+  const nearStreet = (x, y, m) => streets.some(([x0, y0, x1, y1, w]) => {
+    const dx = x1 - x0, dy = y1 - y0, t = Math.max(0, Math.min(1, ((x - x0) * dx + (y - y0) * dy) / (dx * dx + dy * dy)));
+    return Math.hypot(x - x0 - t * dx, y - y0 - t * dy) < w / 2 + m;
+  });
+  for (let gx = -7.5; gx < 8; gx += 0.75) for (let gy = -5.5; gy < 6; gy += 0.62) {
+    const x = gx + (rnd() - 0.5) * 0.12, y = gy + (rnd() - 0.5) * 0.1;
+    if (nearStreet(x, y, 0.36)) { if (!nearStreet(x, y, 0.2) && rnd() < 0.6) cDiscs.add([x, y, 0], [0.11 + 0.1 * rnd(), 0, 0], null, 0, [28, 51 + Math.round(15 * rnd()), 26, 217], 0, VARIANT_CANOPY); continue; }
+    if (rnd() < 0.18) { cDiscs.add([x, y, 0], [0.14 + 0.1 * rnd(), 0, 0], null, 0, [28, 51 + Math.round(15 * rnd()), 26, 217], 0, VARIANT_CANOPY); continue; }
+    const w = 0.4 + 0.18 * rnd(), d = 0.3 + 0.12 * rnd(), g = 150 + Math.round(60 * rnd());
+    cQuads.add([x + 0.07, y - 0.07, 0], [w, d, 0], null, 0, [5, 6, 8, 128]);                                   // a cast shadow: literal
+    cQuads.add([x, y + d / 4, 0], [w, d / 2, 0], null, 0, [g, g, g, 255], 0, COLOUR.TINT);                      // the lit half of the roof
+    cQuads.add([x, y - d / 4, 0], [w, d / 2, 0], null, 0, [g * 0.62, g * 0.62, g * 0.62, 255], 0, COLOUR.TINT); // the dark half
+  }
   const rest = [quads, discs, boxes, prisms, spheres, coarse, rods, lines, glass];
   for (const b of rest) b.params = pRest;
-  return { OFF, batches: [groundA, groundB, roofsB, ...rest], pA, pB, pRest };
+  return { OFF, batches: [groundA, groundB, roofsB, ...rest], city: [groundA, groundB, cDiscs, cLines, cQuads], pA, pB, pRest, pC };
 }
 
 // ---- camera (column-major) ----
@@ -192,7 +223,8 @@ function ortho(h, aspect, n, f) {
   return new Float32Array([1 / (h * aspect), 0, 0, 0, 0, 1 / h, 0, 0, 0, 0, 2 / (n - f), 0, 0, 0, (f + n) / (n - f), 1]);
 }
 
-const { OFF, batches, pA, pB, pRest } = scene();
+const { OFF, batches, city, pA, pB, pRest, pC } = scene();
+const isMap = q.get('map') === '1';
 const state = { dim: Math.min(1, Math.max(0.3, +(q.get('dim') || 1))), tex: q.get('tex') === '0' ? 0 : 1 };
 const hit = { slider: null, button: null };   // device-pixel rectangles [x0, y0, x1, y1] of the two controls
 
@@ -305,15 +337,21 @@ function overlay(lines) {
   hit.button = [s4.o[0] + bx4, s4.o[1] + y - 11 * d, s4.o[0] + bx4 + bw4, s4.o[1] + y + 11 * d];
   y += row + 4 * d;
   s4.text('ramp', STYLE.SMALL, pad, y, -1, DIM);
-  for (let i = 0; i < 5; i++) s4.discs.add([pad + (48 + 22 * i) * d, y, 0], [8 * d, 0, 0], [i / 4, 0, 0], 0, [255, 0, 255, 255], 0, COLOUR.RAMP);
+  for (let i = 0; i < 5; i++) s4.discs.add([pad + (48 + 22 * i) * d, y, 0], [8 * d, 0, 0], null, i / 4, [255, 0, 255, 255], 0, COLOUR.RAMP);   // a screen mark's t is its angle
   s4.text('tint', STYLE.SMALL, s4.w - pad - 60 * d, y, 1, DIM);
   for (let i = 0; i < 2; i++) s4.discs.add([s4.w - pad - (8 + 22 * (1 - i)) * d, y, 0], [8 * d, 0, 0], null, 0, [150 + 80 * i, 150 + 80 * i, 150 + 80 * i, 255], 0, COLOUR.TINT);
 }
 
 // The settings, written into the tiles' 32 numbers: no instance changes.
 function applyState() {
-  for (const p of [pA, pB, pRest, pPanel]) { p[0] = state.dim; p[1] = state.dim; p[2] = state.dim; }
-  pA[20] = state.tex; pB[20] = state.tex;
+  for (const p of [pA, pB, pRest, pPanel, pC]) { p[0] = state.dim; p[1] = state.dim; p[2] = state.dim; }
+  pA[PARAM.TEX] = state.tex; pB[PARAM.TEX] = state.tex; pC[PARAM.TEX] = state.tex;
+  if (isMap) {
+    pC[PARAM.FLOOR] = q.has('floor') ? +q.get('floor') * dpr : 0.5 * dpr;
+    const al = (q.get('alphas') || '0,0,0,0').split(',').map(Number);
+    pA[PARAM.A_GROUND] = pB[PARAM.A_GROUND] = al[0]; pC[PARAM.A_CASING] = al[1]; pC[PARAM.A_ROAD] = al[2]; pC[PARAM.A_ROOF] = al[3];
+    if (q.get('ring') === '1') for (const p of [pA, pB, pC]) p.set([canvas.width / 2, canvas.height / 2, 0.46 * Math.min(canvas.width, canvas.height)], PARAM.RING);
+  }
   pPanel.set(pA.subarray(4, 12), 4); pPanel.set(pB.subarray(12, 16), 12);
 }
 let pending = false;
@@ -341,7 +379,7 @@ let az = (+(q.get('az') || 35) * Math.PI) / 180;
 const el = (+(q.get('el') || 28) * Math.PI) / 180;
 const dist = 19;
 
-const all = batches.slice();
+const all = (isMap ? city : batches).slice();
 const showOverlay = q.get('overlay') !== '0';
 if (showOverlay) for (const p of panels) all.push(...p.batches);
 const viewport = [0, 0, canvas.width, canvas.height];
@@ -357,7 +395,10 @@ function frame(tms) {
   const aspect = canvas.width / canvas.height;
   const fov = (38 * Math.PI) / 180 * (aspect < 1 ? 1.9 : 1);
   const proj = q.get('ortho') === '1' ? ortho(6.2, aspect, 0.1, 100) : perspective(fov, aspect, 0.1, 100);
-  const vp = mul(proj, lookAt(eye, at, [0, 0, 1]));
+  // The flat map: top-down, x east, y north, mapPpu device pixels to a world unit.
+  const mapPpu = +(q.get('ppu') || 70) * dpr;
+  const sx = 2 * mapPpu / canvas.width, sy = 2 * mapPpu / canvas.height;
+  const vp = isMap ? new Float32Array([sx, 0, 0, 0, 0, sy, 0, 0, 0, 0, -0.01, 0, -sx * OFF[0], -sy * OFF[1], 0, 1]) : mul(proj, lookAt(eye, at, [0, 0, 1]));
 
   text.beginFrame();
   if (showOverlay) {
@@ -383,7 +424,7 @@ function frame(tms) {
   gl.clearColor(0.063, 0.078, 0.11, 1);
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   const t0 = performance.now();
-  drawer.draw(all, vp, { light: [0.35, -0.5, 0.8], ambient: 0.25, viewport });
+  drawer.draw(all, vp, isMap ? { viewport, depthTest: false, pixelsPerUnit: mapPpu } : { light: [0.35, -0.5, 0.8], ambient: 0.25, viewport });
   const ms = performance.now() - t0;
   const s = drawer.stats(), err = gl.getError();
   last.drawCalls = s.drawCalls; last.instances = s.instances; last.bytesUploaded = s.bytesUploaded;

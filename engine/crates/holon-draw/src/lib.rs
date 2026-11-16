@@ -187,8 +187,20 @@ pub const PARAM_RAMP0: usize = 4; // the colour at t = 0 of COLOUR_RAMP
 pub const PARAM_RAMP1: usize = 8; // the colour at t = 1 of COLOUR_RAMP
 pub const PARAM_TINT: usize = 12; // rgb multiplier for COLOUR_TINT (roofs)
 pub const PARAM_NOISE: usize = 16; // the procedural field's origin and scale: x0, y0, sx, sy
-pub const PARAM_TEX: usize = 20; // x: the field's strength (0 off); yzw: the host's
-pub const PARAM_FREE: usize = 24; // 24..32: the host's own
+pub const PARAM_TEX: usize = 20; // the field's strength (0 off)
+pub const PARAM_FLOOR_CASING: usize = 21; // least half width of a CASING line, in pixels (0 off)
+pub const PARAM_FLOOR: usize = 24; // least half width of any other world line or arc, in pixels (0 off)
+pub const PARAM_A_GROUND: usize = 25; // alpha multipliers by surface class, 1 neutral
+pub const PARAM_A_CASING: usize = 26;
+pub const PARAM_A_ROAD: usize = 27;
+pub const PARAM_A_ROOF: usize = 28;
+pub const PARAM_RING: usize = 29; // 29..31: a radial fade's centre x, y and radius in device pixels (radius 0 off)
+
+/// Bit 0 of a world mark's `variant`: a line or arc that is a CASING (under its road), or a
+/// disc that is a CANOPY (a tree's crown). The surface classes the backend derives from kind,
+/// colour mode and this bit are listed in `web/draw.js`'s header.
+pub const VARIANT_CASING: u8 = 0x01;
+pub const VARIANT_CANOPY: u8 = 0x01;
 
 /// The tile settings that leave colours exactly as their records give them.
 pub const PARAMS_NEUTRAL: [f32; 32] = {
@@ -200,6 +212,10 @@ pub const PARAMS_NEUTRAL: [f32; 32] = {
     p[12] = 1.0;
     p[13] = 1.0;
     p[14] = 1.0;
+    p[25] = 1.0;
+    p[26] = 1.0;
+    p[27] = 1.0;
+    p[28] = 1.0;
     p
 };
 

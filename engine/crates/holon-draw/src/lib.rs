@@ -17,10 +17,13 @@
 //!
 //! # What it refuses
 //!
-//! * **Two marks with one tag in a frame** ([`Refusal::DuplicateTag`]): a pick must name
-//!   exactly one instance (the screen standard's L1). The frame is refused whole.
-//! * **Dropping a pinned mark.** A pinned mark is drawn at every allocation (L12: a value a
-//!   write can be sent from is on screen when it is sent).
+//! * **Dropping a tagged mark.** An INSTANCE is every mark that carries one tag, in any
+//!   tile; a pick and a report name the instance (the screen standard's L1 is one tag per
+//!   instance, not per mark). A tagged mark is drawn at every allocation: detail may
+//!   coarsen it (its `coarse` flag is set in the packed record) and never removes it. Only
+//!   decoration (tag 0) is dropped when a tile is coarse.
+//! * **A pick through a modal layer.** While [`Scene::modal`] names a layer, a pick sees
+//!   that layer alone (an open sheet takes every pick).
 //! * **A non-finite field** ([`Refusal::NotFinite`]): a mark whose number is not a number
 //!   is not drawn as zero (L4).
 //!
@@ -29,7 +32,11 @@
 //! It holds no strings and shapes no text, has no clock and no randomness, and knows no
 //! state of a read: a host gives it a scene only when there is one to draw. Level of detail
 //! changes how finely a tile is drawn, never what a tagged mark means (L8): a tagged mark
-//! that a coarse tile does not draw is REPORTED as not drawn, so its host can say so.
+//! is drawn at every allocation, and its report carries a digest of exactly the bytes shown.
+//!
+//! CORRECTION 2026-11-15 (the constitution session's review of `INTERFACE.md`): the first
+//! form of this file refused two marks with one tag and let a coarse tile drop tagged marks.
+//! Both were wrong against the standard and are replaced as above.
 //!
 //! The pick in this slice treats each mark as its bounding sphere projected to the screen.
 //! That is exact for discs and spheres and an over-estimate for the rest; a per-kind test is
@@ -78,9 +85,10 @@ pub struct Instance {
     pub angle: f32,
     pub rgba: [u8; 4],
     pub tag: u32,
-    /// 0: drawn at every allocation. 1 and above: drawn only when its tile is fine.
+    /// 0: the same at every allocation. 1 and above: decoration is drawn only when its tile
+    /// is fine; a tagged mark is drawn coarse (flagged) when its tile is not.
     pub detail: u8,
-    /// Never elided or coarsened.
+    /// Never coarsened.
     pub pin: bool,
     /// A kind's own small choice: a prism's top, a glyph's shape, a patch's field.
     pub variant: u8,
@@ -128,12 +136,16 @@ impl Instance {
     /// 52 little-endian bytes: pos, size, aux (9 f32), angle (f32), rgba, tag (u32), then
     /// kind, detail, pin, variant.
     pub fn pack(&self, out: &mut Vec<u8>) {
+        self.pack_as(out, false)
+    }
+    /// As [`Instance::pack`]; `coarse` sets bit 1 of the flags byte (bit 0 is the pin).
+    pub fn pack_as(&self, out: &mut Vec<u8>, coarse: bool) {
         for v in self.pos.iter().chain(&self.size).chain(&self.aux).chain(std::iter::once(&self.angle)) {
             out.extend_from_slice(&v.to_le_bytes());
         }
         out.extend_from_slice(&self.rgba);
         out.extend_from_slice(&self.tag.to_le_bytes());
-        out.extend_from_slice(&[self.kind as u8, self.detail, self.pin as u8, self.variant]);
+        out.extend_from_slice(&[self.kind as u8, self.detail, self.pin as u8 | (coarse as u8) << 1, self.variant]);
     }
 }
 
@@ -146,6 +158,8 @@ pub struct Tile {
     /// The version of the inputs this tile was built from. A host that drops an answer bumps
     /// the version it asks for, and a tile of another version is not drawn (L11).
     pub version: u64,
+    /// Draw order and pick order: a higher layer is over a lower one.
+    pub layer: u8,
     pub marks: Vec<Instance>,
 }
 
@@ -183,8 +197,6 @@ impl Camera {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Refusal {
-    /// Two marks in one frame carry this tag.
-    DuplicateTag(u32),
     /// A mark of this tile holds a number that is not finite.
     NotFinite { tile: u64, index: usize },
 }
@@ -200,11 +212,12 @@ pub struct Batch {
     pub bytes: Vec<u8>,
 }
 
-/// What is said of one tagged mark.
+/// What is said of one mark of a tagged instance.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Mark {
     pub tag: u32,
-    pub drawn: bool,
+    pub layer: u8,
+    pub coarse: bool,
     pub on_screen: bool,
     /// Centre in pixels, and radius in pixels.
     pub x: f64,
@@ -212,6 +225,27 @@ pub struct Mark {
     pub r: f64,
     pub depth: f64,
     pub legible: bool,
+    /// A fold of this mark's packed bytes as drawn.
+    pub shown: u64,
+}
+
+/// What is said of one instance: every mark that carries its tag.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Shown {
+    pub tag: u32,
+    pub marks: u32,
+    /// Every mark of it is within the viewport.
+    pub on_screen: bool,
+    /// On screen, and its largest mark is at least [`LEGIBLE_PX`] across. This is the
+    /// GEOMETRIC part of "legible" alone: occlusion, contrast, truncation and the string
+    /// itself are not known to this crate and are owed by the layer that knows them.
+    pub legible: bool,
+    /// Any mark of it drawn coarse.
+    pub coarse: bool,
+    /// The screen box of its marks: left, top, right, bottom.
+    pub bounds: [f64; 4],
+    /// A fold of the bytes of all its marks as drawn on this frame, in draw order.
+    pub shown: u64,
 }
 
 /// A frame: what to draw, and what can be asked of it.
@@ -224,6 +258,7 @@ pub struct Frame {
     pub coarse: u32,
     /// Tiles not drawn because their version is not the one asked for.
     pub stale: u32,
+    pub modal: Option<u8>,
 }
 
 /// A mark under this many pixels across is drawn but not legible.
@@ -232,13 +267,14 @@ pub const LEGIBLE_PX: f64 = 4.0;
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct Scene {
     pub tiles: Vec<Tile>,
+    /// While set, a pick sees this layer alone.
+    pub modal: Option<u8>,
 }
 
 impl Scene {
     /// Build a frame. `version` is the version of the inputs the host holds now; `budget` is
     /// the number of marks the allocator may spend on detail.
     pub fn frame(&self, cam: &Camera, version: u64, alloc: &dyn Allocator, budget: u64) -> Result<Frame, Refusal> {
-        let mut seen = std::collections::HashSet::new();
         let mut cands = Vec::new();
         let mut live = Vec::new();
         let mut stale = 0u32;
@@ -251,19 +287,20 @@ impl Scene {
                 if !m.finite() {
                     return Err(Refusal::NotFinite { tile: t.id, index: i });
                 }
-                if m.tag != 0 && !seen.insert(m.tag) {
-                    return Err(Refusal::DuplicateTag(m.tag));
-                }
             }
             let d = [t.origin[0] - cam.focus[0], t.origin[1] - cam.focus[1], t.origin[2] - cam.focus[2]];
+            // drawing a tile fine adds its detailed decoration and the fine forms of its tagged marks
             let work = t.marks.iter().filter(|m| m.detail > 0 && !m.pin).count() as u64;
             let read = t.marks.iter().filter(|m| m.detail > 0 && !m.pin && m.tag != 0).count() as u64;
             cands.push(Candidate { distance: (d[0] * d[0] + d[1] * d[1] + d[2] * d[2]).sqrt(), work, read });
             live.push((t, d));
         }
         let fine = alloc.allocate(&cands, budget);
-        let mut frame = Frame { batches: Vec::new(), marks: Vec::new(), fine: 0, coarse: 0, stale };
-        for (k, (t, d)) in live.iter().enumerate() {
+        let mut frame = Frame { batches: Vec::new(), marks: Vec::new(), fine: 0, coarse: 0, stale, modal: self.modal };
+        let mut order: Vec<usize> = (0..live.len()).collect();
+        order.sort_by_key(|&k| (live[k].0.layer, k));
+        for k in order {
+            let (t, d) = &live[k];
             let is_fine = fine.get(k).copied().unwrap_or(false);
             if is_fine {
                 frame.fine += 1;
@@ -275,19 +312,22 @@ impl Scene {
                 let mut bytes = Vec::new();
                 let mut count = 0u32;
                 for m in t.marks.iter().filter(|m| m.kind == kind) {
-                    let drawn = is_fine || m.detail == 0 || m.pin;
-                    if drawn {
-                        m.pack(&mut bytes);
-                        count += 1;
+                    let whole = is_fine || m.detail == 0 || m.pin;
+                    if !whole && m.tag == 0 {
+                        continue;
                     }
+                    let at = bytes.len();
+                    m.pack_as(&mut bytes, !whole);
+                    count += 1;
                     if m.tag != 0 {
+                        let shown = fnv(0xcbf2_9ce4_8422_2325, &bytes[at..]);
                         let world = [t.origin[0] + m.pos[0] as f64, t.origin[1] + m.pos[1] as f64, t.origin[2] + m.pos[2] as f64];
                         let r = m.bound() as f64 * cam.scale;
                         let (x, y, depth, on) = match cam.project(world) {
                             Some(p) => (p[0], p[1], p[2], p[0] + r >= 0.0 && p[0] - r <= cam.width && p[1] + r >= 0.0 && p[1] - r <= cam.height),
                             None => (f64::NAN, f64::NAN, f64::INFINITY, false),
                         };
-                        frame.marks.push(Mark { tag: m.tag, drawn, on_screen: drawn && on, x, y, r, depth, legible: drawn && on && 2.0 * r >= LEGIBLE_PX });
+                        frame.marks.push(Mark { tag: m.tag, layer: t.layer, coarse: !whole, on_screen: on, x, y, r, depth, legible: on && 2.0 * r >= LEGIBLE_PX, shown });
                     }
                 }
                 if count > 0 {
@@ -300,11 +340,12 @@ impl Scene {
 }
 
 impl Frame {
-    /// The tagged mark under a point in pixels: the nearest in depth among those whose
-    /// circle holds the point, the nearest centre on a tie. Pure.
+    /// The instance under a point in pixels: among marks whose circle holds the point, the
+    /// highest layer, then the nearest in depth, then the nearest centre. While a modal layer
+    /// is set, that layer alone. Pure.
     pub fn pick(&self, x: f64, y: f64) -> Option<u32> {
         let mut best: Option<(&Mark, f64)> = None;
-        for m in self.marks.iter().filter(|m| m.on_screen) {
+        for m in self.marks.iter().filter(|m| m.on_screen && self.modal.map_or(true, |l| m.layer == l)) {
             let d2 = (m.x - x) * (m.x - x) + (m.y - y) * (m.y - y);
             let r = m.r.max(LEGIBLE_PX);
             if d2 > r * r {
@@ -312,7 +353,9 @@ impl Frame {
             }
             let better = match best {
                 None => true,
-                Some((b, bd2)) => m.depth < b.depth || (m.depth == b.depth && (d2 < bd2 || (d2 == bd2 && m.tag < b.tag))),
+                Some((b, bd2)) => {
+                    m.layer > b.layer || (m.layer == b.layer && (m.depth < b.depth || (m.depth == b.depth && (d2 < bd2 || (d2 == bd2 && m.tag < b.tag)))))
+                }
             };
             if better {
                 best = Some((m, d2));
@@ -320,24 +363,35 @@ impl Frame {
         }
         best.map(|(m, _)| m.tag)
     }
-    /// What is said of one tag, or `None` if no mark of this frame carries it.
-    pub fn report(&self, tag: u32) -> Option<Mark> {
-        self.marks.iter().find(|m| m.tag == tag).copied()
+    /// What is said of one instance, or `None` if no mark of this frame carries its tag.
+    pub fn report(&self, tag: u32) -> Option<Shown> {
+        let mut out: Option<Shown> = None;
+        let mut widest = 0.0f64;
+        for m in self.marks.iter().filter(|m| m.tag == tag) {
+            let b = [m.x - m.r, m.y - m.r, m.x + m.r, m.y + m.r];
+            widest = widest.max(2.0 * m.r);
+            out = Some(match out {
+                None => Shown { tag, marks: 1, on_screen: m.on_screen, legible: false, coarse: m.coarse, bounds: b, shown: fnv(0xcbf2_9ce4_8422_2325, &m.shown.to_le_bytes()) },
+                Some(s) => Shown {
+                    marks: s.marks + 1,
+                    on_screen: s.on_screen && m.on_screen,
+                    coarse: s.coarse || m.coarse,
+                    bounds: [s.bounds[0].min(b[0]), s.bounds[1].min(b[1]), s.bounds[2].max(b[2]), s.bounds[3].max(b[3])],
+                    shown: fnv(s.shown, &m.shown.to_le_bytes()),
+                    ..s
+                },
+            });
+        }
+        out.map(|s| Shown { legible: s.on_screen && widest >= LEGIBLE_PX, ..s })
     }
     /// A fold of every batch's tile, kind, count and bytes (FNV-1a, 64-bit), in order.
     pub fn digest(&self) -> u64 {
         let mut h = 0xcbf2_9ce4_8422_2325u64;
-        let mut eat = |b: &[u8]| {
-            for &x in b {
-                h ^= x as u64;
-                h = h.wrapping_mul(0x0000_0100_0000_01B3);
-            }
-        };
         for b in &self.batches {
-            eat(&b.tile.to_le_bytes());
-            eat(&[b.kind as u8]);
-            eat(&b.count.to_le_bytes());
-            eat(&b.bytes);
+            h = fnv(h, &b.tile.to_le_bytes());
+            h = fnv(h, &[b.kind as u8]);
+            h = fnv(h, &b.count.to_le_bytes());
+            h = fnv(h, &b.bytes);
         }
         h
     }
@@ -347,17 +401,32 @@ impl Frame {
     }
 }
 
+/// FNV-1a, 64-bit, continued from `h`.
+fn fnv(mut h: u64, b: &[u8]) -> u64 {
+    for &x in b {
+        h ^= x as u64;
+        h = h.wrapping_mul(0x0000_0100_0000_01B3);
+    }
+    h
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn scene(tiles: Vec<Tile>) -> Scene {
+        Scene { tiles, modal: None }
+    }
 
     fn tile(id: u64, ox: f64, n: u32, tag0: u32) -> Tile {
         let mut marks = vec![Instance::new(Kind::Patch, [0.0; 3], [100.0, 100.0, 0.0])];
         for i in 0..n {
             let p = [10.0 + 8.0 * (i % 10) as f32, 10.0 + 8.0 * (i / 10) as f32, 0.0];
             marks.push(Instance::new(Kind::Prism, p, [3.0, 3.0, 6.0]).tagged(tag0 + i).detail(1));
+            // a garden tree beside it: decoration, detailed
+            marks.push(Instance::new(Kind::Disc, [p[0] + 3.0, p[1], 0.0], [1.0, 0.0, 0.0]).detail(1));
         }
-        Tile { id, origin: [ox, 0.0, 0.0], version: 7, marks }
+        Tile { id, origin: [ox, 0.0, 0.0], version: 7, layer: 0, marks }
     }
     fn cam() -> Camera {
         Camera::map([50.0, 50.0, 0.0], 4.0, 800.0, 600.0)
@@ -371,62 +440,83 @@ mod tests {
         assert_eq!(&b[0..4], &1.0f32.to_le_bytes());
         assert_eq!(&b[44..48], &9u32.to_le_bytes());
         assert_eq!(b[48], Kind::Rod as u8);
-        let s = Scene { tiles: vec![tile(1, 0.0, 40, 100), tile(2, 100.0, 40, 200)] };
+        let s = scene(vec![tile(1, 0.0, 40, 100), tile(2, 100.0, 40, 200)]);
         let (a, c) = (s.frame(&cam(), 7, &Ring, 1000).unwrap(), s.frame(&cam(), 7, &Ring, 1000).unwrap());
         assert_eq!(a, c);
         assert_eq!(a.digest(), c.digest());
-        assert_eq!(a.drawn(), 82);
+        assert_eq!(a.drawn(), 162);
         assert!(a.batches.iter().all(|x| x.bytes.len() == x.count as usize * INSTANCE_BYTES));
-        assert_eq!(a.batches.len(), 4, "one batch per tile and kind");
+        assert_eq!(a.batches.len(), 6, "one batch per tile and kind");
     }
 
     #[test]
-    fn a_duplicate_tag_or_a_number_that_is_not_one_refuses_the_frame() {
-        let mut s = Scene { tiles: vec![tile(1, 0.0, 5, 100), tile(2, 100.0, 5, 104)] };
-        assert_eq!(s.frame(&cam(), 7, &Ring, 1000), Err(Refusal::DuplicateTag(104)));
-        s.tiles[1] = tile(2, 100.0, 5, 200);
+    fn a_number_that_is_not_one_refuses_the_frame() {
+        let mut s = scene(vec![tile(1, 0.0, 5, 100)]);
         s.tiles[0].marks[3].size[1] = f32::NAN;
         assert_eq!(s.frame(&cam(), 7, &Ring, 1000), Err(Refusal::NotFinite { tile: 1, index: 3 }));
     }
 
     #[test]
-    fn a_pick_names_exactly_one_mark_and_decoration_is_never_picked() {
-        let s = Scene { tiles: vec![tile(1, 0.0, 40, 100)] };
-        let c = cam();
-        let f = s.frame(&c, 7, &Ring, 1000).unwrap();
+    fn an_instance_is_every_mark_with_its_tag_and_a_pick_names_it() {
+        let mut s = scene(vec![tile(1, 0.0, 40, 100)]);
+        // instance 113 gains a second mark (a flag beside the building), in a second tile
+        s.tiles.push(Tile { id: 2, origin: [0.0; 3], version: 7, layer: 0, marks: vec![Instance::new(Kind::Glyph, [40.0, 18.0, 0.0], [1.0, 0.0, 0.0]).tagged(113)] });
+        let f = s.frame(&cam(), 7, &Ring, 1000).unwrap();
         // mark 100+13 sits at local (34, 18): on screen at ((34-50)*4+400, 300-(18-50)*4)
         assert_eq!(f.pick(336.0, 428.0), Some(113));
+        assert_eq!(f.pick(360.0, 428.0), Some(113), "its second mark names the same instance");
         assert_eq!(f.pick(336.0, 428.0), Some(113), "pure");
-        // the ground patch is under every point and carries no tag
+        // the ground patch and the trees carry no tag
         assert_eq!(f.pick(700.0, 80.0), None);
-        let m = f.report(113).unwrap();
-        assert!(m.drawn && m.on_screen && m.legible);
+        let r = f.report(113).unwrap();
+        assert!(r.marks == 2 && r.on_screen && r.legible && !r.coarse);
+        assert!(r.bounds[0] < 336.0 && r.bounds[2] > 360.0);
+        assert_eq!(f.report(114).unwrap().marks, 1);
         assert!(f.report(5).is_none());
     }
 
     #[test]
-    fn detail_changes_how_finely_never_what_and_a_pinned_mark_is_always_drawn() {
-        let mut s = Scene { tiles: vec![tile(1, 0.0, 40, 100), tile(2, 5000.0, 40, 200)] };
-        s.tiles[1].marks[4] = s.tiles[1].marks[4].pinned();
+    fn detail_coarsens_a_tagged_mark_and_never_removes_it() {
+        let mut s = scene(vec![tile(1, 0.0, 40, 100), tile(2, 5000.0, 40, 200)]);
+        s.tiles[1].marks[7] = s.tiles[1].marks[7].pinned();
         let c = cam();
         let fine = s.frame(&c, 7, &Ring, 1000).unwrap();
-        let tight = s.frame(&c, 7, &Ring, 40).unwrap();
+        let tight = s.frame(&c, 7, &Ring, 80).unwrap();
         assert_eq!((fine.fine, fine.coarse), (2, 0));
         assert_eq!((tight.fine, tight.coarse), (1, 1), "the budget covers the near tile alone");
-        assert_eq!(tight.drawn(), 41 + 1 + 1, "the far tile keeps its ground and its pinned mark");
-        // every tag is still reported; the ones not drawn say so, and none is picked
-        assert_eq!(tight.marks.len(), fine.marks.len());
-        assert!(tight.report(203).unwrap().drawn, "pinned");
-        let dropped = tight.report(210).unwrap();
-        assert!(!dropped.drawn && !dropped.on_screen && !dropped.legible);
-        // what IS drawn in both is byte-identical: the near tile's batches
+        // the far tile keeps its ground and all 40 tagged marks; its 40 trees are dropped
+        assert_eq!(tight.drawn(), 81 + 1 + 40);
+        assert_eq!(tight.marks.len(), fine.marks.len(), "every tagged mark is drawn in both");
+        let (pinned, plain) = (tight.report(203).unwrap(), tight.report(210).unwrap());
+        assert!(!pinned.coarse && plain.coarse);
+        // what is shown differs exactly where the form differs
+        assert_eq!(pinned.shown, fine.report(203).unwrap().shown);
+        assert_ne!(plain.shown, fine.report(210).unwrap().shown);
+        // with budget enough nothing is coarse: no tagged mark is unreachable (L9)
+        assert!(fine.marks.iter().all(|m| !m.coarse));
+        // what is drawn in both is byte-identical: the near tile's batches
         let near = |f: &Frame| f.batches.iter().filter(|b| b.tile == 1).cloned().collect::<Vec<_>>();
         assert_eq!(near(&fine), near(&tight));
     }
 
     #[test]
+    fn an_open_modal_layer_takes_every_pick() {
+        let mut s = scene(vec![tile(1, 0.0, 40, 100)]);
+        let sheet = Tile { id: 9, origin: [0.0; 3], version: 7, layer: 5, marks: vec![Instance::new(Kind::Quad, [70.0, 70.0, 0.0], [6.0, 4.0, 0.0]).tagged(900).pinned()] };
+        s.tiles.push(sheet);
+        let f = s.frame(&cam(), 7, &Ring, 1000).unwrap();
+        assert_eq!(f.pick(336.0, 428.0), Some(113), "no modal: the scene is picked");
+        assert_eq!(f.pick(480.0, 220.0), Some(900), "a higher layer is over a lower one");
+        s.modal = Some(5);
+        let f = s.frame(&cam(), 7, &Ring, 1000).unwrap();
+        assert_eq!(f.pick(336.0, 428.0), None, "under an open sheet nothing is picked");
+        assert_eq!(f.pick(480.0, 220.0), Some(900));
+        assert_eq!(f.batches.last().unwrap().tile, 9, "the highest layer is drawn last");
+    }
+
+    #[test]
     fn a_tile_of_another_version_is_not_drawn() {
-        let mut s = Scene { tiles: vec![tile(1, 0.0, 10, 100), tile(2, 100.0, 10, 200)] };
+        let mut s = scene(vec![tile(1, 0.0, 10, 100), tile(2, 100.0, 10, 200)]);
         s.tiles[1].version = 6;
         let f = s.frame(&cam(), 7, &Ring, 1000).unwrap();
         assert_eq!(f.stale, 1);
@@ -438,14 +528,15 @@ mod tests {
         // 20,000 km from the world's origin, two marks 1 unit apart: the offset the GPU adds
         // is taken from the focus in 64-bit, so they land 4 pixels apart at 4 pixels a unit
         let far = 2.0e7;
-        let t = Tile { id: 1, origin: [far, far, 0.0], version: 1, marks: vec![
+        let t = Tile { id: 1, origin: [far, far, 0.0], version: 1, layer: 0, marks: vec![
             Instance::new(Kind::Disc, [0.0, 0.0, 0.0], [0.4, 0.0, 0.0]).tagged(1),
             Instance::new(Kind::Disc, [1.0, 0.0, 0.0], [0.4, 0.0, 0.0]).tagged(2),
         ] };
         let c = Camera::map([far + 0.5, far, 0.0], 4.0, 800.0, 600.0);
-        let f = Scene { tiles: vec![t] }.frame(&c, 1, &Ring, 10).unwrap();
+        let f = scene(vec![t]).frame(&c, 1, &Ring, 10).unwrap();
         let (a, b) = (f.report(1).unwrap(), f.report(2).unwrap());
-        assert!((b.x - a.x - 4.0).abs() < 1e-6 && (a.x - 398.0).abs() < 1e-6, "{} {}", a.x, b.x);
+        let mid = |s: Shown| 0.5 * (s.bounds[0] + s.bounds[2]);
+        assert!((mid(b) - mid(a) - 4.0).abs() < 1e-6 && (mid(a) - 398.0).abs() < 1e-6, "{} {}", mid(a), mid(b));
         assert_eq!(f.batches[0].offset, [-0.5, 0.0, 0.0]);
     }
 }

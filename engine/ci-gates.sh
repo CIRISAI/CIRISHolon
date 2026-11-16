@@ -504,8 +504,8 @@ n_draw=$(cargo test -q -p holon-draw -- --list 2>/dev/null | grep -c ': test$')
   && ok "holon-draw reaches $n_draw tests" \
   || no "holon-draw reaches 0 tests (gate 9's disease: passing without covering anything)"
 cargo test -q -p holon-draw 2>/dev/null >/dev/null \
-  && ok "holon-draw: one tag one mark, a pinned mark always drawn, detail never changes what, a stale tile not drawn, a far origin keeps its precision" \
-  || no "holon-draw: one tag one mark, a pinned mark always drawn, detail never changes what, a stale tile not drawn, a far origin keeps its precision"
+  && ok "holon-draw: a pick names one instance, detail coarsens a tagged mark and never removes it, a modal layer takes every pick, a stale tile not drawn, a far origin keeps its precision" \
+  || no "holon-draw: a pick names one instance, detail coarsens a tagged mark and never removes it, a modal layer takes every pick, a stale tile not drawn, a far origin keeps its precision"
 
 # 12. A CROSS-REFERENCE IS A WARRANT ONLY IF ITS TARGET EXISTS (team-lead's ruling,
 #     2026-08-24). Q10_PREREG.md §10 cites "M1-M6 carry over from Q9's brief unchanged" —

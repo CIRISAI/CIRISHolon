@@ -314,3 +314,67 @@ delayed), planet-arc, layer-zoom (3 forms), texture-switch and every page test i
 the layout cross-check and the service worker's; its evidence crate's tests; the
 no-high-precision boot with the macro undefined; and texture-off frames by eye with a
 tolerance, since two loads already differ by leaf order.
+
+## 8. CORRECTION 2026-11-15 — from the constitution session's review against the registry, its checker and its screen model. Verdict as given: "it does not yet hold". (Text above kept legible; where it and this section disagree, this section holds. The core was changed to match in the same commit.)
+
+**1. A tag belongs to an INSTANCE, not to a mark (L1).** §1 and §2 said a duplicate tag
+refuses the frame; §3 and §3a then drew a twin and its canvas mark, and compositions of
+several marks, under one tag. The rule now: an instance is every mark that carries one
+handle, in any tile; a pick returns the instance; a report is of the instance. Nothing is
+refused for sharing a handle. And every SLOT a law needs drawn is its own instance with its
+own derived tag (`__wire`, `__fact_n`, `__unit`, `__source`), not an untagged part of its
+parent: tagging the touch target alone, as §3a said, left the values L12 needs outside
+what S3 can report.
+
+**2. "A drawn scene is a view of a list" holds for GraphView only.** In profile B the rule
+is: every tagged instance is one the CARD declares, and anything else is decoration. §0 is
+read so.
+
+**3. Detail never removes a tagged instance.** §1's `detail` and §4.4's 2-pixel rule let a
+coarse tile drop tagged marks, which breaks L8, L2 and L3 (a present StateBlock with no
+form drawn), L4, L10, L12 and the screen model's "nothing admitted undrawn". Now: every
+tagged mark the consumer says is present is drawn at every allocation. Detail may draw it
+COARSE (a flag in its record) and drops decoration only. `pin` means never coarsened. The
+2-pixel fade applies to decoration and to the fine form of a mark, not to its presence.
+
+**4. Modality and previews (L6, L7).** A tile has a layer; a higher layer is over a lower
+one for drawing and for picking; while a modal layer is set, a pick sees that layer alone,
+so an open ConfirmSheet takes every pick. A PREVIEW is an instance like any other with a
+drawn form, in the modal layer; the card sends a write that has a preview only while S3
+reports that instance shown. Holding the preview is the card's state, not this engine's.
+
+**5. What "legible" must mean for L12, and what this engine can attest.** All of: tagged;
+in the viewport; unoccluded; above a size and a contrast floor; untruncated; the exact
+string that is sent; on the frame actually presented. The core attests three (tagged, in
+the viewport, a size floor) and returns a digest of the exact bytes of the instance as
+drawn on that frame (`Shown::shown`), for a card to compare with the standard's
+`shown_digest`. Occlusion, contrast, truncation and the string are OWED: they need the text
+provider's result and a depth test, and belong to the UI layer and the backend. Until they
+exist, S3's `legible` must not be used to license a send.
+
+**6. The 17 states, by exact name, each with its read's outcome.** `idle` (idle);
+`loading`, `loading_known` (pending); `error` (failed); and under an answered read (ok):
+`populated`, `empty`, `refused`, `gone`, `withheld`, `lapsed`, `ended`, `locked`,
+`hidden_by_rules`, `unreviewed`, `waiting`, `unknown`, `not_on_this_node`. The UI layer of
+profile B holds one form for each of the 17 and may draw a form only under its outcome.
+
+**7. `version` is a monotone ask id, not a hash of inputs (L11).** With a hash, inputs
+going A, B, A would bring back an answer that was dropped. The host counts asks; a tile
+carries the ask it answers; only the current ask is drawn.
+
+**8. Media cannot be reached round L10.** The generic `image` mark (D12) is drawable as
+CONTENT only through the Media composition, which requires alt text and an AI-disclosure
+value. Any other `image` is decoration or a QR grid. The UI layer enforces it; the core's
+`image`, when built, takes the two as required fields for a tagged instance.
+
+**9. to 11.** ScopePill, `scan`, the shell prefixes and the missed slots are corrected in
+§6. The cited `FSD/twin/texture.md` is not in this repository: it is the twin's file, in
+the CEWP repository (read at the twin's worktree, `ae9e535`).
+
+**CEWPOS's 12 against the standard's 24, as that review maps them** (its guide at
+`d6ba311`): one-to-one for CardShell, FieldRow, ItemRow, ReceiptSheet, ScopePill,
+ConfirmSheet, LineageChain; its Chip also holds Choice; its last merges ConscienceStep and
+PolicyLens; one covers Choice, Ceremony and StepFlow and another QrCode and CodeCompare;
+its StateBlock has 8 states, one of them non-standard; Action, Metric, Field, Transcript,
+Document and Media are missing. Re-basing it on draft 3 is the lead's call and the CEWPOS
+side's work; profile B here is written against the 24.

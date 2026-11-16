@@ -100,7 +100,7 @@
 //   roof    4 0.05, 1 0.04
 // The lattice repeats every 4096 units. THE HASH IS THE TWIN'S, BIT FOR BIT IN ITS
 // ARITHMETIC, ONLY WHERE THE FRAGMENT STAGE HAS HIGH PRECISION; without it a different hash
-// is used (see PRECISION), so the pattern differs there. Accepted by the lead, 2026-11-15.
+// is used (see PRECISION), so the pattern differs there.
 // Pixels per field unit, and the pixels of FLOOR, come from `opts.pixelsPerUnit` (pixels
 // per WORLD unit, exact for a map) or, without it, are estimated per vertex from `vp`, the
 // clip w and the viewport's height.

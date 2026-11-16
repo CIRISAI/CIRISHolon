@@ -3,10 +3,17 @@
 //! the zoom to street to globe - when off, zoom is universe to vacuum - holon-draw will
 //! handle").
 //!
-//! # The zoom is a logarithm
+//! # The zoom is a logarithm of metres per PIXEL
 //!
-//! `z` is log10 of the view's HEIGHT in metres, an f64: about -35 at the Planck length and
-//! about 26.9 across the observable universe. Nothing on the ladder is ever positioned in
+//! `z` is log10 of the metres one DEVICE PIXEL spans at the view's focus, an f64. The pixel is
+//! the engine's measure of acuity (the lead, 2026-11-15: "Pixels are our acuity measure,
+//! dynamic to the size of the window and resolution - that should let the engine scale
+//! seamlessly"): which rung is drawn, what detail a rung draws and where one rung hands over
+//! to the next are all decided by what a pixel resolves, so a phone and a large screen at the
+//! same `z` show the same thing at the same sharpness, and a larger window shows more of it.
+//! The view's height in metres is `10^z` times its height in device pixels. The range runs
+//! from about -38 (a Planck length across a thousand pixels is -38) to about 24 (the
+//! observable universe, 8.8e26 m, across a thousand pixels). Nothing on the ladder is ever positioned in
 //! absolute metres. Each [`Rung`] has its own UNIT (10^`unit` metres) and its own origin;
 //! a rung's marks are f32 in that unit about that origin, and the camera is placed in the
 //! same unit in f64 and folded into the matrix on the CPU ([`crate::Camera::relative`]), so
@@ -113,8 +120,14 @@ impl Band {
 
 /// The ends of the ladder: the Planck length, and the diameter of the observable universe
 /// (about 8.8e26 m), each with a little room.
-pub const Z_MIN: f64 = -35.0;
-pub const Z_MAX: f64 = 27.0;
+pub const Z_MIN: f64 = -38.0;
+pub const Z_MAX: f64 = 24.5;
+
+/// The view's height in metres for `z` (log10 metres per device pixel) on a viewport
+/// `height_px` device pixels high.
+pub fn view_height(z: f64, height_px: f64) -> f64 {
+    10f64.powf(z) * height_px
+}
 
 /// The host's weight at `z` (1 inside its band, fading across `FADE` beyond each edge). The
 /// ladder draws at `1 - host_weight` beyond the band and not at all inside it; with the
@@ -127,10 +140,10 @@ pub fn host_weight(b: &Band, z: f64) -> f64 {
 }
 
 /// The camera for one rung at `z`: an orbit about the rung's origin (plus `pan`, in the rung's
-/// unit) whose view height is 10^z metres at the focus.
+/// unit) at which one device pixel spans 10^z metres at the focus.
 #[allow(clippy::too_many_arguments)]
 pub fn rung_camera(r: &Rung, z: f64, pan: [f64; 3], yaw: f64, pitch: f64, fov_y: f64, width: f64, height: f64) -> crate::Camera {
-    let view = 10f64.powf(z - r.unit as f64); // view height in the rung's unit
+    let view = 10f64.powf(z - r.unit as f64) * height; // view height in the rung's unit
     let dist = 0.5 * view / (0.5 * fov_y).tan();
     crate::Camera::orbit(pan, yaw, pitch, dist, fov_y, width, height)
 }
@@ -164,32 +177,35 @@ mod tests {
 
     #[test]
     fn the_switch_clamps_the_zoom_and_the_host_fades_only_when_it_is_off() {
-        let b = Band { z_lo: 0.0, z_hi: 7.15, clamp: true };
-        assert_eq!(b.clamp_z(-20.0), 0.0);
-        assert_eq!(b.clamp_z(30.0), 7.15);
-        assert_eq!(host_weight(&b, 7.15), 1.0);
+        let b = Band { z_lo: -1.0, z_hi: 4.2, clamp: true };
+        assert_eq!(b.clamp_z(-20.0), -1.0);
+        assert_eq!(b.clamp_z(30.0), 4.2);
+        assert_eq!(host_weight(&b, 4.2), 1.0);
         let off = Band { clamp: false, ..b };
         assert_eq!(off.clamp_z(-40.0), Z_MIN);
-        assert_eq!(host_weight(&off, 3.0), 1.0);
-        assert_eq!(host_weight(&off, 7.15), 0.5);
-        assert_eq!(host_weight(&off, 7.4), 0.0);
+        assert_eq!(host_weight(&off, 1.0), 1.0);
+        assert_eq!(host_weight(&off, 4.2), 0.5);
+        assert_eq!(host_weight(&off, 4.45), 0.0);
         // a ladder rung that meets the host's edge carries the other half
-        let space = Rung { name: "earth and moon", z_lo: 7.15, z_hi: 9.0, unit: 7, status: Status::Catalogue };
+        let space = Rung { name: "earth and moon", z_lo: 4.2, z_hi: 6.0, unit: 7, status: Status::Catalogue };
         for k in 0..=50 {
-            let z = 6.9 + k as f64 * 0.01;
+            let z = 3.95 + k as f64 * 0.01;
             assert!((host_weight(&off, z) + weight(&space, z) - 1.0).abs() < 1e-12);
         }
     }
 
     #[test]
     fn a_rung_camera_shows_its_view_height_at_every_scale() {
-        // at z = -9.5 in a rung of unit 1e-10 m the view is 3.16 units high; at z = 26 in a
-        // rung of unit 1e24 m it is 100 units high: a unit sphere spans height / view pixels
-        for (z, unit) in [(-9.5f64, -10i32), (26.0, 24), (-33.0, -35)] {
+        // one rung unit spans 10^(unit - z) pixels at the focus, at every scale and for every
+        // window: the camera's scale is pixels per unit
+        for (z, unit) in [(-12.5f64, -10i32), (23.0, 24), (-36.0, -35)] {
             let r = Rung { name: "", z_lo: z - 1.0, z_hi: z + 1.0, unit, status: Status::Illustration };
+            for (w, h) in [(1000.0, 800.0), (390.0 * 3.0, 844.0 * 3.0)] {
+                let c = rung_camera(&r, z, [0.0; 3], 0.4, 0.3, 0.8, w, h);
+                let want = 10f64.powf(unit as f64 - z);
+                assert!((c.scale / want - 1.0).abs() < 1e-9, "{z}: {} against {want}", c.scale);
+            }
             let c = rung_camera(&r, z, [0.0; 3], 0.4, 0.3, 0.8, 1000.0, 800.0);
-            let view = 10f64.powf(z - unit as f64);
-            assert!(((c.scale * view) / 800.0 - 1.0).abs() < 1e-9, "{z}: {}", c.scale * view);
             let p = c.project([0.0, 0.0, 0.0]).unwrap();
             assert!((p[0] - 500.0).abs() < 1e-6 && (p[1] - 400.0).abs() < 1e-6);
         }

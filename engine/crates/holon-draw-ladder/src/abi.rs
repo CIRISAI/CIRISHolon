@@ -120,7 +120,8 @@ pub extern "C" fn hl_text_ptr() -> *const u8 {
     OUT.with(|o| o.borrow().as_ptr())
 }
 
-/// Build the passes for `z` (already clamped by the host). Returns how many there are.
+/// Build the passes for `z` (log10 metres per device pixel, already clamped by the host).
+/// Returns how many there are.
 #[no_mangle]
 #[allow(clippy::too_many_arguments)]
 pub extern "C" fn hl_view(z: f64, yaw: f64, pitch: f64, width: f64, height: f64, dpr: f64, clock: f64) -> u32 {

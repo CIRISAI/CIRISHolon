@@ -23,12 +23,14 @@ pub trait Scene {
     fn status(&self) -> Status;
     /// One line saying what the scene shows and where its numbers come from.
     fn source(&self) -> &'static str;
-    /// The finest and coarsest `z` the scene is meant for (the ladder may stretch the
-    /// outermost rungs to meet a host's band or the ends of the range).
+    /// The finest and coarsest `z` (log10 metres per device pixel) the scene is meant for (the
+    /// ladder may stretch the outermost rungs to meet a host's band or the ends of the range).
     fn span(&self) -> (f64, f64);
     /// Advance by `dt` seconds of wall time (a simulated scene steps; others may animate).
     fn advance(&mut self, _dt: f64) {}
-    /// The scene's tiles at zoom `z` (marks in the scene's unit about its origin). `clock` is
+    /// The scene's tiles at zoom `z` (log10 metres per device pixel; marks in the scene's unit
+    /// about its origin). A scene decides its detail by what a pixel resolves: a feature of
+    /// size `s` metres spans `s / 10^z` pixels, and one under about a pixel is not drawn. `clock` is
     /// the host's time in seconds; `alpha` is the cross-fade weight, already applied by the
     /// ladder through each tile's settings, given in case a scene wants to skip detail.
     fn tiles(&mut self, z: f64, clock: f64, alpha: f64) -> Vec<Tile>;
@@ -137,10 +139,11 @@ impl Ladder {
     }
 }
 
-/// A scale bar for a view `10^z` metres high on a viewport `height` pixels high: the
+/// A scale bar at `z` (log10 metres per device pixel) on a viewport `height` pixels high: the
 /// largest 1, 2 or 5 times a power of ten that is at most a fifth of the view, its length in
 /// pixels, and its name.
 pub fn scale_bar(z: f64, height: f64) -> (f64, String) {
+    let z = z + height.log10(); // the view's height in metres, as a logarithm
     const LY: f64 = 9.4607e15;
     let target = 10f64.powf(z) / 5.0;
     // a round number of light years beyond a tenth of one, else of metres
@@ -208,8 +211,8 @@ mod tests {
     }
 
     fn ladder(clamp: bool) -> Ladder {
-        let s: Vec<Box<dyn Scene>> = vec![Box::new(Dummy("far", 8.0, 14.0, 11)), Box::new(Dummy("vacuum", -35.0, -16.0, -25)), Box::new(Dummy("atoms", -11.0, -8.0, -10)), Box::new(Dummy("drop", -8.0, 0.0, -4))];
-        Ladder::new(s, Band { z_lo: 2.0, z_hi: 7.2, clamp })
+        let s: Vec<Box<dyn Scene>> = vec![Box::new(Dummy("far", 5.0, 11.0, 11)), Box::new(Dummy("vacuum", -38.0, -19.0, -25)), Box::new(Dummy("atoms", -14.0, -11.0, -10)), Box::new(Dummy("drop", -11.0, -3.0, -4))];
+        Ladder::new(s, Band { z_lo: -1.0, z_hi: 4.2, clamp })
     }
 
     #[test]
@@ -223,8 +226,8 @@ mod tests {
             assert!(w[0].z_hi <= w[1].z_lo + 1e-12);
         }
         // the drop rung ends where the host begins, the far rung starts where it ends
-        assert_eq!(l.rungs[2].z_hi, 2.0);
-        assert_eq!(l.rungs[3].z_lo, 7.2);
+        assert_eq!(l.rungs[2].z_hi, -1.0);
+        assert_eq!(l.rungs[3].z_lo, 4.2);
         // every z outside the host's band is covered by the ladder or the host, summing to 1
         for k in 0..620 {
             let z = Z_MIN + k as f64 * 0.1;
@@ -239,9 +242,9 @@ mod tests {
     #[test]
     fn with_the_switch_on_nothing_is_drawn_and_off_a_pass_per_visible_rung() {
         let mut on = ladder(true);
-        assert!(on.passes(-9.5, 0.5, 0.3, 800.0, 600.0, 1.0, 0.0).is_empty());
+        assert!(on.passes(-12.5, 0.5, 0.3, 800.0, 600.0, 1.0, 0.0).is_empty());
         let mut off = ladder(false);
-        let p = off.passes(-9.5, 0.5, 0.3, 800.0, 600.0, 1.0, 0.0);
+        let p = off.passes(-12.5, 0.5, 0.3, 800.0, 600.0, 1.0, 0.0);
         assert_eq!(p.len(), 1);
         assert_eq!(off.rungs[p[0].rung].name, "atoms");
         assert!((p[0].weight - 1.0).abs() < 1e-12);
@@ -256,13 +259,18 @@ mod tests {
 
     #[test]
     fn a_scale_bar_reads_in_words_at_every_scale() {
-        assert_eq!(scale_bar(0.0, 1000.0).1, "20 cm");
-        assert_eq!(scale_bar(-9.0, 1000.0).1, "200 pm");
-        assert_eq!(scale_bar(-15.0, 1000.0).1, "200 am");
-        assert_eq!(scale_bar(12.0, 1000.0).1, "200 Gm");
-        assert_eq!(scale_bar(21.0, 1000.0).1, "20000 light years");
-        assert_eq!(scale_bar(26.9, 1000.0).1, "10 billion light years");
-        let (px, _) = scale_bar(3.3, 900.0);
+        // z is metres per pixel: on a 1000-pixel viewport the view is 10^(z+3) metres high
+        assert_eq!(scale_bar(-3.0, 1000.0).1, "20 cm");
+        assert_eq!(scale_bar(-12.0, 1000.0).1, "200 pm");
+        assert_eq!(scale_bar(-18.0, 1000.0).1, "200 am");
+        assert_eq!(scale_bar(9.0, 1000.0).1, "200 Gm");
+        assert_eq!(scale_bar(18.0, 1000.0).1, "20000 light years");
+        assert_eq!(scale_bar(23.9, 1000.0).1, "10 billion light years");
+        // the same z on a window twice as tall: the same metres per pixel, so the same bar is
+        // the same number of pixels long; the taller window just shows more of the scene
+        assert_eq!(scale_bar(-3.0, 2000.0).1, "20 cm");
+        assert!((scale_bar(-3.0, 2000.0).0 - scale_bar(-3.0, 1000.0).0).abs() < 1e-9);
+        let (px, _) = scale_bar(0.3, 900.0);
         assert!(px > 900.0 / 10.0 && px <= 900.0 / 5.0 + 1e-9);
     }
 }

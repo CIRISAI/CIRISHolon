@@ -39,12 +39,12 @@
       window.holonLadder = w;
       const drawer = createDrawer(gl, { text });
       // the host's band: the CEWP twin's street to globe (stand-in values until the twin sends its own)
-      const BAND = [Number(q.get("lo") || 2.0), Number(q.get("hi") || 7.15)];
+      const BAND = [Number(q.get("lo") || -1.0), Number(q.get("hi") || 4.2)]; // log10 metres per device pixel
       let clamp = q.get("switch") === "on";
       w.hl_band(BAND[0], BAND[1], clamp ? 1 : 0);
-      const view = { z: q.get("z") ? Number(q.get("z")) : -9.6, yaw: 0.8, pitch: 0.42 };
+      const view = { z: q.get("z") ? Number(q.get("z")) : -12.6, yaw: 0.8, pitch: 0.42 }; // log10 metres per device pixel
       const setLine = () => {
-        const s = (clamp ? "switch ON: street to globe" : "switch OFF: universe to vacuum") + "  ·  view 10^" + view.z.toFixed(1) + " m  ·  S to switch";
+        const s = (clamp ? "switch ON: street to globe" : "switch OFF: universe to vacuum") + "  ·  1 px = 10^" + view.z.toFixed(1) + " m  ·  S to switch";
         const b = enc.encode(s); const p = w.hl_scratch(b.length); new Uint8Array(w.memory.buffer, p, b.length).set(b); w.hl_caption_line(p, b.length);
       };
       addEventListener("keydown", (e) => { if (e.key === "s" || e.key === "S") { clamp = !clamp; w.hl_band(BAND[0], BAND[1], clamp ? 1 : 0); view.z = w.hl_clamp_z(view.z); } });

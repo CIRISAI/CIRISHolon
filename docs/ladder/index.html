@@ -12,7 +12,7 @@
     </style>
   </head>
   <body data-engine="loading">
-    <canvas id="c" aria-label="One zoom from the vacuum to the universe. Wheel or pinch to zoom, drag to turn, S switches between the host band and the whole range."></canvas>
+    <canvas id="c" aria-label="One zoom from the vacuum to the universe. Wheel or pinch to zoom, W and S to fly in and out, drag to turn, B switches between the host band and the whole range."></canvas>
     <div id="err"></div>
     <script type="module">
       import { createDrawer } from "./draw.js";
@@ -53,14 +53,37 @@
       const NAV = 0x50000000;
       const zoomBy = (d) => { target = w.hl_clamp_z(target + d); };
       const setLine = () => {
-        const s = (clamp ? "switch ON: street to globe" : "switch OFF: universe to vacuum") + "  ·  1 px = 10^" + view.z.toFixed(1) + " m  ·  drag to turn, right-drag to pan, wheel to zoom";
+        const s = (clamp ? "switch ON: street to globe" : "switch OFF: universe to vacuum") + "  ·  1 px = 10^" + view.z.toFixed(1) + " m  ·  fly: W/S in and out, A/D, R/F, Q/E, arrows; drag to turn, right-drag to pan";
         const b = enc.encode(s); const p = w.hl_scratch(b.length); new Uint8Array(w.memory.buffer, p, b.length).set(b); w.hl_caption_line(p, b.length);
+      };
+      // FLIGHT: keys held move continuously. W and S fly in and out (the zoom, two decades a
+      // second), A and D slide left and right, R and F up and down (a fifth of the view a second),
+      // Q and E turn, the arrow keys turn and tilt; shift goes three times as fast.
+      const held = new Set();
+      const FLY = new Set(["w", "a", "s", "d", "r", "f", "q", "e", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"]);
+      addEventListener("keyup", (e) => held.delete(e.key.length === 1 ? e.key.toLowerCase() : e.key));
+      addEventListener("blur", () => held.clear());
+      const fly = (dt) => {
+        if (!held.size) return;
+        const f = (held.has("Shift") ? 3 : 1) * dt, H = canvas.height, m = Math.pow(10, view.z);
+        if (held.has("w")) { target = w.hl_clamp_z(target - 2 * f); view.z = w.hl_clamp_z(view.z - 2 * f); }
+        if (held.has("s")) { target = w.hl_clamp_z(target + 2 * f); view.z = w.hl_clamp_z(view.z + 2 * f); }
+        if (held.has("a")) w.hl_pan_by(-0.2 * H * m * f, 0);
+        if (held.has("d")) w.hl_pan_by(0.2 * H * m * f, 0);
+        if (held.has("r")) w.hl_pan_by(0, 0.2 * H * m * f);
+        if (held.has("f")) w.hl_pan_by(0, -0.2 * H * m * f);
+        if (held.has("q") || held.has("ArrowLeft")) view.yaw += 1.2 * f;
+        if (held.has("e") || held.has("ArrowRight")) view.yaw -= 1.2 * f;
+        if (held.has("ArrowUp")) view.pitch = Math.min(1.45, view.pitch + 0.8 * f);
+        if (held.has("ArrowDown")) view.pitch = Math.max(-1.45, view.pitch - 0.8 * f);
       };
       addEventListener("keydown", (e) => {
         const k = e.key;
-        if (k === "s" || k === "S") { clamp = !clamp; setBand(); target = w.hl_clamp_z(target); view.z = w.hl_clamp_z(view.z); }
-        else if (k === "+" || k === "=" || k === "ArrowUp") { zoomBy(-1); e.preventDefault(); }
-        else if (k === "-" || k === "_" || k === "ArrowDown") { zoomBy(1); e.preventDefault(); }
+        const kk = k.length === 1 ? k.toLowerCase() : k;
+        if (FLY.has(kk) || k === "Shift") { held.add(kk); if (k.startsWith("Arrow")) e.preventDefault(); return; }
+        if (k === "b" || k === "B") { clamp = !clamp; setBand(); target = w.hl_clamp_z(target); view.z = w.hl_clamp_z(view.z); }
+        else if (k === "+" || k === "=") { zoomBy(-1); e.preventDefault(); }
+        else if (k === "-" || k === "_") { zoomBy(1); e.preventDefault(); }
         else if (k === "PageUp") { zoomBy(-5); e.preventDefault(); }
         else if (k === "PageDown") { zoomBy(5); e.preventDefault(); }
         else if (k === "Home") { act(NAV + 12); e.preventDefault(); }
@@ -122,6 +145,7 @@
       let last = performance.now(), first = true;
       function frame(now) {
         const dt = Math.min(0.1, (now - last) / 1000); last = now;
+        fly(dt);
         view.z += (target - view.z) * Math.min(1, dt * 10); // ease toward the target
         if (Math.abs(target - view.z) < 1e-4) view.z = target;
         const W = canvas.clientWidth * DPR | 0, H = canvas.clientHeight * DPR | 0;

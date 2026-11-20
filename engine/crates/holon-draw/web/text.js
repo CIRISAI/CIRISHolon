@@ -54,6 +54,14 @@
 // GL STATE. place() on a cache miss uploads; it saves and puts back the TEXTURE_2D binding
 // of the active unit, UNPACK_FLIP_Y_WEBGL and UNPACK_PREMULTIPLY_ALPHA_WEBGL, and changes
 // nothing else. A cache hit touches no GL state. texture(page) and stats() touch none.
+//
+// WEBGPU. `createTextProviderWebGPU(device, options)` is the same provider (the same
+// rasterisation, shelves, place(), epoch, eviction, styles and stats; the code is shared)
+// for `./draw-webgpu.js`: texture(page) is then a GPUTexture, r8unorm, coverage in red,
+// made with TEXTURE_BINDING | COPY_DST | RENDER_ATTACHMENT, and a cache miss uploads its
+// region with device.queue.copyExternalImageToTexture (premultipliedAlpha: true, so red is
+// the coverage, as the GL page's alpha is). pageSize is capped at
+// device.limits.maxTextureDimension2D. It touches no host state.
 
 const MONO = '"SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace';
 const SANS = '-apple-system, "Segoe UI", sans-serif';
@@ -79,9 +87,61 @@ const EMPTY = Object.freeze({ w: 0, h: 0, u0: 0, v0: 0, u1: 0, v1: 0, page: 0, a
  * @param {{dpr?: number, pageSize?: number, maxPages?: number, styles?: Array<{px:number, weight?:string, family?:string, upper?:boolean, spacing?:number}>}} [options]
  */
 export function createTextProvider(gl, options) {
+  return makeProvider({
+    maxTexture: () => gl.getParameter(gl.MAX_TEXTURE_SIZE) | 0,
+    create(pageSize) {
+      const tex = gl.createTexture();
+      const prev = gl.getParameter(gl.TEXTURE_BINDING_2D);
+      gl.bindTexture(gl.TEXTURE_2D, tex);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.ALPHA, pageSize, pageSize, 0, gl.ALPHA, gl.UNSIGNED_BYTE, null);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      gl.bindTexture(gl.TEXTURE_2D, prev);
+      return tex;
+    },
+    upload(tex, x, y, canvas) {
+      const prev = gl.getParameter(gl.TEXTURE_BINDING_2D);
+      const flip = gl.getParameter(gl.UNPACK_FLIP_Y_WEBGL);
+      const premul = gl.getParameter(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL);
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+      gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+      gl.bindTexture(gl.TEXTURE_2D, tex);
+      gl.texSubImage2D(gl.TEXTURE_2D, 0, x, y, gl.ALPHA, gl.UNSIGNED_BYTE, canvas);
+      gl.bindTexture(gl.TEXTURE_2D, prev);
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, flip);
+      gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, premul);
+    },
+    remove(tex) { gl.deleteTexture(tex); },
+  }, options);
+}
+
+/**
+ * The same provider for a WebGPU host (`./draw-webgpu.js`); texture(page) is a GPUTexture.
+ * @param {GPUDevice} device the host's device
+ * @param {{dpr?: number, pageSize?: number, maxPages?: number, styles?: Array<{px:number, weight?:string, family?:string, upper?:boolean, spacing?:number}>}} [options]
+ */
+export function createTextProviderWebGPU(device, options) {
+  const T = GPUTextureUsage;
+  return makeProvider({
+    maxTexture: () => device.limits.maxTextureDimension2D | 0,
+    create(pageSize) {
+      return device.createTexture({ label: 'holon-draw atlas page', size: [pageSize, pageSize], format: 'r8unorm', usage: T.TEXTURE_BINDING | T.COPY_DST | T.RENDER_ATTACHMENT });
+    },
+    upload(tex, x, y, canvas) {
+      device.queue.copyExternalImageToTexture({ source: canvas, flipY: false }, { texture: tex, origin: [x, y], premultipliedAlpha: true }, [canvas.width, canvas.height]);
+    },
+    remove(tex) { tex.destroy(); },
+  }, options);
+}
+
+// The provider, whatever holds its pages: `gpu` makes a page, uploads a region from the
+// scratch canvas, and deletes a page; everything else is here, once.
+function makeProvider(gpu, options) {
   options = options || {};
   let dpr = options.dpr > 0 ? +options.dpr : (typeof devicePixelRatio === 'number' ? devicePixelRatio : 1);
-  const maxTex = gl.getParameter(gl.MAX_TEXTURE_SIZE) | 0;
+  const maxTex = gpu.maxTexture();
   const pageSize = Math.max(64, Math.min(options.pageSize | 0 || 2048, maxTex));
   const maxPages = Math.max(1, Math.min(options.maxPages | 0 || 4, 4));
 
@@ -115,15 +175,7 @@ export function createTextProvider(gl, options) {
   let dead = false;
 
   function newPage() {
-    const tex = gl.createTexture();
-    const prev = gl.getParameter(gl.TEXTURE_BINDING_2D);
-    gl.bindTexture(gl.TEXTURE_2D, tex);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.ALPHA, pageSize, pageSize, 0, gl.ALPHA, gl.UNSIGNED_BYTE, null);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    gl.bindTexture(gl.TEXTURE_2D, prev);
+    const tex = gpu.create(pageSize);
     const p = { tex, shelves: [], nextY: 0, used: frame, entries: [] };
     pages.push(p);
     st.pages = pages.length;
@@ -202,16 +254,7 @@ export function createTextProvider(gl, options) {
     ctx.fillStyle = '#fff';
     ctx.fillText(shown, 2, 1 + s.baseline);
 
-    const prev = gl.getParameter(gl.TEXTURE_BINDING_2D);
-    const flip = gl.getParameter(gl.UNPACK_FLIP_Y_WEBGL);
-    const premul = gl.getParameter(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL);
-    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
-    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
-    gl.bindTexture(gl.TEXTURE_2D, p.tex);
-    gl.texSubImage2D(gl.TEXTURE_2D, 0, cell.x, cell.y, gl.ALPHA, gl.UNSIGNED_BYTE, canvas);
-    gl.bindTexture(gl.TEXTURE_2D, prev);
-    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, flip);
-    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, premul);
+    gpu.upload(p.tex, cell.x, cell.y, canvas);
 
     const x = cell.x + 1, y = cell.y + 1;
     const e = { w, h, u0: x / pageSize, v0: y / pageSize, u1: (x + w) / pageSize, v1: (y + h) / pageSize, page: pi, advance, epoch: st.epoch };
@@ -278,7 +321,7 @@ export function createTextProvider(gl, options) {
     destroy() {
       if (dead) return;
       dead = true;
-      for (const p of pages) gl.deleteTexture(p.tex);
+      for (const p of pages) gpu.remove(p.tex);
       pages.length = 0;
       for (const s of styles) s.cache.clear();
       st.pages = 0; st.entries = 0;

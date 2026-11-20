@@ -3,6 +3,8 @@
 // One ES module, no dependency. The Rust core (`../src/lib.rs`) packs a scene into batches
 // of fixed 52-byte records (`Instance::pack`); this file uploads each batch as it is and
 // draws it with one instanced call. Nothing is built per vertex or per record in script.
+// `./draw-webgpu.js` is the WebGPU sibling: this header is the contract of both; that file's
+// header says only how it is hosted and what differs.
 //
 // THE RECORD (little-endian, 52 bytes):
 //   f32 pos[3] @0   f32 size[3] @12   f32 aux[3] @24   f32 angle @36

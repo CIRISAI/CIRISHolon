@@ -13,6 +13,62 @@ graphics backend of its own yet.
   uniforms and draw order are untouched.
 - `abi.rs`: the wasm boundary, plain `extern "C"`.
 
+## The WebGPU backend: what was measured, 2026-11-20
+
+`web/draw-webgpu.js` is a second browser backend beside `web/draw.js` (WebGL 1 and 2), under
+the same contract: the contract is `draw.js`'s header, and the same batches draw on either
+(`createDrawerWebGPU(device, { format, text, sampleCount })`, then `draw(batches, vp, opts)`
+with draw.js's options plus `target` and `clear`). The records are uploaded as they are into
+instance vertex buffers; the vertex, fragment and shadow stages are WGSL ports of the GLSL,
+on copies of the same meshes. Without `opts.shadow` no shadow pipeline is made or bound.
+`web/text.js` gains `createTextProviderWebGPU(device, opts)`, the same provider (shared code)
+with r8unorm pages; `createTextProvider(gl, opts)` is unchanged for WebGL hosts.
+`web/test-webgpu.html` draws `web/test.html`'s scene, now shared from `web/test-scene.js`.
+
+`tools/webgpu_parity.py` draws both test pages in one headless Chrome (156) at 960 x 600, dpr 1,
+and compares the canvases. Both are 4x multisampled. Per channel, 0..255:
+
+| mode | panels | mean abs. difference | pixels over 8 | pixels over 32 | largest |
+|---|---|---|---|---|---|
+| scene, shadows on | off | 0.33 | 1.34 % | 0.57 % | 117 |
+| scene, shadows on | on | 0.44 | 1.35 % | 0.60 % | 200 |
+| `?map=1` | off | 0.29 | 1.75 % | 0.12 % | 66 |
+| `?map=1` | on | 0.35 | 1.36 % | 0.21 % | 200 |
+| `?shadow=0` | off | 0.34 | 1.41 % | 0.60 % | 117 |
+| `?shadow=0` | on | 0.46 | 1.42 % | 0.63 % | 200 |
+
+Draw calls and instances are equal in every mode. The numbers were the same in two runs.
+
+What this does and does not say:
+
+- The differing pixels are on the edges of marks only (the diff pictures the script writes
+  show outlines, no filled area): where 4x coverage is resolved, the two paths (ANGLE's GL
+  and Dawn's Vulkan, both on SwiftShader) differ. The insides agree, which includes the
+  lighting, the materials, the ground, canopy and roof fields (the twin's hash), the ring,
+  the class alphas and the shadow lookup. Drawn at one sample (`?msaa=0`) against the 4x
+  WebGL page, the scene's mean difference goes from 0.33 to 0.74, which is what says the
+  remainder is coverage and not shading.
+- With the panels on, the largest difference (200) is the panel's own words: its rows say
+  "WebGL 2.0" and "gl error 0" on one page, "WebGPU swiftshader" and "gpu errors 0" on the
+  other. The other strings, in every script, are the same pixels.
+- Everything here is SwiftShader: CPU rasterisation on both sides. It says the WGSL computes
+  what the GLSL does on one software rasteriser. No hardware GPU, and no browser but
+  Chrome, has drawn the WebGPU backend yet.
+- Frames per second with `?spin=1` for 4 s, same browser: scene with shadows 7.9 (WebGL)
+  and 6.4 (WebGPU); `?map=1` 10.4 and 9.8; `?shadow=0` 8.8 and 8.4. These are SwiftShader's
+  numbers and say nothing about any device's frame time. Why the WebGPU page is slower
+  there has not been looked into.
+- Not shown: a host's own `depthTarget`; a `viewport` that is not the whole target; a target
+  that is a view with `size`; a provider page emptied and refilled while a run batch is drawn
+  across frames on WebGPU (eviction was run once, `?page=256&pages=2`, and drew the same).
+
+To repeat it (headless WebGPU on Linux needed `--use-vulkan=swiftshader`; the script's
+docstring says which flags and why):
+
+```
+python3 crates/holon-draw/tools/webgpu_parity.py --fps 4
+```
+
 ## The twin's leaf builder: what was measured, 2026-11-15
 
 `tools/twin_leaf_check.mjs` runs the twin's own `tlBuildLeaf`, read from the twin's tree at

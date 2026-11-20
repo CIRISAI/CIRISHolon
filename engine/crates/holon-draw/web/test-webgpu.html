@@ -1,0 +1,148 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>holon-draw WebGPU backend test</title>
+<style>
+  html, body { margin: 0; background: #10141c; color: #cdd6e4; font: 13px system-ui, sans-serif; }
+  html, body { height: 100%; overflow: hidden; }
+  canvas { display: block; width: 100vw; height: 100vh; }
+  #nogpu { display: none; padding: 24px; max-width: 640px; line-height: 1.5; }
+  body[data-error] #nogpu { display: block; }
+</style>
+<canvas id="c"></canvas>
+<p id="nogpu"></p>
+<script type="module">
+// test.html's scene (./test-scene.js: the same records, camera and panels), drawn by
+// ./draw-webgpu.js. Query, as test.html: ?map=1 the flat map (and its ?ppu, ?floor, ?floorc,
+// ?ring, ?alphas, ?fade), ?shadow=0, ?ortho=1, ?az, ?el, ?spin=1, ?dim, ?tex=0, ?page, ?pages,
+// ?overlay=0. Also ?msaa=0 draws at one sample (default four, as a WebGL canvas made with
+// antialias: true). WebGL-only switches (?gl, ?novao, ?nohigh, ?mediump) do not apply.
+// The verdict panel says PASS only when the device reported no validation error, no
+// out-of-memory and no uncaptured error during any frame drawn so far; otherwise FAIL and
+// the first message (also in document.body.dataset.stats).
+import { createDrawerWebGPU } from './draw-webgpu.js';
+import { createTextProviderWebGPU } from './text.js';
+import { scene, createOverlay, viewProjection } from './test-scene.js';
+
+const q = new URLSearchParams(location.search);
+const canvas = document.getElementById('c');
+const dpr = window.devicePixelRatio || 1;
+canvas.width = Math.round(window.innerWidth * dpr);
+canvas.height = Math.round(window.innerHeight * dpr);
+
+function fail(msg) {
+  // The engine cannot draw without a device, so this one message is HTML.
+  canvas.style.display = 'none';
+  document.getElementById('nogpu').textContent = msg;
+  document.body.dataset.error = msg;
+  throw new Error(msg);
+}
+if (!navigator.gpu) fail('WebGPU is not available in this browser (navigator.gpu is missing; it also needs a secure context such as https or localhost). Nothing is drawn. test.html draws the same scene with WebGL.');
+const adapter = await navigator.gpu.requestAdapter();
+if (!adapter) fail('WebGPU is present but no adapter was given (navigator.gpu.requestAdapter() returned null). Nothing is drawn.');
+const device = await adapter.requestDevice();
+const errors = [];
+device.addEventListener('uncapturederror', (e) => errors.push('uncaptured: ' + e.error.message));
+device.lost.then((i) => errors.push('device lost: ' + i.message));
+const ctx = canvas.getContext('webgpu');
+const format = navigator.gpu.getPreferredCanvasFormat();
+ctx.configure({ device, format, alphaMode: 'opaque' });
+const ainfo = adapter.info || {};
+
+const { OFF, batches, city, pA, pB, pRest, pC } = scene();
+const isMap = q.get('map') === '1';
+const state = { dim: Math.min(1, Math.max(0.3, +(q.get('dim') || 1))), tex: q.get('tex') === '0' ? 0 : 1 };
+const hit = { slider: null, button: null };
+const ui = createOverlay({ q, canvas, dpr, isMap, state, hit, pA, pB, pRest, pC });
+const { panels, overlay, applyState } = ui;
+
+let pending = false;
+function invalidate() { if (!pending) { pending = true; requestAnimationFrame(frame); } }
+const inside = (r, x, y) => r && x >= r[0] && x <= r[2] && y >= r[1] && y <= r[3];
+let dragging = false;
+const slide = (x) => { const r = hit.slider; state.dim = Math.round((0.3 + 0.7 * Math.min(1, Math.max(0, (x - r[0]) / (r[2] - r[0])))) * 100) / 100; invalidate(); };
+canvas.addEventListener('pointerdown', (e) => {
+  const x = e.clientX * dpr, y = e.clientY * dpr;
+  if (inside(hit.slider, x, y)) { dragging = true; canvas.setPointerCapture(e.pointerId); slide(x); }
+  else if (inside(hit.button, x, y)) { state.tex = state.tex > 0 ? 0 : 1; invalidate(); }
+});
+canvas.addEventListener('pointermove', (e) => { if (dragging) slide(e.clientX * dpr); });
+canvas.addEventListener('pointerup', () => { dragging = false; });
+
+let drawer, text;
+try {
+  text = ui.text = createTextProviderWebGPU(device, { dpr, pageSize: +(q.get('page') || 0), maxPages: +(q.get('pages') || 0) });
+  drawer = await createDrawerWebGPU(device, { format, text, sampleCount: q.get('msaa') === '0' ? 1 : 4 });
+  window.__state = state; window.__invalidate = invalidate;
+} catch (e) {
+  fail('holon-draw WebGPU: ' + String(e && e.message || e));
+}
+let az = (+(q.get('az') || 35) * Math.PI) / 180;
+const el = (+(q.get('el') || 28) * Math.PI) / 180;
+const dist = 19;
+
+const noShadow = q.get('shadow') === '0';
+const SHADOW = { center: [OFF[0], OFF[1], 1], radius: 10 };
+const all = (isMap ? city : batches).slice();
+const showOverlay = q.get('overlay') !== '0';
+if (showOverlay) for (const p of panels) all.push(...p.batches);
+const viewport = [0, 0, canvas.width, canvas.height];
+const CLEAR = [0.063, 0.078, 0.11, 1];
+const last = { drawCalls: 0, instances: 0, bytesUploaded: 0 };
+let frames = 0, epochs = 0, shown = 0;   // shown: how many errors the verdict on screen knew of
+
+async function frame() {
+  pending = false;
+  applyState();
+  if (q.get('spin') === '1') az += 0.004;
+  const { vp, mapPpu } = viewProjection(q, isMap, OFF, canvas, dpr, az, el, dist);
+
+  text.beginFrame();
+  shown = errors.length;
+  if (showOverlay) {
+    const ts = text.stats();
+    const lines = [
+      ['context', 'WebGPU ' + (ainfo.architecture || ainfo.vendor || '')],
+      ['instancing', 'native'],
+      ['canvas', canvas.width + ' x ' + canvas.height + ' @' + dpr + 'x'],
+      ['draw calls', String(last.drawCalls)],
+      ['instances', String(last.instances)],
+      ['atlas', ts.pages + ' page, ' + ts.entries + ' runs'],
+    ];
+    const verdict = errors.length === 0
+      ? { word: 'PASS', colour: [80, 220, 120, 255], note: 'gpu errors 0' }
+      : { word: 'FAIL', colour: [235, 90, 80, 255], note: 'gpu errors ' + errors.length };
+    let e0 = text.epoch;
+    overlay(lines, verdict);
+    if (text.epoch !== e0) { epochs++; overlay(lines, verdict); }
+  }
+
+  // Error scopes on the first frames (and every frame when not spinning); a spinning page
+  // after that draws without waiting on the device, as test.html does.
+  const scoped = frames < 3 || q.get('spin') !== '1';
+  if (scoped) { device.pushErrorScope('validation'); device.pushErrorScope('out-of-memory'); }
+  const t0 = performance.now();
+  drawer.draw(all, vp, isMap
+    ? { target: ctx.getCurrentTexture(), clear: CLEAR, viewport, depthTest: false, pixelsPerUnit: mapPpu }
+    : { target: ctx.getCurrentTexture(), clear: CLEAR, light: [0.35, -0.5, 0.8], ambient: 0.25, viewport, shadow: noShadow ? undefined : SHADOW });
+  const ms = performance.now() - t0;
+  const s = drawer.stats();
+  last.drawCalls = s.drawCalls; last.instances = s.instances; last.bytesUploaded = s.bytesUploaded;
+  if (scoped) {
+    const oom = await device.popErrorScope(), val = await device.popErrorScope();
+    if (val) errors.push('validation: ' + val.message);
+    if (oom) errors.push('out of memory: ' + oom.message);
+  }
+  frames++;
+  const settled = shown === errors.length || frames >= 10;   // a page that errs every frame stops redrawing at 10
+  if (frames >= 2 && settled && !document.body.dataset.ready) {
+    // The counts the first frame measured are the ones the second shows; the verdict drawn knew every error.
+    await device.queue.onSubmittedWorkDone();
+    const gpuMs = performance.now() - t0;
+    document.body.dataset.stats = JSON.stringify({ ...s, backend: drawer.backend, sampleCount: drawer.sampleCount, format, adapter: { vendor: ainfo.vendor, architecture: ainfo.architecture, description: ainfo.description }, errors, dim: state.dim, tex: state.tex, text: { ...text.stats() }, relayouts: epochs, drawMs: +ms.toFixed(2), submitToDoneMs: +gpuMs.toFixed(2) });
+    document.body.dataset.verdict = errors.length ? 'FAIL' : 'PASS';
+    document.body.dataset.ready = '1';
+  }
+  if (q.get('spin') === '1' || frames < 2 || !settled) invalidate();
+}
+invalidate();
+</script>

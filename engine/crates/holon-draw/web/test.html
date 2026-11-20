@@ -9,6 +9,7 @@
 <canvas id="c"></canvas>
 <script type="module">
 // A synthetic scene built in plain script, in the core's 52-byte record, drawn by draw.js.
+// The scene, the camera and the panels are in ./test-scene.js, shared with test-webgpu.html.
 // Query: ?gl=1 asks for WebGL 1; ?ortho=1 an orthographic camera; ?az=deg&el=deg the orbit;
 // ?spin=1 keeps drawing; ?novao=1 hides vertex array objects (the bare WebGL 1 path);
 // ?dim=0.62 starts at night; ?tex=0 starts with the ground field off (both are also on the
@@ -20,8 +21,9 @@
 // ?floorc=H the casings' own least half width, ?alphas=g,c,r,f the four class alphas (1 neutral,
 // 0 hides), ?fade=A the tile's alpha multiplier; ?page=N&pages=M shrinks the text atlas (to see eviction); ?mediump=1 writes mediump for the screen program's fragment precision; ?overlay=0 leaves
 // the panels out. Every word on the page is drawn by the engine: there is no HTML text.
-import { createDrawer, KIND, INSTANCE_BYTES, PARAMS_NEUTRAL, COLOUR, PARAM, VARIANT_CASING, DISC_CASING, DISC_CANOPY_FIELD, VARIANT_ROUND, VARIANT_ORIENT, MATERIAL } from './draw.js';
-import { createTextProvider, STYLE } from './text.js';
+import { createDrawer } from './draw.js';
+import { createTextProvider } from './text.js';
+import { scene, createOverlay, viewProjection } from './test-scene.js';
 
 const q = new URLSearchParams(location.search);
 const canvas = document.getElementById('c');
@@ -67,317 +69,14 @@ if (q.get('novao') === '1') {
   gl.getExtension = (n) => (n === 'OES_vertex_array_object' ? null : real(n));
 }
 
-// ---- records ----
-class Batch {
-  constructor(kind, offset, coarse, screen) {
-    this.kind = kind; this.offset = offset || [0, 0, 0]; this.coarse = !!coarse; this.screen = !!screen;
-    this.count = 0; this.buf = new ArrayBuffer(64 * INSTANCE_BYTES); this.dv = new DataView(this.buf);
-    this.bytes = new Uint8Array(this.buf, 0, 0);
-  }
-  clear() { this.count = 0; this.bytes = new Uint8Array(this.buf, 0, 0); return this; }
-  add(pos, size, aux, angle, rgba, flags, variant) {
-    if ((this.count + 1) * INSTANCE_BYTES > this.buf.byteLength) {
-      const nb = new ArrayBuffer(this.buf.byteLength * 2);
-      new Uint8Array(nb).set(new Uint8Array(this.buf));
-      this.buf = nb; this.dv = new DataView(nb);
-    }
-    const o = this.count * INSTANCE_BYTES, dv = this.dv;
-    for (let i = 0; i < 3; i++) {
-      dv.setFloat32(o + 4 * i, pos[i], true);
-      dv.setFloat32(o + 12 + 4 * i, size[i] || 0, true);
-      dv.setFloat32(o + 24 + 4 * i, aux ? aux[i] : 0, true);
-    }
-    dv.setFloat32(o + 36, angle || 0, true);
-    for (let i = 0; i < 4; i++) dv.setUint8(o + 40 + i, rgba[i]);
-    dv.setUint32(o + 44, 0, true);
-    dv.setUint8(o + 48, this.kind); dv.setUint8(o + 49, 0); dv.setUint8(o + 50, flags || 0); dv.setUint8(o + 51, variant || 0);
-    this.count++;
-    this.bytes = new Uint8Array(this.buf, 0, this.count * INSTANCE_BYTES);
-    return this;
-  }
-}
-
-function scene() {
-  const OFF = [100, 200, 0];           // every batch's offset; the camera looks at it
-  // Two ground tiles side by side. A: RAMP patches (t in aux[0]). B: TINT patches, at its
-  // own origin 8 units east; its NOISE origin makes up the difference, so the field is one
-  // field across the seam. 20 field units (metres) to a world unit.
-  const OFFB = [OFF[0] + 8, OFF[1], OFF[2]];
-  const groundA = new Batch(KIND.PATCH, OFF), groundB = new Batch(KIND.PATCH, OFFB), roofsB = new Batch(KIND.BOX, OFFB);
-  const M = 20;
-  const pA = Float32Array.from(PARAMS_NEUTRAL), pB = Float32Array.from(PARAMS_NEUTRAL), pRest = Float32Array.from(PARAMS_NEUTRAL);
-  pA.set([0.16, 0.30, 0.15, 1], 4); pA.set([0.50, 0.47, 0.44, 1], 8); pA.set([0, 0, M, M], 16);
-  pB.set([1.0, 0.80, 0.58, 1], 12); pB.set([8 * M, 0, M, M], 16);
-  groundA.params = pA; groundB.params = pB; roofsB.params = pB;
-  for (let i = 0; i < 4; i++) for (let j = 0; j < 6; j++) {
-    const t = Math.min(1, Math.max(0, (j + 0.5) / 6 + 0.12 * ((i * 7 + j * 3) % 5 - 2) / 2));
-    groundA.add([-7 + 2 * i, -5 + 2 * j, -0.02], [2, 2, 0], [t, 0, 0], 0, [255, 0, 255, 255], 0, COLOUR.RAMP);
-    const g = 120 + ((i * 5 + j * 11) % 4) * 22;
-    groundB.add([-7 + 2 * i, -5 + 2 * j, -0.02], [2, 2, 0], null, 0, [g, g, g, 255], 0, COLOUR.TINT);
-  }
-  roofsB.add([-3.4, 4.6, 0], [1.2, 0.9, 0.5], null, 0.3, [235, 235, 235, 255], 0, COLOUR.TINT);
-  roofsB.add([-1.6, 4.2, 0], [0.9, 1.3, 0.7], null, -0.2, [200, 200, 200, 255], 0, COLOUR.TINT);
-  const quads = new Batch(KIND.QUAD, OFF);
-  const discs = new Batch(KIND.DISC, OFF);
-  const boxes = new Batch(KIND.BOX, OFF);
-  const prisms = new Batch(KIND.PRISM, OFF);
-  const spheres = new Batch(KIND.SPHERE, OFF);
-  const coarse = new Batch(KIND.SPHERE, OFF, true);
-  const rods = new Batch(KIND.ROD, OFF);
-  const lines = new Batch(KIND.LINE, OFF);
-  const glass = new Batch(KIND.SPHERE, OFF);
-  const arcs = new Batch(KIND.ARC, OFF);
-
-  // Quads: a row of tiles on the floor, each turned a little more.
-  for (let i = 0; i < 5; i++) quads.add([-6 + i * 1.3, -4.6, 0.01], [1.0, 0.6, 0], null, i * 0.3, [230, 180 - i * 25, 60 + i * 30, 255]);
-  // Discs.
-  for (let i = 0; i < 5; i++) discs.add([1 + i * 1.2, -4.6, 0.01], [0.25 + 0.07 * i, 0, 0], null, 0, [80 + i * 35, 200, 230 - i * 30, 255]);
-  // A box and a turned prism.
-  boxes.add([5.6, 2.2, 0], [1.6, 1.2, 2.2], null, 0.0, [205, 120, 80, 255]);
-  boxes.add([5.8, -0.6, 0], [1.0, 1.0, 1.0], null, 0.6, [120, 170, 110, 255]);
-  // VARIANT_ORIENT: a slab leaning 30 degrees toward +x, one record (aux is its local z axis)
-  boxes.add([4.2, -2.4, 0], [0.9, 0.3, 1.8], [Math.sin(0.52), 0, Math.cos(0.52)], 0.0, [110, 150, 210, 255], 0, VARIANT_ORIENT);
-  prisms.add([-6.0, 2.6, 0], [1.4, 2.2, 1.4], null, -0.5, [150, 130, 200, 255]);
-
-  // A lattice of atoms with bonds.
-  const N = [5, 4, 3], a = 1.5, o = [-3.0, -2.0, 0.8];
-  const P = (i, j, k) => [o[0] + i * a, o[1] + j * a, o[2] + k * a];
-  const cols = [[220, 70, 70, 255], [235, 235, 235, 255], [70, 120, 230, 255]];
-  for (let i = 0; i < N[0]; i++) for (let j = 0; j < N[1]; j++) for (let k = 0; k < N[2]; k++) {
-    const t = (i + j + k) % 3;
-    spheres.add(P(i, j, k), [t === 1 ? 0.28 : 0.42, 0, 0], null, 0, cols[t]);
-    if (i + 1 < N[0]) rods.add(P(i, j, k), [0.09, 0, 0], P(i + 1, j, k), 0, [170, 175, 185, 255]);
-    if (j + 1 < N[1]) rods.add(P(i, j, k), [0.09, 0, 0], P(i, j + 1, k), 0, [170, 175, 185, 255]);
-    if (k + 1 < N[2]) rods.add(P(i, j, k), [0.09, 0, 0], P(i, j, k + 1), 0, [170, 175, 185, 255]);
-  }
-  // A diagonal rod, to check a general axis, and a vertical one (the basis's other branch).
-  rods.add([-6.5, -1.5, 0.2], [0.18, 0, 0], [-4.6, -0.2, 2.6], 0, [240, 200, 60, 255]);
-  rods.add([-5.0, -2.6, 0.0], [0.15, 0, 0], [-5.0, -2.6, 1.8], 0, [60, 200, 160, 255]);
-  // Coarse (low-poly) spheres, to see the cheaper mesh.
-  coarse.add([-6.6, 0.6, 0.5], [0.5, 0, 0], null, 0, [240, 150, 40, 255], 2);
-  coarse.add([-5.4, 0.9, 0.5], [0.5, 0, 0], null, 0, [240, 150, 40, 255], 2);
-
-  // The cell's 12 edges as lines.
-  const lo = [o[0] - 0.75, o[1] - 0.75, o[2] - 0.75];
-  const hi = [o[0] + (N[0] - 1) * a + 0.75, o[1] + (N[1] - 1) * a + 0.75, o[2] + (N[2] - 1) * a + 0.75];
-  const C = (b) => [b & 1 ? hi[0] : lo[0], b & 2 ? hi[1] : lo[1], b & 4 ? hi[2] : lo[2]];
-  for (let b = 0; b < 8; b++) for (const bit of [1, 2, 4]) if (!(b & bit)) lines.add(C(b), [0.04, 0, 0], C(b | bit), 0, [250, 250, 160, 255]);
-  // One fat line across the floor.
-  lines.add([-7, 5, 0.2], [0.3, 0, 0], [7, 5.4, 0.2], 0, [255, 90, 160, 255], 0, VARIANT_ROUND);   // round ends, as a tube
-
-  // Arcs: one record each, bent by size[1] (up) and size[2] (across); the last is unbent (its chord).
-  arcs.add([-6.5, -3.4, 0.1], [0.08, 2.4, 0], [-1.5, -3.4, 0.1], 0, [255, 200, 90, 255], 0, VARIANT_ROUND);
-  arcs.add([-6.5, -3.4, 0.1], [0.06, 1.2, 1.4], [-1.5, -3.4, 0.1], 0, [120, 220, 255, 255], 0, VARIANT_ROUND);
-  arcs.add([-6.5, -3.9, 0.1], [0.05, 0, 0], [-1.5, -3.9, 0.1], 0, [200, 200, 200, 255]);
-  // Materials on lit marks (variant bits 4..5): matte, metal, glow beside the kind's own.
-  spheres.add([2.2, 3.4, 0.55], [0.5, 0, 0], null, 0, [200, 205, 215, 255], 0, MATERIAL.KIND);
-  spheres.add([3.4, 3.4, 0.55], [0.5, 0, 0], null, 0, [200, 205, 215, 255], 0, MATERIAL.MATTE);
-  spheres.add([4.6, 3.4, 0.55], [0.5, 0, 0], null, 0, [200, 205, 215, 255], 0, MATERIAL.METAL);
-  spheres.add([5.8, 3.4, 0.55], [0.5, 0, 0], null, 0, [255, 190, 90, 255], 0, MATERIAL.GLOW);
-
-  // A translucent sphere, last (blending is in the order given).
-  glass.add([5.8, -0.6, 1.9], [0.9, 0, 0], null, 0, [120, 200, 255, 110]);
-
-  // The city tile, for ?map=1: canopies, then streets (every casing, then every road), then
-  // buildings (a shadow, then a roof in two tones). Painted in that order with no depth test.
-  const cDiscs = new Batch(KIND.DISC, OFF), cLines = new Batch(KIND.LINE, OFF), cQuads = new Batch(KIND.QUAD, OFF);
-  const pC = Float32Array.from(PARAMS_NEUTRAL);
-  pC.set([1.0, 0.86, 0.72, 1], PARAM.TINT); pC.set([0, 0, M, M], PARAM.NOISE);
-  for (const b of [cDiscs, cLines, cQuads]) b.params = pC;
-  let seed = 12345;
-  const rnd = () => ((seed = (seed * 1103515245 + 12345) >>> 0) / 4294967296);
-  const streets = [   // x0, y0, x1, y1, width (units; 20 m to a unit), rank
-    [-8, 0, 8, 0, 0.6, 2], [-4, -6, -4, 6, 0.35, 1], [3, -6, 3, 6, 0.35, 1],
-    [-8, 3, 8, 3, 0.2, 0], [-8, -3.5, 8, -3.5, 0.2, 0], [-0.5, -6, -0.5, 6, 0.2, 0], [6, -6, 6.6, 6, 0.2, 0],
-  ];
-  // A bent street of 7 segments with ROUND ends (so round joins), and a short cul-de-sac.
-  for (let k = 0; k < 7; k++) {
-    const a0 = (k / 7) * 1.5, a1 = ((k + 1) / 7) * 1.5;
-    streets.push([-7.6 + 3.2 * Math.sin(a0), -5.9 + 2.2 * (1 - Math.cos(a0)), -7.6 + 3.2 * Math.sin(a1), -5.9 + 2.2 * (1 - Math.cos(a1)), 0.3, 0, VARIANT_ROUND]);
-  }
-  streets.push([-6.6, 1.2, -5.4, 2.2, 0.3, 0, VARIANT_ROUND]);
-  const roadCol = [[122, 122, 128, 255], [168, 168, 163, 255], [219, 199, 143, 255]];
-  for (const [x0, y0, x1, y1, w, r, v] of streets) cLines.add([x0, y0, 0], [w + 0.16, 0, 0], [x1, y1, 0], 0, [18, 20, 24, 230], 0, VARIANT_CASING | (v || 0));
-  for (const rank of [0, 1, 2]) for (const [x0, y0, x1, y1, w, r, v] of streets) if (r === rank) cLines.add([x0, y0, 0], [w, 0, 0], [x1, y1, 0], 0, roadCol[r], 0, v || 0);
-  const nearStreet = (x, y, m) => streets.some(([x0, y0, x1, y1, w]) => {
-    const dx = x1 - x0, dy = y1 - y0, t = Math.max(0, Math.min(1, ((x - x0) * dx + (y - y0) * dy) / (dx * dx + dy * dy)));
-    return Math.hypot(x - x0 - t * dx, y - y0 - t * dy) < w / 2 + m;
-  });
-  // Mottling patches (the twin's): casing class, NO field. Larger than a tree, so a field on one would show.
-  for (let k = 0; k < 14; k++) cDiscs.add([-7.2 + 15 * rnd(), -5.4 + 11 * rnd(), 0], [0.45 + 0.25 * rnd(), 0, 0], null, 0, [70, 96, 58, 150], 0, DISC_CASING);
-  for (let gx = -7.5; gx < 8; gx += 0.75) for (let gy = -5.5; gy < 6; gy += 0.62) {
-    const x = gx + (rnd() - 0.5) * 0.12, y = gy + (rnd() - 0.5) * 0.1;
-    if (nearStreet(x, y, 0.36)) { if (!nearStreet(x, y, 0.2) && rnd() < 0.6) cDiscs.add([x, y, 0], [0.11 + 0.1 * rnd(), 0, 0], null, 0, [28, 51 + Math.round(15 * rnd()), 26, 217], 0, DISC_CASING | DISC_CANOPY_FIELD); continue; }
-    if (rnd() < 0.18) { cDiscs.add([x, y, 0], [0.14 + 0.1 * rnd(), 0, 0], null, 0, [28, 51 + Math.round(15 * rnd()), 26, 217], 0, DISC_CASING | DISC_CANOPY_FIELD); continue; }
-    const w = 0.4 + 0.18 * rnd(), d = 0.3 + 0.12 * rnd(), g = 150 + Math.round(60 * rnd());
-    cQuads.add([x + 0.07, y - 0.07, 0], [w, d, 0], null, 0, [5, 6, 8, 128]);                                   // a cast shadow: literal
-    cQuads.add([x, y + d / 4, 0], [w, d / 2, 0], null, 0, [g, g, g, 255], 0, COLOUR.TINT);                      // the lit half of the roof
-    cQuads.add([x, y - d / 4, 0], [w, d / 2, 0], null, 0, [g * 0.62, g * 0.62, g * 0.62, 255], 0, COLOUR.TINT); // the dark half
-  }
-  const rest = [quads, discs, boxes, prisms, spheres, coarse, rods, lines, arcs, glass];
-  for (const b of rest) b.params = pRest;
-  return { OFF, batches: [groundA, groundB, roofsB, ...rest], city: [groundA, groundB, cDiscs, cLines, cQuads], pA, pB, pRest, pC };
-}
-
-// ---- camera (column-major) ----
-function mul(a, b) {
-  const o = new Float32Array(16);
-  for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++) {
-    let s = 0;
-    for (let k = 0; k < 4; k++) s += a[k * 4 + r] * b[c * 4 + k];
-    o[c * 4 + r] = s;
-  }
-  return o;
-}
-function lookAt(eye, at, up) {
-  const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
-  const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
-  const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
-  const norm = (a) => { const l = Math.hypot(...a); return [a[0] / l, a[1] / l, a[2] / l]; };
-  const f = norm(sub(at, eye)), s = norm(cross(f, up)), u = cross(s, f);
-  return new Float32Array([s[0], u[0], -f[0], 0, s[1], u[1], -f[1], 0, s[2], u[2], -f[2], 0, -dot(s, eye), -dot(u, eye), dot(f, eye), 1]);
-}
-function perspective(fovy, aspect, n, f) {
-  const t = 1 / Math.tan(fovy / 2);
-  return new Float32Array([t / aspect, 0, 0, 0, 0, t, 0, 0, 0, 0, (f + n) / (n - f), -1, 0, 0, (2 * f * n) / (n - f), 0]);
-}
-function ortho(h, aspect, n, f) {
-  return new Float32Array([1 / (h * aspect), 0, 0, 0, 0, 1 / h, 0, 0, 0, 0, 2 / (n - f), 0, 0, 0, (f + n) / (n - f), 1]);
-}
-
 const { OFF, batches, city, pA, pB, pRest, pC } = scene();
 const isMap = q.get('map') === '1';
 const state = { dim: Math.min(1, Math.max(0.3, +(q.get('dim') || 1))), tex: q.get('tex') === '0' ? 0 : 1 };
 const hit = { slider: null, button: null };   // device-pixel rectangles [x0, y0, x1, y1] of the two controls
 
-// ---- the screen overlay: panels, rows, buttons, in device pixels ----
-// A panel is one screen tile: its origin is the batch offset, and its marks are packed per
-// kind in the core's order (quad, line, disc, run), as Scene::frame emits them.
-class Panel {
-  constructor() {
-    this.o = [0, 0, 0];
-    this.quads = new Batch(KIND.QUAD, this.o, false, true);
-    this.lines = new Batch(KIND.LINE, this.o, false, true);
-    this.discs = new Batch(KIND.DISC, this.o, false, true);
-    this.runs = new Batch(KIND.RUN, this.o, false, true);
-    this.batches = [this.quads, this.lines, this.discs, this.runs];
-  }
-  begin(x, y, w, h) {
-    this.o[0] = x; this.o[1] = y; this.w = w; this.h = h;
-    for (const b of this.batches) b.clear();
-    const r = 10 * dpr;
-    this.rect(-dpr, -dpr, w + 2 * dpr, h + 2 * dpr, r + dpr, [86, 100, 128, 255]);   // a 1 px (CSS) rim
-    this.rect(0, 0, w, h, r, [17, 22, 32, 232]);
-  }
-  rect(x, y, w, h, r, rgba) { this.quads.add([x + w / 2, y + h / 2, 0], [w, h, 0], [r, 0, 0], 0, rgba); }
-  line(x0, y0, x1, y1, w, rgba) { this.lines.add([x0, y0, 0], [w, 0, 0], [x1, y1, 0], 0, rgba); }
-  disc(x, y, r, rgba) { this.discs.add([x, y, 0], [r, 0, 0], null, 0, rgba); }
-  // align: -1 the ink starts at x, 0 centred on x, 1 the ink ends at x; cy is the row's centre line.
-  text(str, style, x, cy, align, rgba) {
-    const e = text.place(str, style);
-    if (e.w === 0) return e;
-    const cx = align < 0 ? x + e.w / 2 - 1 : align > 0 ? x - e.w / 2 + 1 : x;
-    this.runs.add([cx, cy, 0], [e.w, e.h, 0], [e.u0, e.v0, e.u1], e.v1, rgba, 0, e.page);
-    return e;
-  }
-}
-const panels = [new Panel(), new Panel(), new Panel(), new Panel()];
-const pPanel = Float32Array.from(PARAMS_NEUTRAL);   // panel 4 shows tile A's ramp and tile B's tint in screen marks
-for (const b of panels[3].batches) b.params = pPanel;
-const INK = [222, 229, 240, 255], DIM = [140, 152, 172, 255], HEAD = [120, 190, 255, 255];
+const ui = createOverlay({ q, canvas, dpr, isMap, state, hit, pA, pB, pRest, pC });
+const { panels, overlay, applyState } = ui;
 
-function overlay(lines) {
-  const W = canvas.width, H = canvas.height, d = dpr;
-  const narrow = W / d < 700;
-  const pad = 12 * d, row = 20 * d, pw = Math.min(330 * d, W - 24 * d);
-  const heading = (p, str) => {
-    p.text(str, STYLE.HEADING, pad, pad + 8 * d, -1, HEAD);
-    p.line(pad, pad + 20 * d, p.w - pad, pad + 20 * d, d, [60, 72, 96, 255]);
-  };
-
-  // Panel 1: the engine's own counts, and the verdict.
-  const a = panels[0];
-  a.begin(12 * d, 12 * d, pw, pad * 2 + 24 * d + lines.length * row + 34 * d);
-  heading(a, 'Engine');
-  let y = pad + 24 * d + row / 2;
-  for (const [k, v] of lines) {
-    a.text(k, STYLE.BODY, pad, y, -1, DIM);
-    a.text(v, STYLE.BODY, a.w - pad, y, 1, INK);
-    y += row;
-  }
-  a.disc(pad + 8 * d, y + 12 * d, 7 * d, [80, 220, 120, 255]);
-  a.text('PASS', STYLE.STATUS, pad + 24 * d, y + 12 * d, -1, [80, 220, 120, 255]);
-  a.text('gl error 0', STYLE.SMALL, a.w - pad, y + 12 * d, 1, DIM);
-
-  // Panel 2: strings the platform must shape (joining, reordering, stacked marks, fallback).
-  const scripts = [['Arabic', 'مرحبا بالعالم 123'], ['Hindi', 'नमस्ते दुनिया'], ['Thai', 'สวัสดีชาวโลก'], ['Japanese', 'こんにちは世界'], ['Mixed', 'H₂O → água, 25 °C']];
-  const b = panels[1];
-  const bh = pad * 2 + 24 * d + scripts.length * row;
-  if (narrow) b.begin(12 * d, a.o[1] + a.h + 12 * d, pw, bh); else b.begin(W - pw - 12 * d, 12 * d, pw, bh);
-  heading(b, 'Scripts, shaped by the platform');
-  y = pad + 24 * d + row / 2;
-  for (const [k, v] of scripts) {
-    b.text(k, STYLE.SMALL, pad, y, -1, DIM);
-    b.text(v, STYLE.BODY, b.w - pad, y, 1, INK);
-    y += row;
-  }
-
-  // Panel 3: a row of rounded buttons and a disc.
-  const c = panels[2];
-  const names = ['Reset', 'Spin', 'Explore'];
-  const bwid = 84 * d, bht = 30 * d, gap = 8 * d;
-  const cw = pad * 2 + names.length * bwid + (names.length - 1) * gap + gap + bht;
-  c.begin(narrow ? (W - cw) / 2 : 12 * d, H - bht - pad * 2 - 12 * d, cw, bht + pad * 2);
-  let x = pad;
-  names.forEach((n, i) => {
-    c.rect(x, pad, bwid, bht, 7 * d, i === 2 ? [38, 128, 96, 255] : [48, 62, 90, 255]);
-    c.text(n, STYLE.BUTTON, x + bwid / 2, pad + bht / 2, 0, INK);
-    x += bwid + gap;
-  });
-  c.disc(x + bht / 2, pad + bht / 2, bht / 2, [235, 180, 60, 255]);
-  c.disc(x + bht / 2, pad + bht / 2, bht / 2 - 4 * d, [17, 22, 32, 255]);
-
-  // Panel 4: the tile settings. A slider for DIM (drag it), the field's switch, and screen
-  // discs in RAMP and TINT mode reading the same settings the ground does.
-  const s4 = panels[3];
-  const sh = pad * 2 + 24 * d + 3 * row + 10 * d;
-  if (narrow) s4.begin(12 * d, c.o[1] - sh - 12 * d, pw, sh); else s4.begin(W - pw - 12 * d, b.o[1] + b.h + 12 * d, pw, sh);
-  heading(s4, 'Tile settings');
-  y = pad + 24 * d + row / 2;
-  s4.text('night dim', STYLE.BODY, pad, y, -1, DIM);
-  s4.text(state.dim.toFixed(2), STYLE.BODY, s4.w - pad, y, 1, INK);
-  const tx0 = pad + 96 * d, tx1 = s4.w - pad - 48 * d, f = (state.dim - 0.3) / 0.7, kx = tx0 + f * (tx1 - tx0);
-  s4.rect(tx0, y - 2 * d, tx1 - tx0, 4 * d, 2 * d, [52, 64, 90, 255]);
-  s4.rect(tx0, y - 2 * d, kx - tx0, 4 * d, 2 * d, [120, 190, 255, 255]);
-  s4.disc(kx, y, 7 * d, [222, 229, 240, 255]);
-  hit.slider = [s4.o[0] + tx0, s4.o[1] + y - 12 * d, s4.o[0] + tx1, s4.o[1] + y + 12 * d];
-  y += row + 4 * d;
-  s4.text('ground field', STYLE.BODY, pad, y, -1, DIM);
-  const bw4 = 56 * d, bx4 = s4.w - pad - bw4;
-  s4.rect(bx4, y - 11 * d, bw4, 22 * d, 6 * d, state.tex > 0 ? [38, 128, 96, 255] : [70, 50, 56, 255]);
-  s4.text(state.tex > 0 ? 'on' : 'off', STYLE.BUTTON, bx4 + bw4 / 2, y, 0, INK);
-  hit.button = [s4.o[0] + bx4, s4.o[1] + y - 11 * d, s4.o[0] + bx4 + bw4, s4.o[1] + y + 11 * d];
-  y += row + 4 * d;
-  s4.text('ramp', STYLE.SMALL, pad, y, -1, DIM);
-  for (let i = 0; i < 5; i++) s4.discs.add([pad + (48 + 22 * i) * d, y, 0], [8 * d, 0, 0], null, i / 4, [255, 0, 255, 255], 0, COLOUR.RAMP);   // a screen mark's t is its angle
-  s4.text('tint', STYLE.SMALL, s4.w - pad - 60 * d, y, 1, DIM);
-  for (let i = 0; i < 2; i++) s4.discs.add([s4.w - pad - (8 + 22 * (1 - i)) * d, y, 0], [8 * d, 0, 0], null, 0, [150 + 80 * i, 150 + 80 * i, 150 + 80 * i, 255], 0, COLOUR.TINT);
-}
-
-// The settings, written into the tiles' 32 numbers: no instance changes.
-function applyState() {
-  for (const p of [pA, pB, pRest, pPanel, pC]) { p[0] = state.dim; p[1] = state.dim; p[2] = state.dim; }
-  pA[PARAM.TEX] = state.tex; pB[PARAM.TEX] = state.tex; pC[PARAM.TEX] = state.tex;
-  if (q.has('fade')) for (const p of [pA, pB, pRest, pC]) p[PARAM.FADE] = +q.get('fade');
-  if (isMap) {
-    pC[PARAM.FLOOR] = q.has('floor') ? +q.get('floor') * dpr : 0.5 * dpr;
-    const al = (q.get('alphas') || '1,1,1,1').split(',').map(Number);
-    pC[PARAM.FLOOR_CASING] = +(q.get('floorc') || 0) * dpr;
-    pA[PARAM.A_GROUND] = pB[PARAM.A_GROUND] = al[0]; pC[PARAM.A_CASING] = al[1]; pC[PARAM.A_ROAD] = al[2]; pC[PARAM.A_ROOF] = al[3];
-    if (q.get('ring') === '1') for (const p of [pA, pB, pC]) p.set([canvas.width / 2, canvas.height / 2, 0.46 * Math.min(canvas.width, canvas.height)], PARAM.RING);
-  }
-  pPanel.set(pA.subarray(4, 12), 4); pPanel.set(pB.subarray(12, 16), 12);
-}
 let pending = false;
 function invalidate() { if (!pending) { pending = true; requestAnimationFrame(frame); } }
 const inside = (r, x, y) => r && x >= r[0] && x <= r[2] && y >= r[1] && y <= r[3];
@@ -393,7 +92,7 @@ canvas.addEventListener('pointerup', () => { dragging = false; });
 
 let drawer, text;
 try {
-  text = createTextProvider(gl, { dpr, pageSize: +(q.get('page') || 0), maxPages: +(q.get('pages') || 0) });
+  text = ui.text = createTextProvider(gl, { dpr, pageSize: +(q.get('page') || 0), maxPages: +(q.get('pages') || 0) });
   drawer = createDrawer(gl, { text, forceMediump: q.get('mediump') === '1' });
   window.__state = state; window.__invalidate = invalidate;
 } catch (e) {
@@ -417,15 +116,7 @@ function frame(tms) {
   pending = false;
   applyState();
   if (q.get('spin') === '1') az += 0.004;
-  const at = [OFF[0], OFF[1], OFF[2] + 1.2];
-  const eye = [at[0] + dist * Math.cos(el) * Math.sin(az), at[1] - dist * Math.cos(el) * Math.cos(az), at[2] + dist * Math.sin(el)];
-  const aspect = canvas.width / canvas.height;
-  const fov = (38 * Math.PI) / 180 * (aspect < 1 ? 1.9 : 1);
-  const proj = q.get('ortho') === '1' ? ortho(6.2, aspect, 0.1, 100) : perspective(fov, aspect, 0.1, 100);
-  // The flat map: top-down, x east, y north, mapPpu device pixels to a world unit.
-  const mapPpu = +(q.get('ppu') || 70) * dpr;
-  const sx = 2 * mapPpu / canvas.width, sy = 2 * mapPpu / canvas.height;
-  const vp = isMap ? new Float32Array([sx, 0, 0, 0, 0, sy, 0, 0, 0, 0, -0.01, 0, -sx * OFF[0], -sy * OFF[1], 0, 1]) : mul(proj, lookAt(eye, at, [0, 0, 1]));
+  const { vp, mapPpu } = viewProjection(q, isMap, OFF, canvas, dpr, az, el, dist);
 
   text.beginFrame();
   if (showOverlay) {

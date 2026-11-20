@@ -136,7 +136,14 @@ impl Instance {
         let reach = match self.kind {
             Kind::Line | Kind::Rod | Kind::Arc => {
                 let d = [self.aux[0] - self.pos[0], self.aux[1] - self.pos[1], self.aux[2] - self.pos[2]];
-                (d[0] * d[0] + d[1] * d[1] + d[2] * d[2]).sqrt()
+                let l = (d[0] * d[0] + d[1] * d[1] + d[2] * d[2]).sqrt();
+                if self.kind == Kind::Arc {
+                    // the curve lies in the hull of its ends and control point; the control point
+                    // is the chord's midpoint moved hypot(size[1], size[2])
+                    l.max(0.5 * l + (s[1] * s[1] + s[2] * s[2]).sqrt())
+                } else {
+                    l
+                }
             }
             _ => 0.0,
         };
@@ -213,6 +220,15 @@ pub const VARIANT_ROUND: u8 = 0x02;
 /// of upright slices. In RAMP mode an oriented box reads `t = 0` (its `aux` is taken). The
 /// pick's bounding sphere is about `pos` and turning about `pos` keeps it, so `bound` holds.
 pub const VARIANT_ORIENT: u8 = 0x08;
+/// Bits 4..5 of a LIT mark's `variant` (box, prism, sphere, rod): its material, a closed list.
+/// KIND: the kind's own specular and rim. MATTE: no specular. METAL: a stronger, tighter
+/// specular and rim. GLOW: unlit, the colour as given; it neither casts nor receives a shadow.
+/// Unlit kinds ignore these bits. `web/draw.js`'s header has the shading.
+pub const VARIANT_MATERIAL: u8 = 0x30;
+pub const MATERIAL_KIND: u8 = 0x00;
+pub const MATERIAL_MATTE: u8 = 0x10;
+pub const MATERIAL_METAL: u8 = 0x20;
+pub const MATERIAL_GLOW: u8 = 0x30;
 
 /// The tile settings that leave colours exactly as their records give them.
 pub const PARAMS_NEUTRAL: [f32; 32] = {
@@ -642,6 +658,19 @@ fn fnv(mut h: u64, b: &[u8]) -> u64 {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn an_arc_bound_holds_its_bend() {
+        // A chord of 4 raised 3: the top of the curve is 1.5 above the midpoint, about 2.5 from pos.
+        let mut a = Instance::new(Kind::Arc, [0.0, 0.0, 0.0], [0.1, 3.0, 0.0]);
+        a.aux = [4.0, 0.0, 0.0];
+        let top = (2.0f32 * 2.0 + 1.5 * 1.5).sqrt();
+        assert!(a.bound() >= top, "bound {} must hold the curve's top {}", a.bound(), top);
+        a.size = [0.1, 0.0, 0.0];
+        assert_eq!(a.bound(), 4.0, "an unbent arc is its chord");
+        assert_eq!(VARIANT_MATERIAL & (VARIANT_ORIENT | COLOUR_RAMP | COLOUR_TINT), 0, "material bits are their own");
+        assert_eq!(MATERIAL_GLOW, VARIANT_MATERIAL);
+    }
+
     #[test]
     fn an_oriented_box_keeps_its_bound() {
         let upright = Instance::new(Kind::Box, [1.0, 2.0, 0.0], [0.4, 0.3, 2.0]);

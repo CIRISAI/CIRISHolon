@@ -206,6 +206,13 @@ pub const VARIANT_CASING: u8 = 0x01;
 /// after the floor); a polyline of round-ended segments has round joins. Without it a line
 /// ends flush, as the twin's streets do at an exit.
 pub const VARIANT_ROUND: u8 = 0x02;
+/// Bit 3 of a box's or prism's `variant`: ORIENTED. `aux` is the box's local z axis (any
+/// length; zero means world z): `size[2]` runs along it from `pos`, and `angle` turns its local
+/// x about it, from world x laid across the axis (world y when the axis is along x). With
+/// `aux = [0, 0, 1]` it is the box without the bit. A box tipped over this way needs no stack
+/// of upright slices. In RAMP mode an oriented box reads `t = 0` (its `aux` is taken). The
+/// pick's bounding sphere is about `pos` and turning about `pos` keeps it, so `bound` holds.
+pub const VARIANT_ORIENT: u8 = 0x08;
 
 /// The tile settings that leave colours exactly as their records give them.
 pub const PARAMS_NEUTRAL: [f32; 32] = {
@@ -228,7 +235,7 @@ pub const PARAMS_NEUTRAL: [f32; 32] = {
 /// `Run` (whose `variant` is its atlas page). LITERAL: `rgba`. RAMP: the mix of the tile's
 /// RAMP0 and RAMP1 at `t`, alpha from `rgba`. TINT: `rgba.rgb` times the tile's TINT.
 /// Where `t` is: `aux[0]` for the kinds whose `aux` is otherwise unused (world quad, patch,
-/// disc, glyph, box, prism, sphere); `angle` for the kinds whose `aux` is a second point or a
+/// disc, glyph, box and prism unless ORIENTED, sphere); `angle` for the kinds whose `aux` is a second point or a
 /// corner radius and whose `angle` is unused (line, arc, rod, and every SCREEN mark).
 /// In every mode the result is then multiplied by the tile's DIM.
 pub const COLOUR_LITERAL: u8 = 0;
@@ -635,6 +642,16 @@ fn fnv(mut h: u64, b: &[u8]) -> u64 {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn an_oriented_box_keeps_its_bound() {
+        let upright = Instance::new(Kind::Box, [1.0, 2.0, 0.0], [0.4, 0.3, 2.0]);
+        let mut tipped = upright;
+        tipped.aux = [1.0, 0.0, 0.2];
+        tipped.variant = VARIANT_ORIENT;
+        assert_eq!(upright.bound(), tipped.bound());
+        assert_eq!(VARIANT_ORIENT & (VARIANT_CASING | VARIANT_ROUND | COLOUR_RAMP | COLOUR_TINT), 0, "a bit of its own");
+    }
+
     use super::*;
 
     fn scene(tiles: Vec<Tile>) -> Scene {

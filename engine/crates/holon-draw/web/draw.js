@@ -15,6 +15,12 @@
 //   2 line, 3 arc     a thin 6-sided tube from pos to aux, WIDTH size[0] (an arc is its chord for now)
 //   4 disc, 10 glyph  flat 24-gon in the plane z = pos.z, radius size[0]
 //   5 box, 6 prism    base centre pos, size = (x, y, z extents), turned by angle about z (prism: flat top)
+//                     With bit 3 of `variant` set (0x08, VARIANT_ORIENT) the box is ORIENTED: aux is
+//                     its local z axis (any length; zero means world z), size.z runs along it from
+//                     pos, and angle turns its local x about that axis, starting from world x
+//                     projected onto the plane across the axis (world y when the axis is along x).
+//                     With aux = (0, 0, 1) it is the same box as without the bit. An oriented box
+//                     has no RAMP t (aux is taken), so in RAMP mode it reads t = 0.
 //   7 sphere          centre pos, radius size[0]
 //   8 rod             capped cylinder from pos to aux, radius size[0]
 // Boxes, prisms, spheres and rods are lit. Flat marks and lines are drawn in their exact
@@ -209,6 +215,8 @@ export const VARIANT_CASING = 0x01;
 export const DISC_CASING = 0x01, DISC_CANOPY_FIELD = 0x04;
 /** Bit 1 of `variant` on a line or arc: round ends (a cap of the line's half width at each). */
 export const VARIANT_ROUND = 0x02;
+/** Bit 3 of `variant` on a box or prism: oriented, aux is its local z axis (see KINDS). */
+export const VARIANT_ORIENT = 0x08;
 /** Tile settings that leave every colour as its record gives it (the core's PARAMS_NEUTRAL). */
 export const PARAMS_NEUTRAL = Object.freeze([1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0]);
 export const COLOUR = Object.freeze({ LITERAL: 0x00, RAMP: 0x40, TINT: 0x80 });
@@ -249,6 +257,7 @@ void main() {
   float bit0 = mod(var, 2.0);
   float bit1 = mod(floor(var / 2.0), 2.0);
   float bit2 = mod(floor(var / 4.0), 2.0);
+  bool orient = kc > 4.5 && kc < 5.5 && mod(floor(var / 8.0), 2.0) > 0.5;
   bool liney = kc > 2.5 && kc < 3.5;
   vec3 p;
   vec3 n;
@@ -279,8 +288,22 @@ void main() {
     float c = cos(i_angle);
     float sn = sin(i_angle);
     vec3 q = a_p * s;
-    p = o + vec3(c * q.x - sn * q.y, sn * q.x + c * q.y, q.z);
-    n = vec3(c * a_n.x - sn * a_n.y, sn * a_n.x + c * a_n.y, a_n.z);
+    if (orient) {
+      // The box's own frame: z along aux; x from world x (world y if aux is along x) laid
+      // across it, then turned by angle about z.
+      float al = length(i_aux);
+      vec3 ez = al > 1e-20 ? i_aux / al : vec3(0.0, 0.0, 1.0);
+      vec3 r0 = abs(ez.x) < 0.999 ? vec3(1.0, 0.0, 0.0) : vec3(0.0, 1.0, 0.0);
+      vec3 x0 = normalize(r0 - ez * dot(r0, ez));
+      vec3 y0 = cross(ez, x0);
+      vec3 ex = c * x0 + sn * y0;
+      vec3 ey = cross(ez, ex);
+      p = o + ex * q.x + ey * q.y + ez * q.z;
+      n = ex * a_n.x + ey * a_n.y + ez * a_n.z;
+    } else {
+      p = o + vec3(c * q.x - sn * q.y, sn * q.x + c * q.y, q.z);
+      n = vec3(c * a_n.x - sn * a_n.y, sn * a_n.x + c * a_n.y, a_n.z);
+    }
   }
   v_n = n;
   v_v = normalize(u_eye.xyz - p * u_eye.w);
@@ -291,7 +314,7 @@ void main() {
   vec3 rgb = i_color.rgb;
   float dens = 0.0;
   if (ramp) {
-    dens = clamp(tube ? i_angle : i_aux.x, 0.0, 1.0);
+    dens = clamp(tube ? i_angle : orient ? 0.0 : i_aux.x, 0.0, 1.0);
     rgb = mix(u_params[1].rgb, u_params[2].rgb, dens);
   } else if (tint) {
     rgb *= u_params[3].rgb;
@@ -939,7 +962,9 @@ export function createDrawer(gl, options) {
   }
 
   /**
-   * @param {Array<{kind:number, offset?:ArrayLike<number>, count:number, bytes:Uint8Array, screen?:boolean, coarse?:boolean, params?:ArrayLike<number>}>} batches
+   * @param {Array<{kind:number, offset?:ArrayLike<number>, count:number, bytes:Uint8Array, screen?:boolean, coarse?:boolean, params?:ArrayLike<number>, shade?:ArrayLike<number>}>} batches
+   *   `shade`, optional on a world batch of a lit kind: [specular, rim] for that batch in place
+   *   of the kind's own (box and prism 0.05, 0; sphere 0.3, 0.18; rod 0.18, 0.08).
    * @param {Float32Array} vp column-major, 16 (world batches only)
    * @param {{light?:ArrayLike<number>, ambient?:number, flatLit?:boolean, viewport?:ArrayLike<number>, pixelsPerUnit?:number, depthTest?:boolean, flatLines?:boolean}} [opts]
    */
@@ -1010,18 +1035,23 @@ export function createDrawer(gl, options) {
       if (opts && opts.depthTest === false) gl.disable(gl.DEPTH_TEST);
       const ppu = opts && opts.pixelsPerUnit > 0 ? +opts.pixelsPerUnit : 0;
 
-      let cur = null;
+      let cur = null, curSpec = -1, curRim = -1;
       for (let i = 0; i < nb; i++) {
         const b = batches[i], c = b.count | 0;
         if (c <= 0 || b.screen === true) continue;
         const s = slotOf(b);
         if (!s) continue;
+        const sh = b.shade;
+        const spec = sh ? +sh[0] : s.spec, rim = sh ? +sh[1] : s.rim;
+        if (s !== cur || spec !== curSpec || rim !== curRim) {
+          curSpec = spec; curRim = rim;
+          gl.uniform4f(uShade, s.lit || flatLit ? 1 : 0, ambient, spec, rim);
+        }
         if (s !== cur) {
           cur = s;
           if (hasVAO) bindVAO(s.vao); else meshAttribs(s.mesh);
           gl.uniform2f(uMode, s.mx, s.my);
           gl.uniform3f(uPix, halfH, ppu, s.kc);
-          gl.uniform4f(uShade, s.lit || flatLit ? 1 : 0, ambient, s.spec, s.rim);
           if (s.cull !== culling) {
             culling = s.cull;
             if (culling) gl.enable(gl.CULL_FACE); else gl.disable(gl.CULL_FACE);

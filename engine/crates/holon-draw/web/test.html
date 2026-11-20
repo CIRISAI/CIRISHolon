@@ -20,7 +20,7 @@
 // ?floorc=H the casings' own least half width, ?alphas=g,c,r,f the four class alphas (1 neutral,
 // 0 hides), ?fade=A the tile's alpha multiplier; ?page=N&pages=M shrinks the text atlas (to see eviction); ?mediump=1 writes mediump for the screen program's fragment precision; ?overlay=0 leaves
 // the panels out. Every word on the page is drawn by the engine: there is no HTML text.
-import { createDrawer, KIND, INSTANCE_BYTES, PARAMS_NEUTRAL, COLOUR, PARAM, VARIANT_CASING, DISC_CASING, DISC_CANOPY_FIELD, VARIANT_ROUND } from './draw.js';
+import { createDrawer, KIND, INSTANCE_BYTES, PARAMS_NEUTRAL, COLOUR, PARAM, VARIANT_CASING, DISC_CASING, DISC_CANOPY_FIELD, VARIANT_ROUND, VARIANT_ORIENT } from './draw.js';
 import { createTextProvider, STYLE } from './text.js';
 
 const q = new URLSearchParams(location.search);
@@ -134,6 +134,8 @@ function scene() {
   // A box and a turned prism.
   boxes.add([5.6, 2.2, 0], [1.6, 1.2, 2.2], null, 0.0, [205, 120, 80, 255]);
   boxes.add([5.8, -0.6, 0], [1.0, 1.0, 1.0], null, 0.6, [120, 170, 110, 255]);
+  // VARIANT_ORIENT: a slab leaning 30 degrees toward +x, one record (aux is its local z axis)
+  boxes.add([4.2, -2.4, 0], [0.9, 0.3, 1.8], [Math.sin(0.52), 0, Math.cos(0.52)], 0.0, [110, 150, 210, 255], 0, VARIANT_ORIENT);
   prisms.add([-6.0, 2.6, 0], [1.4, 2.2, 1.4], null, -0.5, [150, 130, 200, 255]);
 
   // A lattice of atoms with bonds.

@@ -6,7 +6,7 @@
 // in an atlas page; the drawer (`./draw.js`, kind 11 `run`) tints it. Nothing here knows a
 // glyph, a font file or a language.
 //
-//   const text = createTextProvider(gl, { dpr });
+//   const text = createTextProvider(gl, { dpr });         // setDpr(d) when the ratio changes
 //   const drawer = createDrawer(gl, { text });
 //   each frame:  text.beginFrame();  const r = text.place('PASS', 2);  ... pack a run ...
 //
@@ -27,6 +27,11 @@
 //   2 status   16px monospace bold
 //   3 button   13px sans-serif
 //   4 small    11px monospace
+// A host may add its own styles with `options.styles` (an array of { px, weight ('' or
+// 'bold ' or a CSS weight and a space), family (a CSS font-family list, so a webfont the page
+// has loaded works), upper, spacing (em) }); they are numbered from 5 on, in the order given,
+// so the five above keep their numbers. A webfont not yet loaded rasterises in a fallback: a
+// host that waits for `document.fonts.ready` and then calls setDpr(provider.dpr) gets it.
 // Colour is not part of a style. Letter-spacing uses the 2D context's `letterSpacing`
 // where it exists; where it does not (older engines) the heading is drawn unspaced.
 //
@@ -71,11 +76,11 @@ const EMPTY = Object.freeze({ w: 0, h: 0, u0: 0, v0: 0, u1: 0, v1: 0, page: 0, a
 
 /**
  * @param {WebGLRenderingContext|WebGL2RenderingContext} gl the host's context
- * @param {{dpr?: number, pageSize?: number, maxPages?: number}} [options]
+ * @param {{dpr?: number, pageSize?: number, maxPages?: number, styles?: Array<{px:number, weight?:string, family?:string, upper?:boolean, spacing?:number}>}} [options]
  */
 export function createTextProvider(gl, options) {
   options = options || {};
-  const dpr = options.dpr > 0 ? +options.dpr : (typeof devicePixelRatio === 'number' ? devicePixelRatio : 1);
+  let dpr = options.dpr > 0 ? +options.dpr : (typeof devicePixelRatio === 'number' ? devicePixelRatio : 1);
   const maxTex = gl.getParameter(gl.MAX_TEXTURE_SIZE) | 0;
   const pageSize = Math.max(64, Math.min(options.pageSize | 0 || 2048, maxTex));
   const maxPages = Math.max(1, Math.min(options.maxPages | 0 || 4, 4));
@@ -86,20 +91,22 @@ export function createTextProvider(gl, options) {
   if (!ctx) throw new Error('holon-draw text: no 2D canvas context to rasterise with');
   const hasSpacing = 'letterSpacing' in ctx;
 
+  const defs = STYLES.concat((options.styles || []).map((s) => ({
+    px: +s.px > 0 ? +s.px : 13, weight: s.weight || '', family: s.family || SANS, upper: !!s.upper, spacing: +s.spacing || 0,
+  })));
   // Per style: the font string, the line box and the baseline in it, in device pixels.
-  const styles = STYLES.map((s) => {
+  function metrics(s, out) {
     const size = s.px * dpr;
     const h = Math.ceil(size * 1.7);
-    return {
-      font: s.weight + size + 'px ' + s.family,
-      upper: s.upper,
-      spacing: s.spacing > 0 ? s.spacing * size + 'px' : '0px',
-      h,
-      // Capitals are about 0.72 em tall: put their middle on the box's middle.
-      baseline: Math.round(h * 0.5 + size * 0.36),
-      cache: new Map(), // text -> entry
-    };
-  });
+    out.font = s.weight + size + 'px ' + s.family;
+    out.upper = s.upper;
+    out.spacing = s.spacing > 0 ? s.spacing * size + 'px' : '0px';
+    out.h = h;
+    // Capitals are about 0.72 em tall: put their middle on the box's middle.
+    out.baseline = Math.round(h * 0.5 + size * 0.36);
+    return out;
+  }
+  const styles = defs.map((s) => metrics(s, { cache: new Map() /* text -> entry */ }));
 
   // pages[i]: { tex, shelves: [{ y, h, x }], nextY, used (frame of the latest place), entries: [[styleIndex, text]] }
   const pages = [];
@@ -243,6 +250,21 @@ export function createTextProvider(gl, options) {
     texture(page) {
       const p = pages[page];
       return p ? p.tex : null;
+    },
+    /**
+     * A new device pixel ratio: every style is measured again and every page emptied, so every
+     * string is rasterised again at the new size; `epoch` goes up by one. Also the way to pick
+     * up a webfont that finished loading (call it with the same ratio).
+     */
+    setDpr(d) {
+      if (dead) throw new Error('holon-draw text: setDpr() after destroy()');
+      dpr = d > 0 ? +d : 1;
+      provider.dpr = dpr;
+      for (let i = 0; i < styles.length; i++) { styles[i].cache.clear(); metrics(defs[i], styles[i]); }
+      for (const p of pages) { p.entries.length = 0; p.shelves.length = 0; p.nextY = 0; }
+      st.entries = 0;
+      st.epoch++;
+      provider.epoch = st.epoch;
     },
     /** Starts a frame: the page-use clock moves on and `rasterised` returns to 0. */
     beginFrame() {

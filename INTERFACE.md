@@ -46,7 +46,7 @@ by instancing, never a per-vertex build in the host.
 | D2 | `line` | an anti-aliased segment of stated width; a polyline is a run of them | end (3), width |
 | D3 | `arc` | a great-circle or Bezier segment of stated width | control (3), end (3), width |
 | D4 | `disc` | a filled or ringed circle facing the camera | radius, ring width |
-| D5 | `box` | an axis box on a ground plane, rotated about the vertical | size (3), angle |
+| D5 | `box` | an axis box on a ground plane, rotated about the vertical; or, with `variant` bit 3 (`VARIANT_ORIENT`), about any axis given in `aux` | size (3), angle, axis (3) |
 | D6 | `prism` | a footprint extruded to a height, with one of a closed list of tops | size (3), angle, top |
 | D7 | `sphere` | a lit sphere | radius |
 | D8 | `rod` | a lit cylinder between two points | end (3), radius |

@@ -153,7 +153,7 @@ def run_page(url, cfg, frames, ready_js, state_js, hide_css, shot_selector, shot
         page.on("pageerror", lambda e: errors.append(str(e)))
         page.on("console", lambda m: consoles.append((m.type, m.text + " @ " + str((m.location or {}).get("url", "")))))
         cfg = dict(cfg, perFrame=per_frame_js)
-        page.add_init_script("window.__CHECK_CFG__ = " + json.dumps(cfg) + ";\n" + INIT)
+        page.add_init_script("window.__CHECK_CFG__ = " + json.dumps(cfg) + ";\n" + INIT + "\n" + (cfg.get("initExtra") or ""))
         page.goto(url, wait_until="load")
         t0 = time.time()
         while not page.evaluate(ready_js):

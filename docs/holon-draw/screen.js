@@ -127,15 +127,18 @@ export function createStage(canvas, options) {
      * into dashes continuous along its length, as setLineDash does from the first point.
      * `joins` puts a disc of the half width at each interior point (for an opaque line, so a
      * bend has no notch; Canvas's default join is a miter, which this does not reproduce).
+     * `roundCaps` (Canvas lineCap "round") puts that disc at each end, and at each dash's ends.
      */
-    path(points, width, colour, dash = null, joins = false, closed = false) {
+    path(points, width, colour, dash = null, joins = false, closed = false, roundCaps = false) {
       const c = parseColour(colour);
       const pts = closed ? points.concat([points[0]]) : points;
+      const cap = (x, y) => rec(KIND.DISC, x * dpr, y * dpr, (width / 2) * dpr, 0, 0, 0, 0, 0, c, 0);
       if (!dash || dash.length === 0) {
         for (let i = 0; i + 1 < pts.length; i++) {
           rec(KIND.LINE, pts[i][0] * dpr, pts[i][1] * dpr, width * dpr, 0, pts[i + 1][0] * dpr, pts[i + 1][1] * dpr, 0, 0, c, 0);
         }
-        if (joins) for (let i = 1; i + 1 < pts.length; i++) rec(KIND.DISC, pts[i][0] * dpr, pts[i][1] * dpr, (width / 2) * dpr, 0, 0, 0, 0, 0, c, 0);
+        if (joins) for (let i = 1; i + 1 < pts.length; i++) cap(pts[i][0], pts[i][1]);
+        if (roundCaps && !closed && pts.length > 1) { cap(pts[0][0], pts[0][1]); cap(pts[pts.length - 1][0], pts[pts.length - 1][1]); }
         return;
       }
       const pat = dash.length % 2 ? dash.concat(dash) : dash;
@@ -150,6 +153,8 @@ export function createStage(canvas, options) {
             const t0 = at / len, t1 = (at + step) / len;
             rec(KIND.LINE, (ax + (bx - ax) * t0) * dpr, (ay + (by - ay) * t0) * dpr, width * dpr, 0,
               (ax + (bx - ax) * t1) * dpr, (ay + (by - ay) * t1) * dpr, 0, 0, c, 0);
+            // (a dash cut at a corner gets caps at the corner too; Canvas joins it there)
+            if (roundCaps) { cap(ax + (bx - ax) * t0, ay + (by - ay) * t0); cap(ax + (bx - ax) * t1, ay + (by - ay) * t1); }
           }
           at += step; left -= step;
           if (left <= 1e-9) { k = (k + 1) % pat.length; left = pat[k]; }
@@ -157,12 +162,20 @@ export function createStage(canvas, options) {
       }
     },
     /** Canvas strokeRect: the four sides as one closed path (dashes run round it from the top-left). */
-    strokeRect(x, y, w, h, width, colour, dash = null) {
-      api.path([[x, y], [x + w, y], [x + w, y + h], [x, y + h]], width, colour, dash, false, true);
+    strokeRect(x, y, w, h, width, colour, dash = null, roundCaps = false) {
+      api.path([[x, y], [x + w, y], [x + w, y + h], [x, y + h]], width, colour, dash, false, true, roundCaps);
+    },
+    /** Canvas roundRect(x, y, w, h, r) + stroke: the outline as a closed polyline, 6 pieces a corner. */
+    strokeRoundRect(x, y, w, h, r, width, colour) {
+      const pts = [];
+      const corner = (cx, cy, a0) => { for (let i = 0; i <= 6; i++) { const a = a0 + (i / 6) * (Math.PI / 2); pts.push([cx + r * Math.cos(a), cy + r * Math.sin(a)]); } };
+      corner(x + w - r, y + r, -Math.PI / 2); corner(x + w - r, y + h - r, 0);
+      corner(x + r, y + h - r, Math.PI / 2); corner(x + r, y + r, Math.PI);
+      api.path(pts, width, colour, null, false, true);
     },
     /** Canvas arc(x, y, r, 0, 2pi) + stroke: a closed polyline of `segments` pieces. */
     strokeCircle(x, y, r, width, colour, dash = null, segments = 0) {
-      const m = segments || Math.max(24, Math.min(256, Math.ceil(r * dpr * 0.75)));
+      const m = segments || Math.max(48, Math.min(256, Math.ceil(r * dpr * 0.75)));
       const pts = [];
       for (let i = 0; i < m; i++) { const a = (i / m) * Math.PI * 2; pts.push([x + r * Math.cos(a), y + r * Math.sin(a)]); }
       api.path(pts, width, colour, dash, false, true);

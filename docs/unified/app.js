@@ -2,6 +2,11 @@
 // Mobile-First, Touch-Optimized Physics Simulation + Stratified QVM Studio + Live Retract Bridge & ZX Spider Graph
 // Featuring Dynamic 15 FPS Render Guard & One-Tap Temperature & Speed Presets
 
+// THE STAGE, THE CURVE AND THE ZX GRAPH ARE DRAWN BY HOLON-DRAW (the repo's own engine,
+// ../holon-draw/, 2026-11-23), not by Canvas 2D: each is a WebGL canvas whose every mark is
+// a holon-draw screen record. Only the drawing moved; what is drawn, and where, is what it was.
+import { createStage } from "../holon-draw/screen.js";
+
 // --- DOM References ---
 const ui = {
   runtimeStatus: document.querySelector("#runtime-status"),
@@ -154,12 +159,28 @@ const controls = {
 };
 
 // Canvas elements & contexts
+// Two text styles of the page's own, after text.js's five: 5 is the spring's label (bold
+// 10px monospace), 6 a ZX spider's phase (bold 9px monospace).
+const DRAW_STYLES = [
+  { px: 10, weight: "bold ", family: "monospace" },
+  { px: 9, weight: "bold ", family: "monospace" },
+];
+const LABEL_STYLE = 5, PHASE_STYLE = 6;
 const stageCanvas = document.querySelector("#stage");
-const stageCtx = stageCanvas.getContext("2d");
+const stageCtx = createStage(stageCanvas, { dpr: Math.min(window.devicePixelRatio || 1, 2), styles: DRAW_STYLES });
 const curveCanvas = document.querySelector("#curve-canvas");
-const curveCtx = curveCanvas.getContext("2d");
+const curveCtx = createStage(curveCanvas, { dpr: Math.min(window.devicePixelRatio || 1, 2), styles: DRAW_STYLES });
 const zxCanvas = document.querySelector("#zx-canvas");
-const zxCtx = zxCanvas.getContext("2d");
+const zxCtx = createStage(zxCanvas, { dpr: Math.min(window.devicePixelRatio || 1, 2), styles: DRAW_STYLES });
+window.__unifiedStages = { stage: stageCtx, curve: curveCtx, zx: zxCtx };   // a handle for the page's check
+
+// CANVAS STATE THAT CARRIED OVER. A 2D context keeps its line cap and width from one stroke to
+// the next and from one frame to the next, until its canvas is resized (which resets them).
+// The Canvas-2D drawing below relied on that without saying so: after the first bond was
+// drawn, every later stroke on the stage (the wall's dashes, the next bond's glow, the
+// spring, the 3D box) had ROUND caps; the curve's dashed asymptote was 1 px wide on the
+// first frame and 2 px after. These flags keep those pictures as they were.
+const carried = { stageRound: false, curveWidth: 1 };
 
 // Application State
 const state = {
@@ -743,23 +764,28 @@ function fitCanvas(canvas, context) {
   if (canvas.width !== width || canvas.height !== height) {
     canvas.width = width;
     canvas.height = height;
+    // a resize reset a 2D context's state (see CANVAS STATE THAT CARRIED OVER)
+    if (canvas === stageCanvas) carried.stageRound = false;
+    if (canvas === curveCanvas) carried.curveWidth = 1;
   }
-  context.setTransform(dpr, 0, 0, dpr, 0, 0);
+  context.setDpr(dpr);
+  context.begin();
   return { width: rect.width, height: rect.height };
+}
+
+/** A stage stroke from a to b with the cap the 2D context would have had then. */
+function stageLine(x0, y0, x1, y1, width, colour) {
+  if (carried.stageRound) stageCtx.roundLine(x0, y0, x1, y1, width, colour);
+  else stageCtx.line(x0, y0, x1, y1, width, colour);
 }
 
 function drawScene2D(w, view) {
   const s = view.width / state.world.width;
-  stageCtx.clearRect(0, 0, view.width, view.height);
 
   // Soft Walls
   if (!controls.openBoundary.checked) {
     const inset = w.holon_wall_inset() * s;
-    stageCtx.strokeStyle = "rgba(46, 67, 60, 0.4)";
-    stageCtx.setLineDash([4, 4]);
-    stageCtx.lineWidth = 1.5;
-    stageCtx.strokeRect(inset, inset, view.width - 2 * inset, view.height - 2 * inset);
-    stageCtx.setLineDash([]);
+    stageCtx.strokeRect(inset, inset, view.width - 2 * inset, view.height - 2 * inset, 1.5, "rgba(46, 67, 60, 0.4)", [4, 4], carried.stageRound);
   }
 
   // Composite Holon Molecular Bonds
@@ -768,21 +794,10 @@ function drawScene2D(w, view) {
     const i = w.holon_row_member(k, 0);
     const j = w.holon_row_member(k, 1);
     const depth = Math.min(1, -w.holon_row_e_bond(k) / Math.max(1e-12, w.holon_table_d_e()));
-    
-    stageCtx.strokeStyle = `rgba(56, 189, 248, ${0.25 * depth})`;
-    stageCtx.lineWidth = 10 + 12 * depth;
-    stageCtx.beginPath();
-    stageCtx.moveTo(w.holon_atom_x(i) * s, w.holon_atom_y(i) * s);
-    stageCtx.lineTo(w.holon_atom_x(j) * s, w.holon_atom_y(j) * s);
-    stageCtx.stroke();
-
-    stageCtx.strokeStyle = `rgba(52, 211, 153, ${0.6 + 0.4 * depth})`;
-    stageCtx.lineWidth = 3.5 + 6 * depth;
-    stageCtx.lineCap = "round";
-    stageCtx.beginPath();
-    stageCtx.moveTo(w.holon_atom_x(i) * s, w.holon_atom_y(i) * s);
-    stageCtx.lineTo(w.holon_atom_x(j) * s, w.holon_atom_y(j) * s);
-    stageCtx.stroke();
+    const x0 = w.holon_atom_x(i) * s, y0 = w.holon_atom_y(i) * s, x1 = w.holon_atom_x(j) * s, y1 = w.holon_atom_y(j) * s;
+    stageLine(x0, y0, x1, y1, 10 + 12 * depth, `rgba(56, 189, 248, ${0.25 * depth})`);
+    carried.stageRound = true;
+    stageCtx.roundLine(x0, y0, x1, y1, 3.5 + 6 * depth, `rgba(52, 211, 153, ${0.6 + 0.4 * depth})`);
   }
 
   // User Spring & Drag Feedback
@@ -793,36 +808,15 @@ function drawScene2D(w, view) {
     const px = w.holon_anchor_x() * s;
     const py = w.holon_anchor_y() * s;
 
-    stageCtx.strokeStyle = "rgba(232, 133, 108, 0.9)";
-    stageCtx.lineWidth = 2.5;
-    stageCtx.setLineDash([4, 4]);
-    stageCtx.beginPath();
-    stageCtx.moveTo(ax, ay);
-    stageCtx.lineTo(px, py);
-    stageCtx.stroke();
-    stageCtx.setLineDash([]);
-
-    stageCtx.fillStyle = "#bb4c2e";
-    stageCtx.beginPath();
-    stageCtx.arc(px, py, 5, 0, Math.PI * 2);
-    stageCtx.fill();
+    stageCtx.path([[ax, ay], [px, py]], 2.5, "rgba(232, 133, 108, 0.9)", [4, 4], false, false, carried.stageRound);
+    stageCtx.disc(px, py, 5, "#bb4c2e");
 
     const distBohr = Math.hypot(w.holon_atom_x(grabbed) - w.holon_anchor_x(), w.holon_atom_y(grabbed) - w.holon_anchor_y());
     const midX = (ax + px) / 2;
     const midY = (ay + py) / 2;
-    stageCtx.fillStyle = "rgba(15, 21, 19, 0.9)";
-    stageCtx.strokeStyle = "rgba(232, 133, 108, 0.8)";
-    stageCtx.lineWidth = 1;
-    stageCtx.beginPath();
-    stageCtx.roundRect(midX - 45, midY - 14, 90, 24, 4);
-    stageCtx.fill();
-    stageCtx.stroke();
-
-    stageCtx.fillStyle = "#ede9df";
-    stageCtx.font = "bold 10px monospace";
-    stageCtx.textAlign = "center";
-    stageCtx.textBaseline = "middle";
-    stageCtx.fillText(`R: ${distBohr.toFixed(2)} a₀`, midX, midY - 2);
+    stageCtx.rect(midX - 45, midY - 14, 90, 24, "rgba(15, 21, 19, 0.9)", 4);
+    stageCtx.strokeRoundRect(midX - 45, midY - 14, 90, 24, 4, 1, "rgba(232, 133, 108, 0.8)");
+    stageCtx.text(`R: ${distBohr.toFixed(2)} a₀`, LABEL_STYLE, midX, midY - 2, "#ede9df", "center", "middle");
   }
 
   // Atoms
@@ -836,22 +830,13 @@ function drawScene2D(w, view) {
     const isSelected = i === state.selectedAtom;
 
     if (isGrabbed || isSelected) {
-      stageCtx.strokeStyle = isGrabbed ? "rgba(239, 68, 68, 0.6)" : "rgba(56, 189, 248, 0.6)";
-      stageCtx.lineWidth = 5;
-      stageCtx.beginPath();
-      stageCtx.arc(x, y, r + 4, 0, Math.PI * 2);
-      stageCtx.stroke();
+      stageCtx.strokeCircle(x, y, r + 4, 5, isGrabbed ? "rgba(239, 68, 68, 0.6)" : "rgba(56, 189, 248, 0.6)");
     }
 
-    const grad = stageCtx.createRadialGradient(x - r * 0.3, y - r * 0.35, r * 0.1, x, y, r);
-    grad.addColorStop(0, isGrabbed ? "#fca5a5" : "#e0f2fe");
-    grad.addColorStop(1, isGrabbed ? "#bb4c2e" : style.colour);
-
-    stageCtx.fillStyle = grad;
-    stageCtx.beginPath();
-    stageCtx.arc(x, y, r, 0, Math.PI * 2);
-    stageCtx.fill();
+    stageCtx.radial(x - r * 0.3, y - r * 0.35, r * 0.1, x, y, r,
+      [[0, isGrabbed ? "#fca5a5" : "#e0f2fe"], [1, isGrabbed ? "#bb4c2e" : style.colour]], 16);
   }
+  stageCtx.end(stageCanvas.width, stageCanvas.height);
 }
 
 // 3D Spatial Perspective Projector
@@ -885,7 +870,6 @@ function project3D(x, y, z, view) {
 }
 
 function drawScene3D(w, view) {
-  stageCtx.clearRect(0, 0, view.width, view.height);
 
   const { width: W, height: H, depth: D } = state.world;
   const boxCorners = [
@@ -899,13 +883,8 @@ function drawScene3D(w, view) {
     [0,4], [1,5], [2,6], [3,7],
   ];
 
-  stageCtx.strokeStyle = "rgba(46, 67, 60, 0.35)";
-  stageCtx.lineWidth = 1;
   for (const [a, b] of boxEdges) {
-    stageCtx.beginPath();
-    stageCtx.moveTo(boxCorners[a].px, boxCorners[a].py);
-    stageCtx.lineTo(boxCorners[b].px, boxCorners[b].py);
-    stageCtx.stroke();
+    stageLine(boxCorners[a].px, boxCorners[a].py, boxCorners[b].px, boxCorners[b].py, 1, "rgba(46, 67, 60, 0.35)");
   }
 
   const items = [];
@@ -946,38 +925,22 @@ function drawScene3D(w, view) {
 
   for (const item of items) {
     if (item.type === "bond") {
-      stageCtx.strokeStyle = `rgba(52, 211, 153, ${0.5 + 0.5 * item.depth})`;
-      stageCtx.lineWidth = Math.max(2, (3.5 + 6 * item.depth) * (item.pi.scale / 18));
-      stageCtx.lineCap = "round";
-      stageCtx.beginPath();
-      stageCtx.moveTo(item.pi.px, item.pi.py);
-      stageCtx.lineTo(item.pj.px, item.pj.py);
-      stageCtx.stroke();
+      carried.stageRound = true;
+      stageCtx.roundLine(item.pi.px, item.pi.py, item.pj.px, item.pj.py,
+        Math.max(2, (3.5 + 6 * item.depth) * (item.pi.scale / 18)), `rgba(52, 211, 153, ${0.5 + 0.5 * item.depth})`);
     } else if (item.type === "atom") {
       const { proj, style, isGrabbed, isSelected } = item;
       const r = Math.max(4, state.radius * style.scale * proj.scale);
 
       if (isGrabbed || isSelected) {
-        stageCtx.strokeStyle = isGrabbed ? "rgba(239, 68, 68, 0.6)" : "rgba(56, 189, 248, 0.6)";
-        stageCtx.lineWidth = 4;
-        stageCtx.beginPath();
-        stageCtx.arc(proj.px, proj.py, r + 3, 0, Math.PI * 2);
-        stageCtx.stroke();
+        stageCtx.strokeCircle(proj.px, proj.py, r + 3, 4, isGrabbed ? "rgba(239, 68, 68, 0.6)" : "rgba(56, 189, 248, 0.6)");
       }
 
-      const grad = stageCtx.createRadialGradient(
-        proj.px - r * 0.35, proj.py - r * 0.35, r * 0.1,
-        proj.px, proj.py, r
-      );
-      grad.addColorStop(0, isGrabbed ? "#fca5a5" : "#e0f2fe");
-      grad.addColorStop(1, isGrabbed ? "#bb4c2e" : style.colour);
-
-      stageCtx.fillStyle = grad;
-      stageCtx.beginPath();
-      stageCtx.arc(proj.px, proj.py, r, 0, Math.PI * 2);
-      stageCtx.fill();
+      stageCtx.radial(proj.px - r * 0.35, proj.py - r * 0.35, r * 0.1, proj.px, proj.py, r,
+        [[0, isGrabbed ? "#fca5a5" : "#e0f2fe"], [1, isGrabbed ? "#bb4c2e" : style.colour]], 16);
     }
   }
+  stageCtx.end(stageCanvas.width, stageCanvas.height);
 }
 
 // ------------------- Multi-Touch Gesture System -------------------
@@ -1073,7 +1036,6 @@ function drawCurve() {
   if (!w) return;
   const view = fitCanvas(curveCanvas, curveCtx);
   const W = view.width, H = view.height;
-  curveCtx.clearRect(0, 0, W, H);
 
   const rMin = 0.5, rMax = 9.0;
   const de = w.holon_table_d_e();
@@ -1081,24 +1043,17 @@ function drawCurve() {
   const px = (r) => ((r - rMin) / (rMax - rMin)) * W;
   const py = (u) => H - ((u - uMin) / (uMax - uMin)) * H;
 
-  curveCtx.strokeStyle = "rgba(46, 67, 60, 0.4)";
-  curveCtx.setLineDash([3, 3]);
-  curveCtx.beginPath();
-  curveCtx.moveTo(0, py(0));
-  curveCtx.lineTo(W, py(0));
-  curveCtx.stroke();
-  curveCtx.setLineDash([]);
+  // (its width is the 2D context's carried one: see CANVAS STATE THAT CARRIED OVER)
+  curveCtx.path([[0, py(0)], [W, py(0)]], carried.curveWidth, "rgba(46, 67, 60, 0.4)", [3, 3]);
 
-  curveCtx.strokeStyle = "#34d399";
-  curveCtx.lineWidth = 2;
-  curveCtx.beginPath();
+  const pts = [];
   for (let i = 0; i <= 200; i++) {
     const r = rMin + (rMax - rMin) * (i / 200);
     const u = Math.max(uMin, Math.min(uMax, w.holon_curve_u(r)));
-    if (i === 0) curveCtx.moveTo(px(r), py(u));
-    else curveCtx.lineTo(px(r), py(u));
+    pts.push([px(r), py(u)]);
   }
-  curveCtx.stroke();
+  curveCtx.path(pts, 2, "#34d399", null, true);
+  carried.curveWidth = 2;
 
   const pairs = w.holon_pair_count();
   let best = -1, bestR = Infinity;
@@ -1115,16 +1070,14 @@ function drawCurve() {
 
     if (bestR > rMin && bestR < rMax) {
       const u = Math.max(uMin, Math.min(uMax, w.holon_curve_u(bestR)));
-      curveCtx.fillStyle = bonded ? "#34d399" : "#bb4c2e";
-      curveCtx.beginPath();
-      curveCtx.arc(px(bestR), py(u), 4.5, 0, Math.PI * 2);
-      curveCtx.fill();
+      curveCtx.disc(px(bestR), py(u), 4.5, bonded ? "#34d399" : "#bb4c2e");
     }
 
     ui.pairR.textContent = `${bestR.toFixed(4)} a₀`;
     ui.pairErel.textContent = `${eRel.toExponential(3)} Eh`;
     ui.pairRouter.textContent = Number.isFinite(rOuter) ? `${rOuter.toFixed(3)} a₀` : "unbound";
   }
+  curveCtx.end(curveCanvas.width, curveCanvas.height);
 }
 
 // =========================================================================
@@ -1821,61 +1774,38 @@ function updateZXStats() {
 
 function drawZXGraph() {
   const view = fitCanvas(zxCanvas, zxCtx);
-  zxCtx.clearRect(0, 0, view.width, view.height);
+  const done = () => zxCtx.end(zxCanvas.width, zxCanvas.height);
+  void view;
 
   const g = state.zxGraph;
-  if (!g || g.nodes.length === 0) return;
+  if (!g || g.nodes.length === 0) { done(); return; }
 
   for (const edge of g.edges) {
     const u = g.nodes[edge.u];
     const v = g.nodes[edge.v];
     if (!u || !v) continue;
-
-    zxCtx.strokeStyle = edge.hadamard ? "#3b82f6" : "rgba(237, 233, 223, 0.4)";
-    zxCtx.lineWidth = edge.hadamard ? 2 : 1.5;
-    zxCtx.setLineDash(edge.hadamard ? [4, 4] : []);
-
-    zxCtx.beginPath();
-    zxCtx.moveTo(u.x, u.y);
-    zxCtx.lineTo(v.x, v.y);
-    zxCtx.stroke();
-    zxCtx.setLineDash([]);
+    zxCtx.path([[u.x, u.y], [v.x, v.y]], edge.hadamard ? 2 : 1.5,
+      edge.hadamard ? "#3b82f6" : "rgba(237, 233, 223, 0.4)", edge.hadamard ? [4, 4] : null);
   }
 
+  // A spider: Canvas filled the circle, then stroked its outline centred on it. Both colours
+  // are opaque, so that is exactly a disc of the stroke colour out to r + width/2 under a
+  // disc of the fill colour out to r - width/2.
+  const spider = (x, y, r, fill, stroke, width) => {
+    zxCtx.disc(x, y, r + width / 2, stroke);
+    zxCtx.disc(x, y, r - width / 2, fill);
+  };
   for (const node of g.nodes) {
-    zxCtx.beginPath();
-    if (node.type === "Z") {
-      zxCtx.fillStyle = "#22c55e";
-      zxCtx.arc(node.x, node.y, 10, 0, Math.PI * 2);
-      zxCtx.fill();
-      zxCtx.strokeStyle = "#15803d";
-      zxCtx.lineWidth = 2;
-      zxCtx.stroke();
-    } else if (node.type === "X") {
-      zxCtx.fillStyle = "#ef4444";
-      zxCtx.arc(node.x, node.y, 10, 0, Math.PI * 2);
-      zxCtx.fill();
-      zxCtx.strokeStyle = "#b91c1c";
-      zxCtx.lineWidth = 2;
-      zxCtx.stroke();
-    } else {
-      zxCtx.fillStyle = "#475569";
-      zxCtx.arc(node.x, node.y, 6, 0, Math.PI * 2);
-      zxCtx.fill();
-      zxCtx.strokeStyle = "#94a3b8";
-      zxCtx.lineWidth = 1.5;
-      zxCtx.stroke();
-    }
+    if (node.type === "Z") spider(node.x, node.y, 10, "#22c55e", "#15803d", 2);
+    else if (node.type === "X") spider(node.x, node.y, 10, "#ef4444", "#b91c1c", 2);
+    else spider(node.x, node.y, 6, "#475569", "#94a3b8", 1.5);
 
     if (node.phase !== 0 && node.type !== "Boundary") {
-      zxCtx.fillStyle = "#ffffff";
-      zxCtx.font = "bold 9px monospace";
-      zxCtx.textAlign = "center";
-      zxCtx.textBaseline = "middle";
       const pText = node.phase === 4 ? "π" : node.phase === 2 ? "π/2" : `${node.phase}π/4`;
-      zxCtx.fillText(pText, node.x, node.y - 14);
+      zxCtx.text(pText, PHASE_STYLE, node.x, node.y - 14, "#ffffff", "center", "middle");
     }
   }
+  done();
 }
 
 function fuseZXSpiders() {

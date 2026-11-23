@@ -26,6 +26,15 @@ PASS CONDITIONS (written 2026-11-23, before the first run; never edited after a 
       (the check wraps each stage's drawer.draw, before any frame, to mark when it runs).
       (This sentence was revised on 2026-11-23 BEFORE the first run: the committed version
       asked for a sum the page's per-frame report cannot give for a canvas drawn on events.)
+
+RUN 1 (2026-11-23): C1-C3 and C5-C7 PASS; C4 FAILED: 6 of #zx-canvas's 12 GL draws were
+  counted outside draw.js. The cause is this file: the page draws the ZX graph once during
+  boot (runCircuit -> drawZXGraph, before its first frame), and the wrapper was installed by
+  the ready test, after that draw; so those 6 were draw.js's but unmarked. C4's own words
+  ("before any frame") did not cover a draw made before the first frame.
+CORRECTION (2026-11-23, after run 1): the wrapper is installed by an init script the moment
+  the page publishes window.__unifiedStages (a setter on window), before any drawer can draw.
+  Conditions not edited; run 2 is judged by them as written.
   C5  BEFORE and AFTER reach the SAME STATE: the text of every element with an id inside
       #pane-physics, and of every element whose id starts "zx-", are equal, read after
       step 4.
@@ -72,10 +81,13 @@ def shot(page, sel, name):
     page.locator(sel).screenshot(path=os.path.join(out, f"{page.__label}-{name}.png"))
 
 
-WRAP = """(() => { const S = window.__unifiedStages; if (!S) return false;
+# installed with the init script: wraps each drawer's draw() when the page publishes the handle
+WRAP = """(() => { let held;
+  Object.defineProperty(window, '__unifiedStages', { configurable: true, get() { return held; }, set(S) {
+    held = S;
     for (const k of ['stage', 'curve', 'zx']) { const d = S[k].drawer, o = d.draw;
       d.draw = function (...a) { window.__inDrawJs++; try { return o.apply(this, a); } finally { window.__inDrawJs--; } }; }
-    return true; })()"""
+  } }); })();"""
 
 
 def extra(page):
@@ -115,9 +127,8 @@ def extra(page):
 
 
 check = {
-    "cfg": {"seed": 20261123, "clockStep": 25},
-    # ready also wraps the drawers (once, in AFTER), before the first pumped frame
-    "ready": "document.body.dataset.engine === 'ready' && window.__queued() > 0 && (window.__wrapped = window.__wrapped || " + WRAP + " || true)",
+    "cfg": {"seed": 20261123, "clockStep": 25, "initExtra": None},
+    "ready": "document.body.dataset.engine === 'ready' && window.__queued() > 0",
     "state": """(() => {
         const o = {};
         for (const el of document.querySelectorAll('#pane-physics [id], [id^="zx-"]')) o[el.id] = el.textContent.trim();
@@ -131,6 +142,7 @@ check = {
     "viewport": {"width": 1440, "height": 1000},
 }
 
+check["cfg"]["initExtra"] = WRAP
 results = {}
 os.makedirs(out, exist_ok=True)
 before_root = harness.before_tree(repo, commit, out)

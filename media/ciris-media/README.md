@@ -31,16 +31,16 @@ changed byte, a wrong size and a missing pin.
 
 **Status, 2026-11-23.** Not published. All eight jars are pinned by sha256. CI has fetched
 them, built the four wheels twice to the same bytes, and installed one. The wheels are
-19.5 to 27.5 MB. The GitHub environment  exists; the PyPI project and its trusted
+19.5 to 27.5 MB. The GitHub environment `pypi` exists; the PyPI project and its trusted
 publisher do not, and only the account owner can make them:
 
 | PyPI "pending publisher" field | value |
 |---|---|
-| PyPI project name |  |
-| owner |  |
-| repository |  |
-| workflow |  |
-| environment |  |
+| PyPI project name | `ciris-media` |
+| owner | `CIRISAI` |
+| repository | `CIRISHolon` |
+| workflow | `ciris-media.yml` |
+| environment | `pypi` |
 
 Then: Actions, ciris-media, Run workflow on main, with publish ticked.
 

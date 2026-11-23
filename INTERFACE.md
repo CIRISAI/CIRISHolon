@@ -747,3 +747,43 @@ machine's GPU, the GL calls for flat-map tiles fell from 51.0 a tile (one call p
 twin's way) to 19.1 (one call for all). **NOT checked:** the twin's own timing witness with the
 twin using one call. The twin's code is not changed here, so the stake in its README (at most
 1.10 x its own program's frame) is not yet answered.
+
+## 16. A triangle mark, a globe light, and a multiplying blend (2026-11-23)
+
+The CEWP twin's globe is still drawn by its own WebGL programs (CIRISAI/CEWP#24 lists them). Three
+gaps were the smallest that stood between those programs and this engine, and all three are built
+in the browser backends. Where this section and the text above disagree, this section holds. The
+contract is `web/draw.js`'s header (TRIANGLE, GLOBE, BLEND, PRECISION, GL STATE); `draw-webgpu.js`
+draws the same. The core, `lib.rs`, is unchanged.
+
+**1. A thirteenth mark: `triangle` (kind 13).** §1's marks are shapes the engine knows: a disc, a
+box, a line. A land fill, a terrain or a lit sphere seen as a map is none of them: it is a mesh the
+host already holds. The record carries three corners (`pos`, `size`, `aux`) and a colour, so a mesh
+is a batch of records, drawn by instancing like every other mark, resident or not. It is flat and
+unlit (lit under `flatLit`), never culled, in no surface class, world only. It is a backend kind,
+like the matrix per batch of §15: the core's `Kind` stops at 12 and does not emit it, and a host
+packing its own records uses it. Bringing it into the core (its bounding sphere, `pick`, `report`)
+is owed if a core consumer needs it.
+
+**2. GLOBE: a sphere's day and night as a batch's light (§1 S1).** Every globe program of the twin
+computes `dot(p, sun)` itself and shades by it. A world batch may now carry `globe`: a centre, the
+direction toward a sun, a terminator, factors on rgb and alpha for night and day, a Lambert share,
+and a limb fade toward the viewer. It is the host's sun, not the frame's light, and it applies to
+any mark in the batch, not only to triangles: a coastline drawn as lines takes it as the land does.
+It is refused with `opts.shadow` on both backends, because the GL shadow program has no room for
+its varying.
+
+**3. BLEND 'multiply' (§15 item 2).** The 2x multiply: `2 x destination x mix(0.5, source,
+alpha)`. Mid grey leaves the picture as it is, and alpha fades the effect toward none. It is what
+the twin's relief does to the land under it. Like 'add', it writes no depth and casts no shadow.
+
+**Checked** (SwiftShader in headless Chrome, both backends, `tools/webgpu_parity.py`, mode
+`globe`, numbers in the crate README's section of this date). Eighteen squares drawn as 36 triangle
+records are identical, pixel for pixel, to the same squares as 18 quad records, on both backends,
+on WebGL 1, mediump, the no-highp gate and bare WebGL 1. Nine points on a lit hemisphere and
+sixteen of multiplying discs match the header's arithmetic within 1 per channel (the gate allows
+3). Resident batches draw what `bytes` batches draw. The GL blend state after `draw()` is the
+promised one. Three planted faults (a triangle's ramp position, the sun turned 12 degrees, the
+multiply drawn as alpha) each make the gate fail. **NOT checked here:** any twin picture. Whether
+the twin's globe drawn this way looks as its own programs draw it is the twin's gate, with its own
+stakes.

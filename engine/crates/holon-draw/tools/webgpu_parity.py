@@ -12,7 +12,8 @@ a screen panel, FLOW on lines and arcs (tube, flat ribbon, screen, one resident)
 0.25, and a 400-unit ground patch under the RING; iconsmove: the same at phase 0.75; tiles:
 ?tiles=1, 48 small flat-map tiles each with its own matrix (BATCH MATRIX), drawn in one draw();
 tiles3d: ?tiles=2, 42 tiles of lit marks and camera-facing glyphs in one perspective view, each
-tile's matrix the camera's times its own translation; add: ?add=1, BLEND 'add') and for
+tile's matrix the camera's times its own translation; add: ?add=1, BLEND 'add'; globe: ?globe=1,
+kind 13 TRIANGLE, GLOBE and BLEND 'multiply') and for
 the scene alone (?overlay=0) and with the panels, it loads both pages in one headless Google
 Chrome at the same size, device pixel ratio 1 and camera, waits for the page's own
 `document.body.dataset.ready`, takes a screenshot of the canvas, and compares the two:
@@ -61,6 +62,18 @@ screenshot is the arithmetic's colour within ADD_TOL per channel; on WebGL the b
 back after draw() is the one GL STATE promises (dataset.add.ok); ?resident=1 is identical to
 the bytes page (max 0), panels on and off; and the WebGL 1 / mediump / nohigh / bare WebGL 1
 pages pass the same points with gl error 0.
+THE GLOBE MODE IS GATED on each backend (2026-11-23): draw() must throw on a globe with
+shadows, with no sun, a zero sun or a short `day`, and on a bad blend, and must draw a multiply
+batch and a sun-only globe (dataset.refusals.ok); with the panels off, at every point the page
+lists (dataset.globe.points: nine on the lit hemisphere, from the day side through the
+terminator to the limb, and sixteen of multiplying discs, world and screen, over a dark and a
+bright ground) the screenshot is the arithmetic's colour within GLOBE_TOL per channel; the 18
+squares drawn as 36 TRIANGLE records and as 18 QUAD records (?triquads=1) are identical (max 0);
+?resident=1 is identical to bytes (max 0), panels on and off; on WebGL the blend state after
+draw() is GL STATE's; and the WebGL 1 / mediump / nohigh / bare WebGL 1 pages pass the points
+and the triangle check with gl error 0. --plant tri|globe|mul plants a fault in the scene (one
+triangle's t moved; the sun turned 12 degrees from the one the points assume; the multiplying
+discs drawn with the alpha blend): the gate must then FAIL, and each did when this was written.
 Exit status 0 when all of that holds; the pixel numbers are REPORTED, not gated (the two
 backends rasterise on different paths, see the README).
 
@@ -103,12 +116,14 @@ CHROME_ARGS = [
 MODES = {"default": "", "map": "map=1", "noshadow": "shadow=0", "images": "images=1",
          "resident": "resident=1", "residentmap": "map=1&resident=1", "residentimages": "images=1&resident=1",
          "icons": "icons=1", "iconsmove": "icons=1&phase=0.75",
-         "tiles": "tiles=1", "tiles3d": "tiles=2", "add": "add=1"}
+         "tiles": "tiles=1", "tiles3d": "tiles=2", "add": "add=1", "globe": "globe=1"}
 TILES_MODES = ("tiles", "tiles3d")
 GL_VARIANTS = ("gl=1", "mediump=1", "gl=1&mediump=1", "nohigh=1", "gl=1&novao=1")
 ADD_TOL = 2
+GLOBE_TOL = 3   # the globe's varyings are interpolated over 3-degree triangles; the points assume the true sphere
+PLANTS = ("tri", "globe", "mul")
 RESIDENT_BASE = {"resident": "default", "residentmap": "map", "residentimages": "images"}
-MESH_FUNCS = ["sphereMesh", "tubeMesh", "capsuleMesh", "arcCapsuleMesh", "arcRibbonMesh",
+MESH_FUNCS = ["sphereMesh", "tubeMesh", "capsuleMesh", "arcCapsuleMesh", "arcRibbonMesh", "triMesh",
               "ribbonMesh", "boxMesh", "quadMesh", "discMesh"]
 
 COMPARE_JS = """
@@ -219,6 +234,7 @@ def load(browser, url, w, h, shot):
                          "  resident: document.body.dataset.resident ? JSON.parse(document.body.dataset.resident) : null,"
                          "  flow: document.body.dataset.flow ? JSON.parse(document.body.dataset.flow) : null,"
                          "  add: document.body.dataset.add ? JSON.parse(document.body.dataset.add) : null,"
+                         "  globe: document.body.dataset.globe ? JSON.parse(document.body.dataset.globe) : null,"
                          "  refusals: document.body.dataset.refusals ? JSON.parse(document.body.dataset.refusals) : null })")
     png = page.locator("#c").screenshot(type="png") if shot else None
     return page, info, errs, png
@@ -231,6 +247,7 @@ def main():
     ap.add_argument("--height", type=int, default=600)
     ap.add_argument("--modes", default=",".join(MODES))
     ap.add_argument("--fps", type=float, default=0, help="seconds of ?spin=1 per page to count frames (0: skip)")
+    ap.add_argument("--plant", default="", choices=("",) + PLANTS, help="a fault planted in the globe mode's scene (?plant=); the gate must then FAIL")
     args = ap.parse_args()
     os.makedirs(args.out, exist_ok=True)
 
@@ -414,25 +431,25 @@ def main():
                     r.pop("diff_png", None)
                     print("     %-58s vs WebGL 2 highp: max %s, over_8 %s%%" % ("%s %s test.html?%s (%s)" % (mode, tag, extra, (one[1]["stats"] or {}).get("version")), r.get("max"), r.get("over_8")))
 
-        def add_points(label, png, info, gl_state):
+        def add_points(label, png, info, gl_state, key="add", tol=ADD_TOL):
             nonlocal ok
-            a = info.get("add") or {}
+            a = info.get(key) or {}
             pts = a.get("points") or []
             got = pixels(png, [[p["x"], p["y"]] for p in pts])
             worst, bad = 0, []
             for p, g in zip(pts, got):
                 d = max(abs(g[c] - p["want"][c]) for c in range(3))
                 worst = max(worst, d)
-                if d > ADD_TOL: bad.append("%s at (%d, %d): rgb %s, want %s" % (p["what"], p["x"], p["y"], g[:3], p["want"]))
+                if d > tol: bad.append("%s at (%d, %d): rgb %s, want %s" % (p["what"], p["x"], p["y"], g[:3], p["want"]))
             if not pts: bad.append("the page listed no points")
-            if gl_state and not a.get("ok"): bad.append("the blend state after draw() is not GL STATE's: %s" % json.dumps({k: a.get(k) for k in ("afterMain", "afterDepthA")}))
+            if gl_state and not a.get("ok"): bad.append("the blend state after draw() is not GL STATE's: %s" % json.dumps({k: a.get(k) for k in ("afterMain", "afterDepthA", "after")}))
             st = info["stats"] or {}
             if "glError" in st and st.get("glError") != 0: bad.append("glError %s" % st.get("glError"))
-            print("     %-58s %d points, largest difference from the arithmetic %d (tolerance %d)%s" % (label, len(pts), worst, ADD_TOL, "; blend state after draw() as promised" if gl_state and a.get("ok") else ""))
-            report.setdefault("add", []).append(dict(label=label, points=len(pts), worst=worst, state=a.get("afterMain") if gl_state else None, state_ok=a.get("ok") if gl_state else None))
+            print("     %-58s %d points, largest difference from the arithmetic %d (tolerance %d)%s" % (label, len(pts), worst, tol, "; blend state after draw() as promised" if gl_state and a.get("ok") else ""))
+            report.setdefault(key, []).append(dict(label=label, points=len(pts), worst=worst, state=(a.get("afterMain") or a.get("after")) if gl_state else None, state_ok=a.get("ok") if gl_state else None))
             if bad:
                 ok = False
-                for x in bad: print("FAIL add %s: %s" % (label, x))
+                for x in bad: print("FAIL %s %s: %s" % (key, label, x))
 
         def add_gate(overlay, qs, pngs, infos):
             tag = "scene" if overlay == "0" else "panels"
@@ -448,9 +465,57 @@ def main():
                     png, info = shot("test.html", qs + "&" + extra, "add_%s_webgl_%s" % (tag, extra.replace("&", "_").replace("=", "")))
                     add_points("add %s test.html?%s (%s)" % (tag, extra, (info["stats"] or {}).get("version")), png, info, True)
 
+        def globe_gate(overlay, qs, pngs, infos):
+            """?globe=1: the TRIANGLE squares draw what the same squares as QUAD records draw (max 0), the
+            globe and the multiplying discs give the header's arithmetic at every listed point, draw()
+            refuses what GLOBE and BLEND say it refuses, resident draws what bytes draw, and on WebGL the
+            blend state after draw() is GL STATE's; WebGL 1, mediump, nohigh and bare WebGL 1 pass the points."""
+            nonlocal ok
+            tag = "scene" if overlay == "0" else "panels"
+            for k, name in enumerate(("test.html", "test-webgpu.html")):
+                be = "webgl" if k == 0 else "webgpu"
+                rf = infos[k].get("refusals") or {}
+                print("     %-58s %s" % ("globe %s %s refusals" % (tag, be), "ok: throws on a globe with shadows, no sun, a zero sun, a short day, a bad blend; a multiply batch and a sun-only globe draw" if rf.get("ok") else "FAILED"))
+                report.setdefault("refusals", []).append(dict(mode="globe", tag=tag, backend=be, **rf))
+                if not rf.get("ok"):
+                    ok = False
+                    print("FAIL globe %s %s refusals: %s" % (tag, be, json.dumps(rf)))
+                if overlay == "0":
+                    add_points("globe %s %s" % (tag, be), pngs[k], infos[k], k == 0, "globe", GLOBE_TOL)
+                if overlay == "0":
+                    png, info = shot(name, qs + "&triquads=1", "globe_%s_%s_triquads" % (tag, be))
+                    tri_quads("globe %s %s: the squares as QUAD records vs TRIANGLE" % (tag, be), png, info, (pngs[k], infos[k]))
+                png, info = shot(name, qs + "&resident=1", "globe_%s_%s_resident" % (tag, be))
+                wb = (infos[k]["stats"] or {}).get("bytesUploaded", 0) - ((info.get("resident") or {}).get("worldBytes") or 0)
+                same_as("globe %s %s ?resident=1 vs bytes" % (tag, be), png, info, (pngs[k], infos[k]), wb)
+            if overlay == "0":
+                for extra in GL_VARIANTS:
+                    png, info = shot("test.html", qs + "&" + extra, "globe_%s_webgl_%s" % (tag, extra.replace("&", "_").replace("=", "")))
+                    add_points("globe %s test.html?%s (%s)" % (tag, extra, (info["stats"] or {}).get("version")), png, info, True, "globe", GLOBE_TOL)
+                    tq = shot("test.html", qs + "&" + extra + "&triquads=1", "globe_%s_webgl_%s_triquads" % (tag, extra.replace("&", "_").replace("=", "")))
+                    tri_quads("globe %s test.html?%s: QUAD vs TRIANGLE" % (tag, extra), tq[0], tq[1], (png, info))
+
+        def tri_quads(label, png, info, ref):
+            """The 18 squares as QUAD records (png) against the same as 36 TRIANGLE records (ref): the
+            pictures identical (max 0), the draw calls the same, 18 instances fewer, gl error 0."""
+            nonlocal ok
+            r = compare(png, ref[0])
+            r.pop("diff_png", None)
+            st, rs = info["stats"] or {}, ref[1]["stats"] or {}
+            bad = []
+            if r.get("max") != 0: bad.append("pixels differ (max %s, mean_abs %s)" % (r.get("max"), r.get("mean_abs")))
+            if st.get("drawCalls") != rs.get("drawCalls") or (rs.get("instances") or 0) - (st.get("instances") or 0) != 18:
+                bad.append("draw calls %s vs %s, instances %s vs %s (want the same calls, 18 instances more as triangles)" % (st.get("drawCalls"), rs.get("drawCalls"), st.get("instances"), rs.get("instances")))
+            if "glError" in st and st.get("glError") != 0: bad.append("glError %s" % st.get("glError"))
+            print("     %-58s max %s  instances %s as quads, %s as triangles" % (label, r.get("max"), st.get("instances"), rs.get("instances")))
+            report.setdefault("triquads", []).append(dict(label=label, max=r.get("max"), mean_abs=r.get("mean_abs")))
+            if bad:
+                ok = False
+                print("FAIL %s: %s" % (label, "; ".join(bad)))
+
         for mode in args.modes.split(","):
             for overlay in ("0", "1"):
-                qs = "&".join(x for x in (MODES[mode], "overlay=0" if overlay == "0" else "") if x)
+                qs = "&".join(x for x in (MODES[mode], "overlay=0" if overlay == "0" else "", ("plant=" + args.plant) if args.plant and mode == "globe" else "") if x)
                 pngs, infos = [], []
                 for name in ("test.html", "test-webgpu.html"):
                     tag = "%s_%s_%s" % (mode, "scene" if overlay == "0" else "panels", "webgl" if name == "test.html" else "webgpu")
@@ -480,6 +545,8 @@ def main():
                     tiles_gate(mode, overlay, qs, pngs, infos)
                 if mode == "add":
                     add_gate(overlay, qs, pngs, infos)
+                if mode == "globe":
+                    globe_gate(overlay, qs, pngs, infos)
                 if mode in RESIDENT_BASE:
                     bm = RESIDENT_BASE[mode]
                     bqs = "&".join(x for x in (MODES[bm], "overlay=0" if overlay == "0" else "") if x)

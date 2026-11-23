@@ -655,7 +655,7 @@ export function tilesScene(q, canvas) {
 }
 
 // A batch as draw() takes it, with every field the engine reads (and `extra` on top).
-const asBatch = (b, extra) => Object.assign({ kind: b.kind, count: b.count, bytes: b.bytes, handle: b.handle, first: b.first, offset: b.offset, params: b.params, coarse: b.coarse, screen: b.screen, shade: b.shade, blend: b.blend }, extra);
+const asBatch = (b, extra) => Object.assign({ kind: b.kind, count: b.count, bytes: b.bytes, handle: b.handle, first: b.first, offset: b.offset, params: b.params, coarse: b.coarse, screen: b.screen, shade: b.shade, blend: b.blend, globe: b.globe }, extra);
 // The batches of `list` (bytes) in ONE resident buffer, each a range of it; returns the new batches.
 export function toResident(drawer, list) {
   let n = 0;
@@ -766,5 +766,122 @@ export function tilesRefusals(ts, tryDraw) {
     ppuWithShadow: tryDraw([asBatch(b, { pixelsPerUnit: 9 })], vp, { viewport, shadow }),
   };
   log.ok = !!log.vpWithShadow && !!log.badBlend && !!log.shortVp && !!log.noVpAtAll && log.ppuWithShadow === null;
+  return log;
+}
+
+// ---- ?globe=1: kind 13 TRIANGLE, GLOBE and BLEND 'multiply' (draw.js's header) ----
+// One flat pixel-space view (no depth test), the panels optional:
+//   top left   18 squares, each as two TRIANGLE records (literal, RAMP with t = angle, TINT), under
+//              a tile's FADE and DIM. With ?triquads=1 the same squares are QUAD records, and the
+//              two pictures must be the same, pixel for pixel.
+//   top right  a hemisphere of radius R facing the viewer, built of triangles on a 3-degree grid,
+//              grey, with a `globe` (a sun, the terminator, rgb and alpha by night and day, a
+//              Lambert share, the limb), over a dark ground. `points` lists pixels and the
+//              colour the header's arithmetic gives there.
+//   bottom     a dark and a bright ground; multiplying discs (one opaque, one at alpha 0.5, and
+//              the two overlapping), in the world and on screen; `points` again.
+// ?plant=tri|globe|mul plants a fault the gate must catch: one triangle's t moved by 0.3 (the
+// triquads picture then differs); the sun turned 12 degrees from the one the points assume; the
+// multiplying discs drawn with the alpha blend.
+export function globeScene(canvas, q) {
+  const W = canvas.width, H = canvas.height, plant = q.get('plant') || '';
+  const vp = new Float32Array([2 / W, 0, 0, 0, 0, 2 / H, 0, 0, 0, 0, -0.001, 0, -1, -1, 0, 1]);
+  const main = [], points = [];
+  const shot = (x, yw) => [x, H - 1 - yw];   // a pixel's (x, y from the top) from its world y (pixel rows from the bottom)
+  // the triangles (or quads)
+  const asQuads = q.get('triquads') === '1';
+  const tp = PARAMS_NEUTRAL.slice();
+  tp[PARAM.DIM] = 0.9; tp[PARAM.DIM + 1] = 0.95; tp[PARAM.DIM + 2] = 1; tp[PARAM.FADE] = 0.8;
+  tp[PARAM.RAMP0] = 0.9; tp[PARAM.RAMP0 + 1] = 0.2; tp[PARAM.RAMP0 + 2] = 0.1;
+  tp[PARAM.RAMP1] = 0.1; tp[PARAM.RAMP1 + 1] = 0.7; tp[PARAM.RAMP1 + 2] = 0.9;
+  tp[PARAM.TINT] = 0.5; tp[PARAM.TINT + 1] = 0.9; tp[PARAM.TINT + 2] = 0.6;
+  const tris = new Batch(asQuads ? KIND.QUAD : KIND.TRIANGLE);
+  tris.params = tp;
+  const S = 40, X0 = 24, Y0 = H - 24 - 3 * S;
+  for (let j = 0; j < 3; j++) for (let i = 0; i < 6; i++) {
+    const x0 = X0 + i * (S + 4), y0 = Y0 + j * (S + 4), x1 = x0 + S, y1 = y0 + S, k = j * 6 + i;
+    const mode = [0, COLOUR.RAMP, COLOUR.TINT][j], t = i / 5;
+    const rgba = [60 + 30 * i, 220 - 25 * i, 90 + 20 * j, 255 - 20 * (i % 3)];
+    if (asQuads) tris.add([x0 + S / 2, y0 + S / 2, 0], [S, S, 0], [t, 0, 0], 0, rgba, 0, mode);
+    else {
+      const tt = plant === 'tri' && k === 7 ? t + 0.3 : t;
+      tris.add([x0, y0, 0], [x1, y0, 0], [x1, y1, 0], tt, rgba, 0, mode);
+      tris.add([x0, y0, 0], [x1, y1, 0], [x0, y1, 0], tt, rgba, 0, mode);
+    }
+  }
+  main.push(tris);
+  // the globe
+  const R = Math.round(Math.min(W, H) * 0.22), cx = Math.round(W * 0.72), cy = Math.round(H * 0.68);
+  const G = [24, 30, 44], GREY = [200, 200, 200, 255];
+  const ground = new Batch(KIND.QUAD);
+  ground.add([cx, cy, -0.5], [2.4 * R, 2.4 * R, 0], null, 0, [...G, 255]);
+  main.push(ground);
+  const norm = (v) => { const l = Math.hypot(v[0], v[1], v[2]); return [v[0] / l, v[1] / l, v[2] / l]; };
+  const sun = norm([-0.45, 0.35, 0.55]);
+  const turn = (v, a) => [v[0] * Math.cos(a) - v[2] * Math.sin(a), v[1], v[0] * Math.sin(a) + v[2] * Math.cos(a)];
+  const globe = { centre: [cx, cy, 0], sun: plant === 'globe' ? turn(sun, 12 * Math.PI / 180) : sun, day: [-0.1, 0.15], rgb: [0.3, 1.2], alpha: [0.6, 1], lambert: 0.5, limb: [0, 0.25] };
+  const sph = new Batch(KIND.TRIANGLE);
+  sph.globe = globe;
+  const P = (th, ph) => { const a = th * Math.PI / 180, b = ph * Math.PI / 180; return [cx + R * Math.sin(a) * Math.cos(b), cy + R * Math.sin(a) * Math.sin(b), R * Math.cos(a)]; };
+  for (let th = 0; th < 90; th += 3) for (let ph = 0; ph < 360; ph += 3) {
+    const a = P(th, ph), b = P(th + 3, ph), c = P(th + 3, ph + 3), d = P(th, ph + 3);
+    sph.add(a, b, c, 0, GREY);
+    if (th > 0) sph.add(a, c, d, 0, GREY);
+  }
+  main.push(sph);
+  const sstep = (e0, e1, x) => { const t = Math.min(1, Math.max(0, (x - e0) / (e1 - e0))); return t * t * (3 - 2 * t); };
+  const mix = (a, b, t) => a + (b - a) * t;
+  for (const [u, v] of [[0, 0], [-0.5, 0.4], [0.55, -0.4], [0.2, 0.25], [-0.82, 0.3], [0.95, 0.2], [0.6, 0.5], [0.35, 0.05], [-0.2, -0.6]]) {
+    const x = Math.round(cx + u * R), yw = Math.round(cy + v * R);
+    const nx = (x + 0.5 - cx) / R, ny = (yw + 0.5 - cy) / R, nz = Math.sqrt(Math.max(0, 1 - nx * nx - ny * ny));
+    const d = nx * sun[0] + ny * sun[1] + nz * sun[2], day = sstep(globe.day[0], globe.day[1], d);
+    const f = mix(globe.rgb[0], globe.rgb[1], day * mix(1, Math.max(d, 0), globe.lambert));
+    const a = mix(globe.alpha[0], globe.alpha[1], day) * sstep(globe.limb[0], globe.limb[1], nz);
+    const want = G.map((g, k) => Math.round(Math.min(1, GREY[k] / 255 * f) * 255 * a + g * (1 - a)));
+    const [sx, sy] = shot(x, yw);
+    points.push({ what: 'globe at (' + u + ', ' + v + '): sun ' + d.toFixed(3) + ', limb ' + nz.toFixed(3), x: sx, y: sy, want });
+  }
+  // multiply
+  const DARK = [60, 80, 100], BRIGHT = [200, 190, 170], MA = [220, 120, 40, 255], MB = [100, 180, 220, 128];
+  const mg = new Batch(KIND.QUAD);
+  const hb = Math.round(H * 0.42);
+  mg.add([W / 4, hb / 2, 0], [W / 2, hb, 0], null, 0, [...DARK, 255]);
+  mg.add([3 * W / 4, hb / 2, 0], [W / 2, hb, 0], null, 0, [...BRIGHT, 255]);
+  main.push(mg);
+  const r = Math.round(Math.min(W, H) * 0.07), dx = Math.round(r * 0.6);
+  const wy = Math.round(hb * 0.72), sy = H - Math.round(hb * 0.28);   // world discs' y from the bottom; screen discs' y from the top
+  const mw = new Batch(KIND.DISC), ms = new Batch(KIND.DISC, [0, 0, 0], false, true);
+  for (const cxx of [Math.round(W / 4), Math.round(3 * W / 4)]) {
+    mw.add([cxx - dx, wy, 0], [r, 0, 0], null, 0, MA); mw.add([cxx + dx, wy, 0], [r, 0, 0], null, 0, MB);
+    ms.add([cxx - dx, sy, 0], [r, 0, 0], null, 0, MA); ms.add([cxx + dx, sy, 0], [r, 0, 0], null, 0, MB);
+  }
+  mw.blend = ms.blend = plant === 'mul' ? 'alpha' : 'multiply';
+  main.push(mw, ms);
+  const mul = (dst, c) => dst.map((v, k) => Math.round(255 * Math.min(1, 2 * (v / 255) * mix(0.5, c[k] / 255, c[3] / 255))));
+  for (const [g, cxx, name] of [[DARK, Math.round(W / 4), 'dark'], [BRIGHT, Math.round(3 * W / 4), 'bright']]) {
+    for (const [y, what] of [[H - 1 - wy, 'world'], [sy, 'screen']]) {
+      points.push({ what: 'multiply ' + what + ' ' + name + ' ground', x: cxx, y: y - r - Math.round(r * 0.5), want: g });
+      points.push({ what: 'multiply ' + what + ' ' + name + ' A alone', x: cxx - dx - Math.round(r * 0.7), y, want: mul(g, MA) });
+      points.push({ what: 'multiply ' + what + ' ' + name + ' B alone (alpha 0.5)', x: cxx + dx + Math.round(r * 0.7), y, want: mul(g, MB) });
+      points.push({ what: 'multiply ' + what + ' ' + name + ' A then B', x: cxx, y, want: mul(mul(g, MA), MB) });
+    }
+  }
+  return { vp, main, points, opts: { viewport: [0, 0, W, H], depthTest: false } };
+}
+// ?globe=1: what draw() refuses (GLOBE, BLEND), each tried once before the first frame; the last
+// two are draws that must NOT throw (a multiplying batch; a globe with only a sun).
+export function globeRefusals(gs, tryDraw) {
+  const sph = gs.main[2], vp = gs.vp, viewport = gs.opts.viewport;
+  const g = sph.globe;
+  const log = {
+    withShadow: tryDraw([asBatch(sph)], vp, { viewport, shadow: { center: g.centre, radius: 50 } }),
+    noSun: tryDraw([asBatch(sph, { globe: { day: [0, 1] } })], vp, { viewport }),
+    zeroSun: tryDraw([asBatch(sph, { globe: { sun: [0, 0, 0] } })], vp, { viewport }),
+    shortDay: tryDraw([asBatch(sph, { globe: { sun: [0, 0, 1], day: [0] } })], vp, { viewport }),
+    badBlend: tryDraw([asBatch(sph, { blend: 'screen' })], vp, { viewport }),
+    multiplyDraws: tryDraw([asBatch(gs.main[4])], vp, { viewport }),
+    sunOnlyDraws: tryDraw([asBatch(sph, { globe: { sun: [0, 0, 1] } })], vp, { viewport }),
+  };
+  log.ok = !!log.withShadow && !!log.noSun && !!log.zeroSun && !!log.shortDay && !!log.badBlend && log.multiplyDraws === null && log.sunOnlyDraws === null;
   return log;
 }

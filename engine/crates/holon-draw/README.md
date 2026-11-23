@@ -19,6 +19,48 @@ graphics backend of its own yet.
   uniforms and draw order are untouched.
 - `abi.rs`: the wasm boundary, plain `extern "C"`.
 
+## A triangle, a globe light and a multiplying blend: what was built and checked, 2026-11-23
+
+Three additions to both browser backends, for the CEWP twin's globe (CIRISAI/CEWP#24: its land,
+lakes and relief are meshes, every globe pass shades by its own `dot(p, sun)`, and its relief
+is a 2x multiply). The contract is `web/draw.js`'s header (TRIANGLE, GLOBE, BLEND, PRECISION, GL
+STATE) and `INTERFACE.md` §16. `lib.rs` is unchanged.
+
+- **Kind 13, TRIANGLE.** A record's `pos`, `size` and `aux` are a triangle's corners, drawn on a
+  three-vertex mesh of barycentric weights (`triMesh`, copied into `draw-webgpu.js` and checked
+  for drift with the other builders). World only, flat, unlit, not culled, in no surface class;
+  RAMP's t is `angle`. The core does not emit it.
+- **GLOBE**, per world batch: `{ sun, centre, day, rgb, alpha, lambert, limb }`. The vertex stage
+  hands the fragment stage the unit direction from `centre` dotted with the sun and with the view
+  vector (`v_glb`); the fragment stage scales rgb and alpha by the terminator and the limb, after
+  the mark's own drawing. In GL the fragment `main` is now `hd_main` plus a wrapper that applies
+  it; in WGSL `fs` wraps `fsBody`. GL's program without shadows had seven varying vectors, and
+  `v_glb` makes eight. The shadow program already had eight, so `v_glb` is not declared there,
+  and a globe batch with `opts.shadow` throws on both backends.
+- **BLEND 'multiply'**: `2 x destination x mix(0.5, source rgb, source alpha)`. In GL it is
+  `blendFuncSeparate(DST_COLOR, SRC_COLOR, ZERO, ONE)` with a fragment switch (`u_blendm`,
+  `u_sblendm`) that writes `mix(0.5, rgb, a)`. In WebGPU it is a pipeline variant whose fragment
+  entry point (`fsm`, `sfsm`) writes the same.
+
+**Checked**, with `tools/webgpu_parity.py` (SwiftShader, headless Chrome 152, 960 x 600):
+- The new mode `globe`: 18 squares as 36 triangle records against the same squares as 18 quad
+  records, identical (max 0) on WebGL 2, WebGPU, WebGL 1, mediump, both, nohigh and bare
+  WebGL 1. The 25 points (nine on the lit hemisphere, from the day side across the terminator
+  to the limb; sixteen of multiplying discs, world and screen, opaque and at alpha 0.5, alone
+  and overlapping, on a dark and a bright ground) are at most 1 from the arithmetic on every
+  one of those pages (tolerance 3). Resident and bytes are identical (max 0), panels on and off,
+  and the resident scene uploads 0 bytes. The GL blend state after `draw()` is GL STATE's. The
+  refusals hold: a globe with shadows, no sun, a zero sun, a short `day`, and a bad blend.
+- Planted faults, `--plant`: `tri` (one triangle's t moved by 0.3) fails the triangle check at
+  max 45; `globe` (the sun turned 12 degrees from the one the points assume) fails 6 of the 9
+  globe points on every page, by 7 to 37 levels; `mul` (the multiplying discs drawn with the alpha blend) fails the
+  multiply points. Each run exits 1.
+- Every mode that existed before passes, and its 134 screenshots are byte-identical to a run of
+  the same tool at `f206a4f` (before this change) on the same machine.
+
+**Not checked:** any frame time, and any picture of the twin's. Whether the twin's globe drawn this way
+matches its own programs is the twin's gate, under its own stakes.
+
 ## A matrix per batch and additive blending: what was built and measured, 2026-11-23
 
 Two changes to both browser backends, both asked for by the CEWP twin's move to drawing only

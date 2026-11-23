@@ -28,10 +28,12 @@
 // ./test-scene.js): drawn in ONE draw() with a `vp` and `pixelsPerUnit` on every batch, or with
 // ?percall=1 one draw() per tile with the twin's state restore after each (the two pictures must
 // be the same); ?n=N tiles. ?add=1 is BLEND 'add' (addScene): the points to check and the GL blend
-// state read back after draw() are in document.body.dataset.add. Every word on the page is drawn by the engine: there is no HTML text.
+// state read back after draw() are in document.body.dataset.add. ?globe=1 is kind 13 TRIANGLE, GLOBE and BLEND
+// 'multiply' (globeScene; ?triquads=1 the same squares as QUAD records, ?plant=tri|globe|mul a planted fault):
+// the points and the blend state after draw() in document.body.dataset.globe. Every word on the page is drawn by the engine: there is no HTML text.
 import { createDrawer } from './draw.js';
 import { createTextProvider } from './text.js';
-import { scene, createOverlay, viewProjection, makeResident, makeResidentImages, iconsScene, iconsResident, sumStats, tilesScene, tilesResident, tilesFrame, addScene, toResident, tilesRefusals, glBlendState, BLEND_PROMISED } from './test-scene.js';
+import { scene, createOverlay, viewProjection, makeResident, makeResidentImages, iconsScene, iconsResident, sumStats, tilesScene, tilesResident, tilesFrame, addScene, globeScene, globeRefusals, toResident, tilesRefusals, glBlendState, BLEND_PROMISED } from './test-scene.js';
 
 const q = new URLSearchParams(location.search);
 const canvas = document.getElementById('c');
@@ -83,6 +85,7 @@ const isIcons = !isMap && q.get('icons') === '1';   // ?icons=1: glyph shapes, F
 const ic = isIcons ? iconsScene(q, OFF, canvas) : null;
 const ts = q.get('tiles') === '1' || q.get('tiles') === '2' ? tilesScene(q, canvas) : null;   // ?tiles=1|2: BATCH MATRIX
 const ad = !ts && q.get('add') === '1' ? addScene(canvas) : null;   // ?add=1: BLEND 'add'
+const gs = !ts && !ad && q.get('globe') === '1' ? globeScene(canvas, q) : null;   // ?globe=1: TRIANGLE, GLOBE, BLEND 'multiply'
 const perCall = q.get('percall') === '1';
 const state = { dim: Math.min(1, Math.max(0.3, +(q.get('dim') || 1))), tex: q.get('tex') === '0' ? 0 : 1 };
 const hit = { slider: null, button: null };   // device-pixel rectangles [x0, y0, x1, y1] of the two controls
@@ -119,7 +122,7 @@ const dist = 19;
 const noShadow = new URLSearchParams(location.search).get('shadow') === '0';
 // Shadows over the scene (its tile sits at OFF, a far origin); ?shadow=0 turns them off.
 const SHADOW = { center: [OFF[0], OFF[1], 1], radius: 10 };
-const all = (ts ? [] : ad ? ad.main : isMap ? city : isIcons ? ic.world : batches).slice();
+const all = (ts ? [] : ad ? ad.main : gs ? gs.main : isMap ? city : isIcons ? ic.world : batches).slice();
 const showOverlay = q.get('overlay') !== '0';
 if (showOverlay) for (const p of panels) all.push(...p.batches);
 const viewport = [0, 0, canvas.width, canvas.height];
@@ -135,14 +138,20 @@ else if (isResident && ad) {
   residentLog = { worldBytes: drawer.stats().residentBytes, imageBytes: 0, buffers: drawer.stats().residentBuffers, ok: true };
   for (let k = 0; k < n; k++) all[k] = r[k];
   ad.main = r.slice(0, n); ad.depthA = [r[n]]; ad.depthB = [r[n + 1]];
+} else if (isResident && gs) {
+  const r = toResident(drawer, gs.main);
+  residentLog = { worldBytes: drawer.stats().residentBytes, imageBytes: 0, buffers: drawer.stats().residentBuffers, ok: true };
+  for (let k = 0; k < r.length; k++) all[k] = r[k];
+  gs.main = r;
 } else if (isResident) residentLog = makeResident(drawer, all, tryDraw);
-const panelBatches = all.slice(ad ? ad.main.length : 0);
+const panelBatches = all.slice(ad ? ad.main.length : gs ? gs.main.length : 0);
 // ?tiles=1|2: what draw() refuses, tried once (tilesRefusals), in document.body.dataset.refusals.
-const refusals = ts ? tilesRefusals(ts, (bs, v, o) => { try { drawer.draw(bs, v, { ...o, }); return null; } catch (e) { return String(e && e.message || e); } }) : null;
+const refusalTry = (bs, v, o) => { try { drawer.draw(bs, v, { ...o, }); return null; } catch (e) { return String(e && e.message || e); } };
+const refusals = ts ? tilesRefusals(ts, refusalTry) : gs ? globeRefusals(gs, refusalTry) : null;
 // The state the twin puts back after each of its draw() calls (its tiling.js, tlHdTile).
 const restore = () => { gl.disable(gl.DEPTH_TEST); gl.disable(gl.CULL_FACE); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.useProgram(null); };
 const drawCopy = (bs, v, o) => { drawer.draw(bs, v, o); return { ...drawer.stats() }; };
-let addLog = null;
+let addLog = null, globeLog = null;
 // ?icons=1: one flow arc moved into a resident buffer and drawn alone at three phases (iconsResident).
 const flowLog = isIcons ? iconsResident(drawer, all, ic, (bs) => { drawer.draw(bs, new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]), { viewport }); return { ...drawer.stats() }; }) : null;
 const last = { drawCalls: 0, instances: 0, bytesUploaded: 0 };
@@ -191,6 +200,10 @@ function frame(tms) {
     s = sumStats(sumStats(a, b), c);
     const same = (x) => Object.keys(BLEND_PROMISED).every((k) => x[k] === BLEND_PROMISED[k]);
     addLog = { points: ad.points, afterMain, afterDepthA, ok: same(afterMain) && same(afterDepthA) };
+  } else if (gs) {
+    s = drawCopy(all, gs.vp, gs.opts);
+    const after = glBlendState(gl);
+    globeLog = { points: gs.points, after, ok: Object.keys(BLEND_PROMISED).every((k) => after[k] === BLEND_PROMISED[k]) };
   } else {
     // ?icons=1: the flat ribbons first (a draw() of their own, with flatLines), then the rest over them.
     const s0 = isIcons ? (drawer.draw(ic.ribbons, vp, { viewport, flatLines: true }), { ...drawer.stats() }) : null;
@@ -209,6 +222,7 @@ function frame(tms) {
     if (flowLog) document.body.dataset.flow = JSON.stringify(flowLog);
     if (refusals) document.body.dataset.refusals = JSON.stringify(refusals);
     if (addLog) document.body.dataset.add = JSON.stringify(addLog);
+    if (globeLog) document.body.dataset.globe = JSON.stringify(globeLog);
     document.body.dataset.ready = '1';
   }
   if (q.get('spin') === '1' || frames < 2) invalidate();

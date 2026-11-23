@@ -83,6 +83,15 @@
 //     alpha: zero, one, add; depth writes off) or of the screen pipeline, each made with
 //     createRenderPipeline on the first draw() that needs it. A switch between consecutive
 //     batches that differ is one setPipeline. The shadow pass leaves additive batches out.
+//   - BLEND 'multiply' (draw.js's): a MULTIPLY variant of the world or screen pipeline (colour:
+//     dst, src, add; alpha: zero, one, add; depth writes off) whose fragment entry point (fsm,
+//     sfsm) returns mix(0.5, rgb, alpha) with alpha 1, where draw.js switches a uniform. Made on
+//     first use, as the additive ones.
+//   - GLOBE (draw.js's) and kind 13 TRIANGLE (draw.js's TRIANGLE). The globe's numbers are in the
+//     batch's Draw slot (struct Draw: gsun, gcen, gk, gd, glimb; Draw is 256 bytes now, one
+//     aligned slot as before), the terminator applied by fn globe() on fsBody's colour, and its
+//     varying (glb) exists in every world pipeline. It is refused with shadows all the same, so a
+//     host's draw() throws on both backends alike.
 //   - BATCH MATRIX (draw.js's). A batch's own `vp` and `pixelsPerUnit` are written into a FRAME
 //     slot of its own (struct Frame: the matrix, the eye derived from it, its pixels per unit;
 //     the light, viewport, origin and shadow numbers copied from the call's), one slot per run of
@@ -112,7 +121,7 @@
 //
 // Not handled, as in draw.js: a `vp` that mirrors the picture flips winding.
 
-import { KIND, INSTANCE_BYTES, PARAMS_NEUTRAL, GLYPH_GLSL } from './draw.js';
+import { KIND, INSTANCE_BYTES, PARAMS_NEUTRAL, GLYPH_GLSL, checkGlobe } from './draw.js';
 export {
   KIND, INSTANCE_BYTES, PARAM, PARAMS_NEUTRAL, COLOUR, VARIANT_CASING, VARIANT_ROUND, VARIANT_ORIENT,
   VARIANT_MATERIAL, MATERIAL, DISC_CASING, DISC_CANOPY_FIELD, VARIANT_FLOW, VARIANT_GLYPH_SHAPE, GLYPH,
@@ -136,7 +145,7 @@ const GLYPH_WGSL = wgslOf(GLYPH_GLSL);
 
 const MAX_PAGES = 4;
 const FRAME_FLOATS = 52;   // struct Frame: 208 bytes
-const DRAW_FLOATS = 44;    // struct Draw: 176 bytes
+const DRAW_FLOATS = 64;    // struct Draw: 256 bytes
 
 // ---- WGSL ----
 
@@ -156,6 +165,11 @@ struct Draw {
   mode: vec4f,     // world: x vertex mode (0 sphere, 1 tube, 2 scaled-and-turned, 3 bent tube), y radius scale, z kind code
                    // screen: x mode (0 rectangle, 1 circle, 2 line, 3 run or image), w 1 for a run, 2 for an image
   shade: vec4f,    // x lit (0 or 1), y ambient, z specular, w rim
+  gsun: vec4f,     // GLOBE: xyz the unit direction toward the sun, w 1 on (0 off)
+  gcen: vec4f,     // GLOBE: the sphere's centre
+  gk: vec4f,       // GLOBE: the rgb factor at night and by day; the alpha factor at night and by day
+  gd: vec4f,       // GLOBE: the terminator's lo and hi, the Lambert share
+  glimb: vec4f,    // GLOBE: the limb's lo and hi; z 1 on (0 off)
 };
 @group(0) @binding(0) var<uniform> F: Frame;
 @group(0) @binding(1) var<uniform> D: Draw;
@@ -186,6 +200,7 @@ struct VOut {
   @location(6) ring: vec3f,    // draw.js's v_ring (picture: the centre in the target's pixels, here from the top)
   @location(7) mat: f32,       // the material (0 kind, 1 matte, 2 metal, 3 glow)
 ${shadow ? '  @location(8) ls: vec4f,      // the position in the light\'s clip space\n' : ''}  @location(9) sp: vec2f,      // draw.js's v_sp: a glyph's shape and half size in pixels; 16 and a flow's upper clamp
+  @location(10) glb: vec2f,    // draw.js's v_glb (GLOBE)
 };
 // Pixels per world unit at clip w.
 fn ppuAt(w: f32) -> f32 {
@@ -212,7 +227,16 @@ fn ppuAt(w: f32) -> f32 {
   var p: vec3f;
   var n: vec3f;
   let org = a.i_pos + D.offset.xyz;
-  if (mx < 0.5) {
+  let tri = mx > 3.5;                    // a TRIANGLE: pos, size and aux are its three corners
+  if (tri) {
+    let tb = a.i_size + D.offset.xyz;
+    let tc = a.i_aux + D.offset.xyz;
+    p = org * a.a_p.x + tb * a.a_p.y + tc * a.a_p.z;
+    let tn = cross(tb - org, tc - org);
+    let tl = length(tn);
+    n = vec3f(0.0, 0.0, 1.0);
+    if (tl > 1e-30) { n = tn / tl; }
+  } else if (mx < 0.5) {
     n = a.a_n;
     p = org + a.a_p * a.i_size.x;
   } else if (mx < 1.5 || mx > 2.5) {
@@ -315,14 +339,21 @@ fn ppuAt(w: f32) -> f32 {
   }
   o.n = n;
   o.v = normalize(F.eye.xyz - p * F.eye.w);
+  o.glb = vec2f(0.0);
+  if (D.gsun.w > 0.5) {
+    var gn = p - D.gcen.xyz;
+    let gl = length(gn);
+    if (gl > 1e-30) { gn = gn / gl; } else { gn = vec3f(0.0, 0.0, 1.0); }
+    o.glb = vec2f(dot(gn, D.gsun.xyz), dot(gn, o.v));
+  }
   let cm = vr >> 6u;
   let ramp = cm == 1u;
   let tint = cm == 2u;
-  let tube = (mx > 0.5 && mx < 1.5) || mx > 2.5;
+  let tube = (mx > 0.5 && mx < 1.5) || (mx > 2.5 && mx < 3.5);
   var rgb = a.i_color.rgb;
   var dens = 0.0;
   if (ramp) {
-    dens = clamp(select(select(a.i_aux.x, 0.0, orient), a.i_angle, tube), 0.0, 1.0);
+    dens = clamp(select(select(a.i_aux.x, 0.0, orient), a.i_angle, tube || tri), 0.0, 1.0);
     rgb = mix(D.params[1].rgb, D.params[2].rgb, dens);
   } else if (tint) {
     rgb = rgb * D.params[3].rgb;
@@ -432,7 +463,7 @@ fn litFraction(ls: vec4f, ndl: f32) -> f32 {
   return s * 0.25;
 }
 ` : ''}
-@fragment fn fs(i: VOut, @builtin(front_facing) ff: bool) -> @location(0) vec4f {
+fn fsBody(i: VOut, ff: bool) -> vec4f {
   // the ring, from this fragment's own position in the target
   var ring = 1.0;
   if (i.ring.z > 0.0) {
@@ -483,6 +514,26 @@ ${shadow ? `  var shf = 1.0;
   let shaded = select(base * (lit + rim) + vec3f(sp), base, glow);
   let flatc = base * mix(1.0 - strength, 1.0, shf);
   return vec4f(mix(flatc, shaded, D.shade.x) * i.dim.rgb, i.c.a * i.dim.a * ring * flowA);
+}
+// GLOBE (draw.js's), on what the mark's own drawing gave.
+fn globe(c0: vec4f, i: VOut) -> vec4f {
+  var c = c0;
+  if (D.gsun.w > 0.5) {
+    let day = smoothstep(D.gd.x, D.gd.y, i.glb.x);
+    c = vec4f(c.rgb * mix(D.gk.x, D.gk.y, day * mix(1.0, max(i.glb.x, 0.0), D.gd.z)), c.a);
+    var ga = mix(D.gk.z, D.gk.w, day);
+    if (D.glimb.z > 0.5) { ga = ga * smoothstep(D.glimb.x, D.glimb.y, i.glb.y); }
+    c = vec4f(c.rgb, c.a * ga);
+  }
+  return c;
+}
+@fragment fn fs(i: VOut, @builtin(front_facing) ff: bool) -> @location(0) vec4f {
+  return globe(fsBody(i, ff), i);
+}
+// BLEND 'multiply': 2 x destination x mix(0.5, source rgb, source alpha); the pipeline does the 2 x destination
+@fragment fn fsm(i: VOut, @builtin(front_facing) ff: bool) -> @location(0) vec4f {
+  let c = globe(fsBody(i, ff), i);
+  return vec4f(mix(vec3f(0.5), c.rgb, c.a), 1.0);
 }
 `;
 }
@@ -595,7 +646,7 @@ struct SOut {
   o.pos = vec4f(px.x / F.view.x * 2.0 - 1.0, 1.0 - px.y / F.view.y * 2.0, 0.0, 1.0);
   return o;
 }
-@fragment fn sfs(i: SOut) -> @location(0) vec4f {
+fn sfsBody(i: SOut) -> vec4f {
   var cov: f32;
   if (D.mode.w > 1.5) {
     let im = textureSampleLevel(img, ismp, i.uv, 0.0);
@@ -620,6 +671,14 @@ struct SOut {
     }
   }
   return vec4f(i.c.rgb, i.c.a * cov * i.fade);
+}
+@fragment fn sfs(i: SOut) -> @location(0) vec4f {
+  return sfsBody(i);
+}
+// BLEND 'multiply' (see fsm)
+@fragment fn sfsm(i: SOut) -> @location(0) vec4f {
+  let c = sfsBody(i);
+  return vec4f(mix(vec3f(0.5), c.rgb, c.a), 1.0);
 }
 `;
 
@@ -772,6 +831,11 @@ function quadMesh() {
   };
 }
 
+// A TRIANGLE's mesh: three vertices whose positions are barycentric weights of the record's corners.
+function triMesh() {
+  return { v: [1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1], ix: [0, 1, 2] };
+}
+
 function discMesh(sides) {
   const v = [0, 0, 0, 0, 0, 1], ix = [];
   for (let j = 0; j < sides; j++) {
@@ -783,8 +847,9 @@ function discMesh(sides) {
 }
 
 // Slots as in draw.js: index = kind; 11 and 12 the coarse sphere and rod, 13 and 14 the flat line and arc.
-const KIND_CODE = [0, 1, 3, 3, 4, 5, 5, 0, 0, 2, 6, 0, 0, 3, 3];
-const SLOT_COARSE_SPHERE = 11, SLOT_COARSE_ROD = 12, SLOT_FLAT_LINE = 13, SLOT_FLAT_ARC = 14, N_SLOT = 15;
+const KIND_CODE = [0, 1, 3, 3, 4, 5, 5, 0, 0, 2, 6, 0, 0, 3, 3, 0];
+const SLOT_COARSE_SPHERE = 11, SLOT_COARSE_ROD = 12, SLOT_FLAT_LINE = 13, SLOT_FLAT_ARC = 14, SLOT_TRIANGLE = 15, N_SLOT = 16;
+const N_KIND = 14;      // instance buffers by kind, 1..13
 
 const MESH_LAYOUT = {
   arrayStride: 24, stepMode: 'vertex',
@@ -879,14 +944,23 @@ export async function createDrawerWebGPU(device, options) {
     color: { srcFactor: 'src-alpha', dstFactor: 'one', operation: 'add' },
     alpha: { srcFactor: 'zero', dstFactor: 'one', operation: 'add' },
   };
+  // blend: 'multiply' (draw.js's BLEND): destination x source + source x destination, the fragment
+  // stage's output being mix(0.5, rgb, alpha) (entry points fsm, sfsm); the alpha kept.
+  const BLEND_MUL = {
+    color: { srcFactor: 'dst', dstFactor: 'src', operation: 'add' },
+    alpha: { srcFactor: 'zero', dstFactor: 'one', operation: 'add' },
+  };
+  const BLENDS = [BLEND, BLEND_ADD, BLEND_MUL], BLEND_NAME = ['', ' add', ' multiply'];
+  // add: the batch's blend, 0 'alpha', 1 'add', 2 'multiply'
   function worldDesc(shadow, cull, depthOn, add) {
+    add = add | 0;
     return {
-      label: 'holon-draw world' + (shadow ? '+shadow' : '') + (cull ? ' cull' : '') + (depthOn ? '' : ' nodepth') + (add ? ' add' : ''),
+      label: 'holon-draw world' + (shadow ? '+shadow' : '') + (cull ? ' cull' : '') + (depthOn ? '' : ' nodepth') + BLEND_NAME[add],
       layout: shadow ? plWorldS : plWorld,
       vertex: { module: shadow ? mWorldS : mWorld, entryPoint: 'vs', buffers: [MESH_LAYOUT, INSTANCE_LAYOUT] },
-      fragment: { module: shadow ? mWorldS : mWorld, entryPoint: 'fs', targets: [{ format, blend: add ? BLEND_ADD : BLEND }] },
+      fragment: { module: shadow ? mWorldS : mWorld, entryPoint: add === 2 ? 'fsm' : 'fs', targets: [{ format, blend: BLENDS[add] }] },
       primitive: { topology: 'triangle-list', frontFace: 'ccw', cullMode: cull ? 'back' : 'none' },
-      // an additive batch writes no depth
+      // an additive or multiplying batch writes no depth
       depthStencil: { format: depthFormat, depthWriteEnabled: depthOn && !add, depthCompare: depthOn ? 'less-equal' : 'always' },
       multisample: { count: sampleCount },
     };
@@ -903,7 +977,7 @@ export async function createDrawerWebGPU(device, options) {
   }
   // Pipelines by key; the four without shadows are made now, the shadow ones on first use.
   const pipes = new Map();
-  const key = (shadow, cull, depthOn, add) => (add ? 8 : 0) | (shadow ? 4 : 0) | (cull ? 2 : 0) | (depthOn ? 1 : 0);
+  const key = (shadow, cull, depthOn, add) => ((add | 0) << 3) | (shadow ? 4 : 0) | (cull ? 2 : 0) | (depthOn ? 1 : 0);
   const made = await Promise.all([[false, false], [false, true], [true, false], [true, true]].map(([c, d]) => device.createRenderPipelineAsync(worldDesc(false, c, d))));
   pipes.set(key(false, false, false), made[0]); pipes.set(key(false, false, true), made[1]);
   pipes.set(key(false, true, false), made[2]); pipes.set(key(false, true, true), made[3]);
@@ -915,16 +989,16 @@ export async function createDrawerWebGPU(device, options) {
   }
   let zPipes = null;
   const screenDesc = (add) => ({
-    label: 'holon-draw screen' + (add ? ' add' : ''),
+    label: 'holon-draw screen' + BLEND_NAME[add | 0],
     layout: plScreen,
     vertex: { module: mScreen, entryPoint: 'svs', buffers: [MESH_LAYOUT, INSTANCE_LAYOUT] },
-    fragment: { module: mScreen, entryPoint: 'sfs', targets: [{ format, blend: add ? BLEND_ADD : BLEND }] },
+    fragment: { module: mScreen, entryPoint: (add | 0) === 2 ? 'sfsm' : 'sfs', targets: [{ format, blend: BLENDS[add | 0] }] },
     primitive: { topology: 'triangle-list', cullMode: 'none' },
     depthStencil: { format: depthFormat, depthWriteEnabled: false, depthCompare: 'always' },
     multisample: { count: sampleCount },
   });
   const screenPipe = await device.createRenderPipelineAsync(screenDesc(false));
-  let screenPipeAdd = null;   // made on first use
+  const screenPipes = [screenPipe, null, null];   // by blend; 'add' and 'multiply' made on first use
 
   // Meshes.
   const owned = [];   // buffers and textures destroy() frees
@@ -952,6 +1026,7 @@ export async function createDrawerWebGPU(device, options) {
   const mBox = mesh(boxMesh());
   const mQuad = mesh(quadMesh());
   const mDisc = mesh(discMesh(24));
+  const mTri = mesh(triMesh());
 
   const slots = new Array(N_SLOT).fill(null);
   const slot = (i, kind, m, mx, my, lit, spec, rim, cull) => {
@@ -971,6 +1046,7 @@ export async function createDrawerWebGPU(device, options) {
   slot(SLOT_COARSE_ROD, KIND.ROD, mRodCoarse, 1, 1, 1, 0.18, 0.08, true);
   slot(SLOT_FLAT_LINE, KIND.LINE, mRibbon, 1, 0.5, 0, 0, 0, false);
   slot(SLOT_FLAT_ARC, KIND.ARC, mArcRibbon, 3, 0.5, 0, 0, 0, false);
+  slot(SLOT_TRIANGLE, KIND.TRIANGLE, mTri, 4, 0, 0, 0, 0, false);
 
   const sslots = new Array(12).fill(null);
   sslots[KIND.QUAD] = { kind: KIND.QUAD, smode: 0 };
@@ -1015,10 +1091,10 @@ export async function createDrawerWebGPU(device, options) {
 
   // One instance buffer per kind, grown as needed and reused. Within one draw() every batch
   // of a kind is written at its own offset in that buffer, as in draw.js.
-  const instBuf = new Array(13).fill(null);
-  const instCap = new Int32Array(13);
-  const need = new Int32Array(13);
-  const cursor = new Int32Array(13);
+  const instBuf = new Array(N_KIND).fill(null);
+  const instCap = new Int32Array(N_KIND);
+  const need = new Int32Array(N_KIND);
+  const cursor = new Int32Array(N_KIND);
 
   // Uniforms: [main frame][shadow frame][one Draw per draw call], each slot `align` bytes.
   let ubuf = null, ucap = 0, uniBG = null;
@@ -1105,8 +1181,9 @@ export async function createDrawerWebGPU(device, options) {
 
   function slotOf(b) {
     const k = b.kind | 0;
-    if (k < 1 || k > 12) return null;
-    if (b.screen === true) return sslots[k];
+    if (k < 1 || k > 13) return null;
+    if (b.screen === true) return sslots[k] || null;
+    if (k === KIND.TRIANGLE) return slots[SLOT_TRIANGLE];
     if (k > 10) return null;
     if (flat) {
       if (k === KIND.LINE) return slots[SLOT_FLAT_LINE];
@@ -1203,7 +1280,7 @@ export async function createDrawerWebGPU(device, options) {
 
   // Write a Draw slot; returns its byte offset. `cmpParams` counts what draw.js would upload.
   let uNext = 0;
-  function drawSlot(params, o, mx, my, kc, sw, shade0, shade1, shade2, shade3) {
+  function drawSlot(params, o, mx, my, kc, sw, shade0, shade1, shade2, shade3, g) {
     const base = uNext * alignF;
     uNext++;
     const src = params || PARAMS_NEUTRAL;
@@ -1217,6 +1294,17 @@ export async function createDrawerWebGPU(device, options) {
     ustage[base + 32] = o ? o[0] : 0; ustage[base + 33] = o ? o[1] : 0; ustage[base + 34] = o ? o[2] : 0; ustage[base + 35] = 0;
     ustage[base + 36] = mx; ustage[base + 37] = my; ustage[base + 38] = kc; ustage[base + 39] = sw;
     ustage[base + 40] = shade0; ustage[base + 41] = shade1; ustage[base + 42] = shade2; ustage[base + 43] = shade3;
+    // GLOBE (draw.js's setGlobe): gsun, gcen, gk, gd, glimb
+    if (g) {
+      const sn = g.sun, sl = Math.hypot(sn[0], sn[1], sn[2]), c = g.centre, d = g.day, r = g.rgb, a = g.alpha, l = g.limb;
+      ustage[base + 44] = sn[0] / sl; ustage[base + 45] = sn[1] / sl; ustage[base + 46] = sn[2] / sl; ustage[base + 47] = 1;
+      ustage[base + 48] = c ? c[0] : 0; ustage[base + 49] = c ? c[1] : 0; ustage[base + 50] = c ? c[2] : 0; ustage[base + 51] = 0;
+      ustage[base + 52] = r ? r[0] : 1; ustage[base + 53] = r ? r[1] : 1; ustage[base + 54] = a ? a[0] : 1; ustage[base + 55] = a ? a[1] : 1;
+      ustage[base + 56] = d ? d[0] : -0.1; ustage[base + 57] = d ? d[1] : 0.1; ustage[base + 58] = g.lambert > 0 ? Math.min(1, +g.lambert) : 0; ustage[base + 59] = 0;
+      ustage[base + 60] = l ? l[0] : 0; ustage[base + 61] = l ? l[1] : 0; ustage[base + 62] = l ? 1 : 0; ustage[base + 63] = 0;
+    } else {
+      for (let k = 44; k < 64; k++) ustage[base + k] = 0;
+    }
     return base * 4;
   }
   // m: the frame's vp; m2: what F.lvp holds (the light's in the picture, the camera's in the shadow pass)
@@ -1236,10 +1324,11 @@ export async function createDrawerWebGPU(device, options) {
   // draw.js's checkBatch: the per-batch fields of BATCH MATRIX and BLEND, and what is refused.
   function checkBatch(b, i, vp, wantShadow) {
     const bl = b.blend;
-    if (bl !== undefined && bl !== 'alpha' && bl !== 'add') {
-      throw new Error('holon-draw: batch ' + i + ' has blend ' + JSON.stringify(bl) + ': a batch\'s blend is \'alpha\' (the default) or \'add\'');
+    if (bl !== undefined && bl !== 'alpha' && bl !== 'add' && bl !== 'multiply') {
+      throw new Error('holon-draw: batch ' + i + ' has blend ' + JSON.stringify(bl) + ': a batch\'s blend is \'alpha\' (the default), \'add\' or \'multiply\'');
     }
     if (b.screen === true) return;
+    checkGlobe(b.globe, i, wantShadow);
     const m = b.vp;
     if (m !== undefined && m !== null) {
       if (!(m.length >= 16)) throw new Error('holon-draw: batch ' + i + ' has a `vp` that is not a 4x4 matrix (16 numbers, column-major)');
@@ -1303,7 +1392,7 @@ export async function createDrawerWebGPU(device, options) {
     const vw = V ? V[2] : tw, vh = V ? V[3] : th;
     ownTargets(tw, th, !opts.depthTarget);
 
-    for (let k = 1; k <= 12; k++) {
+    for (let k = 1; k < N_KIND; k++) {
       cursor[k] = 0;
       if (need[k] <= instCap[k]) continue;
       let cap = instCap[k] || 64 * INSTANCE_BYTES;
@@ -1363,7 +1452,7 @@ export async function createDrawerWebGPU(device, options) {
       for (let i = 0; i < nb; i++) {
         if (wAt[i] === -1) continue;
         const b = batches[i];
-        if (b.castShadow === false || b.blend === 'add') continue;
+        if (b.castShadow === false || b.blend === 'add' || b.blend === 'multiply') continue;
         const s = slotOf(b);
         if (!(s.lit || ((s.kind === KIND.LINE || s.kind === KIND.ARC) && !flat))) continue;
         const c = b.count | 0;
@@ -1416,14 +1505,14 @@ export async function createDrawerWebGPU(device, options) {
     // Pass 2b: the world batches, in the order given.
     if (nWorld > 0) {
       if (shadowsOn) pass.setBindGroup(1, zBG);
-      let cur = null, curPipe = null, curAdd = false, curM = vp, curPpu = ppu;
+      let cur = null, curPipe = null, curAdd = 0, curM = vp, curPpu = ppu;
       for (let i = 0; i < nb; i++) {
         if (wAt[i] === -1) continue;
         const b = batches[i], c = b.count | 0;
         const s = slotOf(b);
         const sh = b.shade;
         const spec = sh ? +sh[0] : s.spec, rim = sh ? +sh[1] : s.rim;
-        const add = b.blend === 'add';
+        const add = b.blend === 'add' ? 1 : b.blend === 'multiply' ? 2 : 0;
         const m = b.vp || vp, bppu = b.pixelsPerUnit > 0 ? +b.pixelsPerUnit : ppu;
         if (m !== curM || bppu !== curPpu) {
           // BATCH MATRIX: a frame slot of its own (its matrix, the eye from it, its pixels per unit),
@@ -1450,7 +1539,7 @@ export async function createDrawerWebGPU(device, options) {
         }
         if (wAt[i] === -2) pass.setVertexBuffer(1, handles[b.handle].buf, (b.first | 0) * INSTANCE_BYTES);
         else pass.setVertexBuffer(1, instBuf[s.kind], wAt[i]);
-        dynOff[1] = drawSlot(b.params, b.offset, s.mx, s.my, s.kc, 0, s.lit || flatLit ? 1 : 0, ambient, spec, rim);
+        dynOff[1] = drawSlot(b.params, b.offset, s.mx, s.my, s.kc, 0, s.lit || flatLit ? 1 : 0, ambient, spec, rim, shadowsOn ? null : b.globe);
         pass.setBindGroup(0, uniBG, dynOff);
         pass.drawIndexed(s.mesh.n, c);
         st.drawCalls++; st.instances += c;
@@ -1462,7 +1551,7 @@ export async function createDrawerWebGPU(device, options) {
       lastP.fill(NaN);
       dynOff[0] = 0;
       pass.setPipeline(screenPipe);
-      let sAdd = false;
+      let sAdd = 0;
       pass.setVertexBuffer(0, mQuad.vbo);
       pass.setIndexBuffer(mQuad.ibo, 'uint16');
       let atlas = false, imgBG = null;
@@ -1485,11 +1574,11 @@ export async function createDrawerWebGPU(device, options) {
           imgBG = want.group;
           pass.setBindGroup(2, imgBG);
         }
-        const add = b.blend === 'add';
+        const add = b.blend === 'add' ? 1 : b.blend === 'multiply' ? 2 : 0;
         if (add !== sAdd) {
           sAdd = add;
-          if (add && !screenPipeAdd) screenPipeAdd = device.createRenderPipeline(screenDesc(true));
-          pass.setPipeline(add ? screenPipeAdd : screenPipe);
+          if (!screenPipes[add]) screenPipes[add] = device.createRenderPipeline(screenDesc(add));
+          pass.setPipeline(screenPipes[add]);
         }
         if (b.handle !== undefined) pass.setVertexBuffer(1, handles[b.handle].buf, (b.first | 0) * INSTANCE_BYTES);
         else pass.setVertexBuffer(1, instBuf[s.kind], upload(b, s.kind, c * INSTANCE_BYTES));

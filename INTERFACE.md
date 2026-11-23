@@ -787,3 +787,18 @@ promised one. Three planted faults (a triangle's ramp position, the sun turned 1
 multiply drawn as alpha) each make the gate fail. **NOT checked here:** any twin picture. Whether
 the twin's globe drawn this way looks as its own programs draw it is the twin's gate, with its own
 stakes.
+
+**4. CORRECTION 2026-11-23: the eye a backend derives from `vp` was wrong.** Both backends take the eye (the
+viewer's position, or under an orthographic `vp` the direction toward the viewer) as the preimage of clip
+(0, 0, -1, 0), from the inverse of `vp`. They took the inverse's third ROW where its third COLUMN was meant.
+The two agree only when that row equals the column, which it does not for a camera that turns. So the view
+vector `v` was wrong for every perspective and every turned orthographic `vp` that `tools/eye_check.mjs`
+tries (400 random matrices). It was found because the GLOBE limb reads `v`: at the twin's globe view the eye
+was 8.6 degrees off, and the limb dropped a band of land along the rim. What reads `v` is specular, rim and
+now the globe's limb. Shapes, positions, the camera-facing glyph squares (taken from the rows of `vp`) and
+unlit marks do not read it. After the fix, the lit 3D modes of `tools/webgpu_parity.py` change by up to 77
+to 79 levels on about 7 % of their pixels (the highlights move to where the camera is). The flat map, the
+tiles, add and globe modes are unchanged, and the icons mode changes on 0.01 % of its pixels. The two
+backends still agree, because they shared the error. Every consumer's lit picture (the ladder, CEWPOS's
+story) changes the same way. `tools/eye_check.mjs` is now a step of `webgpu_parity.py`, and its `--plant`
+(the old formula) fails all 800 matrices.

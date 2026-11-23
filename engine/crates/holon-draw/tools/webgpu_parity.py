@@ -74,6 +74,8 @@ draw() is GL STATE's; and the WebGL 1 / mediump / nohigh / bare WebGL 1 pages pa
 and the triangle check with gl error 0. --plant tri|globe|mul plants a fault in the scene (one
 triangle's t moved; the sun turned 12 degrees from the one the points assume; the multiplying
 discs drawn with the alpha blend): the gate must then FAIL, and each did when this was written.
+THE EYE (2026-11-23): tools/eye_check.mjs runs first and must pass: each backend's eyeFrom against
+a plain inverse over 200 orthographic and 200 perspective matrices (see the CORRECTION in INTERFACE.md §16).
 Exit status 0 when all of that holds; the pixel numbers are REPORTED, not gated (the two
 backends rasterise on different paths, see the README).
 
@@ -260,6 +262,14 @@ def main():
         print("FAIL mesh builders differ between draw.js and draw-webgpu.js:", ", ".join(drift))
     else:
         print("ok   mesh builders in draw-webgpu.js are draw.js's, source for source")
+
+    # the eye each backend derives from vp, against a plain inverse (tools/eye_check.mjs; the CORRECTION of 2026-11-23)
+    import subprocess
+    ec = subprocess.run(["node", os.path.join(HERE, "eye_check.mjs")], capture_output=True, text=True)
+    report["eye_check"] = ec.stdout.strip().splitlines()
+    print(("ok   " if ec.returncode == 0 else "FAIL ") + "eye from vp (tools/eye_check.mjs): " + " | ".join(report["eye_check"]))
+    if ec.returncode != 0:
+        ok = False
 
     srv = serve()
     base = "http://127.0.0.1:%d/" % srv.server_address[1]

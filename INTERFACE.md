@@ -385,8 +385,17 @@ side's work; profile B here is written against the 24.
 *Each primitive's prefixes, slots and whether it is keyed are READ from the registry (draft
 3, `181c48a`) by a script, which fails if this table names a slot the registry does not or
 misses one it does: 24 primitives, 60 slots. The marks column is this file's. Every row is its own
-instance with the tag form shown; `…` stands for the root tag; the UI layer builds the
+instance with the tag form shown; `…` stands for the root tag WITHOUT its key, `prefix_<surface>_<instance>`, and a
+slot comes before the key (`row_<surface>_<instance>__flag[.key]`); the UI layer builds the
 string and the core holds a handle to it. `run` is an already-shaped text run (D11).*
+
+*CORRECTION 2026-11-22 (issue #6 ask 4; §10 item 1). The first form of this table wrote `…` as
+the whole root tag, keyed roots included, so a keyed slot read `row_s_i.k__flag`. The grammar
+takes everything after the first `.` as the key, so that slot is lost. The 35 slot rows of the 11
+keyed primitives now read `…__slot[.key]`. The script is now committed as
+`engine/crates/holon-draw/tools/check_registry.py`. It checks this section against the registry
+vendored at `engine/crates/holon-draw/registry/` (tag `v1.0-rc21-wire`, the same file as
+`181c48a`), and ci-gates runs it. The marks column is unchanged.*
 
 | primitive | prefix | tag form | marks |
 |---|---|---|---|
@@ -396,23 +405,23 @@ string and the core holds a handle to it. `run` is an already-shaped text run (D
 | | | `…__wire` | `run`: the value as sent, or the fixed "not sent" form |
 | | | `…__gloss` | `run` |
 | **ItemRow** | `row` | `row_<surface>_<instance>[.key]` | `quad` + `run`s; in a canvas, the mark(s) of the same instance |
-| | | `…__flag` | `glyph` + `run` |
-| | | `…__act` | holds an Action (`btn`), which is its own instance |
+| | | `…__flag[.key]` | `glyph` + `run` |
+| | | `…__act[.key]` | holds an Action (`btn`), which is its own instance |
 | **ScopePill** | `scope` | `scope_<surface>_<instance>` | `quad` (radius) + `run` |
 | | | `…__group` | `run`, present when the circle has more than one group |
 | **Chip** | `chip` | `chip_<surface>_<instance>` | `quad` (radius) + `glyph` + `run`: the token as sent |
 | **Action** | `btn`, `mi` | `btn_<surface>_<instance>`, `mi_<surface>_<instance>` | `quad` + `run`; `mi` is the same inside a menu tile (a layer above the scene) |
 | | | `…__reason` | `run`, drawn when present and disabled |
 | **ReceiptSheet** | `receipt` | `receipt_<surface>_<instance>[.key]` | a modal-layer tile: `quad` |
-| | | `…__open` | `quad` + `glyph`: the control that opens it |
-| | | `…__fact_1` | `run` |
-| | | `…__fact_2` | `run` |
-| | | `…__fact_3` | `run` |
-| | | `…__fact_4` | `run` |
-| | | `…__fact_5` | `run` |
-| | | `…__holders` | `run`s |
-| | | `…__notes` | `run`s |
-| | | `…__acts` | Actions, each its own instance |
+| | | `…__open[.key]` | `quad` + `glyph`: the control that opens it |
+| | | `…__fact_1[.key]` | `run` |
+| | | `…__fact_2[.key]` | `run` |
+| | | `…__fact_3[.key]` | `run` |
+| | | `…__fact_4[.key]` | `run` |
+| | | `…__fact_5[.key]` | `run` |
+| | | `…__holders[.key]` | `run`s |
+| | | `…__notes[.key]` | `run`s |
+| | | `…__acts[.key]` | Actions, each its own instance |
 | **StateBlock** | `state` | `state_<surface>_<instance>` | no mark of its own: its value is the state's name, held by the UI layer |
 | | | `…__<state>` for each of the 17 | one form per state, 17 in all (`glyph` + `run`; `loading_known` adds a `quad` bar); exactly one drawn |
 | | | `…__freshness` | `run` |
@@ -427,25 +436,25 @@ string and the core holds a handle to it. `run` is an already-shaped text run (D
 | | | `…__confirm` | `quad` + `run`; never coarsened |
 | | | `…__cancel` | `quad` + `run`; never coarsened |
 | **Choice** | `opt` | `opt_<surface>_<instance>[.key]` | the question `run`; each option is a key: `quad` + `run` + `glyph` mark; none marked unless the card names the default and its cost |
-| | | `…__cost` | `run` |
-| | | `…__tally` | `run` (+ `quad` bar) |
+| | | `…__cost[.key]` | `run` |
+| | | `…__tally[.key]` | `run` (+ `quad` bar) |
 | **DestinationPicker** | `pick` | `pick_<surface>_<instance>[.key]` | each destination is a key: `quad` + `run` |
-| | | `…__group` | `run` |
+| | | `…__group[.key]` | `run` |
 | **Field** | `input` | `input_<surface>_<instance>` | `quad` + `run` (the text as it will be sent) + caret `line`; input itself is outside the core |
 | | | `…__ceiling` | `run`: the byte ceiling, shown before the node refuses |
 | | | `…__error` | `run` |
 | **StepFlow** | `step` | `step_<surface>_<instance>[.key]` | each step is a key: `disc` + `run`, joined by `line`s; a skipped step is absent |
-| | | `…__next` | `quad` + `run` + `glyph` (mirrored in right-to-left) |
-| | | `…__back` | `quad` + `run` + `glyph` (mirrored) |
+| | | `…__next[.key]` | `quad` + `run` + `glyph` (mirrored in right-to-left) |
+| | | `…__back[.key]` | `quad` + `run` + `glyph` (mirrored) |
 | **Ceremony** | `ceremony` | `ceremony_<surface>_<instance>[.key]` | a tile: `quad` |
-| | | `…__act_price` | `run`: from the node's answer or the governance policy manifest |
-| | | `…__undo_price` | `run`: likewise |
-| | | `…__window` | `run` |
-| | | `…__threshold` | `run` |
-| | | `…__signer` | keyed by who: `quad` + `run` + `glyph` |
+| | | `…__act_price[.key]` | `run`: from the node's answer or the governance policy manifest |
+| | | `…__undo_price[.key]` | `run`: likewise |
+| | | `…__window[.key]` | `run` |
+| | | `…__threshold[.key]` | `run` |
+| | | `…__signer[.key]` | keyed by who: `quad` + `run` + `glyph` |
 | **LineageChain** | `chain` | `chain_<surface>_<instance>[.key]` | a tile |
-| | | `…__link` | keyed: `disc` + `run`, joined by `arc` |
-| | | `…__cascade` | `run` (+ `line`s) |
+| | | `…__link[.key]` | keyed: `disc` + `run`, joined by `arc` |
+| | | `…__cascade[.key]` | `run` (+ `line`s) |
 | **CodeCompare** | `code` | `code_<surface>_<instance>` | a tile |
 | | | `…__words` | large `run`s |
 | | | `…__digits` | large `run`s |
@@ -453,11 +462,11 @@ string and the core holds a handle to it. `run` is an already-shaped text run (D
 | **QrCode** | `qr`, `scan` | `qr_<surface>_<instance>`, `scan_<surface>_<instance>` | `qr`: `image` with nearest sampling, or a grid of `quad`s. `scan`: the platform's camera view; a scan fills a Field and never submits |
 | | | `…__paste` | `quad` + `run`: an Action-like control that fills the same Field |
 | **Transcript** | `msg`, `note` | `msg_<surface>_<instance>[.key]`, `note_<surface>_<instance>[.key]` | `msg`, `note`: keyed `run`s in a scrolling tile |
-| | | `…__receipt` | `glyph` + `run` |
-| | | `…__fetch` | `quad` + `run` |
+| | | `…__receipt[.key]` | `glyph` + `run` |
+| | | `…__fetch[.key]` | `quad` + `run` |
 | **ConscienceStep** | `conscience` | `conscience_<surface>_<instance>[.key]` | a row: `glyph` + `run` |
-| | | `…__cost` | `run` |
-| | | `…__faculty` | keyed, 4 faculties: `glyph` + `run` |
+| | | `…__cost[.key]` | `run` |
+| | | `…__faculty[.key]` | keyed, 4 faculties: `glyph` + `run` |
 | **PolicyLens** | `lens` | `lens_<surface>_<instance>` | a bar: `quad` + `run`; what it hides is ABSENT |
 | | | `…__hidden_count` | `run` |
 | | | `…__helpers` | `run`s |
@@ -465,15 +474,15 @@ string and the core holds a handle to it. `run` is an already-shaped text run (D
 | **GraphView** | `canvas` | `canvas_<surface>_<instance>` | `canvas`: tiles of marks; every pickable mark belongs to an ItemRow instance; the rest is decoration |
 | | | `…__twin` | the list: ItemRow instances, the same instances as the canvas marks |
 | **Document** | `doc` | `doc_<surface>_<instance>[.key]` | `run`s in a scrolling tile |
-| | | `…__claim` | keyed `run`s |
-| | | `…__recant` | the claim's `run` with a `line` through it and its reason `run` beside it; never removed |
-| | | `…__revision` | `run` |
-| | | `…__cite` | `run` + `glyph` |
+| | | `…__claim[.key]` | keyed `run`s |
+| | | `…__recant[.key]` | the claim's `run` with a `line` through it and its reason `run` beside it; never removed |
+| | | `…__revision[.key]` | `run` |
+| | | `…__cite[.key]` | `run` + `glyph` |
 | **Media** | `media` | `media_<surface>_<instance>[.key]` | `image`, drawable only with both slots below present |
-| | | `…__alt` | `run` (required) |
-| | | `…__ai_disclosure` | `run` + `glyph` (required) |
-| | | `…__blur` | the `image` drawn blurred until asked |
-| | | `…__class` | `run` |
+| | | `…__alt[.key]` | `run` (required) |
+| | | `…__ai_disclosure[.key]` | `run` + `glyph` (required) |
+| | | `…__blur[.key]` | the `image` drawn blurred until asked |
+| | | `…__class[.key]` | `run` |
 
 Shell prefixes, which a whole screen must also draw, each its own `pin`ned tile of
 `quad` + `run` (+ `glyph`): `circle_<name>`, `tab_<name>`, `nav_<name>`, `screen_<name>`.
@@ -548,3 +557,4 @@ every script) into an atlas, and the core places and draws it. Layout (panels, r
 wrapping, buttons, the narrow-screen arrangement) is Rust (`holon-draw::ui`), measured
 through the provider. The screen standard's requirements in §2, §8 and §10 now bind the
 engine directly rather than a host.
+

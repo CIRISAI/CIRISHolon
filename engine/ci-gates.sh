@@ -506,6 +506,14 @@ n_draw=$(cargo test -q -p holon-draw -- --list 2>/dev/null | grep -c ': test$')
 cargo test -q -p holon-draw 2>/dev/null >/dev/null \
   && ok "holon-draw: a pick names one instance, detail coarsens a tagged mark and never removes it, a modal layer takes every pick, a stale tile not drawn, a far origin keeps its precision" \
   || no "holon-draw: a pick names one instance, detail coarsens a tagged mark and never removes it, a modal layer takes every pick, a stale tile not drawn, a far origin keeps its precision"
+# INTERFACE.md section 9 against the screen standard's registry (vendored at a pinned tag and
+# hash): the 24 primitives and their prefixes, all 60 slots, keyed or not, and every tag form in
+# the grammar's order (slot before key). Planted when written: a slot after its key, a missing
+# slot, an invented slot, a wrong keyed flag, a missing shell prefix, a renamed primitive and a
+# changed registry byte are each refused.
+python3 crates/holon-draw/tools/check_registry.py >/dev/null \
+  && ok "INTERFACE.md section 9 matches the CSD/5 registry: 24 primitives, 60 slots, slot before key" \
+  || no "INTERFACE.md section 9 matches the CSD/5 registry: 24 primitives, 60 slots, slot before key"
 
 # holon-draw-atoms: the 3D atom world through holon-draw instead of Bevy. RELEASE: its tests
 # solve the hydrogen curves at load (2.5 s in release; the twelve presets together took

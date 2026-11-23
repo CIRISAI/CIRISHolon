@@ -695,54 +695,68 @@ def digest(f):
     return hashlib.sha256(pathlib.Path(f).read_bytes()).hexdigest()
 
 
+def tag4(text):
+    """A decimal as written, as a CBOR tag 4 pair [exponent, mantissa], the mantissa not divisible by ten."""
+    import decimal
+    sign, digits, exp = decimal.Decimal(text).as_tuple()
+    m = int("".join(map(str, digits))) * (-1 if sign else 1)
+    if m == 0:
+        return [0, 0]
+    while m % 10 == 0:
+        m //= 10
+        exp += 1
+    return [exp, m]
+
+
 def claims(decls, answers, root):
-    """One prototype payload per certificate and per price of a declaration that holds: what a signer would be
-    saying, by digest. Not CEG rows: unsigned, unencoded, in the unregistered range x_private:holon (HOLON-DECL Section 9)."""
+    """One prototype per certificate and per price of a declaration that holds, shaped as the payload rule holon-claim
+    (CC 3.1.11, registered provisionally on the Constitution's rc22 at 3f694e4; HOLON-DECL Section 9). Not rows: nothing
+    is encoded or signed, and there is no signer."""
     ans = {r["label"]: r["answer"] for r in answers}
-    out = []
+    tools = {digest(STD / "tools" / "holonc.py"): "standard/tools/holonc.py", digest(STD / "vocabulary.json"): "standard/vocabulary.json"}
+    out, names = [], dict(tools)
     for label, d in decls:
         if ans[label] != "holds":
             continue
         raw = json.loads((STD / "registry" / label).read_text(encoding="utf-8"), parse_float=str, parse_int=str)
+        decl = digest(STD / "registry" / label)
+        names[decl] = f"standard/registry/{label}"
 
-        def refs_of(items):
-            refs = [{"what": "declaration", "path": f"standard/registry/{label}", "sha256": digest(STD / "registry" / label)}]
+        def row(kind, f, value, unit, basis, items):
+            refs = {decl, *tools}
             for e in items:
-                if "path" in e:
-                    refs.append({"what": "evidence", "path": e["path"], "sha256": digest(root / e["path"])})
-                elif "gate" in e:
-                    refs.append({"what": "gate: " + e["gate"], "path": "engine/ci-gates.sh", "sha256": digest(root / "engine" / "ci-gates.sh")})
+                path = e["path"] if "path" in e else "engine/ci-gates.sh" if "gate" in e else None
+                if path:
+                    refs.add(digest(root / path))
+                    names[digest(root / path)] = path
             if "engine" in d["step"]:
-                refs.append({"what": "engine", "path": d["step"]["engine"], "sha256": digest(root / d["step"]["engine"])})
-            return refs
-
-        def budget_of(f):
-            view = next(v for v in raw["views"] if v["id"] == f["view"])
-            b = next(c for c in view["consumers"] if c["id"] == f["consumer"])["budget"]
-            return {"decimal": b["bound"], "unit": b["unit"]} if "bound" in b else {"agrees_with": b["agrees_with"], "over": b["over"]}
+                refs.add(digest(root / d["step"]["engine"]))
+                names[digest(root / d["step"]["engine"])] = d["step"]["engine"]
+            r = {"family": "holon:claim", "spec": SPEC, "holon": d["id"], "view": f["view"], "consumer": f["consumer"], "kind": kind,
+                 "score": 1, "declaration": decl, "evidence_refs": sorted(refs)}
+            view = next(v for v in d["views"] if v["id"] == f["view"])
+            if "bound" in next(c for c in view["consumers"] if c["id"] == f["consumer"]).get("budget", {"bound": 0}):
+                r["body"] = {"bound": tag4(value), "unit": unit, "basis": basis}
+                if basis == "realised":
+                    r["body"]["realised"] = tag4(value)
+            out.append(r)
 
         cert = d["certificate"]
         if cert["kind"] != "none":
             items = list(cert.get("evidence", []))
             for part in cert.get("parts", {}).values():
                 items += part.get("evidence", [])
-            out.append({"family": "x_private:holon:claim", "holon": d["id"], "view": cert["for"]["view"], "consumer": cert["for"]["consumer"],
-                        "score": 1, "kind": cert["kind"], "basis": cert["basis"],
-                        "bound": {"decimal": raw["certificate"]["bound"]["value"], "unit": cert["bound"]["unit"]},
-                        "budget": budget_of(cert["for"]), "evidence_refs": refs_of(items)})
+            row(cert["kind"], cert["for"], raw["certificate"]["bound"]["value"], cert["bound"]["unit"], cert["basis"], items)
         if "price" in d:
-            pr, rp = d["price"], raw["price"]
-            price = {"decimal": rp["value"], "unit": pr["unit"]}
-            if "se" in rp:
-                price["se"] = rp["se"]
-            if "null" in rp:
-                price["null"] = rp["null"]
-            out.append({"family": "x_private:holon:price", "holon": d["id"], "view": pr["for"]["view"], "consumer": pr["for"]["consumer"],
-                        "score": 1, "reads": pr["reads"], "price": price, "budget": budget_of(pr["for"]), "evidence_refs": refs_of(pr["evidence"])})
-    return {"says": "PROTOTYPE, unsigned and unregistered. Each entry is what a signer would say in one scores row: 'the checks of "
-                    "ciris/holon-decl/0 held for this claim over these digests'. It does not say the evidence supports the claim. "
-                    "For a price, score 1 says the stated reading (carried or dropped) is what the numbers give, not that it is carried.",
-            "checked_by": {"holonc.py": digest(STD / "tools" / "holonc.py"), "vocabulary.json": digest(STD / "vocabulary.json")},
+            row("price", d["price"]["for"], raw["price"]["value"], d["price"]["unit"], "price", d["price"]["evidence"])
+    return {"says": "PROTOTYPE of holon:claim payloads (wire leaf holon:claim:v1). Unsigned, unencoded, no signer. Each entry is what a "
+                    "signer would say in one scores row: 'the checks of the declaration's spec held for this claim over these digests'. It "
+                    "does not say the evidence supports the claim. For a price, score 1 says the reading the declaration states (carried "
+                    "or dropped) is what the numbers give. bound and realised are [exponent, mantissa]. A price's standard error and "
+                    "null, the budget, and all prose stay in the declaration. An exact-agreement claim carries no body.",
+            "open": "Under basis realised this format has ONE number, the realised cost, which is also the bound claimed; both members "
+                    "carry it. Whether CC means two different numbers there is asked on CIRISAI/CIRISConstitution#215.",
+            "names": {k: names[k] for k in sorted(names)},
             "claims": out}
 
 

@@ -558,3 +558,78 @@ wrapping, buttons, the narrow-screen arrangement) is Rust (`holon-draw::ui`), me
 through the provider. The screen standard's requirements in §2, §8 and §10 now bind the
 engine directly rather than a host.
 
+## 13. CORRECTION 2026-11-22 — Profile B's owed items, built (issue #6, from the CEWPOS side)
+
+CEWPOS has re-based on the 24 primitives over Profile B (CIRISAI/CEWPOS#3) and asked for the
+items §8, §9 and §10 left OWED. The text above is kept legible. Where it and this section
+disagree, this section holds. The code is `engine/crates/holon-draw` at the commit that adds
+this section.
+
+**1. D12 `image` exists (§1, §8 item 8, §9's Media and QrCode rows).** It is `Kind::Image = 12`,
+laid out as a run: `size[0]` by `size[1]` centred at `pos`, sampling `aux[0], aux[1]` to
+`aux[2], angle`, multiplied by `rgba`. Its texture is the host's, in slot `variant` (0..255),
+set with `setImage(slot, source, { nearest })` on `draw.js` and on `draw-webgpu.js`. The host
+chooses the sampling per slot: nearest for a QR grid. It is drawn in SCREEN tiles only, and
+the core refuses one in a world tile (`Refusal::ImageInWorld`). The core packs one batch per
+slot, so overlapping images in different slots of one tile are drawn in slot order. The core
+does not blur: `__blur` is a blurred texture the UI layer supplies.
+
+**L10 is enforced in the core, not only in the UI layer as §8 item 8 had it.** A tagged image
+carries `Bind::Media { alt, disclosure }` (two handles) or `Bind::Qr`. A tagged image with
+neither is refused (`Refusal::BareImage`). A media image is refused when its alt text or its
+AI disclosure is not drawn in the same frame as a run that carries a source string
+(`Refusal::MediaUnbound`, naming the missing handle). An untagged image is decoration and
+needs neither. What the core cannot check is that the alt text describes the image. That
+stays the card's.
+
+**2. A run carries the digest of its SOURCE STRING (§9; §10 item 2).** It is the SHA-256 of the
+UTF-8 bytes handed to the text provider, in `Bind::Source`. The UI layer computes it, because
+the core holds no strings. With it the run carries what the provider said of the drawing:
+`Drawn::Exact` (whole and as given), `Cut` (wider than an atlas page), `Changed` (its style
+changed the case, or a flow collapsed whitespace), or `Unsaid`. `text.js` now says which, and
+a host's `host_text` passes it as an 8th number; a host that writes only 7 leaves it `Unsaid`.
+`Frame::report` returns the digest as `Shown::source` when every run of the instance carries
+the same one. A wrapped value is one instance whose word-runs all carry the digest of the
+whole string. SHA-256 is chosen so that a UI layer comparing it with the digest of the value
+it sends uses the standard's own hash. `Shown::shown` stays the fold of drawn bytes, comparable
+to nothing in the standard (§9's ruling holds). §10's limit holds: where a value is drawn
+through a label, the comparison is with the label string derived from the value.
+
+**3. Legibility (§8 item 5).** `Shown::legible` now holds only when every condition the core
+can attest holds, and `Shown::why` reports each one:
+
+| condition (§8 item 5) | what the core does | exact or bounded |
+|---|---|---|
+| tagged | anything reported is tagged | exact |
+| in the viewport | every mark WHOLLY inside (before: touching it) | exact for screen marks; a world mark by its bounding circle |
+| unoccluded | screen: no mark of another instance drawn later overlaps it | conservative: a disc or glyph occludes by its bounding square, so the core can wrongly say occluded, never wrongly say unoccluded |
+| | world: `No` if a screen mark covers it, otherwise `Unknown` | world against world needs the backend's depth buffer, which the core does not have, so a world mark is never `legible` |
+| size floor | the narrow side of a screen mark, a world mark's diameter, at least `LEGIBLE_PX` (4) | exact; for text the floor is low and the UI layer, which knows the device pixel ratio, should hold its own |
+| contrast floor | each run's ink against its ground, at least 4.5:1 (WCAG 2.x 1.4.3, AA, normal text; the 3:1 large-text allowance is not taken, because the core does not know a point size) | exact where the ground is screen quads whose rounded rectangles hold the run, the lowest opaque, composited as the backend blends (source-alpha in sRGB, tile DIM applied); `Unknown` when the ground is not uniform or not opaque (the world shows through) |
+| untruncated | every run `Drawn::Exact` | as exact as the provider's report; `Unknown` when it said nothing |
+| the exact string | one source digest across the instance's runs; the comparison with the sent value is the UI layer's | exact |
+| the frame presented | the host's: it draws the frame it was given | not the core's |
+
+So `legible` can now license a send for a SCREEN instance, after the UI layer has compared
+`Shown::source`. The meaning of `Shown::legible` changed on this date. The old meaning,
+the size floor alone, is `why.size`. The engine's own panels in the atoms page are
+translucent over the scene, so their contrast is `Unknown`: they send nothing, and nothing asks
+them to be legible. A card that sends draws its values on an opaque ground.
+
+**4. §9's tag forms and its check (§10 item 1).** These are corrected in §9 itself, under
+its dated note. The registry is vendored at `engine/crates/holon-draw/registry/` (tag
+`v1.0-rc21-wire`, byte-identical to `181c48a`). `tools/check_registry.py` checks §9 against it
+in ci-gates.
+
+**5. A screen line's rectangle (§1 S2, S3).** A tagged screen line or arc was reported, and
+picked, by a box of `size` about its first end. It is now the box of its two ends and its
+width (an arc's control point included). In this repository the ladder's nav control is the
+only consumer of tagged screen marks, and its tests pass unchanged. CEWPOS's `csd5.rs` draws
+screen lines, and its picks of any TAGGED line move to the corrected rectangle.
+
+**Still open.**
+- World-against-world occlusion, from a backend ID or depth pass.
+- The size floor for text.
+- §10 (3) the budget as a stated input, (4) which modal wins and the focus and screen-reader
+  path, (6) the richer `withheld`/`waiting`/`refused` forms, and the preview's owner and tag
+  form. These are the UI layer's, as §10 says.

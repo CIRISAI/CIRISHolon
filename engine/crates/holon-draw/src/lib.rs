@@ -44,6 +44,7 @@
 
 pub mod abi;
 pub mod alloc;
+pub mod digest;
 pub mod ladder;
 pub mod twin;
 pub mod ui;
@@ -69,9 +70,63 @@ pub enum Kind {
     /// `aux[0], aux[1]` (u0, v0) to `aux[2], angle` (u1, v1) on atlas page `variant`, tinted
     /// by `rgba`. The core holds no string and no font (`INTERFACE.md` §1, D11).
     Run = 11,
+    /// A rectangle of a HOST-SUPPLIED texture (`INTERFACE.md` §1, D12): a QR grid, or a
+    /// media frame the host decoded. Laid out as a run: `size[0]` by `size[1]` centred at
+    /// `pos`, sampling `aux[0], aux[1]` (u0, v0) to `aux[2], angle` (u1, v1) of the texture
+    /// the host put in slot `variant`, multiplied by `rgba` (white is the texture as it is).
+    /// The host chooses each slot's sampling (nearest for a QR grid). Screen tiles only.
+    /// A TAGGED image must say what it is ([`Bind::Media`] or [`Bind::Qr`]); anything else
+    /// is refused (L10: media is never drawn bare). A blurred frame (`__blur`) is a blurred
+    /// texture the host supplies; the core does not blur.
+    Image = 12,
 }
 
-pub const KINDS: [Kind; 11] = [Kind::Quad, Kind::Line, Kind::Arc, Kind::Disc, Kind::Box, Kind::Prism, Kind::Sphere, Kind::Rod, Kind::Patch, Kind::Glyph, Kind::Run];
+pub const KINDS: [Kind; 12] = [Kind::Quad, Kind::Line, Kind::Arc, Kind::Disc, Kind::Box, Kind::Prism, Kind::Sphere, Kind::Rod, Kind::Patch, Kind::Glyph, Kind::Run, Kind::Image];
+
+/// What a text provider says of how it drew a string.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+pub enum Drawn {
+    /// The provider did not say. Nothing is known about truncation.
+    #[default]
+    Unsaid,
+    /// The whole string, as given.
+    Exact,
+    /// Cut short (wider than the provider's page, for one).
+    Cut,
+    /// Drawn, but not as given: case changed by its style, or whitespace collapsed by a flow.
+    Changed,
+}
+
+impl Drawn {
+    /// Two parts of one string: a definite fault wins, then not knowing.
+    pub fn and(self, o: Drawn) -> Drawn {
+        use Drawn::*;
+        match (self, o) {
+            (Cut, _) | (_, Cut) => Cut,
+            (Changed, _) | (_, Changed) => Changed,
+            (Unsaid, _) | (_, Unsaid) => Unsaid,
+            _ => Exact,
+        }
+    }
+}
+
+/// What a mark is bound to beyond its record. It is never packed and never reaches a GPU.
+/// The frame reads it, and the report returns it.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+pub enum Bind {
+    #[default]
+    None,
+    /// A run's SOURCE STRING: the SHA-256 of the UTF-8 bytes handed to the text provider,
+    /// supplied by whoever shaped it (the UI layer), and what the provider said of the drawing.
+    /// The screen standard's L12 compares this with the digest of the value a write sends.
+    Source { sha256: [u8; 32], drawn: Drawn },
+    /// A tagged image that is MEDIA content: the handles of its alt text and of its AI
+    /// disclosure. Each must be drawn in the same frame as a run that carries a source,
+    /// or the frame is refused (L10).
+    Media { alt: u32, disclosure: u32 },
+    /// A tagged image that is a QR grid.
+    Qr,
+}
 
 /// The bytes of one packed instance.
 pub const INSTANCE_BYTES: usize = 52;
@@ -101,11 +156,17 @@ pub struct Instance {
     pub pin: bool,
     /// A kind's own small choice: a prism's top, a glyph's shape, a patch's field.
     pub variant: u8,
+    /// Not packed: a run's source string, an image's media slots.
+    pub bind: Bind,
 }
 
 impl Instance {
     pub fn new(kind: Kind, pos: [f32; 3], size: [f32; 3]) -> Instance {
-        Instance { kind, pos, size, aux: [0.0; 3], angle: 0.0, rgba: [255; 4], tag: 0, detail: 0, pin: false, variant: 0 }
+        Instance { kind, pos, size, aux: [0.0; 3], angle: 0.0, rgba: [255; 4], tag: 0, detail: 0, pin: false, variant: 0, bind: Bind::None }
+    }
+    pub fn bound_to(mut self, b: Bind) -> Instance {
+        self.bind = b;
+        self
     }
     pub fn tagged(mut self, tag: u32) -> Instance {
         self.tag = tag;
@@ -352,6 +413,13 @@ impl Camera {
 pub enum Refusal {
     /// A mark of this tile holds a number that is not finite.
     NotFinite { tile: u64, index: usize },
+    /// A tagged image that says neither [`Bind::Media`] nor [`Bind::Qr`] (L10).
+    BareImage { tile: u64, index: usize },
+    /// A media image whose alt text or AI disclosure (`missing`, a handle) is not drawn in
+    /// this frame as a run with a source string (L10).
+    MediaUnbound { tile: u64, index: usize, missing: u32 },
+    /// An image in a world tile: no backend draws one there.
+    ImageInWorld { tile: u64, index: usize },
 }
 
 /// One upload and one instanced draw call.
@@ -376,6 +444,7 @@ pub struct Batch {
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Mark {
     pub tag: u32,
+    pub kind: Kind,
     pub layer: u8,
     pub coarse: bool,
     pub on_screen: bool,
@@ -384,11 +453,78 @@ pub struct Mark {
     pub y: f64,
     pub r: f64,
     pub depth: f64,
+    /// At least [`LEGIBLE_PX`] across (the size floor alone).
     pub legible: bool,
     /// A fold of this mark's packed bytes as drawn.
     pub shown: u64,
     /// A screen mark's exact rectangle (left, top, right, bottom); a pick inside it hits.
     pub rect: Option<[f64; 4]>,
+    /// A screen mark's place in [`Frame::covers`] (its draw order); `u32::MAX` for a world mark.
+    pub cover: u32,
+    pub bind: Bind,
+}
+
+/// One screen mark as drawn, tagged or not: what the legibility test reads, in draw order.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Cover {
+    pub tag: u32,
+    pub kind: Kind,
+    pub rect: [f64; 4],
+    /// A quad's or patch's corner radius in pixels (0 for other kinds).
+    pub radius: f64,
+    /// Its colour as the backend computes it: the colour mode applied, then the tile's DIM
+    /// (rgb times DIM's rgb, alpha times DIM's w), in 0..1.
+    pub ink: [f64; 4],
+}
+
+/// Three answers: the core can say yes, can say no, or cannot know.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum Tri {
+    Yes,
+    No,
+    Unknown,
+}
+
+impl Tri {
+    fn and(self, o: Tri) -> Tri {
+        match (self, o) {
+            (Tri::No, _) | (_, Tri::No) => Tri::No,
+            (Tri::Unknown, _) | (_, Tri::Unknown) => Tri::Unknown,
+            _ => Tri::Yes,
+        }
+    }
+}
+
+/// The parts of "legible" (the screen standard's L12, `INTERFACE.md` §8 item 5) that the
+/// core can attest for one instance, each on its own. "Tagged" holds for anything reported.
+/// "The exact string that is sent" is the UI layer's comparison of [`Shown::source`] with
+/// the value it sends. "On the frame actually presented" is the host's: it draws the frame
+/// it was given.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Legibility {
+    /// Every mark is wholly within the viewport (not only touching it).
+    pub inside: bool,
+    /// The largest mark is at least [`LEGIBLE_PX`] across.
+    pub size: bool,
+    /// SCREEN marks: no mark of another instance is drawn over any part of any of them (by
+    /// rectangle, so a disc or glyph occludes by its bounding square: an over-estimate,
+    /// never an under-estimate). WORLD marks: `No` when a screen mark covers one; otherwise
+    /// `Unknown`, because world against world needs the backend's depth buffer, which the core
+    /// does not have.
+    pub unoccluded: Tri,
+    /// Every run of it is on an OPAQUE ground the core can see whole (screen quads that
+    /// contain the run's rectangle, the lowest of them opaque), and its ink reaches
+    /// [`CONTRAST_MIN`] against that ground. `Unknown` when the ground is not uniform, or not
+    /// opaque, so that the world shows through. `Yes` with no runs.
+    pub contrast: Tri,
+    /// The lowest contrast ratio of its runs (infinite with no runs, NaN where unknown).
+    pub min_contrast: f64,
+    /// Every run was drawn whole as given, as its text provider said ([`Drawn::Exact`]).
+    /// `Unknown` when a provider did not say. `Yes` with no runs.
+    pub untruncated: Tri,
+    /// Every run of it carries one and the same source digest. `No` when two differ,
+    /// `Unknown` when a run carries none. `Yes` with no runs.
+    pub string: Tri,
 }
 
 /// What is said of one instance: every mark that carries its tag.
@@ -396,25 +532,41 @@ pub struct Mark {
 pub struct Shown {
     pub tag: u32,
     pub marks: u32,
-    /// Every mark of it is within the viewport.
+    /// Every mark of it touches the viewport. ([`Legibility::inside`] is the stronger
+    /// "wholly within".)
     pub on_screen: bool,
-    /// On screen, and its largest mark is at least [`LEGIBLE_PX`] across. This is the
-    /// GEOMETRIC part of "legible" alone: occlusion, contrast, truncation and the string
-    /// itself are not known to this crate and are owed by the layer that knows them.
+    /// Everything [`Legibility`] can say holds: on screen and wholly inside, the size floor,
+    /// unoccluded, the contrast floor, untruncated, and one source string. Only then may a
+    /// UI layer use it to license a send, after it has compared [`Shown::source`] with the
+    /// value it sends.
+    ///
+    /// CORRECTION 2026-11-22 (issue #6): until this date `legible` was the size floor alone,
+    /// and its doc said so. A world mark is now never legible, because its occlusion is not
+    /// known. [`Legibility::size`] is the old meaning.
     pub legible: bool,
+    pub why: Legibility,
     /// Any mark of it drawn coarse.
     pub coarse: bool,
     /// The screen box of its marks: left, top, right, bottom.
     pub bounds: [f64; 4],
-    /// A fold of the bytes of all its marks as drawn on this frame, in draw order.
+    /// A fold of the bytes of all its marks as drawn on this frame, in draw order. It is
+    /// evidence about a frame, and comparable to nothing in the screen standard (§9).
     pub shown: u64,
+    /// The SHA-256 of the source string its runs were shaped from, when they all carry the same
+    /// one ([`Legibility::string`] is `Yes` and there is at least one run).
+    pub source: Option<[u8; 32]>,
 }
 
 /// A frame: what to draw, and what can be asked of it.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct Frame {
     pub batches: Vec<Batch>,
     pub marks: Vec<Mark>,
+    /// Every screen mark, in the order drawn.
+    pub covers: Vec<Cover>,
+    /// The viewport, pixels.
+    pub width: f64,
+    pub height: f64,
     /// Tiles drawn fine, and tiles drawn coarse.
     pub fine: u32,
     pub coarse: u32,
@@ -440,6 +592,85 @@ pub fn coarse_shortfall(kind: Kind) -> f64 {
 /// A mark under this many pixels across is drawn but not legible.
 pub const LEGIBLE_PX: f64 = 4.0;
 
+/// The least contrast ratio of a run's ink against its ground for it to count as legible:
+/// WCAG 2.x success criterion 1.4.3 (AA) for text of normal size, `(L1 + 0.05) / (L2 + 0.05)`
+/// with sRGB relative luminance. The large-text allowance (3:1) is not taken, because the core
+/// does not know a run's point size.
+pub const CONTRAST_MIN: f64 = 4.5;
+
+/// A screen mark's rectangle in pixels: a line or arc by its two ends and its width (an arc
+/// with its control point too), a disc or glyph by its radius, anything else by its size
+/// about `pos`.
+fn screen_rect(m: &Instance, origin: [f64; 3]) -> [f64; 4] {
+    let (cx, cy) = (origin[0] + m.pos[0] as f64, origin[1] + m.pos[1] as f64);
+    match m.kind {
+        Kind::Disc | Kind::Glyph => {
+            let r = m.size[0].abs() as f64;
+            [cx - r, cy - r, cx + r, cy + r]
+        }
+        Kind::Line | Kind::Arc => {
+            let (ex, ey) = (origin[0] + m.aux[0] as f64, origin[1] + m.aux[1] as f64);
+            let mut hw = 0.5 * m.size[0].abs() as f64;
+            if m.kind == Kind::Arc {
+                hw += (m.size[1] as f64).hypot(m.size[2] as f64);
+            }
+            [cx.min(ex) - hw, cy.min(ey) - hw, cx.max(ex) + hw, cy.max(ey) + hw]
+        }
+        _ => {
+            let (hw, hh) = (0.5 * m.size[0].abs() as f64, 0.5 * m.size[1].abs() as f64);
+            [cx - hw, cy - hh, cx + hw, cy + hh]
+        }
+    }
+}
+
+/// A screen mark's colour as the backend's screen pass computes it (`web/draw.js`, SVS).
+fn screen_ink(m: &Instance, p: &[f32; 32]) -> [f64; 4] {
+    let c = |i: usize| m.rgba[i] as f64 / 255.0;
+    let mut rgb = [c(0), c(1), c(2)];
+    if !matches!(m.kind, Kind::Run | Kind::Image) {
+        let t = (m.angle as f64).clamp(0.0, 1.0);
+        match m.variant & 0xc0 {
+            COLOUR_RAMP => {
+                for (k, v) in rgb.iter_mut().enumerate() {
+                    *v = p[PARAM_RAMP0 + k] as f64 * (1.0 - t) + p[PARAM_RAMP1 + k] as f64 * t;
+                }
+            }
+            COLOUR_TINT => {
+                for (k, v) in rgb.iter_mut().enumerate() {
+                    *v *= p[PARAM_TINT + k] as f64;
+                }
+            }
+            _ => {}
+        }
+    }
+    let d = |k: usize| p[PARAM_DIM + k] as f64;
+    [(rgb[0] * d(0)).clamp(0.0, 1.0), (rgb[1] * d(1)).clamp(0.0, 1.0), (rgb[2] * d(2)).clamp(0.0, 1.0), (c(3) * d(3)).clamp(0.0, 1.0)]
+}
+
+/// sRGB relative luminance (WCAG 2.x).
+fn luminance(c: [f64; 3]) -> f64 {
+    let lin = |v: f64| if v <= 0.04045 { v / 12.92 } else { ((v + 0.055) / 1.055).powf(2.4) };
+    0.2126 * lin(c[0]) + 0.7152 * lin(c[1]) + 0.0722 * lin(c[2])
+}
+
+/// The WCAG contrast ratio of two colours.
+pub fn contrast_ratio(a: [f64; 3], b: [f64; 3]) -> f64 {
+    let (la, lb) = (luminance(a), luminance(b));
+    (la.max(lb) + 0.05) / (la.min(lb) + 0.05)
+}
+
+/// Whether a point is inside a rectangle with rounded corners (the screen pass's distance).
+fn in_rounded(rect: &[f64; 4], radius: f64, p: [f64; 2]) -> bool {
+    let (cx, cy) = (0.5 * (rect[0] + rect[2]), 0.5 * (rect[1] + rect[3]));
+    let (hx, hy) = (0.5 * (rect[2] - rect[0]), 0.5 * (rect[3] - rect[1]));
+    let (qx, qy) = ((p[0] - cx).abs() - (hx - radius), (p[1] - cy).abs() - (hy - radius));
+    qx.max(0.0).hypot(qy.max(0.0)) + qx.max(qy).min(0.0) - radius <= 1e-9
+}
+
+fn overlaps(a: &[f64; 4], b: &[f64; 4]) -> bool {
+    a[0] < b[2] && b[0] < a[2] && a[1] < b[3] && b[1] < a[3]
+}
+
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct Scene {
     pub tiles: Vec<Tile>,
@@ -454,6 +685,15 @@ impl Scene {
         let mut cands = Vec::new();
         let mut live = Vec::new();
         let mut stale = 0u32;
+        // L10: the handles drawn as runs with a source string, which a media image may name
+        let sourced: std::collections::HashSet<u32> = self
+            .tiles
+            .iter()
+            .filter(|t| t.version == version)
+            .flat_map(|t| t.marks.iter())
+            .filter(|m| m.kind == Kind::Run && m.tag != 0 && matches!(m.bind, Bind::Source { .. }))
+            .map(|m| m.tag)
+            .collect();
         for t in &self.tiles {
             if t.version != version {
                 stale += 1;
@@ -462,6 +702,24 @@ impl Scene {
             for (i, m) in t.marks.iter().enumerate() {
                 if !m.finite() {
                     return Err(Refusal::NotFinite { tile: t.id, index: i });
+                }
+                if m.kind == Kind::Image {
+                    if !t.screen {
+                        return Err(Refusal::ImageInWorld { tile: t.id, index: i });
+                    }
+                    if m.tag != 0 {
+                        match m.bind {
+                            Bind::Qr => {}
+                            Bind::Media { alt, disclosure } => {
+                                for h in [alt, disclosure] {
+                                    if h == 0 || !sourced.contains(&h) {
+                                        return Err(Refusal::MediaUnbound { tile: t.id, index: i, missing: h });
+                                    }
+                                }
+                            }
+                            _ => return Err(Refusal::BareImage { tile: t.id, index: i }),
+                        }
+                    }
                 }
             }
             if t.screen {
@@ -497,7 +755,7 @@ impl Scene {
         }
         let fine = alloc.allocate(&cands, budget);
         let remainder_px = Acuity::remainder(&cands, &fine);
-        let mut frame = Frame { batches: Vec::new(), marks: Vec::new(), fine: 0, coarse: 0, stale, modal: self.modal, remainder_px };
+        let mut frame = Frame { batches: Vec::new(), marks: Vec::new(), covers: Vec::new(), width: cam.width, height: cam.height, fine: 0, coarse: 0, stale, modal: self.modal, remainder_px };
         let mut order: Vec<usize> = (0..live.len()).collect();
         order.sort_by_key(|&k| (live[k].0.screen, live[k].0.layer, k));
         for k in order {
@@ -509,13 +767,28 @@ impl Scene {
                 frame.coarse += 1;
             }
             let offset = [d[0] as f32, d[1] as f32, d[2] as f32];
+            // one batch per kind; images one batch per texture slot, in the order the slots first appear
+            let mut groups: Vec<(Kind, Option<u8>)> = Vec::new();
             for kind in KINDS {
+                if kind == Kind::Image {
+                    let mut slots: Vec<u8> = Vec::new();
+                    for m in t.marks.iter().filter(|m| m.kind == Kind::Image) {
+                        if !slots.contains(&m.variant) {
+                            slots.push(m.variant);
+                        }
+                    }
+                    groups.extend(slots.into_iter().map(|s| (kind, Some(s))));
+                } else {
+                    groups.push((kind, None));
+                }
+            }
+            for (kind, slot) in groups {
                 let mut bytes = Vec::new();
                 let mut count = 0u32;
                 // a pinned mark is never coarsened: in a coarse tile it rides in a batch of its own
                 let mut pinned = Vec::new();
                 let mut n_pinned = 0u32;
-                for m in t.marks.iter().filter(|m| m.kind == kind) {
+                for m in t.marks.iter().filter(|m| m.kind == kind && slot.map_or(true, |s| m.variant == s)) {
                     if !is_fine && !t.screen && m.pin {
                         let at = pinned.len();
                         m.pack_as(&mut pinned, false);
@@ -528,7 +801,7 @@ impl Scene {
                                 Some(p) => (p[0], p[1], p[2], p[0] + r >= 0.0 && p[0] - r <= cam.width && p[1] + r >= 0.0 && p[1] - r <= cam.height),
                                 None => (f64::NAN, f64::NAN, f64::INFINITY, false),
                             };
-                            frame.marks.push(Mark { tag: m.tag, layer: t.layer, coarse: false, on_screen: on, x, y, r, depth, legible: on && 2.0 * r >= LEGIBLE_PX, shown, rect: None });
+                            frame.marks.push(Mark { tag: m.tag, kind, layer: t.layer, coarse: false, on_screen: on, x, y, r, depth, legible: on && 2.0 * r >= LEGIBLE_PX, shown, rect: None, cover: u32::MAX, bind: m.bind });
                         }
                         continue;
                     }
@@ -539,16 +812,17 @@ impl Scene {
                     let at = bytes.len();
                     m.pack_as(&mut bytes, !whole);
                     count += 1;
-                    if m.tag != 0 && t.screen {
-                        let shown = fnv(0xcbf2_9ce4_8422_2325, &bytes[at..]);
-                        let (cx, cy) = (t.origin[0] + m.pos[0] as f64, t.origin[1] + m.pos[1] as f64);
-                        let (hw, hh) = match m.kind {
-                            Kind::Disc | Kind::Glyph => (m.size[0].abs() as f64, m.size[0].abs() as f64),
-                            _ => (0.5 * m.size[0].abs() as f64, 0.5 * m.size[1].abs() as f64),
-                        };
-                        let rect = [cx - hw, cy - hh, cx + hw, cy + hh];
-                        let on = rect[2] >= 0.0 && rect[0] <= cam.width && rect[3] >= 0.0 && rect[1] <= cam.height;
-                        frame.marks.push(Mark { tag: m.tag, layer: t.layer, coarse: false, on_screen: on, x: cx, y: cy, r: hw.max(hh), depth: f64::NEG_INFINITY, legible: on && hh >= 0.5 * LEGIBLE_PX, shown, rect: Some(rect) });
+                    if t.screen {
+                        let rect = screen_rect(m, t.origin);
+                        let radius = if matches!(kind, Kind::Quad | Kind::Patch) { (m.aux[0].max(0.0) as f64).min(0.5 * (rect[2] - rect[0]).min(rect[3] - rect[1])) } else { 0.0 };
+                        let cover = frame.covers.len() as u32;
+                        frame.covers.push(Cover { tag: m.tag, kind, rect, radius, ink: screen_ink(m, &t.params) });
+                        if m.tag != 0 {
+                            let shown = fnv(0xcbf2_9ce4_8422_2325, &bytes[at..]);
+                            let (hw, hh) = (0.5 * (rect[2] - rect[0]), 0.5 * (rect[3] - rect[1]));
+                            let on = rect[2] >= 0.0 && rect[0] <= cam.width && rect[3] >= 0.0 && rect[1] <= cam.height;
+                            frame.marks.push(Mark { tag: m.tag, kind, layer: t.layer, coarse: false, on_screen: on, x: rect[0] + hw, y: rect[1] + hh, r: hw.max(hh), depth: f64::NEG_INFINITY, legible: on && hw.min(hh) >= 0.5 * LEGIBLE_PX, shown, rect: Some(rect), cover, bind: m.bind });
+                        }
                     } else if m.tag != 0 {
                         let shown = fnv(0xcbf2_9ce4_8422_2325, &bytes[at..]);
                         let world = [t.origin[0] + m.pos[0] as f64, t.origin[1] + m.pos[1] as f64, t.origin[2] + m.pos[2] as f64];
@@ -557,7 +831,7 @@ impl Scene {
                             Some(p) => (p[0], p[1], p[2], p[0] + r >= 0.0 && p[0] - r <= cam.width && p[1] + r >= 0.0 && p[1] - r <= cam.height),
                             None => (f64::NAN, f64::NAN, f64::INFINITY, false),
                         };
-                        frame.marks.push(Mark { tag: m.tag, layer: t.layer, coarse: !whole, on_screen: on, x, y, r, depth, legible: on && 2.0 * r >= LEGIBLE_PX, shown, rect: None });
+                        frame.marks.push(Mark { tag: m.tag, kind, layer: t.layer, coarse: !whole, on_screen: on, x, y, r, depth, legible: on && 2.0 * r >= LEGIBLE_PX, shown, rect: None, cover: u32::MAX, bind: m.bind });
                     }
                 }
                 if count > 0 {
@@ -609,15 +883,116 @@ impl Frame {
         }
         best.map(|(m, _)| m.tag)
     }
+
+    /// Whether a mark of instance `tag` is drawn over by a mark of another instance.
+    fn unoccluded(&self, m: &Mark) -> Tri {
+        let box_ = m.rect.unwrap_or([m.x - m.r, m.y - m.r, m.x + m.r, m.y + m.r]);
+        let after = if m.cover == u32::MAX { 0 } else { m.cover as usize + 1 };
+        let hit = self.covers[after..].iter().any(|c| c.tag != m.tag && c.ink[3] > 0.0 && overlaps(&c.rect, &box_));
+        match (hit, m.rect.is_some()) {
+            (true, _) => Tri::No,
+            (false, true) => Tri::Yes,
+            // world against world needs a depth buffer
+            (false, false) => Tri::Unknown,
+        }
+    }
+
+    /// A run's contrast against the ground under it, or `None` when that ground is not one
+    /// the core can see whole and opaque.
+    fn contrast(&self, m: &Mark) -> Option<f64> {
+        let r = m.rect?;
+        if m.cover == u32::MAX {
+            return None;
+        }
+        let own = self.covers[m.cover as usize];
+        // the covers under it, nearest first, until one is opaque
+        let mut layers: Vec<[f64; 4]> = Vec::new();
+        for c in self.covers[..m.cover as usize].iter().rev() {
+            if c.ink[3] <= 0.0 || !overlaps(&c.rect, &r) {
+                continue;
+            }
+            // a quad (or patch) whose rounded rectangle holds the run is a uniform layer (it is
+            // convex, so holding the run's four corners holds the run); anything else under any
+            // part of it makes the ground unknown
+            let holds = [[r[0], r[1]], [r[2], r[1]], [r[0], r[3]], [r[2], r[3]]].iter().all(|p| in_rounded(&c.rect, c.radius, *p));
+            if !matches!(c.kind, Kind::Quad | Kind::Patch) || !holds {
+                return None;
+            }
+            layers.push(c.ink);
+            if c.ink[3] >= 1.0 {
+                break;
+            }
+        }
+        let base = layers.pop().filter(|l| l[3] >= 1.0)?;
+        let mut g = [base[0], base[1], base[2]];
+        for l in layers.iter().rev() {
+            for k in 0..3 {
+                g[k] = l[3] * l[k] + (1.0 - l[3]) * g[k];
+            }
+        }
+        let a = own.ink[3];
+        let ink = [a * own.ink[0] + (1.0 - a) * g[0], a * own.ink[1] + (1.0 - a) * g[1], a * own.ink[2] + (1.0 - a) * g[2]];
+        Some(contrast_ratio(ink, g))
+    }
+
     /// What is said of one instance, or `None` if no mark of this frame carries its tag.
     pub fn report(&self, tag: u32) -> Option<Shown> {
         let mut out: Option<Shown> = None;
         let mut widest = 0.0f64;
+        let (mut inside, mut unoccluded, mut contrast, mut untruncated, mut string) = (true, Tri::Yes, Tri::Yes, Tri::Yes, Tri::Yes);
+        let mut min_contrast = f64::INFINITY;
+        let mut source: Option<[u8; 32]> = None;
         for m in self.marks.iter().filter(|m| m.tag == tag) {
             let b = m.rect.unwrap_or([m.x - m.r, m.y - m.r, m.x + m.r, m.y + m.r]);
-            widest = widest.max(2.0 * m.r);
+            // the narrow side of a screen mark (a run's height), a world mark's diameter
+            widest = widest.max(match m.rect {
+                Some(r) => (r[2] - r[0]).min(r[3] - r[1]),
+                None => 2.0 * m.r,
+            });
+            inside &= m.on_screen && b[0] >= 0.0 && b[1] >= 0.0 && b[2] <= self.width && b[3] <= self.height;
+            unoccluded = unoccluded.and(self.unoccluded(m));
+            if m.kind == Kind::Run {
+                match self.contrast(m) {
+                    Some(c) => {
+                        min_contrast = min_contrast.min(c);
+                        contrast = contrast.and(if c >= CONTRAST_MIN { Tri::Yes } else { Tri::No });
+                    }
+                    None => {
+                        min_contrast = f64::NAN;
+                        contrast = contrast.and(Tri::Unknown);
+                    }
+                }
+                match m.bind {
+                    Bind::Source { sha256, drawn } => {
+                        untruncated = untruncated.and(match drawn {
+                            Drawn::Exact => Tri::Yes,
+                            Drawn::Unsaid => Tri::Unknown,
+                            Drawn::Cut | Drawn::Changed => Tri::No,
+                        });
+                        match source {
+                            None => source = Some(sha256),
+                            Some(s) if s != sha256 => string = string.and(Tri::No),
+                            _ => {}
+                        }
+                    }
+                    _ => {
+                        untruncated = untruncated.and(Tri::Unknown);
+                        string = string.and(Tri::Unknown);
+                    }
+                }
+            }
             out = Some(match out {
-                None => Shown { tag, marks: 1, on_screen: m.on_screen, legible: false, coarse: m.coarse, bounds: b, shown: fnv(0xcbf2_9ce4_8422_2325, &m.shown.to_le_bytes()) },
+                None => Shown {
+                    tag,
+                    marks: 1,
+                    on_screen: m.on_screen,
+                    legible: false,
+                    why: Legibility { inside: false, size: false, unoccluded: Tri::Unknown, contrast: Tri::Unknown, min_contrast: f64::NAN, untruncated: Tri::Unknown, string: Tri::Unknown },
+                    coarse: m.coarse,
+                    bounds: b,
+                    shown: fnv(0xcbf2_9ce4_8422_2325, &m.shown.to_le_bytes()),
+                    source: None,
+                },
                 Some(s) => Shown {
                     marks: s.marks + 1,
                     on_screen: s.on_screen && m.on_screen,
@@ -628,7 +1003,11 @@ impl Frame {
                 },
             });
         }
-        out.map(|s| Shown { legible: s.on_screen && widest >= LEGIBLE_PX, ..s })
+        out.map(|s| {
+            let why = Legibility { inside, size: widest >= LEGIBLE_PX, unoccluded, contrast, min_contrast, untruncated, string };
+            let legible = s.on_screen && why.inside && why.size && [why.unoccluded, why.contrast, why.untruncated, why.string].iter().all(|t| *t == Tri::Yes);
+            Shown { legible, why, source: if string == Tri::Yes { source } else { None }, ..s }
+        })
     }
     /// A fold of every batch's tile, kind, count and bytes (FNV-1a, 64-bit), in order.
     pub fn digest(&self) -> u64 {
@@ -738,7 +1117,9 @@ mod tests {
         // the ground patch and the trees carry no tag
         assert_eq!(f.pick(700.0, 80.0), None);
         let r = f.report(113).unwrap();
-        assert!(r.marks == 2 && r.on_screen && r.legible && !r.coarse);
+        assert!(r.marks == 2 && r.on_screen && r.why.size && !r.coarse);
+        // a world mark is never legible enough to license a send: world against world is the depth buffer's
+        assert!(!r.legible && r.why.unoccluded == Tri::Unknown);
         assert!(r.bounds[0] < 336.0 && r.bounds[2] > 360.0);
         assert_eq!(f.report(114).unwrap().marks, 1);
         assert!(f.report(5).is_none());
@@ -790,7 +1171,9 @@ mod tests {
         // its left, over the building whose centre is at (336, 428)
         let mut button = Instance::new(Kind::Quad, [-50.0, 0.0, 0.0], [80.0, 24.0, 0.0]).tagged(7);
         button.aux = [6.0, 0.0, 0.0];
-        let label = Instance::new(Kind::Run, [-50.0, 0.0, 0.0], [52.0, 14.0, 0.0]);
+        button.rgba = [0x23, 0x69, 0x57, 255];
+        // the label is part of the button's instance, with its source string
+        let label = Instance::new(Kind::Run, [-50.0, 0.0, 0.0], [52.0, 14.0, 0.0]).tagged(7).bound_to(Bind::Source { sha256: digest::sha256(b"confirm"), drawn: Drawn::Exact });
         s.tiles.push(Tile { id: 50, origin: [300.0, 420.0, 0.0], version: 7, layer: 0, screen: true, params: PARAMS_NEUTRAL, marks: vec![Instance::new(Kind::Quad, [0.0; 3], [200.0, 40.0, 0.0]), button, label] });
         let f = s.frame(&cam(), 7, &Ring, 1000).unwrap();
         assert_eq!(f.pick(260.0, 425.0), Some(7), "the button, inside its rectangle");
@@ -800,7 +1183,8 @@ mod tests {
         assert_eq!(f.pick(336.0, 428.0), Some(113));
         let r = f.report(7).unwrap();
         assert_eq!(r.bounds, [210.0, 408.0, 290.0, 432.0]);
-        assert!(r.legible);
+        assert!(r.legible, "{:?}", r.why);
+        assert_eq!(r.source, Some(digest::sha256(b"confirm")));
         // screen batches come last, flagged, with the origin as their offset
         let last = f.batches.last().unwrap();
         assert!(last.screen && last.kind == Kind::Run && last.offset == [300.0, 420.0, 0.0]);
@@ -910,5 +1294,181 @@ mod tests {
         let mid = |s: Shown| 0.5 * (s.bounds[0] + s.bounds[2]);
         assert!((mid(b) - mid(a) - 4.0).abs() < 1e-6 && (mid(a) - 398.0).abs() < 1e-6, "{} {}", mid(a), mid(b));
         assert_eq!(f.batches[0].offset, [-0.5, 0.0, 0.0]);
+    }
+
+    // ---- L12 legibility and L10 media (issue #6) ----
+
+    const WHITE: [u8; 4] = [255, 255, 255, 255];
+    const BLACK: [u8; 4] = [0, 0, 0, 255];
+
+    fn src(s: &str) -> Bind {
+        Bind::Source { sha256: digest::sha256(s.as_bytes()), drawn: Drawn::Exact }
+    }
+    fn screen(id: u64, layer: u8, marks: Vec<Instance>) -> Tile {
+        Tile { id, origin: [0.0; 3], version: 7, layer, screen: true, params: PARAMS_NEUTRAL, marks }
+    }
+    /// A white card 300 by 100 at (50, 50) and a value run (tag 21) 120 by 16 on it.
+    fn card(run: Instance) -> Tile {
+        screen(1, 0, vec![Instance::new(Kind::Quad, [200.0, 100.0, 0.0], [300.0, 100.0, 0.0]).colour(WHITE).tagged(20), run])
+    }
+    fn value() -> Instance {
+        Instance::new(Kind::Run, [150.0, 100.0, 0.0], [120.0, 16.0, 0.0]).colour(BLACK).tagged(21).bound_to(src("42 tokens"))
+    }
+    fn shown(tiles: Vec<Tile>, tag: u32) -> Shown {
+        Scene { tiles, modal: None }.frame(&cam(), 7, &Ring, u64::MAX).expect("drawn").report(tag).expect("reported")
+    }
+
+    #[test]
+    fn a_value_on_an_opaque_card_is_legible_and_reports_its_source() {
+        let s = shown(vec![card(value())], 21);
+        assert!(s.legible, "{:?}", s.why);
+        assert_eq!(s.source, Some(digest::sha256(b"42 tokens")));
+        assert!((s.why.min_contrast - 21.0).abs() < 1e-9, "black on white is 21:1");
+        // the card itself is under its own value: occluded by another instance, so not legible
+        assert_eq!(shown(vec![card(value())], 20).why.unoccluded, Tri::No);
+    }
+
+    #[test]
+    fn occlusion_by_a_later_mark_of_another_instance() {
+        // a sheet in a higher layer over half the value
+        let sheet = screen(2, 1, vec![Instance::new(Kind::Quad, [200.0, 100.0, 0.0], [20.0, 8.0, 0.0]).colour(WHITE).tagged(30)]);
+        let s = shown(vec![card(value()), sheet.clone()], 21);
+        assert_eq!(s.why.unoccluded, Tri::No);
+        assert!(!s.legible);
+        // the same sheet moved clear of it, and an invisible one over it, occlude nothing
+        let mut clear = sheet.clone();
+        clear.marks[0].pos = [400.0, 400.0, 0.0];
+        assert_eq!(shown(vec![card(value()), clear], 21).why.unoccluded, Tri::Yes);
+        let mut ghost = sheet;
+        ghost.marks[0].rgba[3] = 0;
+        assert_eq!(shown(vec![card(value()), ghost], 21).why.unoccluded, Tri::Yes);
+        // a mark of the SAME instance drawn after it (a glyph beside a label) does not occlude it
+        let mut t = card(value());
+        t.marks.push(Instance::new(Kind::Glyph, [150.0, 100.0, 0.0], [5.0, 0.0, 0.0]).colour(BLACK).tagged(21));
+        assert_eq!(shown(vec![t], 21).why.unoccluded, Tri::Yes);
+        // a world mark under a panel is occluded; one clear of every panel is unknown, not yes
+        let mut s = scene(vec![tile(1, 0.0, 40, 100)]);
+        s.tiles.push(screen(9, 0, vec![Instance::new(Kind::Quad, [336.0, 428.0, 0.0], [30.0, 30.0, 0.0]).colour(WHITE)]));
+        let f = s.frame(&cam(), 7, &Ring, u64::MAX).unwrap();
+        assert_eq!(f.report(113).unwrap().why.unoccluded, Tri::No);
+        assert_eq!(f.report(100).unwrap().why.unoccluded, Tri::Unknown);
+    }
+
+    #[test]
+    fn contrast_is_computed_against_a_ground_the_core_can_see_whole() {
+        // grey on white: about 1.6:1, under the floor
+        let mut grey = value();
+        grey.rgba = [200, 200, 200, 255];
+        let s = shown(vec![card(grey)], 21);
+        assert_eq!(s.why.contrast, Tri::No);
+        assert!(s.why.min_contrast < CONTRAST_MIN && s.why.min_contrast > 1.0);
+        // a translucent ground lets the world show through: unknown
+        let mut t = card(value());
+        t.marks[0].rgba[3] = 217;
+        assert_eq!(shown(vec![t], 21).why.contrast, Tri::Unknown);
+        // a translucent quad over an opaque one composes: black at 50% over white is mid grey
+        let mut t = card(value());
+        t.marks.insert(1, Instance::new(Kind::Quad, [150.0, 100.0, 0.0], [200.0, 60.0, 0.0]).colour([0, 0, 0, 128]));
+        let s = shown(vec![t], 21);
+        let g = 1.0 - 128.0 / 255.0;
+        assert!((s.why.min_contrast - contrast_ratio([0.0; 3], [g; 3])).abs() < 1e-9, "{}", s.why.min_contrast);
+        // a run that spills past its card has a ground the core cannot see whole
+        let mut wide = value();
+        wide.size[0] = 400.0;
+        assert_eq!(shown(vec![card(wide)], 21).why.contrast, Tri::Unknown);
+        // a run in the card's rounded corner is not on the card there
+        let mut corner = card(value());
+        corner.marks[0].aux[0] = 30.0;
+        corner.marks[1].pos = [111.0, 59.0, 0.0];
+        corner.marks[1].size = [120.0, 16.0, 0.0];
+        assert_eq!(shown(vec![corner], 21).why.contrast, Tri::Unknown);
+        // the tile's DIM darkens the card: white at a fifth is dark grey, and black on it fails
+        let mut dim = card(value());
+        dim.params[0] = 0.2;
+        dim.params[1] = 0.2;
+        dim.params[2] = 0.2;
+        assert_eq!(shown(vec![dim], 21).why.contrast, Tri::No);
+    }
+
+    #[test]
+    fn truncation_the_string_and_the_viewport() {
+        let with = |drawn: Drawn| {
+            let mut v = value();
+            v.bind = Bind::Source { sha256: digest::sha256(b"42 tokens"), drawn };
+            shown(vec![card(v)], 21)
+        };
+        assert_eq!(with(Drawn::Exact).why.untruncated, Tri::Yes);
+        assert_eq!(with(Drawn::Cut).why.untruncated, Tri::No);
+        assert_eq!(with(Drawn::Changed).why.untruncated, Tri::No);
+        assert_eq!(with(Drawn::Unsaid).why.untruncated, Tri::Unknown);
+        assert!(!with(Drawn::Unsaid).legible);
+        // a run with no source: neither its string nor its drawing is known
+        let mut bare = value();
+        bare.bind = Bind::None;
+        let s = shown(vec![card(bare)], 21);
+        assert_eq!((s.why.string, s.why.untruncated, s.source), (Tri::Unknown, Tri::Unknown, None));
+        // two runs of one instance from two strings
+        let mut t = card(value());
+        t.marks.push(Instance::new(Kind::Run, [150.0, 120.0, 0.0], [60.0, 16.0, 0.0]).colour(BLACK).tagged(21).bound_to(src("43 tokens")));
+        let s = shown(vec![t], 21);
+        assert_eq!((s.why.string, s.source, s.legible), (Tri::No, None, false));
+        // a value partly off the viewport touches it but is not inside it
+        let mut t = card(value());
+        t.marks[0].pos[0] = 60.0;
+        t.marks[1].pos[0] = 10.0;
+        let s = shown(vec![t], 21);
+        assert!(s.on_screen && !s.why.inside && !s.legible);
+    }
+
+    #[test]
+    fn a_screen_line_is_reported_by_its_two_ends() {
+        let mut l = Instance::new(Kind::Line, [10.0, 20.0, 0.0], [4.0, 0.0, 0.0]).tagged(5);
+        l.aux = [110.0, 20.0, 0.0];
+        let f = Scene { tiles: vec![screen(1, 0, vec![l])], modal: None }.frame(&cam(), 7, &Ring, u64::MAX).unwrap();
+        assert_eq!(f.report(5).unwrap().bounds, [8.0, 18.0, 112.0, 22.0]);
+        assert_eq!(f.pick(100.0, 20.0), Some(5), "its far end is on it");
+    }
+
+    fn image(tag: u32, slot: u8, bind: Bind) -> Instance {
+        let mut m = Instance::new(Kind::Image, [200.0, 300.0, 0.0], [120.0, 90.0, 0.0]).tagged(tag).bound_to(bind);
+        m.aux = [0.0, 0.0, 1.0];
+        m.angle = 1.0;
+        m.variant = slot;
+        m
+    }
+    fn label(tag: u32, s: &str) -> Instance {
+        Instance::new(Kind::Run, [200.0, 360.0, 0.0], [100.0, 14.0, 0.0]).colour(BLACK).tagged(tag).bound_to(src(s))
+    }
+    fn draw(marks: Vec<Instance>) -> Result<Frame, Refusal> {
+        Scene { tiles: vec![screen(4, 0, marks)], modal: None }.frame(&cam(), 7, &Ring, u64::MAX)
+    }
+
+    #[test]
+    fn media_is_never_drawn_bare() {
+        let media = Bind::Media { alt: 41, disclosure: 42 };
+        assert_eq!(draw(vec![image(40, 0, Bind::None)]).unwrap_err(), Refusal::BareImage { tile: 4, index: 0 });
+        assert_eq!(draw(vec![image(40, 0, media), label(41, "a heron on a post")]).unwrap_err(), Refusal::MediaUnbound { tile: 4, index: 0, missing: 42 });
+        // a disclosure drawn without a source string does not count
+        let mut d = label(42, "made with a generator");
+        d.bind = Bind::None;
+        assert_eq!(draw(vec![image(40, 0, media), label(41, "a heron on a post"), d]).unwrap_err(), Refusal::MediaUnbound { tile: 4, index: 0, missing: 42 });
+        // alt and disclosure drawn: the image is drawn, in its own batch
+        let f = draw(vec![image(40, 0, media), label(41, "a heron on a post"), label(42, "not generated")]).expect("media with both slots");
+        assert_eq!(f.batches.iter().filter(|b| b.kind == Kind::Image).count(), 1);
+        assert!(f.report(40).is_some());
+        // a QR grid and a decoration need neither
+        assert!(draw(vec![image(50, 1, Bind::Qr)]).is_ok());
+        assert!(draw(vec![image(0, 1, Bind::None)]).is_ok());
+        // an image in a world tile is refused: no backend draws one there
+        let mut w = scene(vec![tile(1, 0.0, 1, 100)]);
+        w.tiles[0].marks.push(image(0, 0, Bind::None));
+        assert_eq!(w.frame(&cam(), 7, &Ring, u64::MAX).unwrap_err(), Refusal::ImageInWorld { tile: 1, index: 3 });
+    }
+
+    #[test]
+    fn images_are_batched_by_texture_slot_in_the_order_the_slots_appear() {
+        let f = draw(vec![image(0, 3, Bind::None), image(0, 1, Bind::None), image(0, 3, Bind::None)]).unwrap();
+        let imgs: Vec<(u8, u32)> = f.batches.iter().filter(|b| b.kind == Kind::Image).map(|b| (b.bytes[51], b.count)).collect();
+        assert_eq!(imgs, [(3, 2), (1, 1)]);
     }
 }

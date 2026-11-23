@@ -94,6 +94,7 @@ let drawer, text;
 try {
   text = ui.text = createTextProvider(gl, { dpr, pageSize: +(q.get('page') || 0), maxPages: +(q.get('pages') || 0) });
   drawer = createDrawer(gl, { text, forceMediump: q.get('mediump') === '1' });
+  ui.installImages(drawer);
   window.__state = state; window.__invalidate = invalidate;
 } catch (e) {
   info.textContent = String(e); document.body.dataset.error = String(e); throw e;
@@ -146,6 +147,7 @@ function frame(tms) {
   const ms = performance.now() - t0;
   const s = drawer.stats(), err = gl.getError();
   last.drawCalls = s.drawCalls; last.instances = s.instances; last.bytesUploaded = s.bytesUploaded;
+  document.body.dataset.missingImages = String(s.missingImages);
   frames++;
   // Two frames, so the counts the first one measured are the ones the second one shows.
   if (frames >= 2) {

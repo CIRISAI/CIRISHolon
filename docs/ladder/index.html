@@ -30,8 +30,9 @@
         host_text(ptr, len, style, out) {
           const s = dec.decode(new Uint8Array(w.memory.buffer, ptr, len));
           const p = text.place(s, style);
-          const o = new Float32Array(w.memory.buffer, out, 7);
+          const o = new Float32Array(w.memory.buffer, out, 8);
           o[0] = p.w; o[1] = p.h; o[2] = p.u0; o[3] = p.v0; o[4] = p.u1; o[5] = p.v1; o[6] = p.page;
+          o[7] = p.drawn === undefined ? -1 : p.drawn;   // 0 whole, 1 cut, 2 changed, -1 not said
         },
       };
       const { instance } = await WebAssembly.instantiate(await (await fetch("holon_draw_ladder.wasm")).arrayBuffer(), { env });

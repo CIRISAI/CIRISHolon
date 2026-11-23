@@ -222,12 +222,52 @@ export function createOverlay(env) {
     }
   }
   const panels = [new Panel(), new Panel(), new Panel(), new Panel()];
+
+  // ?images=1: a fifth panel of IMAGES (kind 12): a QR-like grid in slot 0, sampled nearest; a
+  // translucent gradient in slot 1, sampled linear, tinted; and one image naming slot 7, which
+  // holds nothing, so the drawer skips it (stats().missingImages = 1). Each slot is its own
+  // batch, as Scene::frame emits them.
+  const withImages = q.get('images') === '1';
+  const images = [];
+  if (withImages) {
+    const qr = document.createElement('canvas');
+    qr.width = qr.height = 21;
+    const g = qr.getContext('2d');
+    g.fillStyle = '#fff'; g.fillRect(0, 0, 21, 21);
+    g.fillStyle = '#000';
+    for (let y = 0; y < 21; y++) for (let x = 0; x < 21; x++) {
+      const finder = (cx, cy) => { const dx = Math.abs(x - cx), dy = Math.abs(y - cy), m = Math.max(dx, dy); return m <= 3 && m !== 2; };
+      const inFinder = (x < 8 && y < 8) || (x > 12 && y < 8) || (x < 8 && y > 12);
+      const on = inFinder ? finder(x < 8 ? 3 : 17, y < 8 ? 3 : 17) : ((x * 7 + y * 13 + x * y) % 5) < 2;
+      if (on) g.fillRect(x, y, 1, 1);
+    }
+    const gr = document.createElement('canvas');
+    gr.width = gr.height = 64;
+    const h = gr.getContext('2d');
+    const lg = h.createLinearGradient(0, 0, 64, 64);
+    lg.addColorStop(0, 'rgba(255, 120, 40, 1)'); lg.addColorStop(1, 'rgba(40, 120, 255, 0.25)');
+    h.fillStyle = lg; h.fillRect(0, 0, 64, 64);
+    images.push({ slot: 0, source: qr, nearest: true }, { slot: 1, source: gr, nearest: false });
+    const ip = new Panel();
+    ip.imgs = [new Batch(KIND.IMAGE, ip.o, false, true), new Batch(KIND.IMAGE, ip.o, false, true), new Batch(KIND.IMAGE, ip.o, false, true)];
+    ip.batches = [ip.quads, ip.imgs[0], ip.imgs[1], ip.imgs[2]];
+    ip.image = (b, x, y, w, hh, rgba, slot) => b.add([x + w / 2, y + hh / 2, 0], [w, hh, 0], [0, 0, 1], 1, rgba, 0, slot);
+    panels.push(ip);
+  }
   const pPanel = Float32Array.from(PARAMS_NEUTRAL);   // panel 4 shows tile A's ramp and tile B's tint in screen marks
   for (const b of panels[3].batches) b.params = pPanel;
   const INK = [222, 229, 240, 255], DIM = [140, 152, 172, 255], HEAD = [120, 190, 255, 255];
 
   function overlay(lines, verdict) {
     const W = canvas.width, H = canvas.height, d = dpr;
+    if (withImages) {
+      const ip = panels[4], side = 168 * d, gap = 12 * d;
+      ip.begin(W - 2 * side - 3 * gap - 12 * d, H - side - 2 * gap - 12 * d, 2 * side + 3 * gap, side + 2 * gap);
+      for (const b of ip.imgs) b.clear();
+      ip.image(ip.imgs[0], gap, gap, side, side, [255, 255, 255, 255], 0);
+      ip.image(ip.imgs[1], 2 * gap + side, gap, side, side, [255, 255, 255, 230], 1);
+      ip.image(ip.imgs[2], gap, gap, 24 * d, 24 * d, [255, 0, 0, 255], 7);
+    }
     const narrow = W / d < 700;
     const pad = 12 * d, row = 20 * d, pw = Math.min(330 * d, W - 24 * d);
     const heading = (p, str) => {
@@ -320,7 +360,9 @@ export function createOverlay(env) {
     pPanel.set(pA.subarray(4, 12), 4); pPanel.set(pB.subarray(12, 16), 12);
   }
 
-  const ui = { panels, pPanel, overlay, applyState, text: env.text || null };
+  // the host's textures, given to the drawer once it exists
+  const installImages = (drawer) => { for (const im of images) drawer.setImage(im.slot, im.source, { nearest: im.nearest }); };
+  const ui = { panels, pPanel, overlay, applyState, installImages, text: env.text || null };
   return ui;
 }
 

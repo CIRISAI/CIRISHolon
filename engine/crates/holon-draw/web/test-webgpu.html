@@ -72,6 +72,7 @@ let drawer, text;
 try {
   text = ui.text = createTextProviderWebGPU(device, { dpr, pageSize: +(q.get('page') || 0), maxPages: +(q.get('pages') || 0) });
   drawer = await createDrawerWebGPU(device, { format, text, sampleCount: q.get('msaa') === '0' ? 1 : 4 });
+  ui.installImages(drawer);
   window.__state = state; window.__invalidate = invalidate;
 } catch (e) {
   fail('holon-draw WebGPU: ' + String(e && e.message || e));
@@ -127,6 +128,7 @@ async function frame() {
   const ms = performance.now() - t0;
   const s = drawer.stats();
   last.drawCalls = s.drawCalls; last.instances = s.instances; last.bytesUploaded = s.bytesUploaded;
+  document.body.dataset.missingImages = String(s.missingImages);
   if (scoped) {
     const oom = await device.popErrorScope(), val = await device.popErrorScope();
     if (val) errors.push('validation: ' + val.message);

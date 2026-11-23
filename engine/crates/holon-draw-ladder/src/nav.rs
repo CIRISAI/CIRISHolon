@@ -163,7 +163,9 @@ mod tests {
             let f = Scene { tiles, modal: None }.frame(&cam, 1, &Acuity { eps_px: 1.0 }, u64::MAX).unwrap();
             for tag in [RING, NORTH, TILT_UP, TILT_DOWN, PAN_UP, PAN_DOWN, PAN_LEFT, PAN_RIGHT, ZOOM_IN, ZOOM_OUT, SLIDER, HOME, SWITCH] {
                 let r = f.report(tag).unwrap_or_else(|| panic!("{tag:x} missing at {w}x{h}"));
-                assert!(r.on_screen && r.legible, "{tag:x} at {w}x{h}");
+                // the size floor and wholly inside: the controls send nothing, so the full L12
+                // attestation (`legible`, which needs opaque grounds and source strings) is not asked of them
+                assert!(r.on_screen && r.why.inside && r.why.size, "{tag:x} at {w}x{h}: {:?}", r.why);
                 let (cx, cy) = (0.5 * (r.bounds[0] + r.bounds[2]), 0.5 * (r.bounds[1] + r.bounds[3]));
                 if tag != RING && tag != SLIDER {
                     assert_eq!(f.pick(cx, cy), Some(tag), "{tag:x} at {w}x{h}");

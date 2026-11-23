@@ -14,7 +14,7 @@
 //! the status line and the button row along the bottom; on a narrow one (under
 //! [`NARROW_CSS_PX`], or when the columns do not fit) one column of COLLAPSIBLE panels, each
 //! heading a toggle carrying a one-word summary, above a button row that wraps.
-use crate::{Instance, Kind, Tile};
+use crate::{digest::sha256, Bind, Drawn, Instance, Kind, Tile};
 
 /// What a text provider says of a string it has rasterised: its size in device pixels and
 /// where it sits in the atlas.
@@ -27,6 +27,8 @@ pub struct Placed {
     pub u1: f32,
     pub v1: f32,
     pub page: u8,
+    /// What the provider says of the drawing: whole, cut, changed, or nothing said.
+    pub drawn: Drawn,
 }
 
 /// The host's text provider. `style` is one of [`BODY`], [`HEADING`], [`STATUS`],
@@ -126,6 +128,11 @@ pub struct Layout {
 }
 
 /// The immediate-mode surface: quads and runs pushed in device pixels.
+///
+/// Text pushed with a TAG ([`Ui::text`], [`Ui::text_flow`], and a button's label, which takes
+/// the button's handle) carries [`Bind::Source`]: the SHA-256 of the string as given, and what the
+/// provider said of the drawing. That is what lets the core report a value's string (L12).
+/// Untagged text carries nothing.
 pub struct Ui<'a> {
     pub text: &'a mut dyn Text,
     pub dpr: f32,
@@ -165,7 +172,8 @@ impl<'a> Ui<'a> {
         m.aux[0] = radius;
         self.marks.push(m);
     }
-    fn push_run(&mut self, p: Placed, left: f32, top: f32, line: f32, colour: [u8; 4]) {
+    #[allow(clippy::too_many_arguments)]
+    fn push_run(&mut self, p: Placed, left: f32, top: f32, line: f32, colour: [u8; 4], tag: u32, bind: Bind) {
         if p.w <= 0.0 || p.h <= 0.0 {
             return;
         }
@@ -174,16 +182,26 @@ impl<'a> Ui<'a> {
         m.aux = [p.u0, p.v0, p.u1];
         m.angle = p.v1;
         m.variant = p.page;
+        m.tag = tag;
+        m.bind = bind;
         self.marks.push(m);
     }
     /// One run, not wrapped, its left edge at `x` and its line's top at `y`; returns its width.
     pub fn run(&mut self, s: &str, style: u8, colour: [u8; 4], x: f32, y: f32) -> f32 {
+        self.run_as(s, style, colour, x, y, 0)
+    }
+    /// As [`Ui::run`], the run tagged `tag` and bound to the source string `s`.
+    pub fn text(&mut self, s: &str, style: u8, colour: [u8; 4], x: f32, y: f32, tag: u32) -> f32 {
+        self.run_as(s, style, colour, x, y, tag)
+    }
+    fn run_as(&mut self, s: &str, style: u8, colour: [u8; 4], x: f32, y: f32, tag: u32) -> f32 {
         if s.trim().is_empty() {
             return 0.0;
         }
         let p = self.text.place(s, style);
         let line = self.line(style);
-        self.push_run(p, x, y, line, colour);
+        let bind = if tag == 0 { Bind::None } else { Bind::Source { sha256: sha256(s.as_bytes()), drawn: p.drawn } };
+        self.push_run(p, x, y, line, colour, tag, bind);
         p.w
     }
     /// The width a string would take as one run.
@@ -198,13 +216,30 @@ impl<'a> Ui<'a> {
     /// is rasterised only to be measured); `\n` breaks a line. Returns the height used.
     #[allow(clippy::too_many_arguments)]
     pub fn flow(&mut self, s: &str, style: u8, colour: [u8; 4], x: f32, y: f32, max_w: f32, centred: bool) -> f32 {
+        self.flow_as(s, style, colour, x, y, max_w, centred, 0)
+    }
+    /// As [`Ui::flow`], every run tagged `tag` and bound to the WHOLE string `s` (a wrapped
+    /// value is one instance with one source). A flow draws words with single spaces, so a
+    /// string with any other whitespace (doubled, leading, trailing, a tab) reports
+    /// [`Drawn::Changed`]; a line break is a `\n`, which the flow keeps.
+    #[allow(clippy::too_many_arguments)]
+    pub fn text_flow(&mut self, s: &str, style: u8, colour: [u8; 4], x: f32, y: f32, max_w: f32, centred: bool, tag: u32) -> f32 {
+        self.flow_as(s, style, colour, x, y, max_w, centred, tag)
+    }
+    #[allow(clippy::too_many_arguments)]
+    fn flow_as(&mut self, s: &str, style: u8, colour: [u8; 4], x: f32, y: f32, max_w: f32, centred: bool, tag: u32) -> f32 {
         let (line, space) = (self.line(style), self.space(style));
+        let mut drawn = Drawn::Exact;
+        if s.split('\n').any(|para| para.split(' ').any(|w| w.is_empty() || w.chars().any(char::is_whitespace)) && !para.is_empty()) {
+            drawn = Drawn::Changed;
+        }
         let mut rows: Vec<(Vec<Word>, f32)> = Vec::new();
         for para in s.split('\n') {
             let mut row: Vec<Word> = Vec::new();
             let mut w = 0.0f32;
             for word in para.split_whitespace() {
                 let p = self.text.place(word, style);
+                drawn = drawn.and(p.drawn);
                 let at = if row.is_empty() { 0.0 } else { w + space };
                 if !row.is_empty() && at + p.w > max_w {
                     rows.push((std::mem::take(&mut row), w));
@@ -217,10 +252,11 @@ impl<'a> Ui<'a> {
             }
             rows.push((row, w));
         }
+        let bind = if tag == 0 { Bind::None } else { Bind::Source { sha256: sha256(s.as_bytes()), drawn } };
         for (k, (row, w)) in rows.iter().enumerate() {
             let x0 = if centred { x + 0.5 * (max_w - w) } else { x };
             for word in row {
-                self.push_run(word.p, x0 + word.x, y + k as f32 * line, line, colour);
+                self.push_run(word.p, x0 + word.x, y + k as f32 * line, line, colour, tag, bind);
             }
         }
         rows.len() as f32 * line
@@ -270,7 +306,8 @@ impl<'a> Ui<'a> {
         self.quad(x, y, w, h, self.px(4.0), if b.active { GREEN } else { IDLE }, b.handle);
         let lw = self.measure(&b.label, BUTTON);
         let line = self.line(BUTTON);
-        self.run(&b.label, BUTTON, PAPER, x + 0.5 * (w - lw), y + 0.5 * (h - line));
+        // the label is part of the button's instance, so its report says what the button reads
+        self.text(&b.label, BUTTON, PAPER, x + 0.5 * (w - lw), y + 0.5 * (h - line), b.handle);
     }
 
     /// A row of buttons that wraps within `max_w`, each line centred, its BOTTOM at `bottom`.
@@ -374,7 +411,7 @@ impl Text for FakeText {
     fn place(&mut self, text: &str, style: u8) -> Placed {
         self.placed += 1;
         let px = STYLE_PX[style as usize % 5] * self.dpr;
-        Placed { w: (text.chars().count() as f32 * 0.6 * px).ceil(), h: (px * 1.15).ceil(), u0: 0.0, v0: 0.0, u1: 1.0, v1: 1.0, page: 0 }
+        Placed { w: (text.chars().count() as f32 * 0.6 * px).ceil(), h: (px * 1.15).ceil(), u0: 0.0, v0: 0.0, u1: 1.0, v1: 1.0, page: 0, drawn: Drawn::Exact }
     }
 }
 
@@ -533,5 +570,46 @@ mod tests {
         // every line of a value starts at the column
         let starts: Vec<f32> = value_lines.iter().map(|y| runs[preset + 1..].iter().filter(|m| m.pos[1] as i32 == *y && left(m) >= column - 0.5).map(|m| left(m)).fold(f32::MAX, f32::min)).collect();
         assert!(starts.iter().all(|x| (x - column).abs() < 1.0), "{starts:?} against {column}");
+    }
+
+    #[test]
+    fn tagged_text_carries_the_whole_strings_digest_and_how_it_was_drawn() {
+        use crate::{digest::sha256, Bind, Drawn, Tri};
+        let mut t = FakeText { dpr: 1.0, placed: 0 };
+        let mut ui = Ui::new(&mut t, 1.0);
+        let s = "forty two tokens to the steward of the commons";
+        ui.quad(0.0, 0.0, 200.0, 200.0, 0.0, PAPER, 0);
+        ui.text_flow(s, BODY, [0x17, 0x20, 0x1d, 255], 10.0, 10.0, 120.0, false, 9);
+        let runs: Vec<&Instance> = ui.marks.iter().filter(|m| m.kind == Kind::Run).collect();
+        assert!(runs.len() > 3, "wrapped into words");
+        assert!(runs.iter().all(|m| m.tag == 9 && m.bind == Bind::Source { sha256: sha256(s.as_bytes()), drawn: Drawn::Exact }));
+        // untagged text carries nothing
+        ui.flow("decoration", BODY, PAPER, 10.0, 150.0, 120.0, false);
+        assert_eq!(ui.marks.last().unwrap().bind, Bind::None);
+        // whitespace a flow cannot draw as given
+        for odd in ["two  spaces", " leading", "trailing ", "a\ttab"] {
+            ui.text_flow(odd, BODY, PAPER, 10.0, 170.0, 300.0, false, 10);
+            assert!(matches!(ui.marks.last().unwrap().bind, Bind::Source { drawn: Drawn::Changed, .. }), "{odd:?}");
+        }
+        ui.text_flow("two\nlines", BODY, PAPER, 10.0, 170.0, 300.0, false, 11);
+        assert!(matches!(ui.marks.last().unwrap().bind, Bind::Source { drawn: Drawn::Exact, .. }), "a line break is kept");
+        // the whole value reports one source, legible on its opaque ground
+        let marks = ui.marks.clone();
+        let tile = Tile { id: 1, origin: [0.0; 3], version: 1, layer: 0, screen: true, params: crate::PARAMS_NEUTRAL, marks };
+        let f = Scene { tiles: vec![tile], modal: None }.frame(&Camera::map([0.0; 3], 1.0, 800.0, 600.0), 1, &Ring, u64::MAX).unwrap();
+        let r = f.report(9).unwrap();
+        assert_eq!(r.source, Some(sha256(s.as_bytes())));
+        assert!(r.legible, "{:?}", r.why);
+        assert_eq!(f.report(10).unwrap().why.untruncated, Tri::No);
+    }
+
+    #[test]
+    fn a_buttons_label_is_part_of_the_button() {
+        use crate::{digest::sha256, Bind};
+        let mut t = FakeText { dpr: 1.0, placed: 0 };
+        let mut ui = Ui::new(&mut t, 1.0);
+        ui.button(&Button { label: "confirm".into(), handle: 77, active: true }, 10.0, 10.0, 120.0, 34.0);
+        let run = ui.marks.iter().find(|m| m.kind == Kind::Run).unwrap();
+        assert_eq!((run.tag, run.bind), (77, Bind::Source { sha256: sha256(b"confirm"), drawn: crate::Drawn::Exact }));
     }
 }

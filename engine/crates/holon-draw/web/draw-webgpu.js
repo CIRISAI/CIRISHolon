@@ -69,6 +69,10 @@
 //     variant is ever made and no draw pays for shadow code (the same split as HD_SHADOW).
 //   - Text. The atlas pages are r8unorm textures (coverage in red) sampled LINEAR, clamped,
 //     with textureSampleLevel(level 0): the same filtering as the GL ALPHA pages.
+//   - Images (kind 12). setImage(slot, source, { nearest }) and deleteImage(slot), as in
+//     draw.js: each slot is an rgba8unorm texture written with copyExternalImageToTexture
+//     (not premultiplied, not flipped), sampled nearest or LINEAR, clamped, level 0. A slot is
+//     bind group 2; a draw with no image binds a 1x1 blank there.
 //
 // STATE. This drawer touches no host object but the target (and depthTarget). It owns its
 // buffers, textures and pipelines; destroy() frees them.
@@ -100,7 +104,7 @@ struct Draw {
   params: array<vec4f, 8>,   // the tile's settings
   offset: vec4f,
   mode: vec4f,     // world: x vertex mode (0 sphere, 1 tube, 2 scaled-and-turned, 3 bent tube), y radius scale, z kind code
-                   // screen: x mode (0 rectangle, 1 circle, 2 line, 3 run), w 1 for a run
+                   // screen: x mode (0 rectangle, 1 circle, 2 line, 3 run or image), w 1 for a run, 2 for an image
   shade: vec4f,    // x lit (0 or 1), y ambient, z specular, w rim
 };
 @group(0) @binding(0) var<uniform> F: Frame;
@@ -363,6 +367,8 @@ const SCREEN = /* wgsl */ `
 @group(1) @binding(2) var t2: texture_2d<f32>;
 @group(1) @binding(3) var t3: texture_2d<f32>;
 @group(1) @binding(4) var smp: sampler;
+@group(2) @binding(0) var img: texture_2d<f32>;
+@group(2) @binding(1) var ismp: sampler;
 struct SOut {
   @builtin(position) pos: vec4f,
   @location(0) a: vec2f,     // max(a, b) = |local| - (half - radius): small near every edge
@@ -428,6 +434,10 @@ struct SOut {
 }
 @fragment fn sfs(i: SOut) -> @location(0) vec4f {
   var cov: f32;
+  if (D.mode.w > 1.5) {
+    let im = textureSampleLevel(img, ismp, i.uv, 0.0);
+    return vec4f(im.rgb * i.c.rgb, im.a * i.c.a * i.fade);
+  }
   if (D.mode.w > 0.5) {
     if (i.page < 0.5) { cov = textureSampleLevel(t0, smp, i.uv, 0.0).r; }
     else if (i.page < 1.5) { cov = textureSampleLevel(t1, smp, i.uv, 0.0).r; }
@@ -680,7 +690,14 @@ export async function createDrawerWebGPU(device, options) {
   });
   const plWorld = device.createPipelineLayout({ bindGroupLayouts: [bglU] });
   const plWorldS = device.createPipelineLayout({ bindGroupLayouts: [bglU, bglShadow] });
-  const plScreen = device.createPipelineLayout({ bindGroupLayouts: [bglU, bglText] });
+  const bglImage = device.createBindGroupLayout({
+    label: 'holon-draw image',
+    entries: [
+      { binding: 0, visibility: GPUShaderStage.FRAGMENT, texture: { sampleType: 'float' } },
+      { binding: 1, visibility: GPUShaderStage.FRAGMENT, sampler: { type: 'filtering' } },
+    ],
+  });
+  const plScreen = device.createPipelineLayout({ bindGroupLayouts: [bglU, bglText, bglImage] });
 
   const BLEND = {
     color: { srcFactor: 'src-alpha', dstFactor: 'one-minus-src-alpha', operation: 'add' },
@@ -784,6 +801,7 @@ export async function createDrawerWebGPU(device, options) {
   sslots[KIND.LINE] = { kind: KIND.LINE, smode: 2 };
   sslots[KIND.ARC] = { kind: KIND.ARC, smode: 2 };
   if (text) sslots[KIND.RUN] = { kind: KIND.RUN, smode: 3 };
+  sslots[KIND.IMAGE] = { kind: KIND.IMAGE, smode: 3, image: true };
 
   // The atlas bind group: the provider's pages, a 1x1 empty page where a page does not exist.
   const blank = device.createTexture({ size: [1, 1], format: 'r8unorm', usage: T.TEXTURE_BINDING });
@@ -793,6 +811,13 @@ export async function createDrawerWebGPU(device, options) {
   const views = new WeakMap();
   const viewOf = (t) => { let v = views.get(t); if (!v) { v = t.createView(); views.set(t, v); } return v; };
   const boundPages = [null, null, null, null];
+
+  // Images, by slot: { tex, group } (setImage). A blank 1x1 group fills group 2 otherwise.
+  const images = new Map();
+  const nearestS = device.createSampler({ magFilter: 'nearest', minFilter: 'nearest', addressModeU: 'clamp-to-edge', addressModeV: 'clamp-to-edge' });
+  const blankImg = device.createTexture({ size: [1, 1], format: 'rgba8unorm', usage: T.TEXTURE_BINDING });
+  owned.push(blankImg);
+  const blankImgBG = device.createBindGroup({ layout: bglImage, entries: [{ binding: 0, resource: blankImg.createView() }, { binding: 1, resource: linear }] });
   let textBG = null;
   function atlasGroup() {
     let same = !!textBG;
@@ -811,10 +836,10 @@ export async function createDrawerWebGPU(device, options) {
 
   // One instance buffer per kind, grown as needed and reused. Within one draw() every batch
   // of a kind is written at its own offset in that buffer, as in draw.js.
-  const instBuf = new Array(12).fill(null);
-  const instCap = new Int32Array(12);
-  const need = new Int32Array(12);
-  const cursor = new Int32Array(12);
+  const instBuf = new Array(13).fill(null);
+  const instCap = new Int32Array(13);
+  const need = new Int32Array(13);
+  const cursor = new Int32Array(13);
 
   // Uniforms: [main frame][shadow frame][one Draw per draw call], each slot `align` bytes.
   let ubuf = null, ucap = 0, uniBG = null;
@@ -872,7 +897,7 @@ export async function createDrawerWebGPU(device, options) {
   const lvp = new Float32Array(16);
   let wAt = new Int32Array(64);
   const inv = new Float64Array(16);
-  const st = { drawCalls: 0, instances: 0, bytesUploaded: 0, paramUploads: 0, uniformBytes: 0 };
+  const st = { drawCalls: 0, instances: 0, bytesUploaded: 0, paramUploads: 0, uniformBytes: 0, missingImages: 0 };
   let dead = false;
   let flat = false;
   const lastP = new Float32Array(32);
@@ -901,7 +926,7 @@ export async function createDrawerWebGPU(device, options) {
 
   function slotOf(b) {
     const k = b.kind | 0;
-    if (k < 1 || k > 11) return null;
+    if (k < 1 || k > 12) return null;
     if (b.screen === true) return sslots[k];
     if (k > 10) return null;
     if (flat) {
@@ -981,7 +1006,7 @@ export async function createDrawerWebGPU(device, options) {
   function draw(batches, vp, opts) {
     if (dead) throw new Error('holon-draw webgpu: draw() after destroy()');
     if (!opts || !opts.target) throw new Error('holon-draw webgpu: opts.target (a GPUTexture or GPUTextureView) is required');
-    st.drawCalls = 0; st.instances = 0; st.bytesUploaded = 0; st.paramUploads = 0; st.uniformBytes = 0;
+    st.drawCalls = 0; st.instances = 0; st.bytesUploaded = 0; st.paramUploads = 0; st.uniformBytes = 0; st.missingImages = 0;
     flat = opts.flatLines === true || (opts.flatLines !== false && opts.depthTest === false);
     const nb = batches.length;
 
@@ -1013,7 +1038,7 @@ export async function createDrawerWebGPU(device, options) {
     const vw = V ? V[2] : tw, vh = V ? V[3] : th;
     ownTargets(tw, th, !opts.depthTarget);
 
-    for (let k = 1; k <= 11; k++) {
+    for (let k = 1; k <= 12; k++) {
       cursor[k] = 0;
       if (need[k] <= instCap[k]) continue;
       let cap = instCap[k] || 64 * INSTANCE_BYTES;
@@ -1141,21 +1166,29 @@ export async function createDrawerWebGPU(device, options) {
       pass.setPipeline(screenPipe);
       pass.setVertexBuffer(0, mQuad.vbo);
       pass.setIndexBuffer(mQuad.ibo, 'uint16');
-      let atlas = false;
+      let atlas = false, imgBG = null;
       for (let i = 0; i < nb; i++) {
         const b = batches[i], c = b.count | 0;
         if (c <= 0 || b.screen !== true) continue;
         const s = slotOf(b);
         if (!s) continue;
+        const want = s.image ? (images.get(b.bytes[51]) || null) : null;
+        if (s.image && !want) { st.missingImages++; continue; }
         if (!atlas) {
           // Once per draw(): the atlas pages, looked up at draw time, so a page the provider
           // made or refilled this frame is the one sampled.
           atlas = true;
           pass.setBindGroup(1, atlasGroup());
+          pass.setBindGroup(2, blankImgBG);
+          imgBG = blankImgBG;
+        }
+        if (want && want.group !== imgBG) {
+          imgBG = want.group;
+          pass.setBindGroup(2, imgBG);
         }
         const at = upload(b, s.kind, c * INSTANCE_BYTES);
         pass.setVertexBuffer(1, instBuf[s.kind], at);
-        dynOff[1] = drawSlot(b.params, b.offset, s.smode, 0, 0, s.smode === 3 ? 1 : 0, 0, 0, 0, 0);
+        dynOff[1] = drawSlot(b.params, b.offset, s.smode, 0, 0, s.image ? 2 : s.smode === 3 ? 1 : 0, 0, 0, 0, 0);
         ustage[dynOff[1] / 4 + 34] = 0;   // a screen tile's offset is x, y only
         pass.setBindGroup(0, uniBG, dynOff);
         pass.drawIndexed(mQuad.n, c);
@@ -1174,9 +1207,37 @@ export async function createDrawerWebGPU(device, options) {
     return st;
   }
 
+  /** Put a texture in an image slot (0..255); see Images in the header. */
+  function setImage(slot, source, o) {
+    if (dead) throw new Error('holon-draw: setImage() after destroy()');
+    slot = slot | 0;
+    if (slot < 0 || slot > 255) throw new Error('holon-draw: an image slot is 0..255');
+    const w = source.videoWidth || source.naturalWidth || source.width, h = source.videoHeight || source.naturalHeight || source.height;
+    if (!(w > 0 && h > 0)) throw new Error('holon-draw: setImage() needs a source with a size');
+    let img = images.get(slot);
+    if (!img || img.w !== w || img.h !== h || img.nearest !== !!(o && o.nearest)) {
+      if (img) img.tex.destroy();
+      const tex = device.createTexture({ label: 'holon-draw image ' + slot, size: [w, h], format: 'rgba8unorm', usage: T.TEXTURE_BINDING | T.COPY_DST | T.RENDER_ATTACHMENT });
+      const nearest = !!(o && o.nearest);
+      img = { tex, w, h, nearest, group: device.createBindGroup({ layout: bglImage, entries: [{ binding: 0, resource: tex.createView() }, { binding: 1, resource: nearest ? nearestS : linear }] }) };
+      images.set(slot, img);
+    }
+    device.queue.copyExternalImageToTexture({ source, flipY: false }, { texture: img.tex, premultipliedAlpha: false }, [w, h]);
+  }
+
+  /** Free an image slot's texture. */
+  function deleteImage(slot) {
+    const img = images.get(slot | 0);
+    if (!img) return;
+    img.tex.destroy();
+    images.delete(slot | 0);
+  }
+
   function destroy() {
     if (dead) return;
     dead = true;
+    for (const img of images.values()) img.tex.destroy();
+    images.clear();
     for (const x of owned) x.destroy();
     for (let k = 0; k < instBuf.length; k++) {
       if (instBuf[k]) instBuf[k].destroy();
@@ -1190,5 +1251,5 @@ export async function createDrawerWebGPU(device, options) {
     ubuf = zTex = dTex = msTex = null;
   }
 
-  return { draw, stats, destroy, backend: 'webgpu', sampleCount, screenPrecision: 'highp' };
+  return { draw, stats, destroy, setImage, deleteImage, backend: 'webgpu', sampleCount, screenPrecision: 'highp' };
 }

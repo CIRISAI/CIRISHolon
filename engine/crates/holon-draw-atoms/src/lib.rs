@@ -159,7 +159,7 @@ pub const HUD_REBUILD_SECONDS: f64 = 0.25;
 #[link(wasm_import_module = "env")]
 extern "C" {
     /// The host's text provider (module `env`): rasterise `len` UTF-8 bytes at `ptr` in
-    /// `style` and write `[w, h, u0, v0, u1, v1, page]` (7 f32, device pixels) at `out`.
+    /// `style` and write `[w, h, u0, v0, u1, v1, page, drawn]` (8 f32, device pixels; `drawn` 0 whole, 1 cut, 2 changed, and a host that writes only 7 leaves it unsaid) at `out`.
     fn host_text(ptr: *const u8, len: u32, style: u32, out: *mut f32);
 }
 
@@ -191,10 +191,18 @@ impl Text for HostText {
         self.asked += 1;
         #[cfg(target_arch = "wasm32")]
         let p = {
-            let mut o = [0.0f32; 7];
-            // SAFETY: the host reads `len` bytes at `ptr` and writes 7 f32 at `out`, both in this module's memory and alive for the call.
+            // o[7] is what the provider says of the drawing (0 whole, 1 cut, 2 changed). A host
+            // that writes only the first 7 leaves it at -1, which reads as nothing said.
+            let mut o = [0.0f32, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1.0];
+            // SAFETY: the host reads `len` bytes at `ptr` and writes up to 8 f32 at `out`, both in this module's memory and alive for the call.
             unsafe { host_text(text.as_ptr(), text.len() as u32, style as u32, o.as_mut_ptr()) };
-            Placed { w: o[0], h: o[1], u0: o[2], v0: o[3], u1: o[4], v1: o[5], page: o[6] as u8 }
+            let drawn = match o[7] as i32 {
+                0 => holon_draw::Drawn::Exact,
+                1 => holon_draw::Drawn::Cut,
+                2 => holon_draw::Drawn::Changed,
+                _ => holon_draw::Drawn::Unsaid,
+            };
+            Placed { w: o[0], h: o[1], u0: o[2], v0: o[3], u1: o[4], v1: o[5], page: o[6] as u8, drawn }
         };
         #[cfg(not(target_arch = "wasm32"))]
         let p = ui::FakeText { dpr: self.dpr, placed: 0 }.place(text, style);

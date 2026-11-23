@@ -254,7 +254,7 @@ impl Ladder {
             }
             let _ = dpr;
             // the pixel is the acuity: a tile whose detail spans under a pixel is drawn coarse
-            let frame = DrawScene { tiles, modal: None }.frame(&cam, 1, &Acuity { eps_px: 1.0 }, u64::MAX).unwrap_or(Frame { batches: Vec::new(), marks: Vec::new(), fine: 0, coarse: 0, stale: 0, modal: None, remainder_px: 0.0 });
+            let frame = DrawScene { tiles, modal: None }.frame(&cam, 1, &Acuity { eps_px: 1.0 }, u64::MAX).unwrap_or(Frame::default());
             out.push(Pass { rung: i, weight, camera: cam, frame });
         }
         out

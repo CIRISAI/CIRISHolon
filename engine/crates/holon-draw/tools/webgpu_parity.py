@@ -2,9 +2,10 @@
 """Draw test.html (WebGL) and test-webgpu.html (WebGPU) the same way and compare their pixels.
 
     python3 crates/holon-draw/tools/webgpu_parity.py [--out DIR] [--width 960 --height 600]
-                                                      [--modes default,map,noshadow] [--fps 4]
+                                                      [--modes default,map,noshadow,images] [--fps 4]
 
-For each mode (default: the 3D scene with shadows; map: ?map=1; noshadow: ?shadow=0) and for
+For each mode (default: the 3D scene with shadows; map: ?map=1; noshadow: ?shadow=0; images:
+?images=1, a panel of host textures) and for
 the scene alone (?overlay=0) and with the panels, it loads both pages in one headless Google
 Chrome at the same size, device pixel ratio 1 and camera, waits for the page's own
 `document.body.dataset.ready`, takes a screenshot of the canvas, and compares the two:
@@ -19,7 +20,8 @@ also run with ?spin=1 for N seconds and its frames per second counted.
 
 It also checks that the mesh builders copied into draw-webgpu.js are still the same source
 text as draw.js's (they are copies; a drift would make the backends draw different meshes),
-that each page reported ready with no error, and that the WebGPU page's verdict is PASS.
+that each page reported ready with no error, that the WebGPU page's verdict is PASS, and that
+both backends skip the same images for an empty slot (one, in the images mode with panels).
 Exit status 0 when all of that holds; the pixel numbers are REPORTED, not gated (the two
 backends rasterise on different paths, see the README).
 
@@ -59,7 +61,7 @@ CHROME_ARGS = [
     "--use-angle=swiftshader",
     "--enable-unsafe-swiftshader",
 ]
-MODES = {"default": "", "map": "map=1", "noshadow": "shadow=0"}
+MODES = {"default": "", "map": "map=1", "noshadow": "shadow=0", "images": "images=1"}
 MESH_FUNCS = ["sphereMesh", "tubeMesh", "capsuleMesh", "arcCapsuleMesh", "arcRibbonMesh",
               "ribbonMesh", "boxMesh", "quadMesh", "discMesh"]
 
@@ -154,7 +156,7 @@ def main():
     ap.add_argument("--out", default=os.path.join(os.environ.get("TMPDIR", "/tmp"), "holon-draw-webgpu-parity"))
     ap.add_argument("--width", type=int, default=960)
     ap.add_argument("--height", type=int, default=600)
-    ap.add_argument("--modes", default="default,map,noshadow")
+    ap.add_argument("--modes", default="default,map,noshadow,images")
     ap.add_argument("--fps", type=float, default=0, help="seconds of ?spin=1 per page to count frames (0: skip)")
     args = ap.parse_args()
     os.makedirs(args.out, exist_ok=True)
@@ -202,6 +204,10 @@ def main():
                 if dc[0] != dc[1] or inst[0] != inst[1]:
                     ok = False
                     print("FAIL %s overlay=%s: draw calls %s, instances %s differ" % (mode, overlay, dc, inst))
+                miss = [i["stats"].get("missingImages") if i["stats"] else None for i in infos]
+                if miss[0] != miss[1] or (mode == "images" and overlay == "1" and miss[0] != 1):
+                    ok = False
+                    print("FAIL %s overlay=%s: images skipped for an empty slot %s (want 1 on both with the panels)" % (mode, overlay, miss))
                 print("%-10s %-8s %10s %9s %9s %5s  %s/%s" % (mode, "on" if overlay == "1" else "off", r.get("mean_abs"), r.get("over_8"),
                                                           r.get("over_32"), r.get("max"), dc[0], dc[1]))
                 report["results"].append(dict(mode=mode, overlay=overlay == "1", query=qs, **r,

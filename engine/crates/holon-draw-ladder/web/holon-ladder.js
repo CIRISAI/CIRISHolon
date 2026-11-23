@@ -91,10 +91,11 @@ export async function install(opts) {
   const dec = new TextDecoder();
   const env = {
     host_text(ptr, len, style, out) {
-      const o = new Float32Array(w.memory.buffer, out, 7);
-      if (!gfx || !gfx.text) { o.fill(0); return; }
+      const o = new Float32Array(w.memory.buffer, out, 8);
+      if (!gfx || !gfx.text) { o.fill(0); o[7] = -1; return; }
       const p = gfx.text.place(dec.decode(new Uint8Array(w.memory.buffer, ptr, len)), style);
       o[0] = p.w; o[1] = p.h; o[2] = p.u0; o[3] = p.v0; o[4] = p.u1; o[5] = p.v1; o[6] = p.page;
+      o[7] = p.drawn === undefined ? -1 : p.drawn;   // 0 whole, 1 cut, 2 changed, -1 not said
     },
   };
 

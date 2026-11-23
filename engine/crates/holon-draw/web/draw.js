@@ -67,9 +67,15 @@
 //                     size[0] by size[1] centred at pos, its top-left rounded to a whole pixel;
 //                     u0 = aux[0], v0 = aux[1], u1 = aux[2], v1 = angle; atlas page = variant
 //                     (byte 51, pages 0..3); colour = rgba.rgb, alpha = rgba.a * coverage.
+//   12 image          a rectangle of a HOST texture, laid out as a run: size[0] by size[1]
+//                     centred at pos, top-left on a whole pixel, u0 = aux[0], v0 = aux[1],
+//                     u1 = aux[2], v1 = angle; texture SLOT = variant (byte 51, 0..255), set
+//                     with setImage(); colour = texture.rgb * rgba.rgb, alpha = texture.a *
+//                     rgba.a. The core puts one slot in a batch, so the first record names it.
+//                     A batch whose slot holds no texture is skipped (stats().missingImages).
 // Shapes are cut by a signed distance in the fragment stage, with about 1 px of antialiasing.
-// Other kinds in a screen batch, a run in a world batch, and a run with no provider bound
-// are skipped. The viewport is `opts.viewport` ([x, y, w, h], as GL has it) or, without it,
+// Other kinds in a screen batch, a run or an image in a world batch, and a run with no provider
+// bound are skipped. The viewport is `opts.viewport` ([x, y, w, h], as GL has it) or, without it,
 // gl.getParameter(gl.VIEWPORT), which allocates: a host that draws screen batches every
 // frame passes `opts.viewport`.
 //
@@ -196,7 +202,18 @@
 //     BLEND is off while the shadow map is drawn (enabled again for the world pass);
 //   - only when a run batch is drawn: activeTexture (left TEXTURE0) and the TEXTURE_2D
 //     bindings of units 0..3 (left on the atlas pages that exist; a unit whose page does
-//     not exist is not touched).
+//     not exist is not touched);
+//   - only when an image batch is drawn: activeTexture (left TEXTURE0) and the TEXTURE_2D
+//     binding of unit 5 (left on the last image drawn).
+//
+// IMAGES. setImage(slot, source, { nearest }) puts a texture in a slot: `source` is anything
+// texImage2D takes (ImageBitmap, ImageData, a canvas, an image or a video element; a video's
+// frame is copied when called, so a host calls it again for each new frame). `nearest: true`
+// samples it nearest (a QR grid, whose modules must stay square); otherwise LINEAR. Always
+// clamped, never mipmapped, so any size works on WebGL 1. Not premultiplied: the blend is
+// SRC_ALPHA. setImage saves and puts back the TEXTURE_2D binding of the active unit,
+// UNPACK_FLIP_Y_WEBGL and UNPACK_PREMULTIPLY_ALPHA_WEBGL, and changes nothing else.
+// deleteImage(slot) frees one. The core never sees pixels: what a slot holds is the host's.
 // A draw() with nothing to draw changes no state.
 //
 // Translucent records are blended in the order given and write depth; a host that needs
@@ -208,7 +225,7 @@
 export const INSTANCE_BYTES = 52;
 
 export const KIND = Object.freeze({
-  QUAD: 1, LINE: 2, ARC: 3, DISC: 4, BOX: 5, PRISM: 6, SPHERE: 7, ROD: 8, PATCH: 9, GLYPH: 10, RUN: 11,
+  QUAD: 1, LINE: 2, ARC: 3, DISC: 4, BOX: 5, PRISM: 6, SPHERE: 7, ROD: 8, PATCH: 9, GLYPH: 10, RUN: 11, IMAGE: 12,
 });
 
 // Attribute slots, bound before link. Slot 0 is a mesh attribute (never instanced), which
@@ -544,7 +561,7 @@ attribute vec4 i_color;
 attribute vec4 i_meta;   // kind, detail, flags, variant as 0..255
 uniform vec2 u_view;     // viewport width and height in pixels
 uniform vec3 u_soffset;
-uniform float u_smode;   // 0 rectangle, 1 circle, 2 line, 3 run
+uniform float u_smode;   // 0 rectangle, 1 circle, 2 line, 3 run or image
 uniform vec4 u_sparams[8];
 varying PF vec2 v_a;     // max(v_a, v_b) = |local| - (half - radius): small near every edge
 varying PF vec2 v_b;
@@ -611,7 +628,8 @@ uniform sampler2D u_t0;
 uniform sampler2D u_t1;
 uniform sampler2D u_t2;
 uniform sampler2D u_t3;
-uniform mediump float u_fmode;   // 0 shape, 1 run
+uniform sampler2D u_img;
+uniform mediump float u_fmode;   // 0 shape, 1 run, 2 image
 varying PF vec2 v_a;
 varying PF vec2 v_b;
 varying PF vec2 v_uv;
@@ -621,6 +639,11 @@ varying lowp vec4 v_c;
 varying mediump float v_fade;
 void main() {
   float cov;
+  if (u_fmode > 1.5) {
+    vec4 im = texture2D(u_img, v_uv);
+    gl_FragColor = vec4(im.rgb * v_c.rgb, im.a * v_c.a * v_fade);
+    return;
+  }
   if (u_fmode > 0.5) {
     if (v_page < 0.5) cov = texture2D(u_t0, v_uv).a;
     else if (v_page < 1.5) cov = texture2D(u_t1, v_uv).a;
@@ -942,6 +965,7 @@ export function createDrawer(gl, options) {
   const uSParams = gl.getUniformLocation(sprogram, 'u_sparams[0]');
   const uFMode = gl.getUniformLocation(sprogram, 'u_fmode');
   const uTex = [0, 1, 2, 3].map((i) => gl.getUniformLocation(sprogram, 'u_t' + i));
+  const uImg = gl.getUniformLocation(sprogram, 'u_img');
   let samplersSet = false;
   const text = options.text || null;
 
@@ -993,7 +1017,7 @@ export function createDrawer(gl, options) {
   slot(SLOT_FLAT_ARC, KIND.ARC, mArcRibbon, 3, 0.5, 0, 0, 0, false);
 
   // Screen slots, by kind: vertex mode (0 rectangle, 1 circle, 2 line, 3 run).
-  const sslots = new Array(12).fill(null);
+  const sslots = new Array(13).fill(null);
   sslots[KIND.QUAD] = { kind: KIND.QUAD, smode: 0 };
   sslots[KIND.PATCH] = { kind: KIND.PATCH, smode: 0 };
   sslots[KIND.DISC] = { kind: KIND.DISC, smode: 1 };
@@ -1001,6 +1025,10 @@ export function createDrawer(gl, options) {
   sslots[KIND.LINE] = { kind: KIND.LINE, smode: 2 };
   sslots[KIND.ARC] = { kind: KIND.ARC, smode: 2 };
   if (text) sslots[KIND.RUN] = { kind: KIND.RUN, smode: 3 };
+  sslots[KIND.IMAGE] = { kind: KIND.IMAGE, smode: 3, image: true };
+  // the host's textures, by slot (setImage)
+  const images = new Map();
+  const IMAGE_UNIT = 5;
   let screenVAO = null;
 
   function meshAttribs(m) {
@@ -1039,17 +1067,17 @@ export function createDrawer(gl, options) {
   // One instance buffer per kind, grown as needed and reused. Within one draw() every batch
   // of a kind is written at its own offset in that buffer, so a later batch never overwrites
   // bytes an earlier draw call of the same frame still reads.
-  const instBuf = new Array(12).fill(null);
-  const instCap = new Int32Array(12);
-  const need = new Int32Array(12);
-  const cursor = new Int32Array(12);
+  const instBuf = new Array(13).fill(null);
+  const instCap = new Int32Array(13);
+  const need = new Int32Array(13);
+  const cursor = new Int32Array(13);
 
   // Scratch, allocated once.
   const light = new Float32Array(3);
   const lvp = new Float32Array(16);
   let wAt = new Int32Array(64);   // per batch: where its records were uploaded this draw(), or -1
   const inv = new Float64Array(16);
-  const st = { drawCalls: 0, instances: 0, bytesUploaded: 0, paramUploads: 0 };
+  const st = { drawCalls: 0, instances: 0, bytesUploaded: 0, paramUploads: 0, missingImages: 0 };
   let dead = false;
   let flat = false;   // lines as flat ribbons, for the draw() in progress
 
@@ -1083,7 +1111,7 @@ export function createDrawer(gl, options) {
   // The slot a batch is drawn with, or null if it is not drawn.
   function slotOf(b) {
     const k = b.kind | 0;
-    if (k < 1 || k > 11) return null;
+    if (k < 1 || k > 12) return null;
     if (b.screen === true) return sslots[k];
     if (k > 10) return null;
     if (flat) {
@@ -1194,7 +1222,7 @@ export function createDrawer(gl, options) {
    */
   function draw(batches, vp, opts) {
     if (dead) throw new Error('holon-draw: draw() after destroy()');
-    st.drawCalls = 0; st.instances = 0; st.bytesUploaded = 0; st.paramUploads = 0;
+    st.drawCalls = 0; st.instances = 0; st.bytesUploaded = 0; st.paramUploads = 0; st.missingImages = 0;
     flat = !!opts && (opts.flatLines === true || (opts.flatLines !== false && opts.depthTest === false));
     if (opts && opts.shadow && opts.shadow.center && opts.shadow.radius > 0) shadowPrograms();
     const nb = batches.length;
@@ -1215,7 +1243,7 @@ export function createDrawer(gl, options) {
     }
     if (nWorld + nScreen === 0) return;
 
-    for (let k = 1; k <= 11; k++) {
+    for (let k = 1; k <= 12; k++) {
       cursor[k] = 0;
       if (need[k] <= instCap[k]) continue;
       let cap = instCap[k] || 64 * INSTANCE_BYTES;
@@ -1377,18 +1405,30 @@ export function createDrawer(gl, options) {
       } else {
         meshAttribs(mQuad);
       }
-      let smode = -1, textured = false;
+      let smode = -1, fmode = -1, textured = false, imageUnitSet = false;
       for (let i = 0; i < nb; i++) {
         const b = batches[i], c = b.count | 0;
         if (c <= 0 || b.screen !== true) continue;
         const s = slotOf(b);
         if (!s) continue;
+        if (s.image) {
+          const img = images.get(b.bytes[51]);
+          if (!img) { st.missingImages++; continue; }
+          if (!imageUnitSet) { imageUnitSet = true; gl.uniform1i(uImg, IMAGE_UNIT); }
+          gl.activeTexture(gl.TEXTURE0 + IMAGE_UNIT);
+          gl.bindTexture(gl.TEXTURE_2D, img.tex);
+          gl.activeTexture(gl.TEXTURE0);
+        }
         if (s.smode !== smode) {
           smode = s.smode;
           gl.uniform1f(uSMode, smode);
-          gl.uniform1f(uFMode, smode === 3 ? 1 : 0);
         }
-        if (smode === 3 && !textured) {
+        const fm = s.image ? 2 : smode === 3 ? 1 : 0;
+        if (fm !== fmode) {
+          fmode = fm;
+          gl.uniform1f(uFMode, fm);
+        }
+        if (smode === 3 && !s.image && !textured) {
           // Once per draw(): the atlas pages on units 0..3. Pages are bound here, at draw
           // time, so a page the provider made or refilled this frame is the one sampled.
           textured = true;
@@ -1432,9 +1472,46 @@ export function createDrawer(gl, options) {
     return st;
   }
 
+  /** Put a texture in an image slot (0..255); see IMAGES in the header. */
+  function setImage(slot, source, o) {
+    if (dead) throw new Error('holon-draw: setImage() after destroy()');
+    slot = slot | 0;
+    if (slot < 0 || slot > 255) throw new Error('holon-draw: an image slot is 0..255');
+    let img = images.get(slot);
+    if (!img) {
+      img = { tex: gl.createTexture() };
+      images.set(slot, img);
+    }
+    const nearest = !!(o && o.nearest);
+    const was = gl.getParameter(gl.TEXTURE_BINDING_2D);
+    const flip = gl.getParameter(gl.UNPACK_FLIP_Y_WEBGL), pre = gl.getParameter(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL);
+    gl.bindTexture(gl.TEXTURE_2D, img.tex);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, source);
+    const f = nearest ? gl.NEAREST : gl.LINEAR;
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, f);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, f);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, flip);
+    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, pre);
+    gl.bindTexture(gl.TEXTURE_2D, was);
+  }
+
+  /** Free an image slot's texture. */
+  function deleteImage(slot) {
+    const img = images.get(slot | 0);
+    if (!img) return;
+    gl.deleteTexture(img.tex);
+    images.delete(slot | 0);
+  }
+
   function destroy() {
     if (dead) return;
     dead = true;
+    for (const img of images.values()) gl.deleteTexture(img.tex);
+    images.clear();
     for (const m of meshes) {
       gl.deleteBuffer(m.vbo);
       gl.deleteBuffer(m.ibo);
@@ -1455,5 +1532,5 @@ export function createDrawer(gl, options) {
     if (zTex) { gl.deleteTexture(zTex); gl.deleteRenderbuffer(zDepth); gl.deleteFramebuffer(zFbo); }
   }
 
-  return { draw, stats, destroy, instancing: isGL2 ? 'webgl2' : 'ANGLE_instanced_arrays', vertexArrays: hasVAO, screenPrecision: PF };
+  return { draw, stats, destroy, setImage, deleteImage, instancing: isGL2 ? 'webgl2' : 'ANGLE_instanced_arrays', vertexArrays: hasVAO, screenPrecision: PF };
 }

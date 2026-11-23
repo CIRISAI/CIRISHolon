@@ -10,7 +10,7 @@
 //   const drawer = createDrawer(gl, { text });
 //   each frame:  text.beginFrame();  const r = text.place('PASS', 2);  ... pack a run ...
 //
-// place(text, style) -> { w, h, u0, v0, u1, v1, page, advance, epoch }, in DEVICE pixels.
+// place(text, style) -> { w, h, u0, v0, u1, v1, page, advance, epoch, drawn }, in DEVICE pixels.
 //   - The SAME object is returned for the same (text, style) while it is cached: a cache
 //     hit allocates nothing. Do not write to it.
 //   - w by h is the run's rectangle: draw it at exactly that size, centred where the text
@@ -20,6 +20,9 @@
 //     `advance` (= w - 2) is the platform's advance for the string.
 //   - An empty string gives w = 0 (draw nothing).
 //   - A string wider than a page is cut at the page's width.
+//   - `drawn` says whether the run shows the string as given (the screen standard's L12 asks):
+//     0 whole, 1 CUT (wider than a page), 2 CHANGED (its style changed the case). A host passes
+//     it to the core as the 8th number of `host_text` (holon-draw's `Drawn`).
 //
 // STYLES, by number (CSS px times dpr gives the device size):
 //   0 body     13px monospace
@@ -231,7 +234,9 @@ function makeProvider(gpu, options) {
       ctx.textBaseline = 'alphabetic';
     };
     setup();
-    const advance = Math.min(Math.ceil(ctx.measureText(shown).width), pageSize - 4);
+    const full = Math.ceil(ctx.measureText(shown).width);
+    const advance = Math.min(full, pageSize - 4);
+    const drawn = full > pageSize - 4 ? 1 : shown !== text ? 2 : 0;
     const w = advance + 2, h = s.h;       // the run's rectangle
     const cw = w + 2, ch = h + 2;         // with the 1 px clear border around it
 
@@ -257,7 +262,7 @@ function makeProvider(gpu, options) {
     gpu.upload(p.tex, cell.x, cell.y, canvas);
 
     const x = cell.x + 1, y = cell.y + 1;
-    const e = { w, h, u0: x / pageSize, v0: y / pageSize, u1: (x + w) / pageSize, v1: (y + h) / pageSize, page: pi, advance, epoch: st.epoch };
+    const e = { w, h, u0: x / pageSize, v0: y / pageSize, u1: (x + w) / pageSize, v1: (y + h) / pageSize, page: pi, advance, epoch: st.epoch, drawn };
     s.cache.set(text, e);
     p.entries.push([si, text]);
     p.used = frame;

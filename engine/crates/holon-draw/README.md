@@ -4,14 +4,50 @@ A small generic draw core with no dependency (`INTERFACE.md` at the repository's
 contract). It packs bytes and answers questions; it does not own a canvas and has no
 graphics backend of its own yet.
 
-- `lib.rs`: tiles of tagged 52-byte instance records, packed one batch per tile and kind; a
-  pure pick that names an instance; a report per instance; a digest of a frame.
+- `lib.rs`: tiles of tagged 52-byte instance records, packed one batch per tile and kind
+  (images one batch per texture slot); a pure pick that names an instance; a report per
+  instance, with what the core can attest of its legibility (`Shown::why`) and the SHA-256
+  of the source string its text was shaped from (`Shown::source`); a digest of a frame.
+- `ui.rs`: panels, text and buttons as screen tiles. Tagged text carries its source digest.
+- `digest.rs`: SHA-256, so a source digest is comparable with the screen standard's.
+- `registry/` and `tools/check_registry.py`: the screen standard's registry, vendored at a
+  pinned tag, and the check of `INTERFACE.md` §9 against it (run by ci-gates).
 - `alloc.rs`: the detail allocator behind one interface, with a distance ring and a
   read-per-work rule. Neither has been compared on a consumer's scene.
 - `twin.rs`: the CEWP twin's street leaf as the twin's own vertex stream (10 floats a
   vertex), built on this side of the seam. A compatibility backend: the twin's program,
   uniforms and draw order are untouched.
 - `abi.rs`: the wasm boundary, plain `extern "C"`.
+
+## Issue #6, Profile B's owed items: what was built and checked, 2026-11-22
+
+`INTERFACE.md` §13 has the contract. In short:
+
+- **Images (D12, `Kind::Image`).** A host puts a texture in a slot with `setImage(slot, source,
+  { nearest })` on either backend. A tagged image must be `Bind::Media` (its alt text and AI
+  disclosure each drawn in the same frame as a run with a source string) or `Bind::Qr`;
+  otherwise the frame is refused (L10). An image in a world tile is refused, because no
+  backend draws one there.
+- **Source strings (L12).** A run carries the SHA-256 of the string it was shaped from, and
+  what the provider said of the drawing (`Drawn`: whole, cut, changed, or nothing said). The
+  report returns the digest when every run of the instance carries the same one.
+- **Legibility (L12).** `Shown::legible` now means every condition the core can attest held:
+  wholly in the viewport, the size floor, unoccluded, contrast of at least 4.5:1 (WCAG AA)
+  against an opaque ground the core can see whole, untruncated, and one source string.
+  `Shown::why` gives each part. A world mark is never legible, because world-against-world
+  occlusion needs the backend's depth buffer.
+- **Checked.** The crate's tests cover each condition and each refusal. Five planted faults
+  were each caught when written: own marks occluding, no contrast floor, a translucent ground
+  taken as opaque, an unsaid drawing taken as whole, and media slots not checked. The registry
+  check refused seven planted faults. `tools/webgpu_parity.py` gained an `images` mode (a
+  nearest-sampled QR-like grid, a translucent linear gradient, and an image naming an empty
+  slot). At 960x600 with the panels, WebGL and WebGPU agree to a mean |diff| of 0.425 of 255,
+  1.26 % of pixels over 8, the same as the plain overlay. Draw calls (39) and instances (574)
+  are equal, and both skip the one image with no texture. The three earlier modes still pass.
+  This is SwiftShader in headless Chrome only.
+- **Fixed on the way.** Both backends grew their per-kind instance buffers for kinds 1 to 11
+  only, so a twelfth kind would have uploaded to no buffer. A screen line's report and pick
+  rectangle were a box of `size` about one end; they are now its two ends and its width.
 
 ## The WebGPU backend: what was measured, 2026-11-20
 

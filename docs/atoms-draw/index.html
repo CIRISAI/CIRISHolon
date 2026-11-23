@@ -38,8 +38,9 @@
       const env = {
         host_text(ptr, len, style, out) {
           const r = text.place(utf8.decode(new Uint8Array(memory.buffer, ptr, len)), style);
-          const o = new Float32Array(memory.buffer, out, 7);
+          const o = new Float32Array(memory.buffer, out, 8);
           o[0] = r.w; o[1] = r.h; o[2] = r.u0; o[3] = r.v0; o[4] = r.u1; o[5] = r.v1; o[6] = r.page;
+          o[7] = r.drawn === undefined ? -1 : r.drawn;   // 0 whole, 1 cut, 2 changed, -1 not said
         },
       };
       const bytes = await (await fetch("holon_draw_atoms.wasm")).arrayBuffer();

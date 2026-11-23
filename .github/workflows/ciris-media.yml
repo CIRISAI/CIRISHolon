@@ -1,0 +1,74 @@
+name: ciris-media
+# Builds the four ciris-media wheels (media/ciris-media): each is one platform's FFmpeg and JavaCPP
+# native jars, byte for byte from Maven Central, checked against media/ciris-media/pins.json.
+# Runs on a pull request that touches the package, and by hand. It publishes ONLY by hand, with
+# publish set, from main, and only when every jar's sha256 is pinned.
+on:
+  pull_request:
+    paths: ["media/ciris-media/**", ".github/workflows/ciris-media.yml"]
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "Publish to PyPI (needs every sha256 pinned, and the pypi environment)"
+        type: boolean
+        default: false
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build and check the wheels
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@v5
+      - name: The builder against stand-in jars
+        run: python3 media/ciris-media/test_build.py
+      - name: Build from Maven Central (prints each jar's sha256)
+        run: python3 media/ciris-media/build_wheels.py --out dist --record ${{ inputs.publish && '--require-pins' || '' }}
+      - name: Build again and compare
+        run: |
+          mkdir jars && for w in dist/*.whl; do unzip -q -j -o "$w" 'ciris_media/jars/*' -d jars; done
+          python3 media/ciris-media/build_wheels.py --out dist2 --from-dir jars
+          diff dist/SHA256SUMS dist2/SHA256SUMS
+          cat dist/SHA256SUMS
+      - name: Each wheel installs and finds its two jars
+        run: |
+          python3 -m venv v && v/bin/pip -q install --no-deps dist/*manylinux*.whl
+          v/bin/python -c "import ciris_media as m; j = m.jars(); print(m.__version__, [p.name for p in j]); assert len(j) == 2"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ciris-media-wheels
+          path: |
+            dist/*.whl
+            dist/SHA256SUMS
+      - uses: actions/attest-build-provenance@v2
+        if: github.event_name == 'workflow_dispatch'
+        with:
+          subject-path: "dist/*.whl"
+
+  publish:
+    name: Publish to PyPI
+    needs: build
+    if: github.event_name == 'workflow_dispatch' && inputs.publish && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: ciris-media-wheels
+          path: dist
+      - run: rm dist/SHA256SUMS
+      - uses: pypa/gh-action-pypi-publish@release/v1

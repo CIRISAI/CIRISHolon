@@ -38,6 +38,17 @@
 //                 first draw() of each frame.
 //   viewport      [x, y, w, h] AS GL HAS IT (y from the bottom), the same numbers draw.js
 //                 takes; default the whole target. The pass's viewport is set from it.
+// RESIDENT BUFFERS: resident(bytes) -> handle, update(handle, bytes), release(handle) and the
+// batch { kind, handle, first, count, ..., slot? } are draw.js's (its header specifies them,
+// the resident image batch's `slot` and every throw included). Here a handle is one GPUBuffer
+// (usage VERTEX | COPY_DST), written with queue.writeBuffer, and a resident batch is drawn by
+// setVertexBuffer(1, that buffer, first * 52): no copy, no upload, bytesUploaded 0. update()
+// writes in place when the records fit the buffer, else makes a new GPUBuffer for the same
+// handle and destroys the old one (work already submitted that reads it still completes).
+// Since queue.writeBuffer is ordered with submits, an update() between two draw() calls is
+// what the second one reads. release() destroys the GPUBuffer. There are no vertex arrays to
+// cache: a resident batch costs the same commands as a `bytes` batch, less its writeBuffer.
+//
 // draw() records one command buffer (the shadow pass first, when asked for, then one render
 // pass with the world and the screen batches) and submits it. It returns nothing. A draw()
 // with nothing to draw submits nothing, unless `clear` is given (then it clears).
@@ -897,7 +908,7 @@ export async function createDrawerWebGPU(device, options) {
   const lvp = new Float32Array(16);
   let wAt = new Int32Array(64);
   const inv = new Float64Array(16);
-  const st = { drawCalls: 0, instances: 0, bytesUploaded: 0, paramUploads: 0, uniformBytes: 0, missingImages: 0 };
+  const st = { drawCalls: 0, instances: 0, bytesUploaded: 0, paramUploads: 0, uniformBytes: 0, missingImages: 0, residentBuffers: 0, residentBytes: 0 };
   let dead = false;
   let flat = false;
   const lastP = new Float32Array(32);
@@ -968,6 +979,60 @@ export async function createDrawerWebGPU(device, options) {
     return at;
   }
 
+  // ---- resident buffers (draw.js's RESIDENT BUFFERS) ----
+  // handles[h]: { buf (GPUBuffer), cap (bytes allocated), size (bytes of records now) }
+  const handles = [null];
+  const freeHandles = [];
+  function handleOf(h, what) {
+    const r = typeof h === 'number' ? handles[h] : undefined;
+    if (!r) throw new Error('holon-draw: ' + what + ': no resident buffer with handle ' + h);
+    return r;
+  }
+  function recordBytes(bytes, what) {
+    if (!bytes || typeof bytes.byteLength !== 'number' || bytes.byteLength % INSTANCE_BYTES !== 0) {
+      throw new Error('holon-draw: ' + what + ' takes whole 52-byte records (an ArrayBufferView whose byteLength is a multiple of 52)');
+    }
+  }
+  function residentBuffer(n) {
+    // at least 4 bytes: an empty resident buffer is allowed, a zero-sized vertex buffer is not useful
+    return device.createBuffer({ label: 'holon-draw resident', size: Math.max(4, n), usage: U.VERTEX | U.COPY_DST });
+  }
+  function write(buf, bytes) {
+    if (bytes.byteLength > 0) device.queue.writeBuffer(buf, 0, bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  }
+  function resident(bytes) {
+    if (dead) throw new Error('holon-draw: resident() after destroy()');
+    recordBytes(bytes, 'resident()');
+    const r = { buf: residentBuffer(bytes.byteLength), cap: bytes.byteLength, size: bytes.byteLength };
+    write(r.buf, bytes);
+    const h = freeHandles.length ? freeHandles.pop() : handles.length;
+    handles[h] = r;
+    st.residentBuffers++;
+    st.residentBytes += r.cap;
+    return h;
+  }
+  function update(h, bytes) {
+    if (dead) throw new Error('holon-draw: update() after destroy()');
+    const r = handleOf(h, 'update()');
+    recordBytes(bytes, 'update()');
+    if (bytes.byteLength > r.cap) {
+      r.buf.destroy();
+      r.buf = residentBuffer(bytes.byteLength);
+      st.residentBytes += bytes.byteLength - r.cap;
+      r.cap = bytes.byteLength;
+    }
+    write(r.buf, bytes);
+    r.size = bytes.byteLength;
+  }
+  function release(h) {
+    const r = handleOf(h, 'release()');
+    r.buf.destroy();
+    handles[h] = null;
+    freeHandles.push(h);
+    st.residentBuffers--;
+    st.residentBytes -= r.cap;
+  }
+
   // Write a Draw slot; returns its byte offset. `cmpParams` counts what draw.js would upload.
   let uNext = 0;
   function drawSlot(params, o, mx, my, kc, sw, shade0, shade1, shade2, shade3) {
@@ -1018,10 +1083,20 @@ export async function createDrawerWebGPU(device, options) {
       if (c <= 0) continue;
       const s = slotOf(b);
       if (!s) continue;
-      if (b.bytes.byteLength < c * INSTANCE_BYTES) {
-        throw new Error('holon-draw: batch ' + i + ' (kind ' + b.kind + ') has ' + b.bytes.byteLength + ' bytes for ' + c + ' records of ' + INSTANCE_BYTES);
+      if (b.handle !== undefined) {
+        const r = handleOf(b.handle, 'batch ' + i), first = b.first === undefined ? 0 : b.first;
+        if (first !== (first | 0) || first < 0 || (first + c) * INSTANCE_BYTES > r.size) {
+          throw new Error('holon-draw: batch ' + i + ' (kind ' + b.kind + ') asks for records ' + first + '..' + (first + c - 1) + ' of a resident buffer that holds ' + r.size / INSTANCE_BYTES);
+        }
+        if (s.image && !(b.slot === (b.slot | 0) && b.slot >= 0 && b.slot <= 255)) {
+          throw new Error('holon-draw: batch ' + i + ' is a resident image batch: it needs `slot` (0..255), since its first record is not in hand');
+        }
+      } else {
+        if (b.bytes.byteLength < c * INSTANCE_BYTES) {
+          throw new Error('holon-draw: batch ' + i + ' (kind ' + b.kind + ') has ' + b.bytes.byteLength + ' bytes for ' + c + ' records of ' + INSTANCE_BYTES);
+        }
+        need[s.kind] += c * INSTANCE_BYTES;
       }
-      need[s.kind] += c * INSTANCE_BYTES;
       if (b.screen === true) nScreen++; else nWorld++;
     }
     const clear = opts.clear;
@@ -1066,7 +1141,7 @@ export async function createDrawerWebGPU(device, options) {
       for (let i = 0; i < nb; i++) {
         const b = batches[i], c = b.count | 0;
         const s = c > 0 && b.screen !== true ? slotOf(b) : null;
-        wAt[i] = s ? upload(b, s.kind, c * INSTANCE_BYTES) : -1;
+        wAt[i] = !s ? -1 : b.handle !== undefined ? -2 : upload(b, s.kind, c * INSTANCE_BYTES);   // -2: resident
       }
       let lx = 0.35, ly = -0.5, lz = 0.8;
       const L = opts.light;
@@ -1093,7 +1168,7 @@ export async function createDrawerWebGPU(device, options) {
       let zcur = null, zpipe = null;
       dynOff[0] = align;
       for (let i = 0; i < nb; i++) {
-        if (wAt[i] < 0) continue;
+        if (wAt[i] === -1) continue;
         const b = batches[i];
         if (b.castShadow === false) continue;
         const s = slotOf(b);
@@ -1106,7 +1181,8 @@ export async function createDrawerWebGPU(device, options) {
           zp.setVertexBuffer(0, s.mesh.vbo);
           zp.setIndexBuffer(s.mesh.ibo, 'uint16');
         }
-        zp.setVertexBuffer(1, instBuf[s.kind], wAt[i]);
+        if (wAt[i] === -2) zp.setVertexBuffer(1, handles[b.handle].buf, (b.first | 0) * INSTANCE_BYTES);
+        else zp.setVertexBuffer(1, instBuf[s.kind], wAt[i]);
         dynOff[1] = drawSlot(b.params, b.offset, s.mx, s.my, s.kc, 0, 0, 0, 0, 0);
         zp.setBindGroup(0, uniBG, dynOff);
         zp.drawIndexed(s.mesh.n, c);
@@ -1140,7 +1216,7 @@ export async function createDrawerWebGPU(device, options) {
       if (shadowsOn) pass.setBindGroup(1, zBG);
       let cur = null, curPipe = null;
       for (let i = 0; i < nb; i++) {
-        if (wAt[i] < 0) continue;
+        if (wAt[i] === -1) continue;
         const b = batches[i], c = b.count | 0;
         const s = slotOf(b);
         const sh = b.shade;
@@ -1152,7 +1228,8 @@ export async function createDrawerWebGPU(device, options) {
           pass.setVertexBuffer(0, s.mesh.vbo);
           pass.setIndexBuffer(s.mesh.ibo, 'uint16');
         }
-        pass.setVertexBuffer(1, instBuf[s.kind], wAt[i]);
+        if (wAt[i] === -2) pass.setVertexBuffer(1, handles[b.handle].buf, (b.first | 0) * INSTANCE_BYTES);
+        else pass.setVertexBuffer(1, instBuf[s.kind], wAt[i]);
         dynOff[1] = drawSlot(b.params, b.offset, s.mx, s.my, s.kc, 0, s.lit || flatLit ? 1 : 0, ambient, spec, rim);
         pass.setBindGroup(0, uniBG, dynOff);
         pass.drawIndexed(s.mesh.n, c);
@@ -1172,7 +1249,7 @@ export async function createDrawerWebGPU(device, options) {
         if (c <= 0 || b.screen !== true) continue;
         const s = slotOf(b);
         if (!s) continue;
-        const want = s.image ? (images.get(b.bytes[51]) || null) : null;
+        const want = s.image ? (images.get(b.handle !== undefined ? b.slot : b.bytes[51]) || null) : null;
         if (s.image && !want) { st.missingImages++; continue; }
         if (!atlas) {
           // Once per draw(): the atlas pages, looked up at draw time, so a page the provider
@@ -1186,8 +1263,8 @@ export async function createDrawerWebGPU(device, options) {
           imgBG = want.group;
           pass.setBindGroup(2, imgBG);
         }
-        const at = upload(b, s.kind, c * INSTANCE_BYTES);
-        pass.setVertexBuffer(1, instBuf[s.kind], at);
+        if (b.handle !== undefined) pass.setVertexBuffer(1, handles[b.handle].buf, (b.first | 0) * INSTANCE_BYTES);
+        else pass.setVertexBuffer(1, instBuf[s.kind], upload(b, s.kind, c * INSTANCE_BYTES));
         dynOff[1] = drawSlot(b.params, b.offset, s.smode, 0, 0, s.image ? 2 : s.smode === 3 ? 1 : 0, 0, 0, 0, 0);
         ustage[dynOff[1] / 4 + 34] = 0;   // a screen tile's offset is x, y only
         pass.setBindGroup(0, uniBG, dynOff);
@@ -1202,7 +1279,7 @@ export async function createDrawerWebGPU(device, options) {
     device.queue.submit([enc.finish()]);
   }
 
-  /** The counts of the last draw(). The SAME object every call (no allocation); copy it to keep it. */
+  /** The counts of the last draw(), and residentBuffers/residentBytes now (as draw.js). The SAME object every call. */
   function stats() {
     return st;
   }
@@ -1235,6 +1312,7 @@ export async function createDrawerWebGPU(device, options) {
 
   function destroy() {
     if (dead) return;
+    for (let h = 1; h < handles.length; h++) if (handles[h]) release(h);
     dead = true;
     for (const img of images.values()) img.tex.destroy();
     images.clear();
@@ -1251,5 +1329,5 @@ export async function createDrawerWebGPU(device, options) {
     ubuf = zTex = dTex = msTex = null;
   }
 
-  return { draw, stats, destroy, setImage, deleteImage, backend: 'webgpu', sampleCount, screenPrecision: 'highp' };
+  return { draw, stats, destroy, setImage, deleteImage, resident, update, release, backend: 'webgpu', sampleCount, screenPrecision: 'highp' };
 }

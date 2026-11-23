@@ -362,7 +362,7 @@ export function createOverlay(env) {
 
   // the host's textures, given to the drawer once it exists
   const installImages = (drawer) => { for (const im of images) drawer.setImage(im.slot, im.source, { nearest: im.nearest }); };
-  const ui = { panels, pPanel, overlay, applyState, installImages, text: env.text || null };
+  const ui = { panels, pPanel, overlay, applyState, installImages, imageSlots: images.map((im) => im.slot), text: env.text || null };
   return ui;
 }
 
@@ -378,4 +378,83 @@ export function viewProjection(q, isMap, OFF, canvas, dpr, az, el, dist) {
   const sx = 2 * mapPpu / canvas.width, sy = 2 * mapPpu / canvas.height;
   const vp = isMap ? new Float32Array([sx, 0, 0, 0, 0, sy, 0, 0, 0, 0, -0.01, 0, -sx * OFF[0], -sy * OFF[1], 0, 1]) : mul(proj, lookAt(eye, at, [0, 0, 1]));
   return { vp, mapPpu };
+}
+
+// ---- ?resident=1: the world batches drawn from resident buffers ----
+// Puts every world batch of `all` (in place, by index) into two resident buffers, A (the
+// first two world batches) and B (the rest), each batch a range of its buffer, so the
+// picture is the same scene drawn with no record uploaded. On the way it exercises the API:
+// A is made from one record, grown by update() to its records and three junk records (a
+// reallocation), then shrunk by update() to its records alone (in place, the allocation
+// kept); a junk handle is released and must be the number resident() hands B; and draw()
+// must throw on a range past A's records (after the shrink), on the released handle, and on
+// a resident image batch with no `slot`. `tryDraw(batches)` draws and returns the error's
+// message, or null. Returns what the page reports in document.body.dataset.resident.
+export function makeResident(drawer, all, tryDraw) {
+  const idx = [];
+  for (let i = 0; i < all.length; i++) if (!all[i].screen && all[i].count > 0) idx.push(i);
+  const cat = (list, extra) => {
+    let n = extra * INSTANCE_BYTES;
+    for (const i of list) n += all[i].count * INSTANCE_BYTES;
+    const out = new Uint8Array(n), firsts = [];
+    let at = 0;
+    for (const i of list) { firsts.push(at / INSTANCE_BYTES); out.set(all[i].bytes.subarray(0, all[i].count * INSTANCE_BYTES), at); at += all[i].count * INSTANCE_BYTES; }
+    for (let k = 0; k < extra * INSTANCE_BYTES; k++) out[at + k] = (k * 37) & 255;   // junk: never drawn
+    return { out, firsts };
+  };
+  const iA = idx.slice(0, 2), iB = idx.slice(2);
+  const A = cat(iA, 0), Agrown = cat(iA, 3), B = cat(iB, 0);
+  const st = () => ({ buffers: drawer.stats().residentBuffers, bytes: drawer.stats().residentBytes });
+  const log = {};
+  const hA = drawer.resident(A.out.subarray(0, INSTANCE_BYTES));
+  log.afterCreate = st();
+  drawer.update(hA, Agrown.out);
+  log.afterGrow = st();
+  drawer.update(hA, A.out);
+  log.afterShrink = st();
+  const nA = A.out.byteLength / INSTANCE_BYTES;
+  log.pastRange = tryDraw([{ kind: all[iA[0]].kind, handle: hA, first: nA, count: 1 }]);   // the junk records, now past the end
+  const hJ = drawer.resident(cat(iA.slice(0, 1), 2).out);
+  drawer.release(hJ);
+  log.afterRelease = st();
+  log.released = tryDraw([{ kind: all[iA[0]].kind, handle: hJ, first: 0, count: 1 }]);
+  log.imageNoSlot = tryDraw([{ kind: KIND.IMAGE, screen: true, handle: hA, first: 0, count: 1 }]);
+  const hB = drawer.resident(B.out);
+  log.reused = hB === hJ;
+  log.handles = [hA, hJ, hB];
+  log.final = st();
+  const swap = (list, h, firsts) => list.forEach((i, j) => {
+    const b = all[i];
+    all[i] = { kind: b.kind, handle: h, first: firsts[j], count: b.count, offset: b.offset, params: b.params, coarse: b.coarse, screen: false };
+  });
+  swap(iA, hA, A.firsts);
+  swap(iB, hB, B.firsts);
+  log.worldBytes = A.out.byteLength + B.out.byteLength;
+  log.imageBytes = 0;
+  log.ok = log.reused && !!log.pastRange && !!log.released && !!log.imageNoSlot
+    && log.afterGrow.bytes === Agrown.out.byteLength && log.afterShrink.bytes === Agrown.out.byteLength
+    && log.final.buffers === 2 && log.final.bytes === Agrown.out.byteLength + B.out.byteLength;
+  return log;
+}
+
+// ?resident=1&images=1: the image panel's three image batches (laid out once, by the first
+// overlay()) moved into one resident buffer, each with its `slot` (the slot its records
+// name, which the host knows; the drawer cannot read it from a resident buffer). log.imageBytes
+// is what the bytes page uploads for them: the batches whose slot holds a texture (`filled`);
+// the one naming an empty slot is skipped there without an upload.
+export function makeResidentImages(drawer, all, ip, log, filled) {
+  let n = 0;
+  for (const b of ip.imgs) n += b.count * INSTANCE_BYTES;
+  const out = new Uint8Array(n), firsts = [];
+  let at = 0;
+  for (const b of ip.imgs) { firsts.push(at / INSTANCE_BYTES); out.set(b.bytes, at); at += b.bytes.byteLength; }
+  const h = drawer.resident(out);
+  ip.imgs.forEach((b, j) => {
+    const i = all.indexOf(b);
+    all[i] = { kind: KIND.IMAGE, screen: true, handle: h, first: firsts[j], count: b.count, offset: b.offset, params: b.params, slot: b.bytes[51] };
+  });
+  log.imageBytes = 0;
+  for (const b of ip.imgs) if (filled.includes(b.bytes[51])) log.imageBytes += b.bytes.byteLength;
+  log.imageResidentBytes = n;
+  log.imageHandle = h;
 }

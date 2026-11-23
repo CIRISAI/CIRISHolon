@@ -2,10 +2,12 @@
 """Draw test.html (WebGL) and test-webgpu.html (WebGPU) the same way and compare their pixels.
 
     python3 crates/holon-draw/tools/webgpu_parity.py [--out DIR] [--width 960 --height 600]
-                                                      [--modes default,map,noshadow,images] [--fps 4]
+                                                      [--modes default,map,noshadow,images,resident,...] [--fps 4]
 
 For each mode (default: the 3D scene with shadows; map: ?map=1; noshadow: ?shadow=0; images:
-?images=1, a panel of host textures) and for
+?images=1, a panel of host textures; resident, residentmap, residentimages: the default, map
+and images modes with ?resident=1, the world batches, and in residentimages the image panel's
+batches, drawn from resident buffers) and for
 the scene alone (?overlay=0) and with the panels, it loads both pages in one headless Google
 Chrome at the same size, device pixel ratio 1 and camera, waits for the page's own
 `document.body.dataset.ready`, takes a screenshot of the canvas, and compares the two:
@@ -22,6 +24,15 @@ It also checks that the mesh builders copied into draw-webgpu.js are still the s
 text as draw.js's (they are copies; a drift would make the backends draw different meshes),
 that each page reported ready with no error, that the WebGPU page's verdict is PASS, and that
 both backends skip the same images for an empty slot (one, in the images mode with panels).
+
+RESIDENT MODES ARE GATED against their base mode ON THE SAME BACKEND (the same page without
+?resident=1, loaded too if the base mode is not in --modes): the two screenshots must be
+identical (max 0), the draw calls and instances the same, and stats().bytesUploaded the base's
+less exactly the bytes made resident (so 0 for the scene alone); the page's own checks of
+update() (grow, shrink), release() and reuse of a handle, and of the three throws, must hold
+(document.body.dataset.resident.ok). For the resident mode with panels, test.html is also
+compared with itself on WebGL 1 (?gl=1) and on bare WebGL 1 (?gl=1&novao=1, no vertex array
+objects), resident against bytes, with the same gate.
 Exit status 0 when all of that holds; the pixel numbers are REPORTED, not gated (the two
 backends rasterise on different paths, see the README).
 
@@ -61,7 +72,9 @@ CHROME_ARGS = [
     "--use-angle=swiftshader",
     "--enable-unsafe-swiftshader",
 ]
-MODES = {"default": "", "map": "map=1", "noshadow": "shadow=0", "images": "images=1"}
+MODES = {"default": "", "map": "map=1", "noshadow": "shadow=0", "images": "images=1",
+         "resident": "resident=1", "residentmap": "map=1&resident=1", "residentimages": "images=1&resident=1"}
+RESIDENT_BASE = {"resident": "default", "residentmap": "map", "residentimages": "images"}
 MESH_FUNCS = ["sphereMesh", "tubeMesh", "capsuleMesh", "arcCapsuleMesh", "arcRibbonMesh",
               "ribbonMesh", "boxMesh", "quadMesh", "discMesh"]
 
@@ -146,7 +159,8 @@ def load(browser, url, w, h, shot):
     except Exception as e:  # noqa: BLE001
         errs.append("not ready: " + str(e).splitlines()[0])
     info = page.evaluate("({ error: document.body.dataset.error || null, verdict: document.body.dataset.verdict || null,"
-                         "  stats: document.body.dataset.stats ? JSON.parse(document.body.dataset.stats) : null })")
+                         "  stats: document.body.dataset.stats ? JSON.parse(document.body.dataset.stats) : null,"
+                         "  resident: document.body.dataset.resident ? JSON.parse(document.body.dataset.resident) : null })")
     png = page.locator("#c").screenshot(type="png") if shot else None
     return page, info, errs, png
 
@@ -156,7 +170,7 @@ def main():
     ap.add_argument("--out", default=os.path.join(os.environ.get("TMPDIR", "/tmp"), "holon-draw-webgpu-parity"))
     ap.add_argument("--width", type=int, default=960)
     ap.add_argument("--height", type=int, default=600)
-    ap.add_argument("--modes", default="default,map,noshadow,images")
+    ap.add_argument("--modes", default=",".join(MODES))
     ap.add_argument("--fps", type=float, default=0, help="seconds of ?spin=1 per page to count frames (0: skip)")
     args = ap.parse_args()
     os.makedirs(args.out, exist_ok=True)
@@ -178,24 +192,73 @@ def main():
         report["chrome"] = browser.version
         print("chrome %s, %dx%d at dpr 1" % (browser.version, args.width, args.height))
         print("%-10s %-8s %10s %9s %9s %5s  %s" % ("mode", "overlay", "mean_abs", "over_8%", "over_32%", "max", "draw calls gl/gpu"))
+        cache = {}
+
+        def shot(name, qs, tag):
+            """(png as base64, info) of a page, loaded once per (name, query)."""
+            nonlocal ok
+            key = (name, qs)
+            if key not in cache:
+                page, info, errs, png = load(browser, base + name + ("?" + qs if qs else ""), args.width, args.height, True)
+                page.close()
+                open(os.path.join(args.out, tag + ".png"), "wb").write(png)
+                if errs or info["error"] or (name == "test-webgpu.html" and info["verdict"] != "PASS"):
+                    ok = False
+                    print("FAIL %s?%s: %s" % (name, qs, errs or info["error"] or info["verdict"]))
+                cache[key] = (base64.b64encode(png).decode(), info)
+            return cache[key]
+
+        def compare(a, b):
+            cmp_page = browser.new_page()
+            cmp_page.goto(base + "test-scene.js")   # any same-origin page; the comparison is self-contained
+            r = cmp_page.evaluate(COMPARE_JS, [a, b])
+            cmp_page.close()
+            return r
+
+        def resident_gate(label, res, bas, unshadowed=None):
+            """Gate a resident page (png, info) against its base on the same backend; one report row."""
+            nonlocal ok
+            r = compare(res[0], bas[0])
+            r.pop("diff_png", None)
+            rs, bs, log = res[1]["stats"] or {}, bas[1]["stats"] or {}, res[1]["resident"] or {}
+            want = (bs.get("bytesUploaded") or 0) - (log.get("worldBytes") or 0) - (log.get("imageBytes") or 0)
+            row = dict(label=label, max=r.get("max"), mean_abs=r.get("mean_abs"), bytes_base=bs.get("bytesUploaded"),
+                       bytes_resident=rs.get("bytesUploaded"), bytes_expected=want, world_bytes=log.get("worldBytes"),
+                       image_bytes=log.get("imageBytes"), resident_buffers=rs.get("residentBuffers"),
+                       resident_bytes=rs.get("residentBytes"), checks_ok=log.get("ok"),
+                       draw_calls=[rs.get("drawCalls"), bs.get("drawCalls")], instances=[rs.get("instances"), bs.get("instances")],
+                       missing_images=[rs.get("missingImages"), bs.get("missingImages")])
+            bad = []
+            if r.get("max") != 0: bad.append("pixels differ (max %s, mean_abs %s)" % (r.get("max"), r.get("mean_abs")))
+            if rs.get("bytesUploaded") != want: bad.append("bytesUploaded %s, want %s" % (rs.get("bytesUploaded"), want))
+            if not log.get("ok"): bad.append("the page's resident checks failed: %s" % json.dumps(log))
+            if rs.get("drawCalls") != bs.get("drawCalls") or rs.get("instances") != bs.get("instances"): bad.append("draw calls/instances differ")
+            if rs.get("missingImages") != bs.get("missingImages"): bad.append("missingImages differ")
+            if unshadowed is not None:
+                # the resident picture against the same scene with no shadow map: it must differ,
+                # or "identical to the shadowed bytes page" would not show that resident batches cast
+                u = compare(res[0], unshadowed[0])
+                row["vs_noshadow"] = {"max": u.get("max"), "over_8": u.get("over_8")}
+                if not (u.get("max") or 0) > 0: bad.append("no different from the page without shadows")
+                print("     resident vs ?shadow=0 %-34s max %s, over_8 %s%% (the shadows it casts)" % (label, u.get("max"), u.get("over_8")))
+            if bad:
+                ok = False
+                print("FAIL resident %s: %s" % (label, "; ".join(bad)))
+            print("     resident vs bytes %-34s max %s  bytesUploaded %s (bytes page %s, made resident %s)  resident %s buffers %s B" % (
+                label, r.get("max"), rs.get("bytesUploaded"), bs.get("bytesUploaded"),
+                (log.get("worldBytes") or 0) + (log.get("imageBytes") or 0), rs.get("residentBuffers"), rs.get("residentBytes")))
+            report.setdefault("resident", []).append(row)
+
         for mode in args.modes.split(","):
             for overlay in ("0", "1"):
                 qs = "&".join(x for x in (MODES[mode], "overlay=0" if overlay == "0" else "") if x)
                 pngs, infos = [], []
                 for name in ("test.html", "test-webgpu.html"):
-                    page, info, errs, png = load(browser, base + name + ("?" + qs if qs else ""), args.width, args.height, True)
-                    page.close()
                     tag = "%s_%s_%s" % (mode, "scene" if overlay == "0" else "panels", "webgl" if name == "test.html" else "webgpu")
-                    open(os.path.join(args.out, tag + ".png"), "wb").write(png)
-                    if errs or info["error"] or (name == "test-webgpu.html" and info["verdict"] != "PASS"):
-                        ok = False
-                        print("FAIL %s?%s: %s" % (name, qs, errs or info["error"] or info["verdict"]))
-                    pngs.append(base64.b64encode(png).decode())
+                    png, info = shot(name, qs, tag)
+                    pngs.append(png)
                     infos.append(info)
-                cmp_page = browser.new_page()
-                cmp_page.goto(base + "test-scene.js")   # any same-origin page; the comparison is self-contained
-                r = cmp_page.evaluate(COMPARE_JS, pngs)
-                cmp_page.close()
+                r = compare(pngs[0], pngs[1])
                 diff = r.pop("diff_png", None)
                 if diff:
                     open(os.path.join(args.out, "%s_%s_diff.png" % (mode, "scene" if overlay == "0" else "panels")), "wb").write(base64.b64decode(diff))
@@ -212,6 +275,23 @@ def main():
                                                           r.get("over_32"), r.get("max"), dc[0], dc[1]))
                 report["results"].append(dict(mode=mode, overlay=overlay == "1", query=qs, **r,
                                               stats={"webgl": infos[0]["stats"], "webgpu": infos[1]["stats"]}))
+                if mode in RESIDENT_BASE:
+                    bm = RESIDENT_BASE[mode]
+                    bqs = "&".join(x for x in (MODES[bm], "overlay=0" if overlay == "0" else "") if x)
+                    for k, name in enumerate(("test.html", "test-webgpu.html")):
+                        be = "webgl" if k == 0 else "webgpu"
+                        bas = shot(name, bqs, "%s_%s_%s" % (bm, "scene" if overlay == "0" else "panels", be))
+                        uns = None
+                        if mode == "resident":
+                            uqs = "&".join(x for x in (MODES["noshadow"], "overlay=0" if overlay == "0" else "") if x)
+                            uns = shot(name, uqs, "noshadow_%s_%s" % ("scene" if overlay == "0" else "panels", be))
+                        resident_gate("%s %s %s" % (mode, "panels" if overlay == "1" else "scene", be), (pngs[k], infos[k]), bas, uns)
+                    if mode == "resident" and overlay == "1":
+                        for extra in ("gl=1", "gl=1&novao=1"):
+                            res = shot("test.html", "&".join((qs, extra)), "resident_panels_webgl1_" + extra.replace("&", "_").replace("=", ""))
+                            bas = shot("test.html", "&".join(x for x in (bqs, extra) if x), "default_panels_webgl1_" + extra.replace("&", "_").replace("=", ""))
+                            ver = (res[1]["stats"] or {}).get("version"), (res[1]["stats"] or {}).get("vertexArrays")
+                            resident_gate("%s panels test.html?%s (%s, vao %s)" % (mode, extra, ver[0], ver[1]), res, bas)
         if args.fps > 0:
             for mode in args.modes.split(","):
                 row = {"mode": mode}

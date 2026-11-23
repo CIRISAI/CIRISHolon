@@ -14,14 +14,14 @@
 // test.html's scene (./test-scene.js: the same records, camera and panels), drawn by
 // ./draw-webgpu.js. Query, as test.html: ?map=1 the flat map (and its ?ppu, ?floor, ?floorc,
 // ?ring, ?alphas, ?fade), ?shadow=0, ?ortho=1, ?az, ?el, ?spin=1, ?dim, ?tex=0, ?page, ?pages,
-// ?overlay=0. Also ?msaa=0 draws at one sample (default four, as a WebGL canvas made with
+// ?overlay=0, ?resident=1. Also ?msaa=0 draws at one sample (default four, as a WebGL canvas made with
 // antialias: true). WebGL-only switches (?gl, ?novao, ?nohigh, ?mediump) do not apply.
 // The verdict panel says PASS only when the device reported no validation error, no
 // out-of-memory and no uncaptured error during any frame drawn so far; otherwise FAIL and
 // the first message (also in document.body.dataset.stats).
 import { createDrawerWebGPU } from './draw-webgpu.js';
 import { createTextProviderWebGPU } from './text.js';
-import { scene, createOverlay, viewProjection } from './test-scene.js';
+import { scene, createOverlay, viewProjection, makeResident, makeResidentImages } from './test-scene.js';
 
 const q = new URLSearchParams(location.search);
 const canvas = document.getElementById('c');
@@ -87,6 +87,11 @@ const all = (isMap ? city : batches).slice();
 const showOverlay = q.get('overlay') !== '0';
 if (showOverlay) for (const p of panels) all.push(...p.batches);
 const viewport = [0, 0, canvas.width, canvas.height];
+// ?resident=1: the world batches (and, with ?images=1, the image panel's batches) drawn from
+// resident buffers (see makeResident in ./test-scene.js); the picture must be the same.
+const isResident = q.get('resident') === '1';
+const tryDraw = (bs) => { try { drawer.draw(bs, new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]), { target: ctx.getCurrentTexture(), viewport }); return null; } catch (e) { return String(e && e.message || e); } };
+const residentLog = isResident ? makeResident(drawer, all, tryDraw) : null;
 const CLEAR = [0.063, 0.078, 0.11, 1];
 const last = { drawCalls: 0, instances: 0, bytesUploaded: 0 };
 let frames = 0, epochs = 0, shown = 0;   // shown: how many errors the verdict on screen knew of
@@ -117,6 +122,8 @@ async function frame() {
     if (text.epoch !== e0) { epochs++; overlay(lines, verdict); }
   }
 
+  if (isResident && showOverlay && q.get('images') === '1' && residentLog.imageHandle === undefined) makeResidentImages(drawer, all, panels[4], residentLog, ui.imageSlots);
+
   // Error scopes on the first frames (and every frame when not spinning); a spinning page
   // after that draws without waiting on the device, as test.html does.
   const scoped = frames < 3 || q.get('spin') !== '1';
@@ -142,6 +149,7 @@ async function frame() {
     const gpuMs = performance.now() - t0;
     document.body.dataset.stats = JSON.stringify({ ...s, backend: drawer.backend, sampleCount: drawer.sampleCount, format, adapter: { vendor: ainfo.vendor, architecture: ainfo.architecture, description: ainfo.description }, errors, dim: state.dim, tex: state.tex, text: { ...text.stats() }, relayouts: epochs, drawMs: +ms.toFixed(2), submitToDoneMs: +gpuMs.toFixed(2) });
     document.body.dataset.verdict = errors.length ? 'FAIL' : 'PASS';
+    if (residentLog) document.body.dataset.resident = JSON.stringify(residentLog);
     document.body.dataset.ready = '1';
   }
   if (q.get('spin') === '1' || frames < 2 || !settled) invalidate();

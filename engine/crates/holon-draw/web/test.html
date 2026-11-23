@@ -20,10 +20,12 @@
 // ?floor=H the streets' least half width in px (default 0.5), ?ring=1 the radial fade,
 // ?floorc=H the casings' own least half width, ?alphas=g,c,r,f the four class alphas (1 neutral,
 // 0 hides), ?fade=A the tile's alpha multiplier; ?page=N&pages=M shrinks the text atlas (to see eviction); ?mediump=1 writes mediump for the screen program's fragment precision; ?overlay=0 leaves
-// the panels out. Every word on the page is drawn by the engine: there is no HTML text.
+// the panels out; ?resident=1 draws the world batches (with ?images=1 the image panel too)
+// from resident buffers, after exercising resident()/update()/release() (makeResident in
+// ./test-scene.js; the outcome is in document.body.dataset.resident). Every word on the page is drawn by the engine: there is no HTML text.
 import { createDrawer } from './draw.js';
 import { createTextProvider } from './text.js';
-import { scene, createOverlay, viewProjection } from './test-scene.js';
+import { scene, createOverlay, viewProjection, makeResident, makeResidentImages } from './test-scene.js';
 
 const q = new URLSearchParams(location.search);
 const canvas = document.getElementById('c');
@@ -110,6 +112,11 @@ const all = (isMap ? city : batches).slice();
 const showOverlay = q.get('overlay') !== '0';
 if (showOverlay) for (const p of panels) all.push(...p.batches);
 const viewport = [0, 0, canvas.width, canvas.height];
+// ?resident=1: the world batches (and, with ?images=1, the image panel's batches) drawn from
+// resident buffers (see makeResident in ./test-scene.js); the picture must be the same.
+const isResident = q.get('resident') === '1';
+const tryDraw = (bs) => { try { drawer.draw(bs, new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]), { viewport }); return null; } catch (e) { return String(e && e.message || e); } };
+const residentLog = isResident ? makeResident(drawer, all, tryDraw) : null;
 const last = { drawCalls: 0, instances: 0, bytesUploaded: 0 };
 let frames = 0, epochs = 0;
 
@@ -139,6 +146,7 @@ function frame(tms) {
     if (text.epoch !== e0) { epochs++; overlay(lines); }
   }
 
+  if (isResident && showOverlay && q.get('images') === '1' && residentLog.imageHandle === undefined) makeResidentImages(drawer, all, panels[4], residentLog, ui.imageSlots);
   gl.viewport(0, 0, canvas.width, canvas.height);
   gl.clearColor(0.063, 0.078, 0.11, 1);
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -152,6 +160,7 @@ function frame(tms) {
   // Two frames, so the counts the first one measured are the ones the second one shows.
   if (frames >= 2) {
     document.body.dataset.stats = JSON.stringify({ ...s, glError: err, version: gl.getParameter(gl.VERSION), instancing: drawer.instancing, vertexArrays: drawer.vertexArrays, screenPrecision: drawer.screenPrecision, macroInVertex, fragHighp, dim: state.dim, tex: state.tex, text: { ...text.stats() }, relayouts: epochs, drawMs: +ms.toFixed(2) });
+    if (residentLog) document.body.dataset.resident = JSON.stringify(residentLog);
     document.body.dataset.ready = '1';
   }
   if (q.get('spin') === '1' || frames < 2) invalidate();

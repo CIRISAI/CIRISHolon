@@ -19,6 +19,43 @@ graphics backend of its own yet.
   uniforms and draw order are untouched.
 - `abi.rs`: the wasm boundary, plain `extern "C"`.
 
+## Resident buffers: what was built and checked, 2026-11-22
+
+Both browser backends can now draw a batch from records already on the GPU. A host calls
+`resident(bytes)` to get a handle, `update(handle, bytes)` to change the records and
+`release(handle)` to free them. A batch then names `{ handle, first, count }` in place of
+`bytes`, and nothing is uploaded for it. The contract is in `web/draw.js`'s header (RESIDENT
+BUFFERS, and the GL STATE section). It is the design on `wip/holon-draw-2026-11-16`, ported
+onto the current file. A resident world batch casts shadows like any other world batch, and
+`castShadow === false` still turns that off. A resident image batch must carry `slot`,
+because the slot byte of its first record is on the GPU and the drawer cannot read it. On
+WebGPU a handle is one GPUBuffer, and a resident batch is drawn with `setVertexBuffer(1,
+buf, first * 52)`.
+
+`tools/webgpu_parity.py` gained three modes, `resident`, `residentmap` and `residentimages`.
+Each draws the default, map or images scene with its world batches in two resident buffers.
+In `residentimages` the image panel goes into a third buffer. Each mode is gated against the
+same page drawn from `bytes`, on the same backend. At 960x600 the results were:
+
+- **Pixels.** Every resident screenshot is identical to its `bytes` screenshot (largest
+  difference 0). That holds for 10 page pairs: 5 scenes on WebGL 2 and on WebGPU, plus the
+  resident scene with panels on WebGL 1 with vertex arrays and on bare WebGL 1 without them.
+- **Shadows.** The resident scene differs from `?shadow=0` by up to 176 (4.67 % of pixels
+  over 8), so its batches do cast shadows.
+- **Uploads.** `bytesUploaded` is 0 for the resident scene, down from 14 664 bytes, and 0 for
+  the resident map, down from 35 828. With the panels on, it is exactly the panels' bytes:
+  3 328, or 3 432 with the images. WebGL and WebGPU agree with each other as in the other
+  modes, and draw calls and instances are equal.
+- **The page's own checks.** `update()` grows a buffer by reallocating and shrinks one in
+  place, keeping its allocation (`residentBytes` 14 820 = 14 664 + the 3 junk records it
+  grew by). A released handle number is handed out again. `draw()` throws on a range past
+  the shrunk end, on a released handle, and on a resident image batch with no `slot`.
+- **The `bytes` path is unchanged.** The 16 screenshots of the four earlier modes are
+  byte-identical to origin/main's.
+
+As everywhere above, this is SwiftShader in headless Chrome. No frame time was measured, and
+the twin's timing test was not run.
+
 ## Issue #6, Profile B's owed items: what was built and checked, 2026-11-22
 
 `INTERFACE.md` §13 has the contract. In short:
@@ -102,7 +139,7 @@ To repeat it (headless WebGPU on Linux needed `--use-vulkan=swiftshader`; the sc
 docstring says which flags and why):
 
 ```
-python3 crates/holon-draw/tools/webgpu_parity.py --fps 4
+python3 crates/holon-draw/tools/webgpu_parity.py --fps 4   # every mode, the resident ones included
 ```
 
 ## The twin's leaf builder: what was measured, 2026-11-15

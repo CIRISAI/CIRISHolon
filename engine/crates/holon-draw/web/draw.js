@@ -1,8 +1,9 @@
 // holon-draw, the browser backend: draws the core's packed instance batches with instancing.
 //
 // One ES module, no dependency. The Rust core (`../src/lib.rs`) packs a scene into batches
-// of fixed 52-byte records (`Instance::pack`); this file uploads each batch as it is and
-// draws it with one instanced call. Nothing is built per vertex or per record in script.
+// of fixed 52-byte records (`Instance::pack`); this file uploads each batch as it is (or
+// reads it from a buffer the host made resident, see RESIDENT BUFFERS) and draws it with one
+// instanced call. Nothing is built per vertex or per record in script.
 // `./draw-webgpu.js` is the WebGPU sibling: this header is the contract of both; that file's
 // header says only how it is hosted and what differs.
 //
@@ -78,6 +79,41 @@
 // bound are skipped. The viewport is `opts.viewport` ([x, y, w, h], as GL has it) or, without it,
 // gl.getParameter(gl.VIEWPORT), which allocates: a host that draws screen batches every
 // frame passes `opts.viewport`.
+//
+// RESIDENT BUFFERS. A batch's records either arrive with it (`bytes`: uploaded on every
+// draw(), into this file's own per-kind buffers) or already live on the GPU:
+//   const h = drawer.resident(bytes)   one buffer, uploaded once (GL: STATIC_DRAW); h is a
+//                                      positive integer. bytes.byteLength is a multiple of 52.
+//   drawer.update(h, bytes)            new contents: written in place when they fit the
+//                                      buffer's allocation (a shrink keeps the allocation),
+//                                      else the buffer is reallocated; the handle stays h
+//   drawer.release(h)                  frees it; h may be handed out again by resident()
+//   batch = { kind, handle: h, first, count, offset, params, screen?, coarse?, shade?,
+//             castShadow?, slot? }     records first .. first + count - 1 of that buffer,
+//                                      drawn with NO upload. `first` defaults to 0.
+// Everything else about a resident batch is a `bytes` batch's: one handle may hold many
+// batches of any kinds (the batch's `kind` says how its range is drawn), a world one is drawn
+// into the shadow map like any other (and not with `castShadow === false`), it may be mixed
+// with `bytes` batches in one draw(), in any order. A draw() whose batches are all resident
+// uploads no record: stats().bytesUploaded is 0 (tile settings are uniforms, counted in
+// paramUploads as before). draw() throws, before it changes any state, on an unknown or
+// released handle and on a range past the records the buffer holds now (after update()).
+// A RESIDENT IMAGE BATCH (kind 12, screen) must carry `slot` (0..255): the texture slot that
+// a `bytes` image batch reads from its first record's byte 51, which for a resident batch is
+// on the GPU, not in hand. draw() throws on a resident image batch without an integer `slot`
+// in 0..255. On a `bytes` image batch `slot` is not read (byte 51 names it, as before).
+// stats() gains residentBuffers and residentBytes: what is resident now (bytes allocated, so
+// a shrinking update() does not lower it), not reset by draw().
+// WHAT A RESIDENT BATCH COSTS IN GL CALLS, after its first draw:
+//   with vertex array objects (WebGL 2, or WebGL 1 with OES_vertex_array_object):
+//     bind its vertex array (skipped when it is the one bound), the offset uniform, the draw.
+//     Each distinct (handle, slot's mesh, first) gets its own vertex array, made on first use
+//     (about 25 calls, once; the shadow pass and the picture share it) and deleted with the
+//     handle; at most 256 per handle, beyond which that batch is drawn the bare way below.
+//   bare WebGL 1: bind the buffer, 6 attribute pointers, the offset uniform, the draw.
+//   a `bytes` batch, for comparison: the same plus its upload.
+// As before, add the slot's uniforms when the slot changes from the batch before, and the
+// tile settings when they differ from the last uploaded.
 //
 // TILE SETTINGS (`batch.params`, 32 numbers = 8 groups of 4; absent means neutral). Slots:
 //   [0..2]   DIM     rgb multiplier on every colour of the tile, applied last (after lighting)
@@ -194,7 +230,8 @@
 //   - CULL_FACE (left enabled), cullFace(BACK), frontFace(CCW);
 //   - ARRAY_BUFFER binding (left null);
 //   - the vertex array object binding, where one exists (WebGL 2 or OES_vertex_array_object):
-//     left null, i.e. the default object, whose own attribute state is NOT touched;
+//     left null, i.e. the default object, whose own attribute state is NOT touched
+//     (resident batches are drawn through this drawer's own vertex arrays: the same rule);
 //   - where no vertex array object exists (bare WebGL 1): attribute slots 0..7 (all eight) (pointers,
 //     enabled flags, divisors) and the ELEMENT_ARRAY_BUFFER binding. On return slots 0..7 are
 //     disabled, their divisors are 0, and ELEMENT_ARRAY_BUFFER is null;
@@ -215,6 +252,10 @@
 // UNPACK_FLIP_Y_WEBGL and UNPACK_PREMULTIPLY_ALPHA_WEBGL, and changes nothing else.
 // deleteImage(slot) frees one. The core never sees pixels: what a slot holds is the host's.
 // A draw() with nothing to draw changes no state.
+// resident() and update() bind ARRAY_BUFFER and put back the binding they found (read with
+// getParameter); they change nothing else. release() deletes the buffer and this drawer's
+// vertex arrays made for it, and binds nothing (a host never has either bound: it never sees
+// them). A draw() with resident batches leaves exactly the state listed above.
 //
 // Translucent records are blended in the order given and write depth; a host that needs
 // correct layering of translucent marks orders its batches back to front.
@@ -831,6 +872,7 @@ function discMesh(sides) {
 // The vertex stage's kind code: 1 quad, 2 patch, 3 line or arc, 4 disc, 5 box or prism, 0 the rest.
 const KIND_CODE = [0, 1, 3, 3, 4, 5, 5, 0, 0, 2, 0, 0, 0, 3, 3];
 const SLOT_COARSE_SPHERE = 11, SLOT_COARSE_ROD = 12, SLOT_FLAT_LINE = 13, SLOT_FLAT_ARC = 14, N_SLOT = 15;
+const SCREEN_ID = 15;   // the id of every screen slot, for a resident batch's vertex arrays (after the world slots' 0..14)
 
 function compile(gl, type, src) {
   const s = gl.createShader(type);
@@ -999,7 +1041,7 @@ export function createDrawer(gl, options) {
   // slot -> { mesh, kind (whose instance buffer), mode x, mode y, lit, spec, rim, cull, vao }
   const slots = new Array(N_SLOT).fill(null);
   const slot = (i, kind, m, mx, my, lit, spec, rim, cull) => {
-    slots[i] = { mesh: m, kind, mx, my, lit, spec, rim, cull, vao: null, kc: KIND_CODE[i] };
+    slots[i] = { mesh: m, kind, mx, my, lit, spec, rim, cull, vao: null, kc: KIND_CODE[i], id: i };
   };
   slot(KIND.QUAD, KIND.QUAD, mQuad, 2, 0, 0, 0, 0, false);
   slot(KIND.PATCH, KIND.PATCH, mQuad, 2, 0, 0, 0, 0, false);
@@ -1026,6 +1068,7 @@ export function createDrawer(gl, options) {
   sslots[KIND.ARC] = { kind: KIND.ARC, smode: 2 };
   if (text) sslots[KIND.RUN] = { kind: KIND.RUN, smode: 3 };
   sslots[KIND.IMAGE] = { kind: KIND.IMAGE, smode: 3, image: true };
+  for (const s of sslots) if (s) { s.id = SCREEN_ID; s.mesh = mQuad; }   // every screen slot draws the quad mesh
   // the host's textures, by slot (setImage)
   const images = new Map();
   const IMAGE_UNIT = 5;
@@ -1077,7 +1120,7 @@ export function createDrawer(gl, options) {
   const lvp = new Float32Array(16);
   let wAt = new Int32Array(64);   // per batch: where its records were uploaded this draw(), or -1
   const inv = new Float64Array(16);
-  const st = { drawCalls: 0, instances: 0, bytesUploaded: 0, paramUploads: 0, missingImages: 0 };
+  const st = { drawCalls: 0, instances: 0, bytesUploaded: 0, paramUploads: 0, missingImages: 0, residentBuffers: 0, residentBytes: 0 };
   let dead = false;
   let flat = false;   // lines as flat ribbons, for the draw() in progress
 
@@ -1140,7 +1183,7 @@ export function createDrawer(gl, options) {
     st.paramUploads++;
   }
 
-  // Upload one batch at its kind's cursor; its offset in that kind's buffer.
+  // Upload one `bytes` batch at its kind's cursor; its offset in that kind's buffer.
   function upload(b, k, len) {
     const at = cursor[k];
     cursor[k] = at + len;
@@ -1152,20 +1195,108 @@ export function createDrawer(gl, options) {
     st.bytesUploaded += len;
     return at;
   }
-  // Point the instanced attributes at records uploaded at `at` in kind k's buffer.
-  function point(k, at, count) {
-    gl.bindBuffer(gl.ARRAY_BUFFER, instBuf[k]);
+  // Point the instanced attributes at records `at` bytes into `buf`.
+  function pointers(buf, at) {
+    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
     gl.vertexAttribPointer(I_POS, 3, gl.FLOAT, false, INSTANCE_BYTES, at);
     gl.vertexAttribPointer(I_SIZE, 3, gl.FLOAT, false, INSTANCE_BYTES, at + 12);
     gl.vertexAttribPointer(I_AUX, 3, gl.FLOAT, false, INSTANCE_BYTES, at + 24);
     gl.vertexAttribPointer(I_ANGLE, 1, gl.FLOAT, false, INSTANCE_BYTES, at + 36);
     gl.vertexAttribPointer(I_COLOR, 4, gl.UNSIGNED_BYTE, true, INSTANCE_BYTES, at + 40);
     gl.vertexAttribPointer(I_META, 4, gl.UNSIGNED_BYTE, false, INSTANCE_BYTES, at + 48);
+  }
+
+  // ---- resident buffers (RESIDENT BUFFERS at the top) ----
+  // handles[h]: { buf, cap (bytes allocated), size (bytes of records now), vaos: Map(first * 32 + slot id -> vertex array) }
+  const handles = [null];
+  const freeHandles = [];
+  const VAO_CAP = 256;
+  function handleOf(h, what) {
+    const r = typeof h === 'number' ? handles[h] : undefined;
+    if (!r) throw new Error('holon-draw: ' + what + ': no resident buffer with handle ' + h);
+    return r;
+  }
+  function recordBytes(bytes, what) {
+    if (!bytes || typeof bytes.byteLength !== 'number' || bytes.byteLength % INSTANCE_BYTES !== 0) {
+      throw new Error('holon-draw: ' + what + ' takes whole 52-byte records (an ArrayBufferView whose byteLength is a multiple of 52)');
+    }
+  }
+  /** Upload records once; returns their handle (see RESIDENT BUFFERS at the top). */
+  function resident(bytes) {
+    if (dead) throw new Error('holon-draw: resident() after destroy()');
+    recordBytes(bytes, 'resident()');
+    const prev = gl.getParameter(gl.ARRAY_BUFFER_BINDING);
+    const r = { buf: gl.createBuffer(), cap: bytes.byteLength, size: bytes.byteLength, vaos: hasVAO ? new Map() : null };
+    gl.bindBuffer(gl.ARRAY_BUFFER, r.buf);
+    gl.bufferData(gl.ARRAY_BUFFER, bytes, gl.STATIC_DRAW);
+    gl.bindBuffer(gl.ARRAY_BUFFER, prev);
+    const h = freeHandles.length ? freeHandles.pop() : handles.length;
+    handles[h] = r;
+    st.residentBuffers++;
+    st.residentBytes += r.cap;
+    return h;
+  }
+  /** New records for a handle: in place when they fit, else reallocated; the handle stays. */
+  function update(h, bytes) {
+    if (dead) throw new Error('holon-draw: update() after destroy()');
+    const r = handleOf(h, 'update()');
+    recordBytes(bytes, 'update()');
+    const prev = gl.getParameter(gl.ARRAY_BUFFER_BINDING);
+    gl.bindBuffer(gl.ARRAY_BUFFER, r.buf);
+    if (bytes.byteLength <= r.cap) {
+      if (bytes.byteLength > 0) gl.bufferSubData(gl.ARRAY_BUFFER, 0, bytes);
+    } else {
+      // The same buffer object, so the vertex arrays that point into it stay good.
+      gl.bufferData(gl.ARRAY_BUFFER, bytes, gl.STATIC_DRAW);
+      st.residentBytes += bytes.byteLength - r.cap;
+      r.cap = bytes.byteLength;
+    }
+    r.size = bytes.byteLength;
+    gl.bindBuffer(gl.ARRAY_BUFFER, prev);
+  }
+  /** Free a handle's buffer (and its vertex arrays); the number may be handed out again. */
+  function release(h) {
+    const r = handleOf(h, 'release()');
+    if (r.vaos) { for (const v of r.vaos.values()) deleteVAO(v); r.vaos.clear(); }
+    gl.deleteBuffer(r.buf);
+    handles[h] = null;
+    freeHandles.push(h);
+    st.residentBuffers--;
+    st.residentBytes -= r.cap;
+  }
+
+  // Make batch b's records the instanced attributes' source for a draw with slot s: `at` is
+  // where a `bytes` batch was uploaded this draw() (pointed at through `vao`, the slot's own
+  // vertex array), or -2 for a resident batch (its own vertex array, or the bare pointers).
+  // `bound` is the vertex array this draw() last bound (null at its start).
+  let bound = null;
+  function attach(b, s, at, vao, count) {
     st.drawCalls++;
     st.instances += count;
-  }
-  function feed(b, k, len) {
-    point(k, upload(b, k, len), b.count | 0);
+    if (at >= 0) {
+      if (hasVAO && bound !== vao) { bindVAO(vao); bound = vao; }
+      pointers(instBuf[s.kind], at);
+      return;
+    }
+    const r = handles[b.handle], first = b.first | 0;
+    if (!hasVAO) { pointers(r.buf, first * INSTANCE_BYTES); return; }
+    const key = first * 32 + s.id;
+    let v = r.vaos.get(key);
+    if (v !== undefined) {
+      if (bound !== v) { bindVAO(v); bound = v; }
+      return;
+    }
+    if (r.vaos.size < VAO_CAP) {
+      v = createVAO();
+      r.vaos.set(key, v);
+      bindVAO(v);
+      bound = v;
+      meshAttribs(s.mesh);
+    } else if (bound !== vao) {
+      bindVAO(vao);
+      bound = vao;
+    }
+    pointers(r.buf, first * INSTANCE_BYTES);
   }
 
   // The light's orthographic view-projection over the sphere (c, r), into lvp.
@@ -1213,7 +1344,9 @@ export function createDrawer(gl, options) {
   }
 
   /**
-   * @param {Array<{kind:number, offset?:ArrayLike<number>, count:number, bytes:Uint8Array, screen?:boolean, coarse?:boolean, params?:ArrayLike<number>, shade?:ArrayLike<number>}>} batches
+   * @param {Array<{kind:number, offset?:ArrayLike<number>, count:number, bytes?:Uint8Array, handle?:number, first?:number, slot?:number, screen?:boolean, coarse?:boolean, params?:ArrayLike<number>, shade?:ArrayLike<number>}>} batches
+   *   each batch has `bytes` (uploaded now) or `handle` (a resident buffer, see RESIDENT
+   *   BUFFERS; `first` its first record, and `slot` on a resident image batch).
    *   `shade`, optional on a world batch of a lit kind: [specular, rim] for that batch in place
    *   of the kind's own (box and prism 0.05, 0; sphere 0.3, 0.18; rod 0.18, 0.08).
    * @param {Float32Array} vp column-major, 16 (world batches only)
@@ -1235,10 +1368,20 @@ export function createDrawer(gl, options) {
       if (c <= 0) continue;
       const s = slotOf(b);
       if (!s) continue;
-      if (b.bytes.byteLength < c * INSTANCE_BYTES) {
-        throw new Error('holon-draw: batch ' + i + ' (kind ' + b.kind + ') has ' + b.bytes.byteLength + ' bytes for ' + c + ' records of ' + INSTANCE_BYTES);
+      if (b.handle !== undefined) {
+        const r = handleOf(b.handle, 'batch ' + i), first = b.first === undefined ? 0 : b.first;
+        if (first !== (first | 0) || first < 0 || (first + c) * INSTANCE_BYTES > r.size) {
+          throw new Error('holon-draw: batch ' + i + ' (kind ' + b.kind + ') asks for records ' + first + '..' + (first + c - 1) + ' of a resident buffer that holds ' + r.size / INSTANCE_BYTES);
+        }
+        if (s.image && !(b.slot === (b.slot | 0) && b.slot >= 0 && b.slot <= 255)) {
+          throw new Error('holon-draw: batch ' + i + ' is a resident image batch: it needs `slot` (0..255), since its first record is not in hand');
+        }
+      } else {
+        if (b.bytes.byteLength < c * INSTANCE_BYTES) {
+          throw new Error('holon-draw: batch ' + i + ' (kind ' + b.kind + ') has ' + b.bytes.byteLength + ' bytes for ' + c + ' records of ' + INSTANCE_BYTES);
+        }
+        need[s.kind] += c * INSTANCE_BYTES;
       }
-      need[s.kind] += c * INSTANCE_BYTES;
       if (b.screen === true) nScreen++; else nWorld++;
     }
     if (nWorld + nScreen === 0) return;
@@ -1255,6 +1398,7 @@ export function createDrawer(gl, options) {
     }
 
     // Frame state.
+    bound = null;
     gl.enable(gl.BLEND);
     gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
     gl.enable(gl.DEPTH_TEST);
@@ -1265,13 +1409,14 @@ export function createDrawer(gl, options) {
     gl.enable(gl.CULL_FACE);
     let culling = true;
 
-    // Pass 2: the world batches, in the order given (uploaded once, read by the shadow pass too).
+    // Pass 2: the world batches, in the order given (uploaded once, read by the shadow pass
+    // too). wAt[i]: where batch i was uploaded; -2 resident (nothing to upload); -1 not drawn.
     if (nWorld > 0) {
       if (wAt.length < nb) wAt = new Int32Array(Math.max(nb, 2 * wAt.length));
       for (let i = 0; i < nb; i++) {
         const b = batches[i], c = b.count | 0;
         const s = c > 0 && b.screen !== true ? slotOf(b) : null;
-        wAt[i] = s ? upload(b, s.kind, c * INSTANCE_BYTES) : -1;
+        wAt[i] = !s ? -1 : b.handle !== undefined ? -2 : upload(b, s.kind, c * INSTANCE_BYTES);
       }
       let lx = 0.35, ly = -0.5, lz = 0.8;
       const L = opts && opts.light;
@@ -1313,14 +1458,14 @@ export function createDrawer(gl, options) {
         gl.cullFace(gl.FRONT);
         let zcur = null;
         for (let i = 0; i < nb; i++) {
-          if (wAt[i] < 0) continue;
+          if (wAt[i] === -1) continue;
           const b = batches[i];
           if (b.castShadow === false) continue;
           const s = slotOf(b);
           if (!(s.lit || ((s.kind === KIND.LINE || s.kind === KIND.ARC) && !flat))) continue;
           if (s !== zcur) {
             zcur = s;
-            if (hasVAO) bindVAO(s.vao); else meshAttribs(s.mesh);
+            if (!hasVAO) meshAttribs(s.mesh);
             gl.uniform2f(Z.uMode, s.mx, s.my);
             gl.uniform3f(Z.uPix, 0.5 * size, ppu, s.kc);
             if (s.cull !== culling) {
@@ -1328,7 +1473,7 @@ export function createDrawer(gl, options) {
               if (culling) gl.enable(gl.CULL_FACE); else gl.disable(gl.CULL_FACE);
             }
           }
-          point(s.kind, wAt[i], b.count | 0);
+          attach(b, s, wAt[i], s.vao, b.count | 0);
           settings(Z.uParams, Z.last, b.params);
           const o = b.offset;
           if (o) gl.uniform3f(Z.uOffset, o[0], o[1], o[2]); else gl.uniform3f(Z.uOffset, 0, 0, 0);
@@ -1366,7 +1511,7 @@ export function createDrawer(gl, options) {
 
       let cur = null, curSpec = -1, curRim = -1;
       for (let i = 0; i < nb; i++) {
-        if (wAt[i] < 0) continue;
+        if (wAt[i] === -1) continue;
         const b = batches[i], c = b.count | 0;
         const s = slotOf(b);
         const sh = b.shade;
@@ -1377,7 +1522,7 @@ export function createDrawer(gl, options) {
         }
         if (s !== cur) {
           cur = s;
-          if (hasVAO) bindVAO(s.vao); else meshAttribs(s.mesh);
+          if (!hasVAO) meshAttribs(s.mesh);
           gl.uniform2f(W.uMode, s.mx, s.my);
           gl.uniform3f(W.uPix, halfH, ppu, s.kc);
           if (s.cull !== culling) {
@@ -1385,7 +1530,7 @@ export function createDrawer(gl, options) {
             if (culling) gl.enable(gl.CULL_FACE); else gl.disable(gl.CULL_FACE);
           }
         }
-        point(s.kind, wAt[i], c);
+        attach(b, s, wAt[i], s.vao, c);
         settings(W.uParams, W.last, b.params);
         const o = b.offset;
         if (o) gl.uniform3f(W.uOffset, o[0], o[1], o[2]); else gl.uniform3f(W.uOffset, 0, 0, 0);
@@ -1400,11 +1545,7 @@ export function createDrawer(gl, options) {
       if (culling) { gl.disable(gl.CULL_FACE); culling = false; }
       const V = (opts && opts.viewport) || gl.getParameter(gl.VIEWPORT);
       gl.uniform2f(uView, V[2], V[3]);
-      if (hasVAO) {
-        bindVAO(screenVAO);
-      } else {
-        meshAttribs(mQuad);
-      }
+      if (!hasVAO) meshAttribs(mQuad);
       let smode = -1, fmode = -1, textured = false, imageUnitSet = false;
       for (let i = 0; i < nb; i++) {
         const b = batches[i], c = b.count | 0;
@@ -1412,7 +1553,7 @@ export function createDrawer(gl, options) {
         const s = slotOf(b);
         if (!s) continue;
         if (s.image) {
-          const img = images.get(b.bytes[51]);
+          const img = images.get(b.handle !== undefined ? b.slot : b.bytes[51]);
           if (!img) { st.missingImages++; continue; }
           if (!imageUnitSet) { imageUnitSet = true; gl.uniform1i(uImg, IMAGE_UNIT); }
           gl.activeTexture(gl.TEXTURE0 + IMAGE_UNIT);
@@ -1444,7 +1585,7 @@ export function createDrawer(gl, options) {
           }
           gl.activeTexture(gl.TEXTURE0);
         }
-        feed(b, s.kind, c * INSTANCE_BYTES);
+        attach(b, s, b.handle !== undefined ? -2 : upload(b, s.kind, c * INSTANCE_BYTES), screenVAO, c);
         settings(uSParams, lastS, b.params);
         const o = b.offset;
         if (o) gl.uniform3f(uSOffset, o[0], o[1], 0); else gl.uniform3f(uSOffset, 0, 0, 0);
@@ -1467,7 +1608,12 @@ export function createDrawer(gl, options) {
     if (!culling) gl.enable(gl.CULL_FACE);
   }
 
-  /** The counts of the last draw(). The SAME object every call (no allocation); copy it to keep it. */
+  /**
+   * drawCalls, instances, bytesUploaded, paramUploads and missingImages are the last draw()'s
+   * (bytesUploaded counts `bytes` batches only: 0 for a draw() of resident batches);
+   * residentBuffers and residentBytes are what is resident now. The SAME object every call
+   * (no allocation); copy it to keep it.
+   */
   function stats() {
     return st;
   }
@@ -1509,6 +1655,7 @@ export function createDrawer(gl, options) {
 
   function destroy() {
     if (dead) return;
+    for (let h = 1; h < handles.length; h++) if (handles[h]) release(h);
     dead = true;
     for (const img of images.values()) gl.deleteTexture(img.tex);
     images.clear();
@@ -1532,5 +1679,5 @@ export function createDrawer(gl, options) {
     if (zTex) { gl.deleteTexture(zTex); gl.deleteRenderbuffer(zDepth); gl.deleteFramebuffer(zFbo); }
   }
 
-  return { draw, stats, destroy, setImage, deleteImage, instancing: isGL2 ? 'webgl2' : 'ANGLE_instanced_arrays', vertexArrays: hasVAO, screenPrecision: PF };
+  return { draw, stats, destroy, setImage, deleteImage, resident, update, release, instancing: isGL2 ? 'webgl2' : 'ANGLE_instanced_arrays', vertexArrays: hasVAO, screenPrecision: PF };
 }

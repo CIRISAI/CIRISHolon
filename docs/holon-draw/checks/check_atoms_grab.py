@@ -17,6 +17,34 @@ PASS CONDITIONS (written 2026-11-23, before this file's first run; never edited 
   C8  the spring is in the picture: in AFTER, #w-ext or #e-spring reads other than 0.000000
       (the grab took), the same as BEFORE (part of C5).
   Whether a molecule row (a bond line) is drawn is REPORTED (#bond-count), not a condition.
+
+RUN 1 (2026-11-23): C1..C7 PASS, C8 FAILED (w-ext and e-spring both 0.000000, in BEFORE
+  and AFTER alike). The cause was this file, not either page: the atom finder took the
+  stage's green "live" dot (an HTML overlay, pointer-events none) for the leftmost atom,
+  so the press landed on empty stage and grabbed nothing.
+CORRECTION (2026-11-23, after run 1): the atom finder hides the stage's HTML overlays
+  (.stage-topline, .aim-copy) while it takes its screenshot, so only canvas pixels are
+  searched. The conditions are not edited; run 2 is judged by them as written.
+RUN 2 (2026-11-23): "1 pass condition(s) FAILED"; which one was lost (the run's PASS/FAIL
+  lines were filtered out of the terminal by mistake, and the report does not keep BEFORE's
+  state). RUN 3, the same code: C5 FAILED, all else PASS. The two states differed in the
+  4th significant figure (e-kin 1.180241 before, 1.180503 after; w-ext 1.066171, 1.066476).
+  The cause is again this file: Playwright's page.mouse goes through the browser's input
+  pipeline, which delivers pointer moves aligned to the browser's own frames, so how many
+  moves landed between two pumps was not fixed and the anchor's path differed. Run 2 most
+  likely failed the same way (not verified).
+CORRECTION 2 (2026-11-23, after run 3): the press, the moves and nothing else are dispatched
+  as PointerEvents on #stage from the page's own thread (synchronous, so each lands before
+  the next pump). The page's listeners are the same ones a hand reaches. Conditions not
+  edited; run 4 is judged by them as written.
+RUN 4 (2026-11-23): C5 FAILED again with the SAME numbers as run 3, so the divergence was
+  deterministic and CORRECTION 2's diagnosis was wrong. The real cause, again this file:
+  each page's atom finder took the centroid of ITS OWN rendering, and the two renderings
+  differ by design (a 16-band disc stack against a continuous gradient), so the centroids,
+  and with them the press and the whole drag, differed by a fraction of a pixel.
+CORRECTION 3 (2026-11-23, after run 4): the atoms are found on the BEFORE page only, and the
+  AFTER page is pressed and dragged at exactly those coordinates. Conditions not edited;
+  run 5 is judged by them as written.
 """
 import json, os, sys
 sys.dont_write_bytecode = True
@@ -34,7 +62,9 @@ def atoms_on_stage(page):
     import numpy as np
     from PIL import Image
     import io
+    page.evaluate("document.querySelectorAll('.stage-topline, .aim-copy').forEach(e => e.style.visibility = 'hidden')")
     img = np.asarray(Image.open(io.BytesIO(page.locator("#stage").screenshot())).convert("RGB")).astype(int)
+    page.evaluate("document.querySelectorAll('.stage-topline, .aim-copy').forEach(e => e.style.visibility = '')")
     r, g, b = img[..., 0], img[..., 1], img[..., 2]
     mask = (g - r > 40) & (b - r > 25)          # the teal of hydrogen, not the paper or the wall
     from scipy import ndimage
@@ -44,9 +74,16 @@ def atoms_on_stage(page):
     return sorted([(c[1], c[0]) for c, z in zip(cs, sizes) if z > 30])
 
 
+_found = {}
+
+
 def extra(page):
-    atoms = atoms_on_stage(page)
+    # CORRECTION 3: found on BEFORE (which runs first), reused on AFTER
+    if page.__label == "before":
+        _found["atoms"] = atoms_on_stage(page)
+    atoms = _found["atoms"]
     page.__found = atoms
+    print(page.__label, "atoms found on the stage (px):", [(round(a), round(b)) for a, b in atoms])
     box = page.locator("#stage").bounding_box()
     (x0, y0), (x1, y1) = atoms[0], atoms[-1]
     s = box["width"] / 40.0                      # px per bohr: the world is 40 bohr wide
@@ -54,10 +91,11 @@ def extra(page):
     dx, dy = x1 - x0, y1 - y0
     d = (dx * dx + dy * dy) ** 0.5
     tx, ty = box["x"] + x1 - dx / d * 3 * s, box["y"] + y1 - dy / d * 3 * s
-    page.mouse.move(ax, ay)
-    page.mouse.down()
+    ev = """([t, x, y]) => document.getElementById('stage').dispatchEvent(new PointerEvent(t,
+        { clientX: x, clientY: y, pointerId: 1, pointerType: 'mouse', isPrimary: true, buttons: 1, bubbles: true }))"""
+    page.evaluate(ev, ["pointerdown", ax, ay])
     for k in range(1, 31):
-        page.mouse.move(ax + (tx - ax) * k / 30, ay + (ty - ay) * k / 30)
+        page.evaluate(ev, ["pointermove", ax + (tx - ax) * k / 30, ay + (ty - ay) * k / 30])
         page.evaluate("window.__pump(3)")
     page.evaluate("window.__pump(90)")
     page.locator("#curve").screenshot(path=os.path.join(out, page.__label + "-curve.png"))

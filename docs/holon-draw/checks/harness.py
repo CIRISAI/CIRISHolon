@@ -37,6 +37,7 @@ INIT = r"""
   performance.now = () => (T += cfg.clockStep);
   // the hand-pumped frame
   let queue = [];
+  window.__log = [];
   window.requestAnimationFrame = (cb) => { queue.push(cb); return queue.length; };
   window.cancelAnimationFrame = () => {};
   window.__pump = (n) => {
@@ -46,6 +47,10 @@ INIT = r"""
       const now = T;
       window.__frameDraws = {};
       for (const cb of q) cb(now);
+      // every pumped frame is logged: the draws per canvas, and what the page says it drew
+      let pg = null;
+      if (cfg.perFrame) { try { pg = (0, eval)(cfg.perFrame); } catch (e) { pg = { error: String(e) }; } }
+      window.__log.push({ gl: Object.assign({}, window.__frameDraws), page: pg });
     }
     return queue.length;
   };
@@ -144,6 +149,7 @@ def run_page(url, cfg, frames, ready_js, state_js, hide_css, shot_selector, shot
         errors, consoles = [], []
         page.on("pageerror", lambda e: errors.append(str(e)))
         page.on("console", lambda m: consoles.append((m.type, m.text + " @ " + str((m.location or {}).get("url", "")))))
+        cfg = dict(cfg, perFrame=per_frame_js)
         page.add_init_script("window.__CHECK_CFG__ = " + json.dumps(cfg) + ";\n" + INIT)
         page.goto(url, wait_until="load")
         t0 = time.time()
@@ -154,11 +160,7 @@ def run_page(url, cfg, frames, ready_js, state_js, hide_css, shot_selector, shot
             if page.evaluate("window.__queued()") and cfg.get("pumpWhileBooting"):
                 page.evaluate("window.__pump(1)")
             time.sleep(0.05)
-        per_frame = []
-        for _ in range(frames):
-            page.evaluate("window.__pump(1)")
-            per_frame.append({"gl": page.evaluate("Object.assign({}, window.__frameDraws)"),
-                              "page": page.evaluate(per_frame_js) if per_frame_js else None})
+        page.evaluate(f"window.__pump({int(frames)})")
         if extra:
             extra(page)
         state = page.evaluate(state_js)
@@ -178,7 +180,7 @@ def run_page(url, cfg, frames, ready_js, state_js, hide_css, shot_selector, shot
             "contexts": page.evaluate("window.__contexts"),
             "draws_total": page.evaluate("window.__draws"),
             "draw2d_total": page.evaluate("window.__draw2d"),
-            "per_frame": per_frame,
+            "per_frame": page.evaluate("window.__log"),
             "state": state,
             "gpu": gpu,
         }

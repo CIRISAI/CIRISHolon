@@ -65,7 +65,9 @@ res = harness.compare("play", check, repo, commit, out, frames=FRAMES)
 A, B = res["after"], res["before"]
 wall = subprocess.run(["node", os.path.join(repo, "docs", "play", "wall.mjs")], capture_output=True, text=True)
 stage_ctx = [c for c in A["contexts"] if c["canvas"].startswith("stage")]
-frames_ok = [f for f in A["per_frame"] if f["gl"].get("stage", 0) > 0 and f["page"] and f["gl"].get("stage", 0) == f["page"]["drawCalls"]]
+# the harness logs every pumped frame (since check_atoms.py), the one pumped after the overlays
+# are hidden too; C4 is about the 60 pumped frames, which are the first 60 logged
+frames_ok = [f for f in A["per_frame"][:FRAMES] if f["gl"].get("stage", 0) > 0 and f["page"] and f["gl"].get("stage", 0) == f["page"]["drawCalls"]]
 conds = [
     ("C1 no page or console error (after)", not A["errors"] and not A["console_errors"], A["errors"] + A["console_errors"]),
     ("C1a (amendment A1, after run 1) no error but the root /favicon.ico 404, which before logs too",

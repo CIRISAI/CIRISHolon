@@ -10,10 +10,16 @@
 // and the wasm should not have to carry one. The knots are pushed through the same
 // `holon_table_*` ABI the native loader uses.
 
+// THE STAGE AND THE CURVE ARE DRAWN BY HOLON-DRAW (the repo's own engine, ../holon-draw/,
+// 2026-11-23), not by Canvas 2D: each is a WebGL canvas whose every mark is a holon-draw
+// screen record. Only the drawing moved; what is drawn, and where, is what it was.
+import { createStage } from "../holon-draw/screen.js";
+
 const stage = document.querySelector("#stage");
-const ctx = stage.getContext("2d");
+const ctx = createStage(stage, { dpr: Math.min(window.devicePixelRatio || 1, 2) });
 const curveCanvas = document.querySelector("#curve");
-const curveCtx = curveCanvas.getContext("2d");
+const curveCtx = createStage(curveCanvas, { dpr: Math.min(window.devicePixelRatio || 1, 2) });
+window.__atomsStages = { stage: ctx, curve: curveCtx };   // a handle for the page's check
 
 const ui = Object.fromEntries(
   [
@@ -846,7 +852,8 @@ function fitCanvas(canvas, context, aspect) {
     canvas.width = width;
     canvas.height = height;
   }
-  context.setTransform(ratio, 0, 0, ratio, 0, 0);
+  context.setDpr(ratio);
+  context.begin();
   return { width: rect.width, height: height / ratio };
 }
 
@@ -854,16 +861,11 @@ function drawScene() {
   const w = state.w;
   const view = fitCanvas(stage, ctx, state.world.width / state.world.height);
   const s = view.width / state.world.width;
-  ctx.clearRect(0, 0, view.width, view.height);
 
   // The wall, where the physics actually puts it.
   if (!controls.openBoundary.checked) {
     const inset = w.holon_wall_inset() * s;
-    ctx.strokeStyle = "rgba(27, 42, 36, 0.20)";
-    ctx.setLineDash([5, 5]);
-    ctx.lineWidth = 1;
-    ctx.strokeRect(inset, inset, view.width - 2 * inset, view.height - 2 * inset);
-    ctx.setLineDash([]);
+    ctx.strokeRect(inset, inset, view.width - 2 * inset, view.height - 2 * inset, 1, "rgba(27, 42, 36, 0.20)", [5, 5]);
   }
 
   // Molecules first, so the atoms sit on top of them.
@@ -871,31 +873,23 @@ function drawScene() {
   // Drawn from the composite-holon ROWS, not from the pair predicate. A molecule is an
   // entry in a table with its own ledger and a formation time, and the picture shows that
   // table -- so what is on screen and what the census counts cannot disagree.
+  // (Its ends were round in Canvas 2D; here they are flat. Each end is an atom's centre, and
+  // the opaque atom drawn over it hides the end wherever its drawn radius is at least the
+  // bond's half width, at most 3.5 px. Where an atom is drawn smaller, the end shows square.)
   const rows = w.holon_row_count();
   for (let k = 0; k < rows; k += 1) {
     const i = w.holon_row_member(k, 0);
     const j = w.holon_row_member(k, 1);
     const depth = Math.min(1, -w.holon_row_e_bond(k) / Math.max(1e-12, w.holon_table_d_e()));
-    ctx.strokeStyle = `rgba(35, 105, 87, ${0.35 + 0.55 * depth})`;
-    ctx.lineWidth = 2 + 5 * depth;
-    ctx.lineCap = "round";
-    ctx.beginPath();
-    ctx.moveTo(w.holon_atom_x(i) * s, w.holon_atom_y(i) * s);
-    ctx.lineTo(w.holon_atom_x(j) * s, w.holon_atom_y(j) * s);
-    ctx.stroke();
+    ctx.line(w.holon_atom_x(i) * s, w.holon_atom_y(i) * s, w.holon_atom_x(j) * s, w.holon_atom_y(j) * s,
+      2 + 5 * depth, `rgba(35, 105, 87, ${0.35 + 0.55 * depth})`);
   }
 
   // The user's spring, drawn from the atom to the pointer anchor.
   const grabbed = w.holon_grabbed();
   if (grabbed >= 0) {
-    ctx.strokeStyle = "rgba(187, 76, 46, 0.65)";
-    ctx.lineWidth = 1.5;
-    ctx.setLineDash([3, 4]);
-    ctx.beginPath();
-    ctx.moveTo(w.holon_atom_x(grabbed) * s, w.holon_atom_y(grabbed) * s);
-    ctx.lineTo(w.holon_anchor_x() * s, w.holon_anchor_y() * s);
-    ctx.stroke();
-    ctx.setLineDash([]);
+    ctx.path([[w.holon_atom_x(grabbed) * s, w.holon_atom_y(grabbed) * s], [w.holon_anchor_x() * s, w.holon_anchor_y() * s]],
+      1.5, "rgba(187, 76, 46, 0.65)", [3, 4]);
   }
 
   const n = w.holon_atom_count();
@@ -907,15 +901,12 @@ function drawScene() {
     // agreeing about where an atom's edge is.
     const style = atomStyle(w, i);
     const r = state.radius * style.scale * s;
-    const gradient = ctx.createRadialGradient(x - r * 0.3, y - r * 0.35, r * 0.15, x, y, r);
     const held = i === grabbed;
-    gradient.addColorStop(0, held ? "#e8a08a" : lighten(style.colour, 0.42));
-    gradient.addColorStop(1, held ? "#bb4c2e" : style.colour);
-    ctx.fillStyle = gradient;
-    ctx.beginPath();
-    ctx.arc(x, y, r, 0, Math.PI * 2);
-    ctx.fill();
+    // the shaded ball: Canvas's two-circle radial gradient, as 16 bands of stacked discs
+    ctx.radial(x - r * 0.3, y - r * 0.35, r * 0.15, x, y, r,
+      [[0, held ? "#e8a08a" : lighten(style.colour, 0.42)], [1, held ? "#bb4c2e" : style.colour]], 16);
   }
+  ctx.end(stage.width, stage.height);
 }
 
 // The curve inset. Drawn by asking the wasm for U(R) point by point, so it is literally
@@ -924,33 +915,23 @@ function drawCurve() {
   const w = state.w;
   const view = fitCanvas(curveCanvas, curveCtx, null);
   const W = view.width, H = view.height;
-  curveCtx.clearRect(0, 0, W, H);
   const rMin = 0.6, rMax = 9.0;
   const de = w.holon_table_d_e();
   const uMin = -1.15 * de, uMax = 0.45 * de;
   const px = (r) => ((r - rMin) / (rMax - rMin)) * W;
   const py = (u) => H - ((u - uMin) / (uMax - uMin)) * H;
+  const done = () => curveCtx.end(curveCanvas.width, curveCanvas.height);
 
   // Zero line: the dissociation asymptote, which is the bond criterion's threshold.
-  curveCtx.strokeStyle = "rgba(27, 42, 36, 0.25)";
-  curveCtx.lineWidth = 1;
-  curveCtx.setLineDash([4, 4]);
-  curveCtx.beginPath();
-  curveCtx.moveTo(0, py(0));
-  curveCtx.lineTo(W, py(0));
-  curveCtx.stroke();
-  curveCtx.setLineDash([]);
+  curveCtx.path([[0, py(0)], [W, py(0)]], 1, "rgba(27, 42, 36, 0.25)", [4, 4]);
 
-  curveCtx.strokeStyle = "#236957";
-  curveCtx.lineWidth = 1.8;
-  curveCtx.beginPath();
+  const pts = [];
   for (let i = 0; i <= 240; i += 1) {
     const r = rMin + (rMax - rMin) * (i / 240);
     const u = Math.max(uMin, Math.min(uMax, w.holon_curve_u(r)));
-    if (i === 0) curveCtx.moveTo(px(r), py(u));
-    else curveCtx.lineTo(px(r), py(u));
+    pts.push([px(r), py(u)]);
   }
-  curveCtx.stroke();
+  curveCtx.path(pts, 1.8, "#236957", null, true);
 
   // The tightest pair, and why it reads the way it does.
   const pairs = w.holon_pair_count();
@@ -959,36 +940,25 @@ function drawCurve() {
     const r = w.holon_pair_r(k);
     if (r < bestR) { bestR = r; best = k; }
   }
-  if (best < 0) return;
+  if (best < 0) { done(); return; }
   const eRel = w.holon_pair_e_rel(best);
   const rOuter = w.holon_pair_r_outer(best);
   const bonded = w.holon_pair_bonded(best) === 1;
 
   // E_rel as a level: where it sits relative to the dashed asymptote IS the criterion.
   if (eRel > uMin && eRel < uMax) {
-    curveCtx.strokeStyle = bonded ? "rgba(35, 105, 87, 0.75)" : "rgba(187, 76, 46, 0.75)";
-    curveCtx.lineWidth = 1.2;
-    curveCtx.beginPath();
-    curveCtx.moveTo(0, py(eRel));
-    curveCtx.lineTo(W, py(eRel));
-    curveCtx.stroke();
+    curveCtx.line(0, py(eRel), W, py(eRel), 1.2, bonded ? "rgba(35, 105, 87, 0.75)" : "rgba(187, 76, 46, 0.75)");
   }
   if (Number.isFinite(rOuter) && rOuter > rMin && rOuter < rMax) {
-    curveCtx.strokeStyle = "rgba(212, 154, 54, 0.9)";
-    curveCtx.setLineDash([2, 3]);
-    curveCtx.beginPath();
-    curveCtx.moveTo(px(rOuter), 0);
-    curveCtx.lineTo(px(rOuter), H);
-    curveCtx.stroke();
-    curveCtx.setLineDash([]);
+    // Canvas kept the last line width set: 1.2 after the level above, else the curve's 1.8
+    const width = eRel > uMin && eRel < uMax ? 1.2 : 1.8;
+    curveCtx.path([[px(rOuter), 0], [px(rOuter), H]], width, "rgba(212, 154, 54, 0.9)", [2, 3]);
   }
   if (bestR > rMin && bestR < rMax) {
     const u = Math.max(uMin, Math.min(uMax, w.holon_curve_u(bestR)));
-    curveCtx.fillStyle = bonded ? "#236957" : "#bb4c2e";
-    curveCtx.beginPath();
-    curveCtx.arc(px(bestR), py(u), 4, 0, Math.PI * 2);
-    curveCtx.fill();
+    curveCtx.disc(px(bestR), py(u), 4, bonded ? "#236957" : "#bb4c2e");
   }
+  done();
 
   ui["pair-r"].textContent = `${bestR.toFixed(4)} a0`;
   ui["pair-erel"].textContent = `${eRel.toExponential(3)} Eh`;

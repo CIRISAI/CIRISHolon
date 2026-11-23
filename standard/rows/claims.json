@@ -1,6 +1,6 @@
 {
  "says": "PROTOTYPE of holon:claim payloads (wire leaf holon:claim:v1). Unsigned, unencoded, no signer. Each entry is what a signer would say in one scores row: 'the checks of the declaration's spec held for this claim over these digests'. It does not say the evidence supports the claim. For a price, score 1 says the reading the declaration states (carried or dropped) is what the numbers give. bound and realised are [exponent, mantissa]. A price's standard error and null, the budget, and all prose stay in the declaration. An exact-agreement claim carries no body.",
- "open": "Under basis realised this format has ONE number, the realised cost, which is also the bound claimed; both members carry it. Whether CC means two different numbers there is asked on CIRISAI/CIRISConstitution#215.",
+ "realised": "bound is the bound the claim certifies, the number a reader compares with the consumer's budget; realised is the cost measured on the run cited. In this format a realised certificate has one number, so both carry it (the Constitution session's reading, CIRISAI/CIRISConstitution#215). The budget is never in a row.",
  "names": {
   "00766a70555d09a5a6717cd5f5aacd40ce4de2557e02100ccf23bd1bcb4cb24e": "standard/registry/sandbox.grain.json",
   "0c8b65e9b600748b6363bf7296723236fa6817daccc7c9eee73ed828cec2db18": "conformance/replace1/OBJECTIVE1_RESULTS.md",
@@ -39,9 +39,9 @@
   "a273abb52ca533b6d1898f551176eb60dd424b14bdbae6a246b6e30e61dd6f00": "standard/registry/ladder.drop.json",
   "a6b44990fc8da4e711d27a31fc8a80bcaf94c19de97764f449a927f00cc8e05f": "standard/registry/cosmos.ledger_wager.json",
   "a71c2f570c5b5fbe7bb709551fbf078e10ae0231c49bf8badc7cdfd7a671dc1e": "standard/registry/sandbox.sandbox.json",
-  "aea390425ca36c12dc4c7637633b6648bc6e49dcfc666c896f76a279d8250f7b": "standard/tools/holonc.py",
   "aebf5bb55d1fcae74d0962078d8fa2757b4e7cb07a2992f59e33d99c4e08186c": "standard/registry/ladder.nucleus.json",
   "c5c4d3628958f81f5ba9b0ff6747caabc99be02daa8043ed47c1e32e0363caff": "standard/registry/ladder.ground.json",
+  "cf5c3a1b5f780fcfccd922d023a4146d2d76ca5b332ccbc3caee34841db3ae7d": "standard/tools/holonc.py",
   "d1ad9c5ca3c3c7abfdf6a0ed568a3d562490b6818a39e3933f919b47d8480c59": "standard/registry/sectors.hbond_network.json",
   "d37a21633b72e6d1cc4073b98cea037e11073b2b75153f7d8988d1eb9d401ba5": "standard/registry/air.json",
   "d5713843271c6fc7674d8b9a7999676ab0e8ce809157832a05defba0ebf15902": "standard/registry/ladder.baryon.json",
@@ -68,7 +68,7 @@
    "declaration": "d1ad9c5ca3c3c7abfdf6a0ed568a3d562490b6818a39e3933f919b47d8480c59",
    "evidence_refs": [
     "38ba2589da93d3954b642fa0f6c8afb95c6126e9a2c3b9450fbcca631bf2b6bc",
-    "aea390425ca36c12dc4c7637633b6648bc6e49dcfc666c896f76a279d8250f7b",
+    "cf5c3a1b5f780fcfccd922d023a4146d2d76ca5b332ccbc3caee34841db3ae7d",
     "d1ad9c5ca3c3c7abfdf6a0ed568a3d562490b6818a39e3933f919b47d8480c59",
     "f6aef8612d6f8ec57a00a7adfa8a2868af5895983a059196e1dc59a30c1f2ebd"
    ],
@@ -97,7 +97,7 @@
    "evidence_refs": [
     "1beacfab3d76cf70518e8ab1fe1a8a439e27db351b54d6157bf3ddd29682f9b6",
     "38ba2589da93d3954b642fa0f6c8afb95c6126e9a2c3b9450fbcca631bf2b6bc",
-    "aea390425ca36c12dc4c7637633b6648bc6e49dcfc666c896f76a279d8250f7b",
+    "cf5c3a1b5f780fcfccd922d023a4146d2d76ca5b332ccbc3caee34841db3ae7d",
     "d1ad9c5ca3c3c7abfdf6a0ed568a3d562490b6818a39e3933f919b47d8480c59",
     "f6aef8612d6f8ec57a00a7adfa8a2868af5895983a059196e1dc59a30c1f2ebd"
    ],
@@ -123,7 +123,7 @@
     "1beacfab3d76cf70518e8ab1fe1a8a439e27db351b54d6157bf3ddd29682f9b6",
     "38ba2589da93d3954b642fa0f6c8afb95c6126e9a2c3b9450fbcca631bf2b6bc",
     "566298919556991083fd98fa28de36b30472febf01b7c2ae735f1eb3cd585ad1",
-    "aea390425ca36c12dc4c7637633b6648bc6e49dcfc666c896f76a279d8250f7b"
+    "cf5c3a1b5f780fcfccd922d023a4146d2d76ca5b332ccbc3caee34841db3ae7d"
    ],
    "body": {
     "bound": [
@@ -147,7 +147,7 @@
     "15bf5e92676260b27a8ece683555e77a3dd65672e844589d949a8dde299dd1e9",
     "38ba2589da93d3954b642fa0f6c8afb95c6126e9a2c3b9450fbcca631bf2b6bc",
     "769aa2d0cd67ff55de5ea62dad2924b73d0aef164215bbafa2f4a6e2961bfa2b",
-    "aea390425ca36c12dc4c7637633b6648bc6e49dcfc666c896f76a279d8250f7b"
+    "cf5c3a1b5f780fcfccd922d023a4146d2d76ca5b332ccbc3caee34841db3ae7d"
    ],
    "body": {
     "bound": [
@@ -172,7 +172,7 @@
     "38ba2589da93d3954b642fa0f6c8afb95c6126e9a2c3b9450fbcca631bf2b6bc",
     "51f4a18f40530ee319bfdf24fc9f3a4dafe04a99c80f6f549de7b535acdb1ccd",
     "64db8f000cb1d1980bacf0f471cb2223193577a2d44c8f26673b6e02ef0e9c6d",
-    "aea390425ca36c12dc4c7637633b6648bc6e49dcfc666c896f76a279d8250f7b"
+    "cf5c3a1b5f780fcfccd922d023a4146d2d76ca5b332ccbc3caee34841db3ae7d"
    ],
    "body": {
     "bound": [
@@ -201,7 +201,7 @@
     "1beacfab3d76cf70518e8ab1fe1a8a439e27db351b54d6157bf3ddd29682f9b6",
     "38ba2589da93d3954b642fa0f6c8afb95c6126e9a2c3b9450fbcca631bf2b6bc",
     "64db8f000cb1d1980bacf0f471cb2223193577a2d44c8f26673b6e02ef0e9c6d",
-    "aea390425ca36c12dc4c7637633b6648bc6e49dcfc666c896f76a279d8250f7b"
+    "cf5c3a1b5f780fcfccd922d023a4146d2d76ca5b332ccbc3caee34841db3ae7d"
    ],
    "body": {
     "bound": [

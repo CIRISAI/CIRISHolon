@@ -754,8 +754,9 @@ def claims(decls, answers, root):
                     "does not say the evidence supports the claim. For a price, score 1 says the reading the declaration states (carried "
                     "or dropped) is what the numbers give. bound and realised are [exponent, mantissa]. A price's standard error and "
                     "null, the budget, and all prose stay in the declaration. An exact-agreement claim carries no body.",
-            "open": "Under basis realised this format has ONE number, the realised cost, which is also the bound claimed; both members "
-                    "carry it. Whether CC means two different numbers there is asked on CIRISAI/CIRISConstitution#215.",
+            "realised": "bound is the bound the claim certifies, the number a reader compares with the consumer's budget; realised is "
+                        "the cost measured on the run cited. In this format a realised certificate has one number, so both carry it "
+                        "(the Constitution session's reading, CIRISAI/CIRISConstitution#215). The budget is never in a row.",
             "names": {k: names[k] for k in sorted(names)},
             "claims": out}
 

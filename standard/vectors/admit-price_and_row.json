@@ -1,5 +1,5 @@
 {
-  "expect": "admitted",
+  "expect": "holds",
   "declarations": [
     {
       "spec": "ciris/holon-decl/0",

@@ -5,8 +5,8 @@
 nowhere. Reviewed twice, adversarially, on the same day: `standard/REVIEW-2026-11-23.md`
 records what those reviews found and what was changed. The register was then extended
 from 15 declarations to 60 (every row of `TIERS.md`, the sandbox's tiers, the twin's
-layers), with the members that needed; that extension has NOT been reviewed. Section 9 is a proposal to the session
-that owns the CEG; nothing in it is agreed. Nothing should pin to this version.*
+layers), with the members that needed; that extension has NOT been reviewed. Section 9 records the first reading of the sessions
+that own the CEG and the kernel; nothing in it is agreed. Nothing should pin to this version.*
 
 ## Abstract
 
@@ -15,7 +15,7 @@ what stands on it. This document specifies how one is DECLARED: what it is made 
 state comes about, what each reader takes from it and within what bound, in what regime,
 what certifies that, and how the declarer knows. A declaration is data. A reference
 compiler checks it against closed vocabularies and a fixed set of checks, and answers
-admitted, waiting, or refused with the set of reasons.
+holds, pending, or fails with the set of reasons.
 
 It defines no new mathematics. What a certificate MEANS is defined in this repository's
 Lean library and doctrine (Section 8). This document says how a claim is written down, and
@@ -200,7 +200,7 @@ honest only when the coarser picture is a function of the finer one"; the CIRISO
 session's reading, as relayed 2026-11-16). `shared_edge` and `context` are this
 document's, to describe what the engine does where that rule is not met: `shared_edge`
 names the construction the ladder's code describes ("at each shared edge the two rungs draw
-the same thing in the same place"), and a fade across `context` is admitted only with its
+the same thing in the same place"), and a fade across `context` holds only with its
 debt written beside it. Neither is the Ontology session's, and neither is checked beyond
 the basis file existing. `shared_edge` is a WEAKER claim than `function`: by the quoted
 rule a fade across it is not shown honest, and version 0 lets it pass without a written
@@ -234,7 +234,7 @@ A certificate other than `none` MUST carry:
 - `basis`: `price` (an a-priori bound) or `realised` (a cost measured on the run cited),
   the distinction of `OBJECT.md`'s correction of 2026-11-15, item 3;
 - evidence: `{ path, sha256? }`, a file of the repository; `{ gate }`, the whole message
-  of an `ok "..."` line of `engine/ci-gates.sh`; or `{ external }`, which makes the answer waiting. A
+  of an `ok "..."` line of `engine/ci-gates.sh`; or `{ external }`, which makes the answer pending. A
   `measured` holon's file evidence MUST carry its sha256;
 - for `scene`: `parts.section_law` and `parts.transport_cost`, and under the latter
   `reference`, the frozen sample `{ path, sha256, frozen_at }`.
@@ -266,10 +266,22 @@ against the engine. For anything else the label is the declarer's and is not che
 The reference compiler is `standard/tools/holonc.py`. It executes nothing a declaration
 names and reads no path outside the repository. For each declaration it gives one answer:
 
-- **admitted**: every check held and everything cited is held here;
-- **waiting**: every check held, but it cites evidence or an engine not held here, or it
-  stands on a declaration that is waiting. Waiting is never counted as admitted;
-- **refused**: with the SET of every failing check's token, sorted.
+- **holds**: every check held and everything cited is held here;
+- **pending**: every check held, but it cites evidence or an engine not held here, or it
+  stands on a declaration that is pending. Pending is never counted as holds;
+- **fails**: with the SET of every failing check's token, sorted.
+
+These three words were `admitted`, `waiting` and `refused` until 2026-11-23. They were
+renamed because the Constitution and Kernel sessions use those words for other things:
+Valid, Invalid and Waiting are the answers of verifying a STATEMENT, and admitted and
+refused are what a substrate does to a ROW. This is a third thing, a check of a
+declaration against the files of one repository. Where this document still says the
+compiler "refuses" a declaration, it means the answer is `fails`, and nothing about a row.
+
+An answer is a function of the SET of declarations and files held when it was computed. It
+is not final: a declaration that holds today fails when one it stands on is corrected.
+Nothing is concluded from a date. `stated_at` and `frozen_at` are content; "current" will
+have to be decided by which row supersedes which (Section 9), never by the later date.
 
 The answer is a set so that it does not depend on the order in which an implementation
 runs its checks. There are two phases, and the phase is the only ordering:
@@ -282,9 +294,9 @@ runs its checks. There are two phases, and the phase is the only ordering:
 
 The phase B checks, by what they protect:
 
-| what | refusals |
+| what | reasons |
 |---|---|
-| what it stands on | `below_unresolved`, `below_cycle`, `below_refused`, `relation_unbacked`, `depicts_unresolved`, `id_duplicate` |
+| what it stands on | `below_unresolved`, `below_cycle`, `below_fails`, `relation_unbacked`, `depicts_unresolved`, `id_duplicate` |
 | what the status owes | `source_missing`, `source_not_found`, `quote_not_found`, `row_missing`, `kill_missing`, `simulated_not_computed`, `engine_missing`, `certificate_owed`, `illustration_certified`, `illustration_undrawn` |
 | views and consumers | `medium_without_view`, `view_without_consumer`, `consumer_conflict`, `consumer_unresolved`, `budget_unit_mismatch` |
 | the certificate and what it is for | `certificate_unbound`, `consumer_without_budget`, `certificate_exceeds_budget`, `price_contradicts_standing`, `regime_missing`, `scene_not_generated`, `scene_certificate_incomplete` |
@@ -293,11 +305,24 @@ The phase B checks, by what they protect:
 | how it is drawn | `fade_across_theories`, `fade_unbacked`, `join_disagrees` |
 | the engine against the registry | `ladder_disagrees` |
 
-A declaration that stands on a refused one is refused (`below_refused`), and one that
-stands on a waiting one waits. Two cases give `below_unresolved` instead, because there is
+A declaration that stands on a refused one is refused (`below_fails`), and one that
+stands on a pending one is pending. Two cases give `below_unresolved` instead, because there is
 no one declaration to stand on: the one below failed phase A, or its id is carried by more
 than one declaration (each copy is `id_duplicate`, and the id then names nothing, whichever
 copy came first). The meaning of each token is in the vocabulary file.
+
+Each reason is also classed, in the vocabulary's `reason_needs`, by what a party must hold
+to run its check (the Kernel session's split, CIRISAI/CIRISKernel#27):
+
+| class | a party needs | reasons |
+|---|---|---|
+| `blob` | the declaration alone | `spec_unknown`, `member_missing`, `member_unexpected`, `type_wrong`, `id_malformed`, `vocabulary_unregistered`, `source_missing`, `kill_missing`, `simulated_not_computed`, `medium_without_view`, `view_without_consumer`, `consumer_conflict`, `consumer_without_budget`, `budget_unit_mismatch`, `certificate_owed`, `certificate_unbound`, `certificate_exceeds_budget`, `illustration_certified`, `illustration_undrawn`, `scene_not_generated`, `scene_certificate_incomplete`, `evidence_missing`, `evidence_undigested`, `regime_missing`, `tier_uncertified`, `tier_uncarried`, `carried_not_tier`, `sector_untested`, `fade_across_theories`, `fade_unbacked`, `price_contradicts_standing` |
+| `set` | the declarations it names | `id_duplicate`, `below_unresolved`, `below_cycle`, `below_fails`, `depicts_unresolved`, `consumer_unresolved`, `join_disagrees` |
+| `repository` | the declarer's files | `relation_unbacked`, `source_not_found`, `engine_missing`, `evidence_not_found`, `evidence_digest`, `gate_not_found`, `ladder_disagrees`, `quote_not_found`, `row_missing` |
+
+A `repository` check, seen from outside, is the DECLARER'S ATTESTATION and not a verified
+fact. A `{ gate }` evidence is the clearest case. It becomes checkable by a third party only
+when the file travels by digest; a third party that re-runs it says so in its own name.
 
 `ladder_disagrees` runs the other way from the rest: it checks the ENGINE against the
 registry. The engine prints each rung's name, unit, status label, band, cuts and the kinds
@@ -331,7 +356,7 @@ This version declares 60 holons, each of which already exists somewhere in the r
 - **`air`**: the air as a holon, status `catalogue`, with what it owes before more is claimed.
 
 By standing: 1 tier, 3 sectors, 14 recorded rows, 5 inputs, 1 medium, 36 rungs. 46 are
-admitted and 14 wait.
+hold and 14 are pending.
 
 **What the tier rows came to.** Of the six rows `TIERS.md` calls physical tiers, ONE is
 declared a `tier` here: the fluid element, whose hydrodynamic block the gate prices at
@@ -360,8 +385,8 @@ function.
 ## 7. Known answers
 
 `standard/vectors/*.json` each hold `{ expect, declarations, ladder? }`. `expect` is
-`admitted`, `waiting`, or the exact set of refusal tokens the declarations give between
-them. `holonc.py --vectors` runs them and fails if any refusal in the vocabulary is
+`holds`, `pending`, or the exact set of reason tokens the declarations give between
+them. `holonc.py --vectors` runs them and fails if any reason in the vocabulary is
 expected by no vector, or if fewer than three vectors carry more than one fault. A second
 implementation is conformant to version 0 when it gives the same answers on these
 vectors.
@@ -385,25 +410,52 @@ Nothing in this document is proved. The compiler checks that a declaration is we
 that a certificate names what it is for, and that what is cited exists and hashes as
 stated. It does not check that the evidence supports the claim.
 
-## 9. Carriage as CEG rows (PROPOSED; not agreed, and not worked out)
+## 9. Being governed: carriage as CEG rows (a working assumption; nothing is agreed)
 
-The CEG draft's rule is that "a new kind of record is expressed as a new family or
-dimension on one of the five types, never as a sixth type". A first reading of how a
-holon's claims would sit on the five types:
+The point of a declaration is to be governed: its claims should be statements the CIRIS
+ecosystem can hold someone to, not files in one repository. On 2026-11-23 the question was
+put to the sessions that own the CEG and the kernel (CIRISAI/CIRISConstitution#215,
+CIRISAI/CIRISKernel#27). What follows is their FIRST READING as relayed, taken here as the
+working assumption. It is not a ruling: a new family is Eric Moore's to admit, and nothing
+is registered before the Constitution's rc22 cut.
+
+**The shape.** The declaration stays a BLOB: unsigned, and named by the SHA-256 of its
+stored bytes (no canonical form, because nothing re-serialises it). Each claim is ONE
+`scores` row that cites the blob and each piece of evidence by digest in `evidence_refs`.
+All prose (the regime, the carrier, what is not claimed) stays in the blob. The row carries
+only this document's ids for the holon, the view and the consumer.
 
 | in this repository | as a row | caution |
 |---|---|---|
-| "this view is within this budget for this consumer, in this regime" | a `scores` row in a `holon` family, the declaration and the evidence named in `evidence_refs` by content hash | the CEG allows "no float or null" and no free text outside `body.note`; a bound would have to be a fixed-scale integer, and what the row's `score` IS has not been decided |
-| a dated CORRECTION (the earlier text was wrong, and stays legible) | `recants` on the old row, and a new `scores` row | NOT `supersedes`, which replaces a row without saying it was false: that would be the quiet fix the house rule forbids |
+| "the checks held for this claim over these digests" | a `scores` row; `score` is met or not met, never the bound; the bound and the budget are finite decimals in the payload, the unit a closed token | no float; a row is not signed for a claim whose evidence is `{ external }` |
+| a dated CORRECTION (the earlier text was wrong, and stays legible) | `recants` on the old row, and a new `scores` row | never `supersedes`, which replaces without saying it was false. Both are same-signer acts, so the house must be ONE identity that survives a key rotation |
 | a revision that is not a correction (a tighter bound from a longer run) | `supersedes` | |
-| a tier killed by its own stake | `recants`, by the original signer only | a kill found by someone else is that party's own negative `scores` row |
+| a tier killed by its own stake | `recants` | a kill found by someone else is that party's own negative `scores` row, which the family must declare it admits |
 | a tier no longer maintained | `withdraws` | |
-| who may sign for a repository's holons | `delegates_to` | some scopes carry the 365-day term rule |
+| who answers for a repository's holons | an owner-binding of the signing key | there is no roster of admissible signers: anyone asserts under their own key, and a reader's trust set decides |
 
-The three answers here are modelled on the CEG's three (its Section 6.4), but they are not
-the same thing. The CEG's Waiting is on missing KEYS; this document's `waiting` is on
-evidence or an engine not held. And "admitted" in the CEG is a row's state, not a
-verification answer. If this is ever carried as rows, the words need separating.
+**What a row would mean, and no more:** "this signer says the checks of
+`ciris/holon-decl/0` held for this claim over these digests". The compiler does not judge
+whether the evidence supports the claim (Section 8), and a row inherits that limit. A
+second party that re-runs the checks signs its own row; that pair is the witness.
+
+**Names.** A holon's governed name is the pair (signer, id). `id_duplicate` is a rule
+within one register, which is one signer's. Across signers a second declaration with the
+same id is a different holon; it cannot void this one. An id is never reused.
+
+**The prototype.** `standard/rows/claims.json` is GENERATED by the compiler: one payload
+per certificate of a declaration that holds, in the unregistered range `x_private:holon`,
+with the digest of the declaration, of each evidence file, of the engine where there is
+one, and of the compiler and vocabulary that ran. They are not rows: nothing is encoded or
+signed. Today there are few, because few declarations carry a certificate.
+
+**What the kernel does and does not do.** The kernel crate never sees bytes, hashes, files
+or a clock, and will not run this compiler. The `set` checks above are the part shaped like
+its work (what a set of rows concludes); nothing is planned there.
+
+**Owed before any row is signed:** every `{ path }` source and basis by digest, not only
+certificate evidence; a registered family with its polarity, emitter rule, payload rule and
+a sample with breaks; one stable signing identity; and the `set` rule stated in a model.
 
 ## 10. What is not claimed, and what is weak
 
@@ -423,7 +475,7 @@ verification answer. If this is ever carried as rows, the words need separating.
   between them, not which declaration gave which.
 - **`function` and `shared_edge` are assertions.** A basis file must exist; nothing checks
   that it shows what is said.
-- **A budget's bound is not checked for sense.** A budget of a million pixels is admitted.
+- **A budget's bound is not checked for sense.** A budget of a million pixels holds.
   A certificate must meet the budget, so a loose budget buys a loose certificate, visibly.
 - **The renderer's budget on the ladder's rungs is a tolerance, not a fidelity.** It is the
   draw allocator's 1 px (`Acuity`, `eps_px`), which holds by construction, and it bounds a

@@ -1,5 +1,5 @@
 {
- "expect": "waiting",
+ "expect": "pending",
  "declarations": [
   {
    "spec": "ciris/holon-decl/0",

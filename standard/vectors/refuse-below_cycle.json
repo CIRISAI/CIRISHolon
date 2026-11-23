@@ -1,7 +1,7 @@
 {
  "expect": [
   "below_cycle",
-  "below_refused"
+  "below_fails"
  ],
  "declarations": [
   {

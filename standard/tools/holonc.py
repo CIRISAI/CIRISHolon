@@ -4,18 +4,18 @@
 It reads the closed vocabularies (standard/vocabulary.json) and every declaration in the
 registry (standard/registry/*.json) and gives each declaration ONE answer:
 
-    admitted            every check held and everything it cites is held here
-    waiting             every check held, but it cites evidence or an engine that is not held
-                        here, or it stands on a declaration that is waiting
-    refused             with the SET of every failing check's token, sorted
+    holds               every check held and everything it cites is held here
+    pending             every check held, but it cites evidence or an engine that is not held
+                        here, or it stands on a declaration that is pending
+    fails               with the SET of every failing check's token, sorted
 
 The answer does not depend on the order of the checks. They run in two phases. Phase A is
 shape: members, types, ids and closed vocabularies. A declaration that fails phase A is
-refused with phase A's tokens alone, because nothing more can be read from it safely. Phase
+it fails with phase A's tokens alone, because nothing more can be read from it safely. Phase
 B is meaning: every check runs, and every failure is collected. It executes nothing a
 declaration names, and reads no path outside the repository.
 
-    python3 standard/tools/holonc.py                  check the registry; exit 1 if any is refused
+    python3 standard/tools/holonc.py                  check the registry; exit 1 if any fails
     python3 standard/tools/holonc.py --vectors        the known answers (standard/vectors/*.json):
                                                       each file states what it expects, and every
                                                       refusal token of the vocabulary must be
@@ -486,7 +486,7 @@ def compile_all(decls, V, root, ladder=None):
             if name not in claimed:
                 out.append({"label": f"(engine rung) {name}", "id": None, "tokens": {"ladder_disagrees"},
                             "why": ["ladder_disagrees: the engine draws this rung and no declaration carries it"], "waiting": [], "shaped": False, "decl": None})
-    # what stands on a refused declaration is refused, and what stands on a waiting one waits: to a fixed point
+    # what stands on a failing declaration fails, and what stands on a pending one is pending: to a fixed point
     by = {rec["id"]: rec for rec in shaped if rec["id"] in world}
     changed = True
     while changed:
@@ -496,15 +496,15 @@ def compile_all(decls, V, root, ladder=None):
                 o = by.get(x)
                 if o is None or o is rec:
                     continue
-                if o["tokens"] and "below_refused" not in rec["tokens"]:
-                    rec["tokens"].add("below_refused")
-                    rec["why"].append(f"below_refused: it stands on {x}, which is refused")
+                if o["tokens"] and "below_fails" not in rec["tokens"]:
+                    rec["tokens"].add("below_fails")
+                    rec["why"].append(f"below_fails: it stands on {x}, which fails")
                     changed = True
                 elif not o["tokens"] and o["waiting"] and f"on {x}, which is waiting" not in rec["waiting"]:
                     rec["waiting"].append(f"on {x}, which is waiting")
                     changed = True
     for rec in out:
-        rec["answer"] = "refused" if rec["tokens"] else ("waiting" if rec["waiting"] else "admitted")
+        rec["answer"] = "fails" if rec["tokens"] else ("pending" if rec["waiting"] else "holds")
         rec["tokens"] = sorted(rec["tokens"])
     return out
 
@@ -559,14 +559,52 @@ def run_vectors(V):
                 fails.append(f"{f.name}: expected exactly {sorted(want)}, got {tokens}")
             seen |= set(want)
             multi += len(want) > 1
-    for token in V["refusal"]:
+    for token in V["reason"]:
         if token not in seen:
             fails.append(f"no vector expects the refusal {token}")
-    for token in sorted(seen - set(V["refusal"])):
+    for token in sorted(seen - set(V["reason"])):
         fails.append(f"a vector expects {token}, which is not a refusal of the vocabulary")
     if multi < 3:
         fails.append(f"only {multi} vectors carry more than one fault; at least 3 are needed to show the answer is a set")
     return files, seen, multi, fails
+
+
+def digest(f):
+    return hashlib.sha256(pathlib.Path(f).read_bytes()).hexdigest()
+
+
+def claims(decls, answers, root):
+    """One prototype payload per certificate of a declaration that holds: what a signer would be saying, by digest.
+    Not CEG rows: unsigned, unencoded, in the unregistered range x_private:holon (HOLON-DECL Section 9)."""
+    ans = {r["label"]: r["answer"] for r in answers}
+    out = []
+    for label, d in decls:
+        cert = d["certificate"]
+        if ans[label] != "holds" or cert["kind"] == "none":
+            continue
+        raw = json.loads((STD / "registry" / label).read_text(encoding="utf-8"), parse_float=str, parse_int=str)
+        view = next(v for v in raw["views"] if v["id"] == cert["for"]["view"])
+        cons = next(c for c in view["consumers"] if c["id"] == cert["for"]["consumer"])
+        refs = [{"what": "declaration", "path": f"standard/registry/{label}", "sha256": digest(STD / "registry" / label)}]
+        items = list(cert.get("evidence", []))
+        for part in cert.get("parts", {}).values():
+            items += part.get("evidence", [])
+        for e in items:
+            if "path" in e:
+                refs.append({"what": "evidence", "path": e["path"], "sha256": digest(root / e["path"])})
+            elif "gate" in e:
+                refs.append({"what": "gate: " + e["gate"], "path": "engine/ci-gates.sh", "sha256": digest(root / "engine" / "ci-gates.sh")})
+        if "engine" in d["step"]:
+            refs.append({"what": "engine", "path": d["step"]["engine"], "sha256": digest(root / d["step"]["engine"])})
+        out.append({"family": "x_private:holon:claim", "holon": d["id"], "view": cert["for"]["view"], "consumer": cert["for"]["consumer"],
+                    "score": 1, "kind": cert["kind"], "basis": cert["basis"],
+                    "bound": {"decimal": raw["certificate"]["bound"]["value"], "unit": cert["bound"]["unit"]},
+                    "budget": {"decimal": cons["budget"]["bound"], "unit": cons["budget"]["unit"]},
+                    "evidence_refs": refs})
+    return {"says": "PROTOTYPE, unsigned and unregistered. Each entry is what a signer would say in one scores row: 'the checks of "
+                    "ciris/holon-decl/0 held for this claim over these digests'. It does not say the evidence supports the claim.",
+            "checked_by": {"holonc.py": digest(STD / "tools" / "holonc.py"), "vocabulary.json": digest(STD / "vocabulary.json")},
+            "claims": out}
 
 
 def main():
@@ -576,26 +614,27 @@ def main():
     ap.add_argument("--ladder")
     a = ap.parse_args()
     V = json.loads((STD / "vocabulary.json").read_text(encoding="utf-8"))
+    assert set(V["reason_needs"]) - {"_"} == set(V["reason"]), "every reason says what a party must hold to check it"
     decls = load_registry(STD / "registry")
     ladder = read_ladder(pathlib.Path(a.ladder).read_text(encoding="utf-8"), V) if a.ladder else None
     answers = compile_all(decls, V, REPO, ladder)
     say = (lambda *_: None) if a.json else print
     for r in answers:
-        if r["answer"] == "refused":
-            say(f"  refused  {r['label']}: {r['tokens']}")
+        if r["answer"] == "fails":
+            say(f"  fails    {r['label']}: {r['tokens']}")
             for w in r["why"]:
                 say(f"             {w}")
-        elif r["answer"] == "waiting":
-            say(f"  waiting  {r['label']}: " + "; ".join(r["waiting"]))
-    n = {s: sum(1 for r in answers if r["answer"] == s) for s in ("admitted", "waiting", "refused")}
-    say(f"registry: {len(decls)} declarations; {n['admitted']} admitted, {n['waiting']} waiting, {n['refused']} refused"
+        elif r["answer"] == "pending":
+            say(f"  pending  {r['label']}: " + "; ".join(r["waiting"]))
+    n = {s: sum(1 for r in answers if r["answer"] == s) for s in ("holds", "pending", "fails")}
+    say(f"registry: {len(decls)} declarations; {n['holds']} hold, {n['pending']} pending, {n['fails']} fail"
         + (f"; the engine's {len(ladder)} rungs checked against it" if ladder is not None else ""))
-    status = 1 if n["refused"] else 0
+    status = 1 if n["fails"] else 0
     report = {"registry": [{k: r[k] for k in ("label", "id", "answer", "tokens", "why", "waiting")} for r in answers]}
 
     if a.vectors:
         files, seen, multi, fails = run_vectors(V)
-        say(f"vectors: {len(files)} files; {len(seen)} of {len(V['refusal'])} refusals expected; {multi} with more than one fault; {len(fails)} failure(s)")
+        say(f"vectors: {len(files)} files; {len(seen)} of {len(V['reason'])} reasons expected; {multi} with more than one fault; {len(fails)} failure(s)")
         for x in fails:
             say("  -", x)
         report["vectors"] = {"files": len(files), "failures": fails}
@@ -603,17 +642,19 @@ def main():
 
     if a.write or a.check:
         out = STD / "HOLONS.md"
-        if n["refused"]:
-            say("HOLONS.md is not written while a declaration is refused")
+        if n["fails"]:
+            say("HOLONS.md is not written while a declaration fails")
             status = 1
         else:
-            text = table(decls, answers)
-            if a.write:
-                out.write_text(text, encoding="utf-8")
-                say(f"wrote {out.relative_to(REPO)}")
-            elif not out.exists() or out.read_text(encoding="utf-8") != text:
-                say("standard/HOLONS.md is stale: run holonc.py --write")
-                status = 1
+            rows = STD / "rows" / "claims.json"
+            for out, text in ((out, table(decls, answers)), (rows, json.dumps(claims(decls, answers, REPO), indent=1, ensure_ascii=False) + "\n")):
+                if a.write:
+                    out.parent.mkdir(exist_ok=True)
+                    out.write_text(text, encoding="utf-8")
+                    say(f"wrote {out.relative_to(REPO)}")
+                elif not out.exists() or out.read_text(encoding="utf-8") != text:
+                    say(f"{out.relative_to(REPO)} is stale: run holonc.py --write")
+                    status = 1
     if a.json:
         print(json.dumps(report, indent=1))
     return status

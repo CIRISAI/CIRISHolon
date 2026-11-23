@@ -4,66 +4,66 @@
 
 | id | name | status | standing | step | stands on | views: consumer (budget) | certificate | answer | declaration sha256 |
 |---|---|---|---|---|---|---|---|---|---|
-| `air` | the air | catalogue | medium | static | nothing | transmittance: holon_draw (1 level); inscatter: holon_draw (1 level) | none | admitted | `d37a21633b72e6d1…` |
-| `cosmos.ledger_wager` | the cosmological rung | wager | recorded | declared | nothing | none | none | admitted | `59dd377336bc5c94…` |
-| `ladder.atoms` | hydrogen, atom by atom | simulated | rung | computed | ladder.nucleus (shared_edge) | picture: holon_draw (1 px) | none | admitted | `da05498a1b8de9c6…` |
-| `ladder.baryon` | below the nucleus: a baryon on a chain | simulated | rung | computed | ladder.sea (shared_edge) | picture: holon_draw (1 px) | none | admitted | `d5713843271c6fc7…` |
-| `ladder.cosmic_web` | the cosmic web | illustration | rung | generated | ladder.local_group (shared_edge) | picture: holon_draw (1 px) | none | admitted | `e0b3980b8637cffa…` |
-| `ladder.drop` | a drop of water | illustration | rung | generated | ladder.water (shared_edge) | picture: holon_draw (1 px) | none | admitted | `a273abb52ca533b6…` |
-| `ladder.earth_moon` | the Earth and the Moon | catalogue | input | computed | ladder.ground (context) | picture: holon_draw (1 px) | none | admitted | `d982fbd834890b4b…` |
-| `ladder.ground` | the ground underfoot | illustration | rung | generated | ladder.drop (shared_edge) | picture: holon_draw (1 px) | none | admitted | `c5c4d3628958f81f…` |
-| `ladder.local_group` | the Local Group | illustration; parts: places catalogue | rung | generated | ladder.milky_way (shared_edge) | picture: holon_draw (1 px) | none | admitted | `6b99434088892dc9…` |
-| `ladder.milky_way` | the Milky Way | illustration | rung | generated | ladder.neighbourhood (shared_edge) | picture: holon_draw (1 px) | none | admitted | `9c42bdea8024e890…` |
-| `ladder.neighbourhood` | the solar neighbourhood | catalogue; parts: oort_cloud illustration | input | static | ladder.solar_system (shared_edge) | picture: holon_draw (1 px) | none | admitted | `e4e6164563602180…` |
-| `ladder.nucleus` | inside the atom: the nucleus | declared; parts: cloud catalogue | input | declared | ladder.baryon (context); depicts tiers.nucleus | picture: holon_draw (1 px) | none | admitted | `aebf5bb55d1fcae7…` |
-| `ladder.sea` | the gauge vacuum: the sea | simulated | rung | computed | nothing | picture: holon_draw (1 px) | none | admitted | `3a293fe768f05d09…` |
-| `ladder.solar_system` | the solar system | catalogue; parts: kuiper_belt illustration | input | computed | ladder.earth_moon (shared_edge) | picture: holon_draw (1 px) | none | admitted | `3ff919de07e664ae…` |
-| `ladder.water` | liquid water, molecule by molecule | illustration | rung | generated | ladder.atoms (context); depicts tiers.molecule | picture: holon_draw (1 px) | none | admitted | `882391f5d4eaa462…` |
-| `qvm.bit_planes` | classical bit-planes | declared | recorded | declared | nothing | none | none | admitted | `43cac1eb1edc16c7…` |
-| `qvm.dense` | the dense statevector | declared | recorded | declared | nothing | none | none | admitted | `eb96444885ba8321…` |
-| `qvm.dispatch` | the dispatch | measured | recorded | measured | qvm.bit_planes (context), qvm.tableau (context), qvm.rank_sum (context), qvm.mps (context), qvm.dense (context) | none | none | admitted | `eba9c453aebdb994…` |
-| `qvm.mps` | the certified matrix-product state | measured | recorded | measured | nothing | none | none | admitted | `9c40d2533122354d…` |
-| `qvm.rank_h7` | the stabilizer rank of seven magic states | measured | recorded | measured | nothing | none | none | admitted | `26b08825218a2735…` |
-| `qvm.rank_sum` | the stabilizer-rank sum | measured | recorded | measured | nothing | none | none | admitted | `55efd5dc8c4240eb…` |
-| `qvm.tableau` | the stabilizer tableau | measured | recorded | measured | nothing | none | none | admitted | `3c1d299b1605c136…` |
-| `reasoning.chains` | reasoning chains | measured | recorded | measured | nothing | none | none | admitted | `927c0864d51fd65e…` |
-| `reasoning.eleven_plus_one` | the eleven kinds and the remainder, on their own carrier | measured | recorded | measured | nothing | none | none | admitted | `4a3a28d0732d3f65…` |
-| `sandbox.cosmic` | the sandbox's cosmic tier | simulated | rung | computed | sandbox.galactic (context) | none | none | admitted | `76b889bc987c94ab…` |
-| `sandbox.crystal` | the sandbox's crystal tier | declared | rung | declared | sandbox.gauge (context) | none | none | admitted | `fb82d9aaaa183b21…` |
-| `sandbox.galactic` | the sandbox's galactic tier | simulated | rung | computed | sandbox.planet (context) | none | none | admitted | `b16c26746054106d…` |
-| `sandbox.gauge` | the sandbox's gauge tier | simulated | rung | computed | nothing | none | none | admitted | `2cbb19cc491db4db…` |
-| `sandbox.grain` | the sandbox's grain tier | simulated | rung | computed | sandbox.crystal (context) | none | none | admitted | `9efed4ac80adad3a…` |
-| `sandbox.landscape` | the sandbox's landscape tier | simulated | rung | computed | sandbox.sandbox (context) | none | none | admitted | `4d1379a554c6f242…` |
-| `sandbox.planet` | the sandbox's planet tier | simulated | rung | computed | sandbox.landscape (context) | none | none | admitted | `9c05064627453c2c…` |
-| `sandbox.sandbox` | the sandbox's sandbox tier | simulated | rung | computed | sandbox.grain (context) | none | none | admitted | `029472abda98b57b…` |
-| `sectors.hbond_network` | the hydrogen-bond network | measured | sector | measured | tiers.molecule (function) | bond_counts: momentum_law_50fs (0.02 relative) | price, price, 0 relative for momentum_law_50fs | admitted | `0cf9e21e6a349a3d…` |
-| `sectors.order_parameter` | the collective order parameter | measured | sector | measured | tiers.molecule (function) | order_field: density_and_current (0.02 relative) | price, price, -0.0007 relative for density_and_current | admitted | `567cc90bc11010db…` |
-| `sectors.slow_shell_coordinate` | the VAMPnet's slow shell-geometry coordinate | measured | sector | measured | tiers.molecule (function) | learned_coordinate: mobility (0.02 relative) | price, price, 0.0128 relative for mobility | admitted | `d6020c25830181f5…` |
-| `tiers.chemistry` | atom to chemistry | measured | recorded | measured | tiers.nucleus (context) | none | none | admitted | `4edf4db9f87ce7ce…` |
-| `tiers.continuum` | the continuum, or the cube | measured | recorded | measured | tiers.fluid_element (context) | none | none | admitted | `7a9cac0a4917acd2…` |
-| `tiers.fluid_element` | the fluid element | measured | tier | measured | tiers.molecule (function) | hydrodynamic_block: level_above (0.005 relative) | price, price, 0.039 relative for level_above | admitted | `1c4bbaa01b587178…` |
-| `tiers.fold` | the fold below the atom | measured | recorded | measured | nothing | none | none | admitted | `d8d25abb628558c5…` |
-| `tiers.molecule` | the molecule | measured | recorded | measured | tiers.chemistry (function) | none | none | admitted | `f66c3e253b8b1735…` |
-| `tiers.nucleus` | the nucleus | declared | input | declared | tiers.fold (context) | none | none | admitted | `7b944ed972896509…` |
-| `twin.alm` | the twin's layer alm | simulated | rung | computed | nothing | picture: twin_page | none | waiting | `500bd5055ba60a8e…` |
-| `twin.arcs` | the twin's layer arcs | simulated | rung | computed | nothing | picture: twin_page | none | waiting | `abfcb43f61433e92…` |
-| `twin.calibration` | the twin's layer calibration | simulated | rung | computed | nothing | picture: twin_page | none | waiting | `7be94052e3ef7ed0…` |
-| `twin.custody` | the twin's layer custody | simulated | rung | computed | nothing | picture: twin_page | none | waiting | `64c2d349385014d5…` |
-| `twin.failures` | the twin's layer failures | simulated | rung | computed | nothing | picture: twin_page | none | waiting | `d5475df664945d58…` |
-| `twin.flows` | the twin's layer flows | simulated | rung | computed | nothing | picture: twin_page | none | waiting | `2934391b80535546…` |
-| `twin.glow` | the twin's layer glow | simulated | rung | computed | nothing | picture: twin_page | none | waiting | `5fb6078dabd6dd56…` |
-| `twin.holon` | the twin's layer holon | simulated | rung | computed | nothing | picture: twin_page | none | waiting | `64b234ec5fa2d466…` |
-| `twin.media` | the twin's layer media | simulated | rung | computed | nothing | picture: twin_page | none | waiting | `567db3156feb2efa…` |
-| `twin.nat` | the twin's layer nat | simulated | rung | computed | nothing | picture: twin_page | none | waiting | `6adeb3c7428c9918…` |
-| `twin.ocean_and_atmosphere` | the twin's ocean and atmosphere layer | illustration | rung | static | nothing | picture: twin_page | none | admitted | `63b8bceeb04d0b5b…` |
-| `twin.people` | the twin's layer people | simulated | rung | computed | nothing | picture: twin_page | none | waiting | `fcbb87fe8cdf74e6…` |
-| `twin.reach` | the twin's layer reach | simulated | rung | computed | nothing | picture: twin_page | none | waiting | `092a96462192bcfc…` |
-| `twin.seat` | the twin's layer seat | simulated | rung | computed | nothing | picture: twin_page | none | waiting | `3ed02f749b73b54e…` |
-| `twin.topology` | the twin's layer topology | simulated | rung | computed | nothing | picture: twin_page | none | waiting | `1e33312e10301ff4…` |
-| `twin.wm_household` | the twin's layer wm-household | catalogue | rung | static | nothing | picture: twin_page | none | admitted | `51454af4fca52c97…` |
-| `twin.wm_power` | the twin's layer wm-power | catalogue | rung | static | nothing | picture: twin_page | none | admitted | `4db197344f0fd019…` |
-| `twin.wm_presence` | the twin's layer wm-presence | catalogue | rung | static | nothing | picture: twin_page | none | admitted | `3a2d32b4b59b2331…` |
-| `twin.wm_uneven` | the twin's layer wm-uneven | catalogue | rung | static | nothing | picture: twin_page | none | admitted | `7c747dfa55aea013…` |
+| `air` | the air | catalogue | medium | static | nothing | transmittance: holon_draw (1 level); inscatter: holon_draw (1 level) | none | holds | `d37a21633b72e6d1…` |
+| `cosmos.ledger_wager` | the cosmological rung | wager | recorded | declared | nothing | none | none | holds | `59dd377336bc5c94…` |
+| `ladder.atoms` | hydrogen, atom by atom | simulated | rung | computed | ladder.nucleus (shared_edge) | picture: holon_draw (1 px) | none | holds | `da05498a1b8de9c6…` |
+| `ladder.baryon` | below the nucleus: a baryon on a chain | simulated | rung | computed | ladder.sea (shared_edge) | picture: holon_draw (1 px) | none | holds | `d5713843271c6fc7…` |
+| `ladder.cosmic_web` | the cosmic web | illustration | rung | generated | ladder.local_group (shared_edge) | picture: holon_draw (1 px) | none | holds | `e0b3980b8637cffa…` |
+| `ladder.drop` | a drop of water | illustration | rung | generated | ladder.water (shared_edge) | picture: holon_draw (1 px) | none | holds | `a273abb52ca533b6…` |
+| `ladder.earth_moon` | the Earth and the Moon | catalogue | input | computed | ladder.ground (context) | picture: holon_draw (1 px) | none | holds | `d982fbd834890b4b…` |
+| `ladder.ground` | the ground underfoot | illustration | rung | generated | ladder.drop (shared_edge) | picture: holon_draw (1 px) | none | holds | `c5c4d3628958f81f…` |
+| `ladder.local_group` | the Local Group | illustration; parts: places catalogue | rung | generated | ladder.milky_way (shared_edge) | picture: holon_draw (1 px) | none | holds | `6b99434088892dc9…` |
+| `ladder.milky_way` | the Milky Way | illustration | rung | generated | ladder.neighbourhood (shared_edge) | picture: holon_draw (1 px) | none | holds | `9c42bdea8024e890…` |
+| `ladder.neighbourhood` | the solar neighbourhood | catalogue; parts: oort_cloud illustration | input | static | ladder.solar_system (shared_edge) | picture: holon_draw (1 px) | none | holds | `e4e6164563602180…` |
+| `ladder.nucleus` | inside the atom: the nucleus | declared; parts: cloud catalogue | input | declared | ladder.baryon (context); depicts tiers.nucleus | picture: holon_draw (1 px) | none | holds | `aebf5bb55d1fcae7…` |
+| `ladder.sea` | the gauge vacuum: the sea | simulated | rung | computed | nothing | picture: holon_draw (1 px) | none | holds | `3a293fe768f05d09…` |
+| `ladder.solar_system` | the solar system | catalogue; parts: kuiper_belt illustration | input | computed | ladder.earth_moon (shared_edge) | picture: holon_draw (1 px) | none | holds | `3ff919de07e664ae…` |
+| `ladder.water` | liquid water, molecule by molecule | illustration | rung | generated | ladder.atoms (context); depicts tiers.molecule | picture: holon_draw (1 px) | none | holds | `882391f5d4eaa462…` |
+| `qvm.bit_planes` | classical bit-planes | declared | recorded | declared | nothing | none | none | holds | `43cac1eb1edc16c7…` |
+| `qvm.dense` | the dense statevector | declared | recorded | declared | nothing | none | none | holds | `eb96444885ba8321…` |
+| `qvm.dispatch` | the dispatch | measured | recorded | measured | qvm.bit_planes (context), qvm.tableau (context), qvm.rank_sum (context), qvm.mps (context), qvm.dense (context) | none | none | holds | `eba9c453aebdb994…` |
+| `qvm.mps` | the certified matrix-product state | measured | recorded | measured | nothing | none | none | holds | `9c40d2533122354d…` |
+| `qvm.rank_h7` | the stabilizer rank of seven magic states | measured | recorded | measured | nothing | none | none | holds | `26b08825218a2735…` |
+| `qvm.rank_sum` | the stabilizer-rank sum | measured | recorded | measured | nothing | none | none | holds | `55efd5dc8c4240eb…` |
+| `qvm.tableau` | the stabilizer tableau | measured | recorded | measured | nothing | none | none | holds | `3c1d299b1605c136…` |
+| `reasoning.chains` | reasoning chains | measured | recorded | measured | nothing | none | none | holds | `927c0864d51fd65e…` |
+| `reasoning.eleven_plus_one` | the eleven kinds and the remainder, on their own carrier | measured | recorded | measured | nothing | none | none | holds | `4a3a28d0732d3f65…` |
+| `sandbox.cosmic` | the sandbox's cosmic tier | simulated | rung | computed | sandbox.galactic (context) | none | none | holds | `76b889bc987c94ab…` |
+| `sandbox.crystal` | the sandbox's crystal tier | declared | rung | declared | sandbox.gauge (context) | none | none | holds | `fb82d9aaaa183b21…` |
+| `sandbox.galactic` | the sandbox's galactic tier | simulated | rung | computed | sandbox.planet (context) | none | none | holds | `b16c26746054106d…` |
+| `sandbox.gauge` | the sandbox's gauge tier | simulated | rung | computed | nothing | none | none | holds | `2cbb19cc491db4db…` |
+| `sandbox.grain` | the sandbox's grain tier | simulated | rung | computed | sandbox.crystal (context) | none | none | holds | `9efed4ac80adad3a…` |
+| `sandbox.landscape` | the sandbox's landscape tier | simulated | rung | computed | sandbox.sandbox (context) | none | none | holds | `4d1379a554c6f242…` |
+| `sandbox.planet` | the sandbox's planet tier | simulated | rung | computed | sandbox.landscape (context) | none | none | holds | `9c05064627453c2c…` |
+| `sandbox.sandbox` | the sandbox's sandbox tier | simulated | rung | computed | sandbox.grain (context) | none | none | holds | `029472abda98b57b…` |
+| `sectors.hbond_network` | the hydrogen-bond network | measured | sector | measured | tiers.molecule (function) | bond_counts: momentum_law_50fs (0.02 relative) | price, price, 0 relative for momentum_law_50fs | holds | `0cf9e21e6a349a3d…` |
+| `sectors.order_parameter` | the collective order parameter | measured | sector | measured | tiers.molecule (function) | order_field: density_and_current (0.02 relative) | price, price, -0.0007 relative for density_and_current | holds | `567cc90bc11010db…` |
+| `sectors.slow_shell_coordinate` | the VAMPnet's slow shell-geometry coordinate | measured | sector | measured | tiers.molecule (function) | learned_coordinate: mobility (0.02 relative) | price, price, 0.0128 relative for mobility | holds | `d6020c25830181f5…` |
+| `tiers.chemistry` | atom to chemistry | measured | recorded | measured | tiers.nucleus (context) | none | none | holds | `4edf4db9f87ce7ce…` |
+| `tiers.continuum` | the continuum, or the cube | measured | recorded | measured | tiers.fluid_element (context) | none | none | holds | `7a9cac0a4917acd2…` |
+| `tiers.fluid_element` | the fluid element | measured | tier | measured | tiers.molecule (function) | hydrodynamic_block: level_above (0.005 relative) | price, price, 0.039 relative for level_above | holds | `1c4bbaa01b587178…` |
+| `tiers.fold` | the fold below the atom | measured | recorded | measured | nothing | none | none | holds | `d8d25abb628558c5…` |
+| `tiers.molecule` | the molecule | measured | recorded | measured | tiers.chemistry (function) | none | none | holds | `f66c3e253b8b1735…` |
+| `tiers.nucleus` | the nucleus | declared | input | declared | tiers.fold (context) | none | none | holds | `7b944ed972896509…` |
+| `twin.alm` | the twin's layer alm | simulated | rung | computed | nothing | picture: twin_page | none | pending | `500bd5055ba60a8e…` |
+| `twin.arcs` | the twin's layer arcs | simulated | rung | computed | nothing | picture: twin_page | none | pending | `abfcb43f61433e92…` |
+| `twin.calibration` | the twin's layer calibration | simulated | rung | computed | nothing | picture: twin_page | none | pending | `7be94052e3ef7ed0…` |
+| `twin.custody` | the twin's layer custody | simulated | rung | computed | nothing | picture: twin_page | none | pending | `64c2d349385014d5…` |
+| `twin.failures` | the twin's layer failures | simulated | rung | computed | nothing | picture: twin_page | none | pending | `d5475df664945d58…` |
+| `twin.flows` | the twin's layer flows | simulated | rung | computed | nothing | picture: twin_page | none | pending | `2934391b80535546…` |
+| `twin.glow` | the twin's layer glow | simulated | rung | computed | nothing | picture: twin_page | none | pending | `5fb6078dabd6dd56…` |
+| `twin.holon` | the twin's layer holon | simulated | rung | computed | nothing | picture: twin_page | none | pending | `64b234ec5fa2d466…` |
+| `twin.media` | the twin's layer media | simulated | rung | computed | nothing | picture: twin_page | none | pending | `567db3156feb2efa…` |
+| `twin.nat` | the twin's layer nat | simulated | rung | computed | nothing | picture: twin_page | none | pending | `6adeb3c7428c9918…` |
+| `twin.ocean_and_atmosphere` | the twin's ocean and atmosphere layer | illustration | rung | static | nothing | picture: twin_page | none | holds | `63b8bceeb04d0b5b…` |
+| `twin.people` | the twin's layer people | simulated | rung | computed | nothing | picture: twin_page | none | pending | `fcbb87fe8cdf74e6…` |
+| `twin.reach` | the twin's layer reach | simulated | rung | computed | nothing | picture: twin_page | none | pending | `092a96462192bcfc…` |
+| `twin.seat` | the twin's layer seat | simulated | rung | computed | nothing | picture: twin_page | none | pending | `3ed02f749b73b54e…` |
+| `twin.topology` | the twin's layer topology | simulated | rung | computed | nothing | picture: twin_page | none | pending | `1e33312e10301ff4…` |
+| `twin.wm_household` | the twin's layer wm-household | catalogue | rung | static | nothing | picture: twin_page | none | holds | `51454af4fca52c97…` |
+| `twin.wm_power` | the twin's layer wm-power | catalogue | rung | static | nothing | picture: twin_page | none | holds | `4db197344f0fd019…` |
+| `twin.wm_presence` | the twin's layer wm-presence | catalogue | rung | static | nothing | picture: twin_page | none | holds | `3a2d32b4b59b2331…` |
+| `twin.wm_uneven` | the twin's layer wm-uneven | catalogue | rung | static | nothing | picture: twin_page | none | holds | `7c747dfa55aea013…` |
 
 60 declarations: 8 catalogue, 5 declared, 7 illustration, 15 measured, 24 simulated, 1 wager.
 

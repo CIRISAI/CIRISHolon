@@ -1,0 +1,135 @@
+{
+ "says": "PROTOTYPE, unsigned and unregistered. Each entry is what a signer would say in one scores row: 'the checks of ciris/holon-decl/0 held for this claim over these digests'. It does not say the evidence supports the claim.",
+ "checked_by": {
+  "holonc.py": "61fdf4cb3770e49d98e819d734e762cee372368c47277cc9d89a471b81e36187",
+  "vocabulary.json": "1fbe392bd2a24255ada3de8fd34d4813fa137885fc3b77bbd95709bae1ade358"
+ },
+ "claims": [
+  {
+   "family": "x_private:holon:claim",
+   "holon": "sectors.hbond_network",
+   "view": "bond_counts",
+   "consumer": "momentum_law_50fs",
+   "score": 1,
+   "kind": "price",
+   "basis": "price",
+   "bound": {
+    "decimal": "0.0",
+    "unit": "relative"
+   },
+   "budget": {
+    "decimal": "0.02",
+    "unit": "relative"
+   },
+   "evidence_refs": [
+    {
+     "what": "declaration",
+     "path": "standard/registry/sectors.hbond_network.json",
+     "sha256": "0cf9e21e6a349a3de993e39ef507c3a05988c14d2a812349ff72af7ae9695207"
+    },
+    {
+     "what": "evidence",
+     "path": "conformance/replace1/REPLACE1_RESULTS.md",
+     "sha256": "1beacfab3d76cf70518e8ab1fe1a8a439e27db351b54d6157bf3ddd29682f9b6"
+    },
+    {
+     "what": "evidence",
+     "path": "conformance/water_observatory/TSCAN_HBOND_SEARCH_RESULTS.md",
+     "sha256": "f6aef8612d6f8ec57a00a7adfa8a2868af5895983a059196e1dc59a30c1f2ebd"
+    }
+   ]
+  },
+  {
+   "family": "x_private:holon:claim",
+   "holon": "sectors.order_parameter",
+   "view": "order_field",
+   "consumer": "density_and_current",
+   "score": 1,
+   "kind": "price",
+   "basis": "price",
+   "bound": {
+    "decimal": "-0.0007",
+    "unit": "relative"
+   },
+   "budget": {
+    "decimal": "0.02",
+    "unit": "relative"
+   },
+   "evidence_refs": [
+    {
+     "what": "declaration",
+     "path": "standard/registry/sectors.order_parameter.json",
+     "sha256": "567cc90bc11010db156fa8f67ccb6e7c8a7c0ff2e26f9da9b4d2a027ed05d229"
+    },
+    {
+     "what": "evidence",
+     "path": "conformance/replace1/REPLACE1_RESULTS.md",
+     "sha256": "1beacfab3d76cf70518e8ab1fe1a8a439e27db351b54d6157bf3ddd29682f9b6"
+    }
+   ]
+  },
+  {
+   "family": "x_private:holon:claim",
+   "holon": "sectors.slow_shell_coordinate",
+   "view": "learned_coordinate",
+   "consumer": "mobility",
+   "score": 1,
+   "kind": "price",
+   "basis": "price",
+   "bound": {
+    "decimal": "0.0128",
+    "unit": "relative"
+   },
+   "budget": {
+    "decimal": "0.02",
+    "unit": "relative"
+   },
+   "evidence_refs": [
+    {
+     "what": "declaration",
+     "path": "standard/registry/sectors.slow_shell_coordinate.json",
+     "sha256": "d6020c25830181f5054e772e9d3fdaefc92e0283d7e66f01f9e81a257965ef5b"
+    },
+    {
+     "what": "evidence",
+     "path": "conformance/water_observatory/SLOW2_RESULTS.md",
+     "sha256": "15bf5e92676260b27a8ece683555e77a3dd65672e844589d949a8dde299dd1e9"
+    }
+   ]
+  },
+  {
+   "family": "x_private:holon:claim",
+   "holon": "tiers.fluid_element",
+   "view": "hydrodynamic_block",
+   "consumer": "level_above",
+   "score": 1,
+   "kind": "price",
+   "basis": "price",
+   "bound": {
+    "decimal": "0.039",
+    "unit": "relative"
+   },
+   "budget": {
+    "decimal": "0.005",
+    "unit": "relative"
+   },
+   "evidence_refs": [
+    {
+     "what": "declaration",
+     "path": "standard/registry/tiers.fluid_element.json",
+     "sha256": "1c4bbaa01b587178561bcab95c782f4b712e12511728eb4fc608941c1c1eb784"
+    },
+    {
+     "what": "evidence",
+     "path": "conformance/replace1/OBJECTIVE1_RESULTS.md",
+     "sha256": "0c8b65e9b600748b6363bf7296723236fa6817daccc7c9eee73ed828cec2db18"
+    },
+    {
+     "what": "evidence",
+     "path": "conformance/replace1/REPLACE1_RESULTS.md",
+     "sha256": "1beacfab3d76cf70518e8ab1fe1a8a439e27db351b54d6157bf3ddd29682f9b6"
+    }
+   ]
+  }
+ ]
+}

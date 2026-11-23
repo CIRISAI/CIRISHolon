@@ -1,6 +1,6 @@
 {
  "expect": [
-  "below_refused",
+  "below_fails",
   "kill_missing"
  ],
  "declarations": [

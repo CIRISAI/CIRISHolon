@@ -86,11 +86,14 @@
     "none": "No neighbour on that side."
   },
   "answer": {
-    "admitted": "Every check held and everything cited is held here.",
-    "waiting": "Every check held, but something cited is not held here, or it stands on a declaration that is waiting. Never counted as admitted.",
-    "refused": "One or more checks failed. The reason is the sorted set of their tokens."
+    "holds": "Every check held and everything cited is held here. It says the checks held over the files read; it does not say the evidence supports the claim.",
+    "pending": "Every check held, but something cited is not held here, or it stands on a declaration that is pending. Never counted as holds.",
+    "fails": "One or more checks failed. The reason is the sorted set of their tokens."
   },
-  "refusal": {
+  "window": {
+    "not_measured": "the range of budgets over which the carried set does not change has not been measured"
+  },
+  "reason": {
     "spec_unknown": "A. spec is not ciris/holon-decl/0.",
     "member_missing": "A. A required member is absent.",
     "member_unexpected": "A. A member this version does not define, at any depth.",
@@ -100,7 +103,7 @@
     "id_duplicate": "B. Two declarations carry one id.",
     "below_unresolved": "B. below names an id no declaration carries.",
     "below_cycle": "B. Following below (and depicts) returns to the same holon.",
-    "below_refused": "B. It stands on a declaration that is refused.",
+    "below_fails": "B. It stands on a declaration that is failing.",
     "relation_unbacked": "B. A function or shared_edge relation cites no file of the repository as its basis.",
     "depicts_unresolved": "B. depicts names an id no declaration carries.",
     "source_missing": "B. A declared, catalogue or measured holon, or such a part, cites no source.",
@@ -139,7 +142,54 @@
     "row_missing": "a recorded row quotes no row of the record",
     "price_contradicts_standing": "a price certificate that does not agree with the standing: a tier's price must exceed its consumer's budget, a sector's must not, the basis must be price, and nothing else holds one"
   },
-  "window": {
-    "not_measured": "the range of budgets over which the carried set does not change has not been measured"
+  "reason_needs": {
+    "_": "What a party must hold to run the check. blob: the declaration alone. set: the declarations it names. repository: the declarer's files, so on the wire it is the declarer's attestation and not a verified fact, until the file travels by digest.",
+    "spec_unknown": "blob",
+    "member_missing": "blob",
+    "member_unexpected": "blob",
+    "type_wrong": "blob",
+    "id_malformed": "blob",
+    "vocabulary_unregistered": "blob",
+    "id_duplicate": "set",
+    "below_unresolved": "set",
+    "below_cycle": "set",
+    "below_fails": "set",
+    "relation_unbacked": "repository",
+    "depicts_unresolved": "set",
+    "source_missing": "blob",
+    "source_not_found": "repository",
+    "kill_missing": "blob",
+    "simulated_not_computed": "blob",
+    "engine_missing": "repository",
+    "medium_without_view": "blob",
+    "view_without_consumer": "blob",
+    "consumer_conflict": "blob",
+    "consumer_unresolved": "set",
+    "consumer_without_budget": "blob",
+    "budget_unit_mismatch": "blob",
+    "certificate_owed": "blob",
+    "certificate_unbound": "blob",
+    "certificate_exceeds_budget": "blob",
+    "illustration_certified": "blob",
+    "illustration_undrawn": "blob",
+    "scene_not_generated": "blob",
+    "scene_certificate_incomplete": "blob",
+    "evidence_missing": "blob",
+    "evidence_not_found": "repository",
+    "evidence_digest": "repository",
+    "evidence_undigested": "blob",
+    "gate_not_found": "repository",
+    "regime_missing": "blob",
+    "tier_uncertified": "blob",
+    "tier_uncarried": "blob",
+    "carried_not_tier": "blob",
+    "sector_untested": "blob",
+    "fade_across_theories": "blob",
+    "fade_unbacked": "blob",
+    "join_disagrees": "set",
+    "ladder_disagrees": "repository",
+    "quote_not_found": "repository",
+    "row_missing": "repository",
+    "price_contradicts_standing": "blob"
   }
 }

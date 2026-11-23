@@ -1,8 +1,8 @@
 {
  "says": "PROTOTYPE, unsigned and unregistered. Each entry is what a signer would say in one scores row: 'the checks of ciris/holon-decl/0 held for this claim over these digests'. It does not say the evidence supports the claim. For a price, score 1 says the stated reading (carried or dropped) is what the numbers give, not that it is carried.",
  "checked_by": {
-  "holonc.py": "531d7abcac5587b8cccfee9e0f1838321e472bdc414444854ebcc09ab1afb0f6",
-  "vocabulary.json": "3764677a9ac0c570c2ff6840681b64c5142e5f89a0ccececef63fbe9dff448ea"
+  "holonc.py": "9e3fe6d5ef7f77f1336ae6818dbbd25fcecf8defdc04ac6c6cf76825bff63566",
+  "vocabulary.json": "38ba2589da93d3954b642fa0f6c8afb95c6126e9a2c3b9450fbcca631bf2b6bc"
  },
  "claims": [
   {

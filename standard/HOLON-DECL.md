@@ -322,6 +322,14 @@ eight. These members answer them. They have known answers and no review.
   stated reference over stated cases. Only a bound of zero meets it.
 - **`plants`**: `{ what, planted, caught, evidence? }`: faults put in on purpose and how
   many were caught (`plants_miscounted` if more caught than planted).
+- **`specification` on a view**: `{ status, states, evidence }`: the definition the view is
+  checked AGAINST, where that definition is itself `proved` or `model_checked`
+  (`specification_unbacked` otherwise). The view's own status says what is true of the
+  code. `proved` on a view means the code is proved, not only its definition. So a view
+  whose definition is proved in Lean and whose code agrees with it on stated cases is
+  `case_checked` with a `proved` specification.
+- **A run's input may be a whole tree**: `{ tree, repository }`, a git commit id. It is not a
+  sha256 and nothing here checks it.
 - **Standing `function`**: a pure function of what it is given, with no state of its own.
   It owes a computed step (`function_not_computed`) and implies no closure claim.
 

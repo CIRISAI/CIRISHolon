@@ -62,7 +62,9 @@ def shapes():
                     # a file held elsewhere, named by its digest; the repository and commit are a hint for finding it
                     ("map", {"digest": (("sha",), True), "name": (("str",), True), "repository": (("str",), False), "commit": (("str",), False)}),
                     # a check that was run: the command, its inputs by digest, and the line it printed
-                    ("map", {"run": (("str",), True), "inputs": (("list", ("map", {"digest": (("sha",), True), "name": (("str",), True)}), 1), True),
+                    ("map", {"run": (("str",), True), "inputs": (("list", ("one", [("map", {"digest": (("sha",), True), "name": (("str",), True)}),
+                                                         # a whole source tree, named by its git commit id (not a sha256: said, not checked)
+                                                         ("map", {"tree": (("str",), True), "repository": (("str",), True)})]), 1), True),
                              "printed": (("str",), True), "repository": (("str",), False), "commit": (("str",), False)})])
     budget = ("one", [("map", {"quantity": (("str",), True), "bound": (("num",), True), "unit": (("word", "budget_unit"), True)}),
                       # exact: the need is agreement with a stated reference over stated cases, not a bound
@@ -70,7 +72,10 @@ def shapes():
     consumer = ("map", {"id": (("str",), True), "kind": (("word", "consumer"), True), "budget": (budget, False),
                         "holon": (("id",), False), "stated": (ref, False), "pin": (("str",), False)})
     view = ("map", {"id": (("str",), True), "reads": (("str",), True), "consumers": (("list", consumer, 0), True),
-                    "status": (("word", "status"), False), "evidence": (("list", evid, 1), False)})
+                    "status": (("word", "status"), False), "evidence": (("list", evid, 1), False),
+                    # what the view is checked AGAINST, where that definition is itself proved or model-checked
+                    "specification": (("map", {"status": (("word", "status"), True), "states": (("str",), True),
+                                               "evidence": (("list", evid, 1), True)}), False)})
     plant = ("map", {"what": (("str",), True), "planted": (("int",), True), "caught": (("int",), True), "evidence": (("list", evid, 1), False)})
     part = ("map", {"id": (("str",), True), "what": (("str",), True), "status": (("word", "status"), True), "source": (("list", ref, 1), False)})
     cert = ("map", {
@@ -339,6 +344,11 @@ def meaning(d, world, root, gates, register=False):
             fail("check_unbacked", f"view {v['id']} is {v.get('status', status)} with no check run as evidence")
         if v.get("evidence"):
             evidence(v["evidence"], f"view {v['id']}", v.get("status", status), root, gates, fail, waiting)
+        sp = v.get("specification")
+        if sp is not None:
+            if sp["status"] not in ("proved", "model_checked") or not has_run(sp["evidence"]):
+                fail("specification_unbacked", f"view {v['id']}: a specification is proved or model_checked, with a check run as evidence")
+            evidence(sp["evidence"], f"view {v['id']} specification", sp["status"], root, gates, fail, waiting)
     if status in CHECKED and not d["views"] and not has_run(d.get("evidence")):
         fail("check_unbacked", f"the holon is {status} with no check run as evidence")
     if d.get("evidence"):

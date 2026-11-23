@@ -97,3 +97,5 @@ join = "fade" / "cut" / "none"
 ;                             unit: unit, reads: "carried" / "dropped", evidence: [+ evidence] } )
 ; consumer   //= ( kind: "target", stated: reference )
 ; a quote is at least 30 characters (phase B: quote_fragment)
+; view     //= ( ? specification: { status: "proved" / "model_checked", states: text1, evidence: [+ evidence] } )
+; a run's inputs may also hold { tree: text1, repository: text1 }, a git commit id

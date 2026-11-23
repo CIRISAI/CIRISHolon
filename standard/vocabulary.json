@@ -8,7 +8,7 @@
     "declared": "An input taken as given; nothing here derives it. Owes: a source.",
     "wager": "A chosen position that could be wrong. Owes: a kill with the date it was stated.",
     "illustration": "A picture; nothing computes it. Owes: no certificate (one is refused), and a draw view with a label.",
-    "proved": "A theorem checked by a proof assistant. Owes: evidence on the view (or the holon) that includes a check run.",
+    "proved": "The CODE that computes the view is proved by a proof assistant, not only its specification. Owes: evidence that includes a check run. Where only the definition is proved and the code agrees with it on cases, the view is case_checked and says so in `specification`.",
     "model_checked": "Every state of a stated finite model was explored. Owes: evidence that includes a check run.",
     "case_checked": "Agreement with a reference over a stated set of cases. Owes: evidence that includes a check run.",
     "unchecked": "Nothing checks it. Said so that a view among checked ones is not taken for one of them."
@@ -161,7 +161,8 @@
     "quote_fragment": "B. A quotation is shorter than 30 characters, or starts or ends inside a word of the file.",
     "source_not_record": "B. A measured recorded row cites, with words, only the file its row is quoted from.",
     "self_cited": "B. A declaration of the register cites the register or the known answers' fixtures.",
-    "bound_negative": "B. A certificate's bound is below zero."
+    "bound_negative": "B. A certificate's bound is below zero.",
+    "specification_unbacked": "B. A view's specification is not proved or model_checked, or carries no check run as evidence."
   },
   "reason_needs": {
     "_": "What a party must hold to run the check. blob: the declaration alone. set: the declarations it names. repository: the declarer's files, so on the wire it is the declarer's attestation and not a verified fact, until the file travels by digest.",
@@ -222,7 +223,8 @@
     "bound_negative": "blob",
     "self_cited": "blob",
     "quote_fragment": "repository",
-    "source_not_record": "blob"
+    "source_not_record": "blob",
+    "specification_unbacked": "blob"
   },
   "price_reading": {
     "carried": "The price, less two of its standard errors, is above the consumer's budget, and no null reaches the budget.",

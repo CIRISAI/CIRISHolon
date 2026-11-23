@@ -78,7 +78,29 @@
               "kind": "dependent",
               "pin": "v1"
             }
-          ]
+          ],
+          "specification": {
+            "status": "proved",
+            "states": "the definition the answer is checked against",
+            "evidence": [
+              {
+                "run": "./check.sh",
+                "inputs": [
+                  {
+                    "digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                    "name": "check.sh"
+                  },
+                  {
+                    "tree": "0e7211e2bcea2f65176a5acd3408e2e00f7269e8",
+                    "repository": "example/repo"
+                  }
+                ],
+                "printed": "all 3 steps passed",
+                "repository": "example/repo",
+                "commit": "0000000"
+              }
+            ]
+          }
         },
         {
           "id": "rest",

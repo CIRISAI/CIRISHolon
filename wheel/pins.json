@@ -1,0 +1,21 @@
+{
+  "_": "The eight native jars this package carries, byte for byte from Maven Central (org.bytedeco). sha1 and bytes are Maven Central's own, read 2026-11-23. sha256 is this repository's pin (null would mean not pinned, and nothing is published while any is null). The Linux pair was given by the client session from its own copies and matched CI's; the other six are from CI run 45254071486 at 60fde4e, where each jar's size and sha1 matched Maven Central's. Those six have that one source.",
+  "version": "0.1.0",
+  "base": "https://repo1.maven.org/maven2/org/bytedeco",
+  "targets": {
+    "linux-x86_64":   { "wheel_tag": "manylinux_2_17_x86_64" },
+    "macosx-x86_64":  { "wheel_tag": "macosx_10_9_x86_64" },
+    "macosx-arm64":   { "wheel_tag": "macosx_11_0_arm64" },
+    "windows-x86_64": { "wheel_tag": "win_amd64" }
+  },
+  "jars": {
+    "ffmpeg-7.1-1.5.11-linux-x86_64.jar":   { "path": "ffmpeg/7.1-1.5.11", "bytes": 24766189, "sha1": "4a4c76feccc8cd5cff5a797af2080024ab87a880", "sha256": "69a5079b881336676115d1250cdc239e89652d6c58a6bd35e84cb880e735cbbf" },
+    "ffmpeg-7.1-1.5.11-macosx-x86_64.jar":  { "path": "ffmpeg/7.1-1.5.11", "bytes": 23073508, "sha1": "0f4defc8d098a7f12d647e9c29a4b81e30229e19", "sha256": "6e0c21b779bb55bf2c5b8810ac71610bc6dd6ef394c3541a80f02c26e61cc4c8" },
+    "ffmpeg-7.1-1.5.11-macosx-arm64.jar":   { "path": "ffmpeg/7.1-1.5.11", "bytes": 19465640, "sha1": "21d65a22081f278cbe1ea8c351ab1548ab4701e0", "sha256": "bae41342be096b898e71060ccba2010af5ee8f5dc722d573c12efef791bf1d10" },
+    "ffmpeg-7.1-1.5.11-windows-x86_64.jar": { "path": "ffmpeg/7.1-1.5.11", "bytes": 25536044, "sha1": "85302b8049f9c5869bf7b61307f39c5b53069339", "sha256": "63205da750f3fbb7fa0e5d23b9e00fc1257e478c33d02dcee9299268309d594b" },
+    "javacpp-1.5.11-linux-x86_64.jar":      { "path": "javacpp/1.5.11", "bytes": 47615,   "sha1": "a0638ad2ac26da1116d3f72555865ef3a8c95525", "sha256": "c0c12bc792a02034176122d822237cce8f36d55d1c6a402533464caa4180fcb2" },
+    "javacpp-1.5.11-macosx-x86_64.jar":     { "path": "javacpp/1.5.11", "bytes": 39877,   "sha1": "50dfb81327a90385e5defc8a8d36de81d3d58cb0", "sha256": "041a60a8893364cce5ce02cfba7129b9dfb02948bf1377b89e62b17fd2f0a2a4" },
+    "javacpp-1.5.11-macosx-arm64.jar":      { "path": "javacpp/1.5.11", "bytes": 38489,   "sha1": "df05a996ce8b0599995109c62d29e84c3819b461", "sha256": "ae071440706f62d20825f177308e996ae7aeffea49c0eb3e88cfeea2fe302928" },
+    "javacpp-1.5.11-windows-x86_64.jar":    { "path": "javacpp/1.5.11", "bytes": 1971409, "sha1": "b1245824a612462e16021b26aa1004e2b69aead0", "sha256": "cb67ca46bfaf54782d38554aab591f2caffa9a89124789866afc8c8203034cf3" }
+  }
+}

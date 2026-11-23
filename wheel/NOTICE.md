@@ -22,7 +22,7 @@ SVT-AV1, dav1d, libaom, libvpx, OpenSSL, LAME, Speex, opencore-amr, vo-amrwbenc 
 OpenH264. This notice does not list every one; the build script does. OpenH264 is included
 as compiled by bytedeco, not as the binary Cisco distributes.
 
-**This package's own files** (`ciris_media/__init__.py`, the builder) are part of
+**This package's own files** (`ciris_holon/`, the builder) are part of
 CIRISHolon and under the GNU AGPL version 3.
 
 Nothing here is legal advice. The digests say which bytes are carried; the terms above are

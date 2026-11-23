@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build the four ciris-media wheels: each is one platform's two native jars, byte for byte.
+"""Build the four ciris-holon wheels: each is one platform's two native jars, byte for byte.
 
     python3 build_wheels.py --out dist                 fetch from Maven Central, check, build
     python3 build_wheels.py --out dist --from-dir D    take the jars from D instead of the network
@@ -33,16 +33,16 @@ def fetch(name, pin, base, from_dir):
 
 
 def wheel(out, version, tag, files):
-    name = f"ciris_media-{version}-py3-none-{tag}.whl"
-    info = f"ciris_media-{version}.dist-info"
-    meta = (f"Metadata-Version: 2.1\nName: ciris-media\nVersion: {version}\n"
-            "Summary: The FFmpeg and JavaCPP native jars the CIRIS client's video calls load, unmodified from Maven Central\n"
+    name = f"ciris_holon-{version}-py3-none-{tag}.whl"
+    info = f"ciris_holon-{version}.dist-info"
+    meta = (f"Metadata-Version: 2.1\nName: ciris-holon\nVersion: {version}\n"
+            "Summary: What CIRISHolon publishes for CIRIS components to run on. 0.1 holds the FFmpeg and JavaCPP native jars for video calls, unmodified from Maven Central\n"
             "Home-page: https://github.com/CIRISAI/CIRISHolon\n"
             "License: AGPL-3.0-only AND LGPL-3.0-or-later AND (Apache-2.0 OR GPL-2.0-or-later WITH Classpath-exception-2.0)\n"
             "Requires-Python: >=3.8\nDescription-Content-Type: text/markdown\n\n" + (HERE / "NOTICE.md").read_text(encoding="utf-8"))
     files = dict(files)
     files[f"{info}/METADATA"] = meta.encode()
-    files[f"{info}/WHEEL"] = f"Wheel-Version: 1.0\nGenerator: ciris-media build_wheels.py\nRoot-Is-Purelib: false\nTag: py3-none-{tag}\n".encode()
+    files[f"{info}/WHEEL"] = f"Wheel-Version: 1.0\nGenerator: ciris-holon build_wheels.py\nRoot-Is-Purelib: false\nTag: py3-none-{tag}\n".encode()
     files[f"{info}/licenses/NOTICE.md"] = (HERE / "NOTICE.md").read_bytes()
     rec = "".join(f"{p},sha256={base64.urlsafe_b64encode(hashlib.sha256(b).digest()).rstrip(b'=').decode()},{len(b)}\n" for p, b in sorted(files.items()))
     files[f"{info}/RECORD"] = (rec + f"{info}/RECORD,,\n").encode()
@@ -69,22 +69,23 @@ def main():
         sys.exit("a sha256 pin is null: nothing is built for publishing until every jar is pinned")
     out = pathlib.Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
-    init = (HERE / "src" / "ciris_media" / "__init__.py").read_bytes()
+    init = (HERE / "src" / "ciris_holon" / "__init__.py").read_bytes()
+    media = (HERE / "src" / "ciris_holon" / "media" / "__init__.py").read_bytes()
     if f'__version__ = "{pins["version"]}"'.encode() not in init:
         sys.exit("the package's __version__ is not pins.json's version")
     sums = []
     for classifier, t in pins["targets"].items():
-        files = {"ciris_media/__init__.py": init}
+        files = {"ciris_holon/__init__.py": init, "ciris_holon/media/__init__.py": media}
         for name, pin in sorted(pins["jars"].items()):
             if name.endswith(f"-{classifier}.jar"):
                 data, got = fetch(name, pin, pins["base"], a.from_dir)
-                files[f"ciris_media/jars/{name}"] = data
+                files[f"ciris_holon/media/jars/{name}"] = data
                 if a.record:
                     print(f"jar {name} sha256 {got}")
-        if len(files) != 3:
-            sys.exit(f"{classifier}: expected two jars, found {len(files) - 1}")
+        if len(files) != 4:
+            sys.exit(f"{classifier}: expected two jars, found {len(files) - 2}")
         # the jars' own digests travel with them, so whoever loads them can check what was found (the client asked for this)
-        files["ciris_media/jars/SHA256SUMS"] = "".join(
+        files["ciris_holon/media/jars/SHA256SUMS"] = "".join(
             f"{hashlib.sha256(b).hexdigest()}  {pathlib.PurePosixPath(n).name}\n" for n, b in sorted(files.items()) if n.endswith(".jar")).encode()
         w = wheel(out, pins["version"], t["wheel_tag"], files)
         sums.append(f"{hashlib.sha256(w.read_bytes()).hexdigest()}  {w.name}")

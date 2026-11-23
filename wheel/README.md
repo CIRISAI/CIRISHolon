@@ -1,20 +1,26 @@
-# ciris-media
+# ciris-holon
 
-One Python wheel per desktop platform, holding that platform's FFmpeg and JavaCPP native jars
+What CIRISHolon publishes for other CIRIS components to run on. Version 0.1 holds one thing,
+`ciris_holon.media`: one Python wheel per desktop platform, holding that platform's FFmpeg and JavaCPP native jars
 exactly as the bytedeco project publishes them on Maven Central. Nothing is compiled or changed.
 
 **Why.** The CIRIS client's desktop wheels carried these jars (19 to 24 MiB each) and sat
 within 0.18 to 3.6 MiB of PyPI's 100 MiB file limit, with the project near PyPI's 10 GiB
-total. With the jars here, under their own version that changes only when FFmpeg does, each
-client wheel is about 20 MiB smaller and each client release adds about 90 MB less. Requirements
+total. With the jars here each client wheel is about 20 MiB smaller, and each client release adds
+about 90 MB less so long as this package is not re-released with it.
+
+**Why `ciris-holon` and not `ciris-media`.** Eric, 2026-11-23: "video is one form of holon we
+draw". The draw engine's native build for the client (#9) is meant to land in this same
+package. The cost: every release of this package carries the jars again (about 95 MB across
+the four wheels) against this project's own PyPI total. Requirements
 as the client session gave them: CIRISAI/CIRISHolon#9.
 
-**What is in a wheel.** `ciris_media/jars/ffmpeg-7.1-1.5.11-<platform>.jar`,
-`ciris_media/jars/javacpp-1.5.11-<platform>.jar`, `ciris_media/jars/SHA256SUMS` (the two jars' digests, so a loader can check what it found),
-a few lines of Python (`ciris_media.jar_dir()`, `jars()`, `verify()`), and `NOTICE.md`.
+**What is in a wheel.** `ciris_holon/media/jars/ffmpeg-7.1-1.5.11-<platform>.jar`,
+`ciris_holon/media/jars/javacpp-1.5.11-<platform>.jar`, `ciris_holon/media/jars/SHA256SUMS` (the two jars' digests, so a loader can check what it found),
+a few lines of Python (`ciris_holon.media.jar_dir()`, `jars()`, `verify()`), and `NOTICE.md`.
 
 The client's jar sits at `site-packages/ciris_client/_artifacts/`, so from there the jars are
-at `../../ciris_media/jars/<name>.jar`.
+at `../../ciris_holon/media/jars/<name>.jar`.
 
 | platform | wheel tag |
 |---|---|
@@ -36,16 +42,17 @@ publisher do not, and only the account owner can make them:
 
 | PyPI "pending publisher" field | value |
 |---|---|
-| PyPI project name | `ciris-media` |
+| PyPI project name | `ciris-holon` |
 | owner | `CIRISAI` |
 | repository | `CIRISHolon` |
-| workflow | `ciris-media.yml` |
+| workflow | `ciris-holon.yml` |
 | environment | `pypi` |
 
-Then: Actions, ciris-media, Run workflow on main, with publish ticked.
+Then: Actions, ciris-holon, Run workflow on main, with publish ticked.
 
-**Versions.** `7.1.0` is FFmpeg 7.1 with JavaCPP 1.5.11, as built by bytedeco. A later
-version is meant to carry a cut-down build of the same libraries (the AV1 codecs and the
+**Versions.** `0.1.0` carries FFmpeg 7.1 with JavaCPP 1.5.11, as built by bytedeco
+(`ciris_holon.media.FFMPEG`, `JAVACPP`). The minor version changes when a consumer must
+change. A later version is meant to carry a cut-down build of the same libraries (the AV1 codecs and the
 scaler only); that needs a build pipeline for four platforms and is not started.
 
 **Terms.** `NOTICE.md`.

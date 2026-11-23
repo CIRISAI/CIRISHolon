@@ -1,6 +1,6 @@
 {
   "_": "The eight native jars this package carries, byte for byte from Maven Central (org.bytedeco). sha1 and bytes are Maven Central's own, read 2026-11-23. sha256 is this repository's pin (null would mean not pinned, and nothing is published while any is null). The Linux pair was given by the client session from its own copies and matched CI's; the other six are from CI run 45254071486 at 60fde4e, where each jar's size and sha1 matched Maven Central's. Those six have that one source.",
-  "version": "7.1.0",
+  "version": "0.1.0",
   "base": "https://repo1.maven.org/maven2/org/bytedeco",
   "targets": {
     "linux-x86_64":   { "wheel_tag": "manylinux_2_17_x86_64" },

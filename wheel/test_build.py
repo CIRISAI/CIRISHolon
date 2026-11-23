@@ -21,10 +21,10 @@ with tempfile.TemporaryDirectory() as d:
         assert w.read_bytes() == (d / "b" / w.name).read_bytes(), f"{w.name} differs between two builds"
         with zipfile.ZipFile(w) as z:
             names = z.namelist(); jars = [n for n in names if n.endswith(".jar")]
-            assert len(jars) == 2 and "ciris_media/__init__.py" in names, names
+            assert len(jars) == 2 and "ciris_holon/media/__init__.py" in names and "ciris_holon/__init__.py" in names, names
             for j in jars:
                 assert z.read(j) == (src / pathlib.Path(j).name).read_bytes()
-            sums = z.read("ciris_media/jars/SHA256SUMS").decode().split("\n")
+            sums = z.read("ciris_holon/media/jars/SHA256SUMS").decode().split("\n")
             assert sorted(sums[:-1]) == sorted(f"{hashlib.sha256(z.read(j)).hexdigest()}  {pathlib.Path(j).name}" for j in jars), sums
             rec = z.read([n for n in names if n.endswith("RECORD")][0]).decode()
             assert all(n in rec for n in names)

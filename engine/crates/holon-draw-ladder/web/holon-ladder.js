@@ -10,6 +10,12 @@
 //
 //   import { install } from './holon-ladder.js';
 //   await install({ wasm: './holon_draw_ladder.wasm' });   // sets window.HOLON_LADDER
+//   window.HOLON_LADDER.prepare(gl, view)   // optional, at idle: the first draw's setup ahead of time
+//
+// The FIRST draw on a context makes the drawer and the text provider (compiling their programs)
+// and builds the rungs' first tiles and text: tens of milliseconds on a desktop, several times
+// that on a slow phone, inside whatever frame first goes past an edge. prepare(gl, view) does
+// that at a moment the host chooses (its idle, once the switch is off), with no drawing.
 //
 // INSTALL OPTIONS (all optional):
 //   wasm          URL of holon_draw_ladder.wasm; default: beside this file
@@ -251,8 +257,50 @@ export async function install(opts) {
     }
   }
 
+  /**
+   * Do ahead of time, at the host's idle, what the first draw call would otherwise do inside a
+   * frame: make the text provider and the drawer on this context (which compiles their
+   * programs), and build the first view on each side of the band once without drawing it (which
+   * lays out the rungs' first tiles and rasterises their text). The same GL state is saved and
+   * put back as for a draw. Nothing is drawn and the depth buffer is not cleared. Returns true
+   * when done; false before the module has loaded or without a usable view.
+   */
+  function prepare(gl, view) {
+    if (!w || !gl || !view) return false;
+    const edges = view.edges || {};
+    if (!Number.isFinite(edges.globe) || !Number.isFinite(edges.street)) return false;
+    try {
+      const g = context(gl);
+      const vp = view.viewport || [gl.drawingBufferWidth, gl.drawingBufferHeight];
+      const css = Number.isFinite(view.dpr) && view.dpr > 0 ? view.dpr : 1;
+      const rs = Number.isFinite(view.renderScale) && view.renderScale > 0 ? view.renderScale : css;
+      const W = Math.max(1, Math.round(vp[0] * rs)), H = Math.max(1, Math.round(vp[1] * rs));
+      const shift = opts.zPixel === 'buffer' ? 0 : Math.log10(css / rs);
+      const lo = edges.street + shift, hi = edges.globe + shift;
+      if (lo !== band.lo || hi !== band.hi) { w.hl_band(lo, hi, 0); band.lo = lo; band.hi = hi; }
+      const keep = opts.restoreState !== false;
+      if (keep) save(g);
+      try {
+        graphics(g, rs);
+        g.text.beginFrame();
+        const clock = clockOf(view);
+        const inn = inward(view, 0.25);
+        w.hl_host_weight_override(0.5, 1);
+        w.hl_view(lo - 0.25, inn[0], inn[1], W, H, rs, clock);
+        w.hl_view(hi + 0.25, view.yaw || 0, Math.min(Math.PI / 2, Math.max(-Math.PI / 2, view.pitch || 0)), W, H, rs, clock);
+      } finally {
+        if (keep) restore(g);
+      }
+      return true;
+    } catch (e) {
+      onError(e);
+      return false;
+    }
+  }
+
   const adapter = {
     draw,
+    prepare,
     /** What the last draw call did: { drawn, share, passes, z, yaw, pitch, width, height, ms, slot }. */
     last,
     /** The wasm exports, once loaded (for a host's own legend: hl_rungs, hl_rung_text). */

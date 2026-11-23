@@ -41,14 +41,20 @@ const LAW = {                        // the served wall law's own numbers, paste
   r_cut: 14.0,
 };
 
+// THE STAGE IS DRAWN BY HOLON-DRAW (the repo's own engine, ../holon-draw/, 2026-11-23), not
+// by Canvas 2D: every blob, bond, atom and the ring below is a holon-draw screen record.
+// Only the drawing moved; what is drawn, and where, is what it was.
+import { createStage } from "../holon-draw/screen.js";
+
 const $ = (id) => document.getElementById(id);
-const canvas = $("stage"), ctx = canvas.getContext("2d", { alpha: false });
-let W = 0, H = 0, DPR = 1;
+const canvas = $("stage");
+let W = 0, H = 0, DPR = Math.min(window.devicePixelRatio || 1, 2);
+const stage = createStage(canvas, { dpr: DPR, clear: [10 / 255, 15 / 255, 24 / 255, 1] });
 function resize() {
   DPR = Math.min(window.devicePixelRatio || 1, 2);
   W = canvas.clientWidth; H = canvas.clientHeight;
   canvas.width = Math.round(W * DPR); canvas.height = Math.round(H * DPR);
-  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  stage.setDpr(DPR);
 }
 window.addEventListener("resize", resize);
 
@@ -275,36 +281,31 @@ function reviewFocus() {
 function mag(p) { return [focus.x + (p[0] - focus.x) * MAG, focus.y + (p[1] - focus.y) * MAG]; }
 
 function draw(sites) {
-  ctx.fillStyle = "#0a0f18"; ctx.fillRect(0, 0, W, H);
-  ctx.globalCompositeOperation = "lighter";
+  stage.begin();                                   // the frame starts from #0a0f18, opaque
+  stage.blend("add");                              // Canvas "lighter"
   for (const b of blobs) {
     if (b.real) continue;
-    const g = ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, 15);
-    g.addColorStop(0, "rgba(70,130,200,0.50)"); g.addColorStop(1, "rgba(40,90,160,0)");
-    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(b.x, b.y, 15, 0, 6.2832); ctx.fill();
+    stage.radial(b.x, b.y, 0, b.x, b.y, 15, [[0, "rgba(70,130,200,0.50)"], [1, "rgba(40,90,160,0)"]], 8);
   }
-  ctx.globalCompositeOperation = "source-over";
+  stage.blend("alpha");
   // the hydrogen bonds the lens would count, drawn only as a hint and counted by nobody
-  ctx.strokeStyle = "rgba(150,210,255,0.34)"; ctx.lineWidth = 1.4;
   for (let i = 0; i < sites.length; i++) for (let j = 0; j < sites.length; j++) {
     if (i === j) continue;
     for (let h = 1; h < 3; h++) {
       const d = Math.hypot(sites[i][h][0] - sites[j][0][0], sites[i][h][1] - sites[j][0][1]) * BOHR_PER_PX;
       if (d < 4.2) { const a = mag(sites[i][h]), b = mag(sites[j][0]);
-                     ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); }
+                     stage.line(a[0], a[1], b[0], b[1], 1.4, "rgba(150,210,255,0.34)"); }
     }
   }
   for (const s of sites) {
     const o = mag(s[0]), h1 = mag(s[1]), h2 = mag(s[2]);
-    ctx.strokeStyle = "rgba(220,235,255,0.6)"; ctx.lineWidth = 2.5;
-    for (const h of [h1, h2]) { ctx.beginPath(); ctx.moveTo(o[0], o[1]); ctx.lineTo(h[0], h[1]); ctx.stroke(); }
-    ctx.fillStyle = "#ff6b6b"; ctx.beginPath(); ctx.arc(o[0], o[1], 6.5, 0, 6.2832); ctx.fill();
-    ctx.fillStyle = "#e8f0ff";
-    for (const h of [h1, h2]) { ctx.beginPath(); ctx.arc(h[0], h[1], 3.6, 0, 6.2832); ctx.fill(); }
+    for (const h of [h1, h2]) stage.line(o[0], o[1], h[0], h[1], 2.5, "rgba(220,235,255,0.6)");
+    stage.disc(o[0], o[1], 6.5, "#ff6b6b");
+    for (const h of [h1, h2]) stage.disc(h[0], h[1], 3.6, "#e8f0ff");
   }
-  ctx.strokeStyle = focus.held ? "rgba(95,179,255,0.95)" : "rgba(95,179,255,0.5)";
-  ctx.lineWidth = focus.held ? 2.5 : 1.5;
-  ctx.beginPath(); ctx.arc(focus.x, focus.y, focus.r, 0, 6.2832); ctx.stroke();
+  stage.strokeCircle(focus.x, focus.y, focus.r, focus.held ? 2.5 : 1.5,
+    focus.held ? "rgba(95,179,255,0.95)" : "rgba(95,179,255,0.5)");
+  stage.end(canvas.width, canvas.height);
 }
 
 // ---------------------------------------------------------------- the loop
@@ -332,7 +333,7 @@ function tick(now) {
   requestAnimationFrame(tick);
 }
 
-window.__toy = { Engine, blobs, focus };   // a handle for inspecting the running toy
+window.__toy = { Engine, blobs, focus, stage };   // a handle for inspecting the running toy
 resize(); seedBlobs();
 focus.x = W / 2; focus.y = H * 0.62;
 await boot();

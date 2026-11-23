@@ -23,6 +23,15 @@ PASS CONDITIONS (written 2026-11-23, before the first run; never edited after a 
       a pixel-difference summary. The difference is REPORTED, not thresholded: the radial
       blobs are drawn as stacked discs (screen.js), so a difference is expected there.
   C8  docs/play/wall.mjs still passes.
+
+RUN 1 (2026-11-23): C1 FAILED, C2..C8 passed. The one console error was
+  "Failed to load resource: 404" for http://127.0.0.1:<port>/favicon.ico, the request the
+  BROWSER makes by itself at the server's root (no page asks for it; docs/ has no
+  favicon.ico). The BEFORE page logs the same error. C1 stays as written and keeps failing
+  on this; it is not edited.
+AMENDMENT A1 (2026-11-23, after run 1, so it is NOT a condition stated before a run):
+  C1a the AFTER page raises no page error, and logs no console error other than the 404 of
+      the server root's /favicon.ico; and the BEFORE page logs that same 404.
 """
 import json, os, subprocess, sys
 sys.dont_write_bytecode = True
@@ -59,6 +68,9 @@ stage_ctx = [c for c in A["contexts"] if c["canvas"].startswith("stage")]
 frames_ok = [f for f in A["per_frame"] if f["gl"].get("stage", 0) > 0 and f["page"] and f["gl"].get("stage", 0) == f["page"]["drawCalls"]]
 conds = [
     ("C1 no page or console error (after)", not A["errors"] and not A["console_errors"], A["errors"] + A["console_errors"]),
+    ("C1a (amendment A1, after run 1) no error but the root /favicon.ico 404, which before logs too",
+     not A["errors"] and all("favicon.ico" in e for e in A["console_errors"]) and any("favicon.ico" in e for e in B["console_errors"]),
+     A["errors"] + A["console_errors"]),
     ("C2 #stage has a WebGL context and never a 2d one", bool(stage_ctx) and all(c["type"] in ("webgl2", "webgl") for c in stage_ctx), stage_ctx),
     ("C3 no Canvas-2D drawing call on any canvas", not A["draw2d_total"], A["draw2d_total"]),
     (f"C4 every frame's stage draws are draw.js's ({len(frames_ok)}/{FRAMES})", len(frames_ok) == FRAMES, A["per_frame"][:3]),

@@ -143,7 +143,7 @@ def run_page(url, cfg, frames, ready_js, state_js, hide_css, shot_selector, shot
         page = browser.new_page(viewport=viewport, device_scale_factor=1)
         errors, consoles = [], []
         page.on("pageerror", lambda e: errors.append(str(e)))
-        page.on("console", lambda m: consoles.append((m.type, m.text)))
+        page.on("console", lambda m: consoles.append((m.type, m.text + " @ " + str((m.location or {}).get("url", "")))))
         page.add_init_script("window.__CHECK_CFG__ = " + json.dumps(cfg) + ";\n" + INIT)
         page.goto(url, wait_until="load")
         t0 = time.time()
@@ -164,12 +164,13 @@ def run_page(url, cfg, frames, ready_js, state_js, hide_css, shot_selector, shot
         state = page.evaluate(state_js)
         gpu = page.evaluate("""(() => { const c = document.createElement('canvas'); const g = c.getContext('webgl2');
           const e = g && g.getExtension('WEBGL_debug_renderer_info'); return e ? g.getParameter(e.UNMASKED_RENDERER_WEBGL) : 'unknown'; })()""")
+        page.wait_for_timeout(100)
+        page.screenshot(path=shot_path.replace(".png", "-page.png"), full_page=False)  # the page as a reader sees it
         if hide_css:
             page.add_style_tag(content=hide_css)
         page.evaluate("window.__pump(1)")  # one more frame after the style change, same for both
         page.wait_for_timeout(100)
         page.locator(shot_selector).screenshot(path=shot_path)
-        page.screenshot(path=shot_path.replace(".png", "-page.png"), full_page=False)
         result = {
             "errors": errors,
             "console_errors": [t for (k, t) in consoles if k == "error"],

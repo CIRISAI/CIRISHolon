@@ -543,7 +543,9 @@ same id is a different holon; it cannot void this one. An id is never reused.
 
 **Registered, provisionally.** On 2026-11-23 the Constitution session registered ONE
 family, `holon:claim` (wire leaf `holon:claim:v1`), as CC 3.1.11 on its rc22 branch at
-`3f694e4`, with the payload rule `holon-claim`. The registration is provisional and its
+`3f694e4`, with the payload rule `holon-claim`, and at `eeb4d0c` added where a row is
+placed: at `federation` scope, the signer citing only digests whose blobs it holds for that
+scope; a reader that cannot fetch a cited blob has no evidence, which is no refusal of the row. The registration is provisional and its
 text says this format is version 0 and not frozen. The members: `spec`, `holon`, `view`,
 `consumer`, `kind` (a token of this vocabulary, read from the blob: CC closes no set),
 `declaration` (the blob's digest, also among `evidence_refs`), `evidence_refs`, `score`

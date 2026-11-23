@@ -710,7 +710,7 @@ def tag4(text):
 
 def claims(decls, answers, root):
     """One prototype per certificate and per price of a declaration that holds, shaped as the payload rule holon-claim
-    (CC 3.1.11, registered provisionally on the Constitution's rc22 at 3f694e4; HOLON-DECL Section 9). Not rows: nothing
+    (CC 3.1.11, registered provisionally on the Constitution's rc22 at eeb4d0c; HOLON-DECL Section 9). Not rows: nothing
     is encoded or signed, and there is no signer."""
     ans = {r["label"]: r["answer"] for r in answers}
     tools = {digest(STD / "tools" / "holonc.py"): "standard/tools/holonc.py", digest(STD / "vocabulary.json"): "standard/vocabulary.json"}

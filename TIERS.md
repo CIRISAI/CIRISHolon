@@ -74,6 +74,42 @@ rung 1 was never an under-evidenced tier, it was a closed sector drawn as a leve
 "measured, not certified" status in `GANTT.md` is closed as NOT A TIER, and every number
 measured on the network stands as a reading of a sector.
 
+**CORRECTION 2026-11-23 — two cells above say more than their records, and three numbers
+are cited to the wrong place.** Found while each row was declared against its record
+(`standard/`, `standard/REVIEW-2026-11-23.md`, the third pass). The rows above are left as
+written. No number changes.
+
+1. **The chemistry row's "`2.10` mHa RMS against MB-pol (COMPARE-0)" is wrong as worded.**
+   `2.096e-3` hartree is the served law's error against the EXACT answer of its own
+   minimal-basis Hamiltonian, on the sixty-five geometries it was built from. It is in
+   sample, and the record says of that comparison that it "is not an accuracy claim"
+   (`conformance/water_observatory/COMPARE0_RESULTS.md`). It is not a distance from MB-pol.
+   MB-pol's own distance from that exact answer is `7.059e-3` hartree over the same
+   sixty-five. `GANTT2.md` words the number correctly ("the served law's RMS is 2.10 mHa
+   (in sample)"). Read the cell as: `2.10` mHa RMS against the exact minimal-basis answer,
+   in sample (COMPARE-0); MB-pol stands `7.06` mHa from that same answer.
+2. **The hydrogen-bond row's "closed? yes: the count's own `σ = 0.46` at 100 fs" cites the
+   stake the record did NOT meet.** S1 (the count's own `σ ≥ 0.5`) read `0.44`, `0.30` and
+   `0.46`: "between" on all three walks. What the record calls closed rests on S2, the
+   bond and velocity cross-block: `0.007`, `0.007` and `0.002` against `< 0.2`, MET
+   (`conformance/water_observatory/TSCAN_HBOND_SEARCH_RESULTS.md`). Read the cell as:
+   closed on S2 (cross-block at most `0.007`); its own `σ` of `0.44–0.46` is under S1's bar.
+
+Citations the rows owe, with nothing wrong in the numbers:
+
+- The molecule row's `893.8` fs against 834 and "0/111 controls" are in
+  `conformance/water_observatory/CENSUS_RESULTS.md`, not in `MOLSEARCH1_RESULTS.md`.
+- The molecule row's `+0.325 kT`/water is in `conformance/water_observatory/replace0/README.md`,
+  where it is `+0.325 ± 0.099`; the row drops the spread.
+- The tableau row's "parity with stim on one core at `d = 221`" names no record. The
+  numbers are in `conformance/bigqvm/MESH_CLIFFORD_RESULTS.md`: `31.08` s on one shard
+  against `35.78` s for stim.
+
+Checked and NOT wrong: the dispatch row's "77 of 80" is ACUITY-2's S2
+(`20 + 19 + 20 + 18`), and its "certificate 80/80" is S3. The order parameter's closure
+stake O1 reads "between" on one seed (`0.293` against `0.3`) while ORDER-1's own headline
+says closed; the row follows the headline, and the tension is the record's.
+
 ## 2. The computational ladder (the QVM) — views, not levels
 
 These are not tiers of matter; they are the DICTIONARY of views the dispatch searches, each a

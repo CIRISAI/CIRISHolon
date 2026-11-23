@@ -69,8 +69,11 @@ INIT = r"""
   }
   // draws, per canvas, total and for the last pumped frame
   window.__draws = {}; window.__frameDraws = {};
+  // draws made while no drawer's draw() is running (a page wraps draw() to set __inDrawJs)
+  window.__drawsOutside = {}; window.__inDrawJs = 0;
   const count = (gl) => {
     const k = gl.canvas && gl.canvas.id ? gl.canvas.id : "(no id)";
+    if (!window.__inDrawJs) window.__drawsOutside[k] = (window.__drawsOutside[k] || 0) + 1;
     window.__draws[k] = (window.__draws[k] || 0) + 1;
     window.__frameDraws[k] = (window.__frameDraws[k] || 0) + 1;
   };
@@ -180,6 +183,7 @@ def run_page(url, cfg, frames, ready_js, state_js, hide_css, shot_selector, shot
             "contexts": page.evaluate("window.__contexts"),
             "draws_total": page.evaluate("window.__draws"),
             "draw2d_total": page.evaluate("window.__draw2d"),
+            "draws_outside_drawjs": page.evaluate("window.__drawsOutside"),
             "per_frame": page.evaluate("window.__log"),
             "state": state,
             "gpu": gpu,

@@ -21,9 +21,11 @@ PASS CONDITIONS (written 2026-11-23, before the first run; never edited after a 
   C2  #stage, #curve-canvas and #zx-canvas are each given a WebGL context and never "2d".
   C3  no Canvas-2D drawing call is made on any canvas of the AFTER page.
   C4  in every pumped frame, the GL draw calls on #stage and on #curve-canvas are each at
-      least one and equal draw.js's stats().drawCalls for that canvas; and on #zx-canvas
-      every GL draw call made in the run is draw.js's (its total equals the sum of its
-      frames' drawCalls as the page reports them, counted the same way).
+      least one and equal draw.js's stats().drawCalls for that canvas; and #zx-canvas
+      receives at least one GL draw call in the run and none made outside a draw.js draw()
+      (the check wraps each stage's drawer.draw, before any frame, to mark when it runs).
+      (This sentence was revised on 2026-11-23 BEFORE the first run: the committed version
+      asked for a sum the page's per-frame report cannot give for a canvas drawn on events.)
   C5  BEFORE and AFTER reach the SAME STATE: the text of every element with an id inside
       #pane-physics, and of every element whose id starts "zx-", are equal, read after
       step 4.
@@ -70,6 +72,12 @@ def shot(page, sel, name):
     page.locator(sel).screenshot(path=os.path.join(out, f"{page.__label}-{name}.png"))
 
 
+WRAP = """(() => { const S = window.__unifiedStages; if (!S) return false;
+    for (const k of ['stage', 'curve', 'zx']) { const d = S[k].drawer, o = d.draw;
+      d.draw = function (...a) { window.__inDrawJs++; try { return o.apply(this, a); } finally { window.__inDrawJs--; } }; }
+    return true; })()"""
+
+
 def extra(page):
     if page.__label == "before":
         _found["atoms"] = atoms_on_stage(page)
@@ -108,7 +116,8 @@ def extra(page):
 
 check = {
     "cfg": {"seed": 20261123, "clockStep": 25},
-    "ready": "document.body.dataset.engine === 'ready' && window.__queued() > 0",
+    # ready also wraps the drawers (once, in AFTER), before the first pumped frame
+    "ready": "document.body.dataset.engine === 'ready' && window.__queued() > 0 && (window.__wrapped = window.__wrapped || " + WRAP + " || true)",
     "state": """(() => {
         const o = {};
         for (const el of document.querySelectorAll('#pane-physics [id], [id^="zx-"]')) o[el.id] = el.textContent.trim();
@@ -156,7 +165,7 @@ def frame_ok(f):
 
 good = [f for f in A["per_frame"] if frame_ok(f)]
 zx_total = A["draws_total"].get("zx-canvas", 0)
-zx_frames = sum((f["gl"].get("zx-canvas", 0)) for f in A["per_frame"])
+zx_outside = A["draws_outside_drawjs"].get("zx-canvas", 0)
 m = _marks.get("after", {})
 conds = [
     ("C1 no page error; no console error but the root /favicon.ico 404",
@@ -164,8 +173,8 @@ conds = [
     ("C2 #stage, #curve-canvas, #zx-canvas have WebGL contexts and never a 2d one",
      ctx_ok("stage") and ctx_ok("curve-canvas") and ctx_ok("zx-canvas"), A["contexts"]),
     ("C3 no Canvas-2D drawing call on any canvas", not A["draw2d_total"], A["draw2d_total"]),
-    (f"C4 every frame's stage and curve draws are draw.js's ({len(good)}/{len(A['per_frame'])}); zx draws all inside pumped frames ({zx_frames}/{zx_total})",
-     len(good) == len(A["per_frame"]) and len(good) > 0 and zx_total > 0 and zx_frames == zx_total, A["per_frame"][:2]),
+    (f"C4 every frame's stage and curve draws are draw.js's ({len(good)}/{len(A['per_frame'])}); zx: {zx_total} draws, {zx_outside} outside draw.js",
+     len(good) == len(A["per_frame"]) and len(good) > 0 and zx_total > 0 and zx_outside == 0, [A["per_frame"][:2], A["draws_outside_drawjs"]]),
     ("C5 the same state before and after", A["state"] == B["state"],
      {k: (B["state"].get(k), A["state"].get(k)) for k in set(A["state"]) | set(B["state"]) if A["state"].get(k) != B["state"].get(k)}),
     ("C6 ready; the grab drew the spring; 3D mode active",

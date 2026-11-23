@@ -14,14 +14,14 @@
 // test.html's scene (./test-scene.js: the same records, camera and panels), drawn by
 // ./draw-webgpu.js. Query, as test.html: ?map=1 the flat map (and its ?ppu, ?floor, ?floorc,
 // ?ring, ?alphas, ?fade), ?shadow=0, ?ortho=1, ?az, ?el, ?spin=1, ?dim, ?tex=0, ?page, ?pages,
-// ?overlay=0, ?resident=1. Also ?msaa=0 draws at one sample (default four, as a WebGL canvas made with
+// ?overlay=0, ?resident=1, ?icons=1 (and ?phase). Also ?msaa=0 draws at one sample (default four, as a WebGL canvas made with
 // antialias: true). WebGL-only switches (?gl, ?novao, ?nohigh, ?mediump) do not apply.
 // The verdict panel says PASS only when the device reported no validation error, no
 // out-of-memory and no uncaptured error during any frame drawn so far; otherwise FAIL and
 // the first message (also in document.body.dataset.stats).
 import { createDrawerWebGPU } from './draw-webgpu.js';
 import { createTextProviderWebGPU } from './text.js';
-import { scene, createOverlay, viewProjection, makeResident, makeResidentImages } from './test-scene.js';
+import { scene, createOverlay, viewProjection, makeResident, makeResidentImages, iconsScene, iconsResident, sumStats } from './test-scene.js';
 
 const q = new URLSearchParams(location.search);
 const canvas = document.getElementById('c');
@@ -50,6 +50,8 @@ const ainfo = adapter.info || {};
 
 const { OFF, batches, city, pA, pB, pRest, pC } = scene();
 const isMap = q.get('map') === '1';
+const isIcons = !isMap && q.get('icons') === '1';   // ?icons=1: glyph shapes, FLOW, the ring on a huge patch (iconsScene)
+const ic = isIcons ? iconsScene(q, OFF, canvas) : null;
 const state = { dim: Math.min(1, Math.max(0.3, +(q.get('dim') || 1))), tex: q.get('tex') === '0' ? 0 : 1 };
 const hit = { slider: null, button: null };
 const ui = createOverlay({ q, canvas, dpr, isMap, state, hit, pA, pB, pRest, pC });
@@ -77,13 +79,13 @@ try {
 } catch (e) {
   fail('holon-draw WebGPU: ' + String(e && e.message || e));
 }
-let az = (+(q.get('az') || 35) * Math.PI) / 180;
-const el = (+(q.get('el') || 28) * Math.PI) / 180;
+let az = (+(q.get('az') || (isIcons ? 0 : 35)) * Math.PI) / 180;
+const el = (+(q.get('el') || (isIcons ? 18 : 28)) * Math.PI) / 180;
 const dist = 19;
 
 const noShadow = q.get('shadow') === '0';
 const SHADOW = { center: [OFF[0], OFF[1], 1], radius: 10 };
-const all = (isMap ? city : batches).slice();
+const all = (isMap ? city : isIcons ? ic.world : batches).slice();
 const showOverlay = q.get('overlay') !== '0';
 if (showOverlay) for (const p of panels) all.push(...p.batches);
 const viewport = [0, 0, canvas.width, canvas.height];
@@ -92,6 +94,8 @@ const viewport = [0, 0, canvas.width, canvas.height];
 const isResident = q.get('resident') === '1';
 const tryDraw = (bs) => { try { drawer.draw(bs, new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]), { target: ctx.getCurrentTexture(), viewport }); return null; } catch (e) { return String(e && e.message || e); } };
 const residentLog = isResident ? makeResident(drawer, all, tryDraw) : null;
+// ?icons=1: one flow arc moved into a resident buffer and drawn alone at three phases (iconsResident).
+const flowLog = isIcons ? iconsResident(drawer, all, ic, (bs) => { drawer.draw(bs, new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]), { target: ctx.getCurrentTexture(), viewport }); return { ...drawer.stats() }; }) : null;
 const CLEAR = [0.063, 0.078, 0.11, 1];
 const last = { drawCalls: 0, instances: 0, bytesUploaded: 0 };
 let frames = 0, epochs = 0, shown = 0;   // shown: how many errors the verdict on screen knew of
@@ -129,11 +133,13 @@ async function frame() {
   const scoped = frames < 3 || q.get('spin') !== '1';
   if (scoped) { device.pushErrorScope('validation'); device.pushErrorScope('out-of-memory'); }
   const t0 = performance.now();
+  // ?icons=1: the flat ribbons first (a draw() of their own, with flatLines, which clears), then the rest over them.
+  const s0 = isIcons ? (drawer.draw(ic.ribbons, vp, { target: ctx.getCurrentTexture(), clear: CLEAR, viewport, flatLines: true }), { ...drawer.stats() }) : null;
   drawer.draw(all, vp, isMap
     ? { target: ctx.getCurrentTexture(), clear: CLEAR, viewport, depthTest: false, pixelsPerUnit: mapPpu }
-    : { target: ctx.getCurrentTexture(), clear: CLEAR, light: [0.35, -0.5, 0.8], ambient: 0.25, viewport, shadow: noShadow ? undefined : SHADOW });
+    : { target: ctx.getCurrentTexture(), clear: isIcons ? undefined : CLEAR, light: [0.35, -0.5, 0.8], ambient: 0.25, viewport, shadow: noShadow ? undefined : SHADOW });
   const ms = performance.now() - t0;
-  const s = drawer.stats();
+  const s = isIcons ? sumStats(s0, drawer.stats()) : drawer.stats();
   last.drawCalls = s.drawCalls; last.instances = s.instances; last.bytesUploaded = s.bytesUploaded;
   document.body.dataset.missingImages = String(s.missingImages);
   if (scoped) {
@@ -150,6 +156,7 @@ async function frame() {
     document.body.dataset.stats = JSON.stringify({ ...s, backend: drawer.backend, sampleCount: drawer.sampleCount, format, adapter: { vendor: ainfo.vendor, architecture: ainfo.architecture, description: ainfo.description }, errors, dim: state.dim, tex: state.tex, text: { ...text.stats() }, relayouts: epochs, drawMs: +ms.toFixed(2), submitToDoneMs: +gpuMs.toFixed(2) });
     document.body.dataset.verdict = errors.length ? 'FAIL' : 'PASS';
     if (residentLog) document.body.dataset.resident = JSON.stringify(residentLog);
+    if (flowLog) document.body.dataset.flow = JSON.stringify(flowLog);
     document.body.dataset.ready = '1';
   }
   if (q.get('spin') === '1' || frames < 2 || !settled) invalidate();

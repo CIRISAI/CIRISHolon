@@ -17,15 +17,16 @@
 // (see below), ?nohigh=2 its macro rename alone;
 // ?map=1 is a FLAT MAP of the same ground with streets, roofs and canopies on it, as the
 // twin's street tier draws one: top-down, no depth test, ?ppu=N pixels per world unit (CSS),
-// ?floor=H the streets' least half width in px (default 0.5), ?ring=1 the radial fade,
+// ?floor=H the streets' least half width in px (default 0.5), ?ring=1 the radial fade (without ?map=1: a small ring on the 3D scene's lit marks, to see the shadow pass take it),
 // ?floorc=H the casings' own least half width, ?alphas=g,c,r,f the four class alphas (1 neutral,
 // 0 hides), ?fade=A the tile's alpha multiplier; ?page=N&pages=M shrinks the text atlas (to see eviction); ?mediump=1 writes mediump for the screen program's fragment precision; ?overlay=0 leaves
-// the panels out; ?resident=1 draws the world batches (with ?images=1 the image panel too)
+// the panels out; ?icons=1 the glyph shapes, FLOW links (?phase=P their phase, default 0.25) and a
+// 400-unit ground patch under the ring (iconsScene in ./test-scene.js); ?resident=1 draws the world batches (with ?images=1 the image panel too)
 // from resident buffers, after exercising resident()/update()/release() (makeResident in
 // ./test-scene.js; the outcome is in document.body.dataset.resident). Every word on the page is drawn by the engine: there is no HTML text.
 import { createDrawer } from './draw.js';
 import { createTextProvider } from './text.js';
-import { scene, createOverlay, viewProjection, makeResident, makeResidentImages } from './test-scene.js';
+import { scene, createOverlay, viewProjection, makeResident, makeResidentImages, iconsScene, iconsResident, sumStats } from './test-scene.js';
 
 const q = new URLSearchParams(location.search);
 const canvas = document.getElementById('c');
@@ -73,6 +74,8 @@ if (q.get('novao') === '1') {
 
 const { OFF, batches, city, pA, pB, pRest, pC } = scene();
 const isMap = q.get('map') === '1';
+const isIcons = !isMap && q.get('icons') === '1';   // ?icons=1: glyph shapes, FLOW, the ring on a huge patch (iconsScene)
+const ic = isIcons ? iconsScene(q, OFF, canvas) : null;
 const state = { dim: Math.min(1, Math.max(0.3, +(q.get('dim') || 1))), tex: q.get('tex') === '0' ? 0 : 1 };
 const hit = { slider: null, button: null };   // device-pixel rectangles [x0, y0, x1, y1] of the two controls
 
@@ -101,14 +104,14 @@ try {
 } catch (e) {
   info.textContent = String(e); document.body.dataset.error = String(e); throw e;
 }
-let az = (+(q.get('az') || 35) * Math.PI) / 180;
-const el = (+(q.get('el') || 28) * Math.PI) / 180;
+let az = (+(q.get('az') || (isIcons ? 0 : 35)) * Math.PI) / 180;
+const el = (+(q.get('el') || (isIcons ? 18 : 28)) * Math.PI) / 180;
 const dist = 19;
 
 const noShadow = new URLSearchParams(location.search).get('shadow') === '0';
 // Shadows over the scene (its tile sits at OFF, a far origin); ?shadow=0 turns them off.
 const SHADOW = { center: [OFF[0], OFF[1], 1], radius: 10 };
-const all = (isMap ? city : batches).slice();
+const all = (isMap ? city : isIcons ? ic.world : batches).slice();
 const showOverlay = q.get('overlay') !== '0';
 if (showOverlay) for (const p of panels) all.push(...p.batches);
 const viewport = [0, 0, canvas.width, canvas.height];
@@ -117,6 +120,8 @@ const viewport = [0, 0, canvas.width, canvas.height];
 const isResident = q.get('resident') === '1';
 const tryDraw = (bs) => { try { drawer.draw(bs, new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]), { viewport }); return null; } catch (e) { return String(e && e.message || e); } };
 const residentLog = isResident ? makeResident(drawer, all, tryDraw) : null;
+// ?icons=1: one flow arc moved into a resident buffer and drawn alone at three phases (iconsResident).
+const flowLog = isIcons ? iconsResident(drawer, all, ic, (bs) => { drawer.draw(bs, new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]), { viewport }); return { ...drawer.stats() }; }) : null;
 const last = { drawCalls: 0, instances: 0, bytesUploaded: 0 };
 let frames = 0, epochs = 0;
 
@@ -151,9 +156,11 @@ function frame(tms) {
   gl.clearColor(0.063, 0.078, 0.11, 1);
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   const t0 = performance.now();
+  // ?icons=1: the flat ribbons first (a draw() of their own, with flatLines), then the rest over them.
+  const s0 = isIcons ? (drawer.draw(ic.ribbons, vp, { viewport, flatLines: true }), { ...drawer.stats() }) : null;
   drawer.draw(all, vp, isMap ? { viewport, depthTest: false, pixelsPerUnit: mapPpu } : { light: [0.35, -0.5, 0.8], ambient: 0.25, viewport, shadow: noShadow ? undefined : SHADOW });
   const ms = performance.now() - t0;
-  const s = drawer.stats(), err = gl.getError();
+  const s = isIcons ? sumStats(s0, drawer.stats()) : drawer.stats(), err = gl.getError();
   last.drawCalls = s.drawCalls; last.instances = s.instances; last.bytesUploaded = s.bytesUploaded;
   document.body.dataset.missingImages = String(s.missingImages);
   frames++;
@@ -161,6 +168,7 @@ function frame(tms) {
   if (frames >= 2) {
     document.body.dataset.stats = JSON.stringify({ ...s, glError: err, version: gl.getParameter(gl.VERSION), instancing: drawer.instancing, vertexArrays: drawer.vertexArrays, screenPrecision: drawer.screenPrecision, macroInVertex, fragHighp, dim: state.dim, tex: state.tex, text: { ...text.stats() }, relayouts: epochs, drawMs: +ms.toFixed(2) });
     if (residentLog) document.body.dataset.resident = JSON.stringify(residentLog);
+    if (flowLog) document.body.dataset.flow = JSON.stringify(flowLog);
     document.body.dataset.ready = '1';
   }
   if (q.get('spin') === '1' || frames < 2) invalidate();

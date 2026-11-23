@@ -2,7 +2,7 @@
 // same records with the same camera and the same panels. Moved out of test.html unchanged
 // (test.html's behaviour is the same); the one addition is overlay()'s optional `verdict`,
 // which test.html does not pass, so its panel still says PASS and "gl error 0".
-import { KIND, INSTANCE_BYTES, PARAMS_NEUTRAL, COLOUR, PARAM, VARIANT_CASING, DISC_CASING, DISC_CANOPY_FIELD, VARIANT_ROUND, VARIANT_ORIENT, MATERIAL } from './draw.js';
+import { KIND, INSTANCE_BYTES, PARAMS_NEUTRAL, COLOUR, PARAM, VARIANT_CASING, DISC_CASING, DISC_CANOPY_FIELD, VARIANT_ROUND, VARIANT_ORIENT, MATERIAL, GLYPH, VARIANT_FLOW } from './draw.js';
 import { STYLE } from './text.js';
 
 // ---- records ----
@@ -254,6 +254,21 @@ export function createOverlay(env) {
     ip.image = (b, x, y, w, hh, rgba, slot) => b.add([x + w / 2, y + hh / 2, 0], [w, hh, 0], [0, 0, 1], 1, rgba, 0, slot);
     panels.push(ip);
   }
+  // ?icons=1: a panel of the 16 glyph shapes on screen (kind 10, screen): one row at 16 px,
+  // two rows at 48 px (the second dark bodies on a light strip), a few turned; and a FLOW
+  // line on screen (kind 3, screen, VARIANT_FLOW) at the tile's phase.
+  const withIcons = q.get('icons') === '1';
+  const pScreenFlow = Float32Array.from(PARAMS_NEUTRAL);
+  if (withIcons) {
+    pScreenFlow[PARAM.FLOW] = q.has('phase') ? +q.get('phase') : 0.25;
+    pScreenFlow[PARAM.FLOW_N] = 8;
+    const gp = new Panel();
+    gp.glyphs = new Batch(KIND.GLYPH, gp.o, false, true);
+    gp.flow = new Batch(KIND.ARC, gp.o, false, true);
+    gp.flow.params = pScreenFlow;
+    gp.batches = [gp.quads, gp.glyphs, gp.flow, gp.runs];
+    panels.push(gp);
+  }
   const pPanel = Float32Array.from(PARAMS_NEUTRAL);   // panel 4 shows tile A's ramp and tile B's tint in screen marks
   for (const b of panels[3].batches) b.params = pPanel;
   const INK = [222, 229, 240, 255], DIM = [140, 152, 172, 255], HEAD = [120, 190, 255, 255];
@@ -267,6 +282,25 @@ export function createOverlay(env) {
       ip.image(ip.imgs[0], gap, gap, side, side, [255, 255, 255, 255], 0);
       ip.image(ip.imgs[1], 2 * gap + side, gap, side, side, [255, 255, 255, 230], 1);
       ip.image(ip.imgs[2], gap, gap, 24 * d, 24 * d, [255, 0, 0, 255], 7);
+    }
+    if (withIcons) {
+      const gp = panels[panels.length - 1], pw2 = 16 * 28 * d + 24 * d, ph2 = 12 * d + 22 * d + 28 * d + 2 * 58 * d + 12 * d;
+      gp.begin(W - pw2 - 12 * d, H - ph2 - 12 * d, pw2, ph2);
+      gp.glyphs.clear(); gp.flow.clear();
+      gp.text('Glyphs 16 px and 48 px', STYLE.SMALL, 12 * d, 12 * d + 7 * d, -1, HEAD);
+      gp.flow.add([200 * d, 12 * d + 8 * d, 0], [4 * d, 0, 0], [gp.w - 14 * d, 12 * d + 8 * d, 0], 0, [120, 200, 255, 255], 0, VARIANT_FLOW);
+      const y16 = 12 * d + 22 * d + 14 * d;
+      const turnedS = { [GLYPH.ARROW]: 0.6, [GLYPH.KEY]: -0.5 };
+      for (let k = 0; k < 16; k++) {
+        const c = ICON_COLOURS_LIGHT[k % 4];
+        gp.glyphs.add([12 * d + 14 * d + k * 28 * d, y16, 0], [8 * d, 0, 0], null, turnedS[k] || 0, [c[0], c[1], c[2], 255], 0, k);
+      }
+      const y48 = y16 + 14 * d + 29 * d;
+      gp.rect(14 * d, y48 + 58 * d - 27 * d, 8 * 56 * d, 54 * d, 6 * d, [226, 230, 236, 255]);   // a light strip for the dark bodies
+      for (let k = 0; k < 16; k++) {
+        const row = k < 8 ? 0 : 1, c = row === 0 ? ICON_COLOURS_LIGHT[k % 4] : ICON_COLOURS_DARK[k % 4];
+        gp.glyphs.add([12 * d + 30 * d + (k % 8) * 56 * d, y48 + row * 58 * d, 0], [24 * d, 0, 0], null, turnedS[k] || 0, [c[0], c[1], c[2], 255], 0, k);
+      }
     }
     const narrow = W / d < 700;
     const pad = 12 * d, row = 20 * d, pw = Math.min(330 * d, W - 24 * d);
@@ -356,6 +390,10 @@ export function createOverlay(env) {
       pC[PARAM.FLOOR_CASING] = +(q.get('floorc') || 0) * dpr;
       pA[PARAM.A_GROUND] = pB[PARAM.A_GROUND] = al[0]; pC[PARAM.A_CASING] = al[1]; pC[PARAM.A_ROAD] = al[2]; pC[PARAM.A_ROOF] = al[3];
       if (q.get('ring') === '1') for (const p of [pA, pB, pC]) p.set([canvas.width / 2, canvas.height / 2, 0.46 * Math.min(canvas.width, canvas.height)], PARAM.RING);
+    } else if (q.get('ring') === '1') {
+      // the 3D scene: a small ring on the lit marks only (not the ground), so the shadow pass's
+      // ring shows: what the picture fades out casts nothing
+      pRest.set([canvas.width / 2, canvas.height / 2, 0.22 * Math.min(canvas.width, canvas.height)], PARAM.RING);
     }
     pPanel.set(pA.subarray(4, 12), 4); pPanel.set(pB.subarray(12, 16), 12);
   }
@@ -457,4 +495,83 @@ export function makeResidentImages(drawer, all, ip, log, filled) {
   for (const b of ip.imgs) if (filled.includes(b.bytes[51])) log.imageBytes += b.bytes.byteLength;
   log.imageResidentBytes = n;
   log.imageHandle = h;
+}
+
+// ---- ?icons=1: the glyph shapes, FLOW on links, and a huge ground patch under the RING ----
+// World: the 16 shapes in two rows (light bodies, half size 0.33; dark bodies, half size 0.22;
+// a few turned), a translucent one, and a sphere behind the DOCUMENT's transparent margin
+// (it must show: a glyph writes no depth where it covers under half). They stand on ONE ground
+// patch 400 units wide whose far corners lie behind the eye, with the RING on: it must be
+// drawn (until 2026-11-22 the ring was taken per vertex and such a patch vanished). FLOW links
+// at a fixed phase (`?phase=`, default 0.25, so the pictures are deterministic): a straight
+// tube, a thin round-ended one, a bent arc, a round-ended arc bent across, and one arc drawn
+// from a RESIDENT buffer (iconsResident). `ribbons` are drawn by a draw() of their own with
+// flatLines: a flat ribbon line and a flat round-ended arc. The camera: az 0, el 18.
+export const ICON_COLOURS_LIGHT = [[236, 238, 242], [250, 214, 120], [170, 226, 180], [160, 205, 250]];
+export const ICON_COLOURS_DARK = [[40, 46, 64], [120, 40, 52], [26, 82, 60], [36, 64, 128]];
+export function iconsScene(q, OFF, canvas) {
+  const phase = q.has('phase') ? +q.get('phase') : 0.25;
+  const pG = Float32Array.from(PARAMS_NEUTRAL), pI = Float32Array.from(PARAMS_NEUTRAL), pF = Float32Array.from(PARAMS_NEUTRAL);
+  pF[PARAM.FLOW] = phase; pF[PARAM.FLOW_N] = 0;   // 0: six dashes
+  const pF8 = Float32Array.from(pF); pF8[PARAM.FLOW_N] = 9;
+  const ground = new Batch(KIND.PATCH, OFF); ground.params = pG;
+  ground.add([0, 0, -0.02], [400, 400, 0], null, 0, [66, 104, 74, 255]);
+  pG.set([canvas.width / 2, canvas.height / 2, 0.46 * Math.min(canvas.width, canvas.height)], PARAM.RING);
+  const glyphs = new Batch(KIND.GLYPH, OFF); glyphs.params = pI;
+  const turned = { [GLYPH.ARROW]: 0.6, [GLYPH.KEY]: -0.5, [GLYPH.DOCUMENT]: 0.25, [GLYPH.CHAT]: -0.2 };
+  for (let k = 0; k < 16; k++) {
+    const x = -5.625 + 0.75 * k;
+    const cl = ICON_COLOURS_LIGHT[k % 4], cd = ICON_COLOURS_DARK[k % 4];
+    glyphs.add([x, 0, 1.15], [0.33, 0, 0], null, turned[k] || 0, [cl[0], cl[1], cl[2], 255], 0, k);
+    glyphs.add([x, 0, 0.3], [0.22, 0, 0], null, k % 3 === 0 ? -(turned[k] || 0.4) : 0, [cd[0], cd[1], cd[2], 255], 0, k);
+  }
+  // one translucent glyph beside the rows, to see blending
+  glyphs.add([-6.7, -0.8, 0.9], [0.5, 0, 0], null, 0, [255, 255, 255, 110], 0, GLYPH.PHOTO);
+  // a lit sphere behind the DOCUMENT's transparent right margin: the margin must not hide it
+  const behind = new Batch(KIND.SPHERE, OFF); behind.params = pI;
+  behind.add([-1.125 + 0.27, 0.8, 1.15], [0.15, 0, 0], null, 0, [230, 90, 60, 255]);
+  const lines = new Batch(KIND.LINE, OFF); lines.params = pF;
+  lines.add([-7.0, -3, 0.3], [0.14, 0, 0], [-3.6, -3, 0.3], 0, [90, 200, 255, 255], 0, VARIANT_FLOW);
+  lines.add([-7.0, -3, 0.8], [0.06, 0, 0], [-3.6, -3, 0.8], 0, [255, 180, 80, 255], 0, VARIANT_FLOW | VARIANT_ROUND);
+  const arcs = new Batch(KIND.ARC, OFF); arcs.params = pF8;
+  arcs.add([-2.6, -3, 0.15], [0.12, 1.2, 0], [2.6, -3, 0.15], 0, [255, 120, 170, 255], 0, VARIANT_FLOW);
+  arcs.add([-2.6, -3, 0.15], [0.09, 0.4, 1.0], [2.6, -3, 0.15], 0, [140, 255, 160, 255], 0, VARIANT_FLOW | VARIANT_ROUND);
+  // the resident one: its records go into a buffer (iconsResident); the batch is swapped then
+  const resArc = new Batch(KIND.ARC, OFF); resArc.params = pF;
+  resArc.add([3.4, -3, 0.15], [0.12, 1.2, 0], [7.0, -3, 0.15], 0, [255, 230, 90, 255], 0, VARIANT_FLOW | VARIANT_ROUND);
+  // flat ribbons (a second draw() with flatLines): a line and a round-ended arc on the ground
+  const rLines = new Batch(KIND.LINE, OFF); rLines.params = pF;
+  rLines.add([-6.8, -5.2, 0.02], [0.3, 0, 0], [-3.6, -5.2, 0.02], 0, [255, 255, 255, 255], 0, VARIANT_FLOW);
+  const rArcs = new Batch(KIND.ARC, OFF); rArcs.params = pF8;
+  rArcs.add([-2.8, -5.0, 0.02], [0.3, 0, 0.9], [0.8, -5.0, 0.02], 0, [255, 210, 120, 255], 0, VARIANT_FLOW | VARIANT_ROUND);
+  return { phase, pG, pI, pF, pF8, world: [ground, behind, glyphs, lines, arcs, resArc], ribbons: [rLines, rArcs], resArc };
+}
+
+// Put the resident arc's records in a buffer and swap its batch in `all` for one that names
+// it. Then draw it alone at two phases: the dashes move and no record is uploaded
+// (bytesUploaded 0 both times; paramUploads counts the changed setting). `drawOne(batches)`
+// draws and returns a copy of stats(). Returns what the page reports in dataset.flow.
+export function iconsResident(drawer, all, ic, drawOne) {
+  const h = drawer.resident(ic.resArc.bytes);
+  const i = all.indexOf(ic.resArc);
+  const rb = { kind: KIND.ARC, handle: h, first: 0, count: 1, offset: ic.resArc.offset, params: ic.pF };
+  all[i] = rb;
+  const p2 = Float32Array.from(ic.pF);
+  const a = drawOne([rb]);
+  const was = ic.pF[PARAM.FLOW];
+  rb.params = p2; p2[PARAM.FLOW] = was + 0.37;
+  const b = drawOne([rb]);
+  p2[PARAM.FLOW] = was + 1000.5;   // a large phase: only fract() matters
+  const c = drawOne([rb]);
+  rb.params = ic.pF;
+  const log = { handle: h, bytesUploaded: [a.bytesUploaded, b.bytesUploaded, c.bytesUploaded], paramUploads: [a.paramUploads, b.paramUploads, c.paramUploads], drawCalls: [a.drawCalls, b.drawCalls, c.drawCalls] };
+  log.ok = log.bytesUploaded.every((x) => x === 0) && log.paramUploads[1] >= 1 && log.paramUploads[2] >= 1 && log.drawCalls.every((x) => x === 1);
+  return log;
+}
+
+// The counts of two draw() calls of one frame, added (a copy; stats() is one object).
+export function sumStats(a, b) {
+  const o = { ...b };
+  for (const k of ['drawCalls', 'instances', 'bytesUploaded', 'paramUploads', 'uniformBytes', 'missingImages']) if (typeof b[k] === 'number') o[k] = (a[k] || 0) + b[k];
+  return o;
 }

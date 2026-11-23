@@ -7,7 +7,9 @@
 For each mode (default: the 3D scene with shadows; map: ?map=1; noshadow: ?shadow=0; images:
 ?images=1, a panel of host textures; resident, residentmap, residentimages: the default, map
 and images modes with ?resident=1, the world batches, and in residentimages the image panel's
-batches, drawn from resident buffers) and for
+batches, drawn from resident buffers; icons: ?icons=1, the 16 glyph shapes in the world and on
+a screen panel, FLOW on lines and arcs (tube, flat ribbon, screen, one resident) at phase
+0.25, and a 400-unit ground patch under the RING; iconsmove: the same at phase 0.75) and for
 the scene alone (?overlay=0) and with the panels, it loads both pages in one headless Google
 Chrome at the same size, device pixel ratio 1 and camera, waits for the page's own
 `document.body.dataset.ready`, takes a screenshot of the canvas, and compares the two:
@@ -33,6 +35,13 @@ update() (grow, shrink), release() and reuse of a handle, and of the three throw
 (document.body.dataset.resident.ok). For the resident mode with panels, test.html is also
 compared with itself on WebGL 1 (?gl=1) and on bare WebGL 1 (?gl=1&novao=1, no vertex array
 objects), resident against bytes, with the same gate.
+ICONS MODES ARE GATED too: on each backend the page's own check of the resident flow link must
+hold (drawn at three phases, stats().bytesUploaded 0 each time, document.body.dataset.flow.ok);
+the ground patch under the ring must show at GROUND_PX (green there, not the clear colour);
+iconsmove must differ from icons on the same backend (the dashes moved); and test.html?icons=1
+with the panels must draw with gl error 0 on WebGL 1, with ?mediump=1, both, ?nohigh=1 (the
+twin's no-highp gate; no fragment source may still say highp) and bare WebGL 1 (?novao=1),
+each compared with WebGL 2 and the numbers reported.
 Exit status 0 when all of that holds; the pixel numbers are REPORTED, not gated (the two
 backends rasterise on different paths, see the README).
 
@@ -73,7 +82,8 @@ CHROME_ARGS = [
     "--enable-unsafe-swiftshader",
 ]
 MODES = {"default": "", "map": "map=1", "noshadow": "shadow=0", "images": "images=1",
-         "resident": "resident=1", "residentmap": "map=1&resident=1", "residentimages": "images=1&resident=1"}
+         "resident": "resident=1", "residentmap": "map=1&resident=1", "residentimages": "images=1&resident=1",
+         "icons": "icons=1", "iconsmove": "icons=1&phase=0.75"}
 RESIDENT_BASE = {"resident": "default", "residentmap": "map", "residentimages": "images"}
 MESH_FUNCS = ["sphereMesh", "tubeMesh", "capsuleMesh", "arcCapsuleMesh", "arcRibbonMesh",
               "ribbonMesh", "boxMesh", "quadMesh", "discMesh"]
@@ -115,6 +125,19 @@ async ([a, b]) => {
            over_8: +(100 * o8 / n).toFixed(4), over_32: +(100 * o32 / n).toFixed(4), max: mx, diff_png: btoa(s) };
 }
 """
+
+PIXEL_JS = """
+async ([b64, x, y]) => {
+  const bmp = await createImageBitmap(await (await fetch('data:image/png;base64,' + b64)).blob(), { colorSpaceConversion: 'none', premultiplyAlpha: 'none' });
+  const c = new OffscreenCanvas(bmp.width, bmp.height);
+  const g = c.getContext('2d');
+  g.drawImage(bmp, 0, 0);
+  return Array.from(g.getImageData(x, y, 1, 1).data);
+}
+"""
+# ?icons=1: places where the 400-unit ground patch under the ring must show (green, not the
+# clear colour), at 960x600: between the panels, inside the ring, and near its rim.
+GROUND_PX = [(480, 180), (480, 250), (300, 330)]
 
 FPS_JS = """
 (ms) => new Promise((done) => {
@@ -160,7 +183,8 @@ def load(browser, url, w, h, shot):
         errs.append("not ready: " + str(e).splitlines()[0])
     info = page.evaluate("({ error: document.body.dataset.error || null, verdict: document.body.dataset.verdict || null,"
                          "  stats: document.body.dataset.stats ? JSON.parse(document.body.dataset.stats) : null,"
-                         "  resident: document.body.dataset.resident ? JSON.parse(document.body.dataset.resident) : null })")
+                         "  resident: document.body.dataset.resident ? JSON.parse(document.body.dataset.resident) : null,"
+                         "  flow: document.body.dataset.flow ? JSON.parse(document.body.dataset.flow) : null })")
     png = page.locator("#c").screenshot(type="png") if shot else None
     return page, info, errs, png
 
@@ -249,6 +273,57 @@ def main():
                 (log.get("worldBytes") or 0) + (log.get("imageBytes") or 0), rs.get("residentBuffers"), rs.get("residentBytes")))
             report.setdefault("resident", []).append(row)
 
+        def pixel(png, x, y):
+            pg = browser.new_page()
+            pg.goto(base + "test-scene.js")
+            v = pg.evaluate(PIXEL_JS, [png, x, y])
+            pg.close()
+            return v
+
+        def icons_gate(mode, overlay, qs, pngs, infos):
+            """?icons=1: the resident flow link's draws uploaded nothing while its phase moved; the huge
+            patch under the ring is drawn; at another phase the dashes moved (iconsmove against icons,
+            same backend); WebGL 1 and the mediump paths draw it with no error (test.html only)."""
+            nonlocal ok
+            tag = "scene" if overlay == "0" else "panels"
+            bad = []
+            for k, be in enumerate(("webgl", "webgpu")):
+                fl = infos[k].get("flow") or {}
+                if not fl.get("ok"):
+                    bad.append("%s: the resident flow link's check failed: %s" % (be, json.dumps(fl)))
+                for (x, y) in GROUND_PX:
+                    r, g, b, _ = pixel(pngs[k], x, y)
+                    if not (g > r + 12 and g > b + 4):
+                        bad.append("%s: the ground under the ring is not drawn at (%d, %d): rgb %d %d %d" % (be, x, y, r, g, b))
+                if mode == "iconsmove":
+                    bqs = "&".join(x for x in (MODES["icons"], "overlay=0" if overlay == "0" else "") if x)
+                    still = shot("test.html" if k == 0 else "test-webgpu.html", bqs, "icons_%s_%s" % (tag, be))
+                    r = compare(pngs[k], still[0])
+                    r.pop("diff_png", None)
+                    print("     flow phase 0.75 vs 0.25 %-6s %-6s max %s, over_8 %s%% (the dashes moved)" % (tag, be, r.get("max"), r.get("over_8")))
+                    report.setdefault("icons", []).append(dict(check="phase moved", tag=tag, backend=be, max=r.get("max"), over_8=r.get("over_8")))
+                    if not (r.get("max") or 0) > 0:
+                        bad.append("%s: the picture did not change with the phase" % be)
+            if mode == "icons" and overlay == "1":
+                for extra in ("gl=1", "mediump=1", "gl=1&mediump=1", "nohigh=1", "gl=1&novao=1"):
+                    png, info = shot("test.html", qs + "&" + extra, "icons_panels_webgl_" + extra.replace("&", "_").replace("=", ""))
+                    st = info["stats"] or {}
+                    r = compare(png, pngs[0])
+                    r.pop("diff_png", None)
+                    fl = info.get("flow") or {}
+                    print("     icons test.html?%-16s glError %s, %s, screen %s; vs WebGL 2 highp: max %s, over_8 %s%%" % (
+                        extra, st.get("glError"), st.get("version"), st.get("screenPrecision"), r.get("max"), r.get("over_8")))
+                    report.setdefault("icons", []).append(dict(check="variant", query=extra, glError=st.get("glError"), version=st.get("version"),
+                                                               screenPrecision=st.get("screenPrecision"), fragHighp=st.get("fragHighp"), max=r.get("max"), over_8=r.get("over_8")))
+                    if st.get("glError") != 0 or not fl.get("ok"):
+                        bad.append("test.html?%s: glError %s, flow %s" % (extra, st.get("glError"), json.dumps(fl)))
+                    if st.get("fragHighp"):
+                        bad.append("test.html?%s: a fragment source still says highp outside the gate" % extra)
+            if bad:
+                ok = False
+                for x in bad:
+                    print("FAIL icons %s %s: %s" % (mode, tag, x))
+
         for mode in args.modes.split(","):
             for overlay in ("0", "1"):
                 qs = "&".join(x for x in (MODES[mode], "overlay=0" if overlay == "0" else "") if x)
@@ -275,6 +350,8 @@ def main():
                                                           r.get("over_32"), r.get("max"), dc[0], dc[1]))
                 report["results"].append(dict(mode=mode, overlay=overlay == "1", query=qs, **r,
                                               stats={"webgl": infos[0]["stats"], "webgpu": infos[1]["stats"]}))
+                if mode in ("icons", "iconsmove"):
+                    icons_gate(mode, overlay, qs, pngs, infos)
                 if mode in RESIDENT_BASE:
                     bm = RESIDENT_BASE[mode]
                     bqs = "&".join(x for x in (MODES[bm], "overlay=0" if overlay == "0" else "") if x)

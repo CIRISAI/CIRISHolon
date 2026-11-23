@@ -19,6 +19,81 @@ graphics backend of its own yet.
   uniforms and draw order are untouched.
 - `abi.rs`: the wasm boundary, plain `extern "C"`.
 
+## Glyph shapes, FLOW on links, and the RING per pixel: what was built and checked, 2026-11-22
+
+Three changes, in both browser backends, with one contract (`web/draw.js`'s header: GLYPHS,
+FLOW, TILE SETTINGS; `INTERFACE.md` §14).
+
+- **Glyph shapes.** The low four bits of a glyph's `variant` are now its shape, from a closed
+  list of 16 (`GLYPH` in draw.js, `GLYPH_*` and `VARIANT_GLYPH_SHAPE` here). Shape 0 is the
+  old disc and is unchanged. Shapes 1..15 are a square of half size `size[0]`, turned by
+  `angle`. In the world the square faces the camera, is unlit, has no shadow, and writes no
+  depth where it covers under half. Each shape is cut from signed distances, in a body tone
+  and a detail ink. The shapes are written once, in a GLSL subset (`GLYPH_GLSL`), and
+  draw-webgpu.js translates that source to WGSL mechanically.
+- **FLOW.** `VARIANT_FLOW` (0x04) on a line or arc, world or screen, draws dashes moving from
+  `pos` to `aux`. Their phase and count are tile settings 22 and 23 (`PARAM_FLOW`,
+  `PARAM_FLOW_N`), which nothing read before. An arc's dashes are spaced along the curve as
+  drawn (Simpson's rule in the vertex stage).
+- **The RING, per pixel (a CORRECTION).** The header said the ring was taken per pixel, but
+  it was taken per vertex. It is now taken from the fragment's own window position. In the
+  shadow pass it is now the camera's ring at the caster's own point; before, it was measured
+  in the shadow map's own pixels.
+
+`tools/webgpu_parity.py` gained two modes. `icons` draws the 16 shapes in the world (two
+rows, two sizes, light and dark bodies, some turned), and on a screen panel at 16 and 48 px.
+It also draws flow links: tubes, bent arcs, flat ribbons, a screen line, and one arc from a
+resident buffer. Under all of it is one 400-unit ground patch with the ring on. `iconsmove`
+is the same scene at another phase. At 960x600, on SwiftShader in headless Chrome, the
+results were:
+
+- **Old pictures are unchanged.** All 32 screenshots of the seven earlier modes are
+  byte-identical to origin/main's (`e822856`), on both backends, including WebGL 1 with and
+  without vertex arrays. Six further views are identical too: `?gl=1`, `?mediump=1`,
+  `?gl=1&mediump=1`, `?nohigh=1`, and `?ortho=1` on both backends. The ring views changed
+  only by rounding. `?map=1&ring=1` differs from before by at most 1 (of 255) on both
+  backends, in 1 241 pixels (0.22 %), all within the ring's fade band. `?gl=1&nohigh=1&map=1&ring=1`
+  differs by at most 1 in 922 pixels. Under that view's orthographic map the old
+  interpolation was already exact.
+- **Parity, WebGL 2 against WebGPU.** For `icons`, mean_abs is 0.048 without panels and
+  0.215 with them. The share of pixels over 8 is 0.23 % and 0.39 %. The max difference is 60
+  without panels; with panels it is 200, from the panel's own text, which names its backend.
+  Draw calls are 12/12 and 30/30, and instances 48/48 and 149/149. The earlier modes' numbers
+  are exactly as before.
+- **Flow.** The resident arc was drawn alone at three phases (0.25, 0.62 and 1000.87).
+  `bytesUploaded` was 0 each time, with one `paramUploads` per draw, on both backends. At
+  phase 0.75 against 0.25 the picture differs, with max 155 and 1.70 % of pixels over 8, on
+  both backends.
+- **The huge patch is drawn.** Three pixels inside the ring are green, not the clear colour,
+  on both backends. Before this change such a patch vanished.
+- **WebGL 1 and mediump.** `icons` with the panels drew with gl error 0 on `?gl=1`,
+  `?mediump=1`, `?gl=1&mediump=1`, `?nohigh=1` (no fragment source still says highp) and
+  `?gl=1&novao=1`. The `mediump=1` and `nohigh=1` pictures are identical to WebGL 2's. On
+  WebGL 1 the only difference is the panel's context label (max 200, 0.07 % of pixels). The
+  world program with shadows now uses eight varying vectors, which is WebGL 1's guaranteed
+  minimum.
+- **The shadow pass's ring.** `?ring=1` without `?map=1` puts a small ring on the 3D scene's
+  lit marks. The marks the picture fades out no longer cast shadows; this was checked by
+  looking at the picture, on both backends.
+- **A real GPU, once.** Chrome with `--use-angle=gl-egl` ran WebGL on ANGLE (Intel, Mesa,
+  RPL-S, OpenGL ES 3.2). `test.html?icons=1` and `?icons=1&gl=1` drew with gl error 0, and
+  the resident flow check held. On that launch `test-webgpu.html?icons=1` got SwiftShader,
+  not the GPU, as its adapter, so WebGPU on hardware was not checked.
+- **The core.** `cargo test -p holon-draw` passes 45 tests. Two are new: the shape bits never
+  touch the colour mode, settings 22 and 23 were free, and a glyph of shape 1..15 is bound
+  by its square's corner (`size[0]` times the square root of 2) and, on screen, by its turned
+  square's box.
+
+Which shapes are weak at 16 px: KEY (thin, especially when turned), STOP (its octagon reads
+as a disc with a bar, which is a no-entry sign), BALLOT (the slot and tick are about one
+pixel), and DOCUMENT's three text lines (about one pixel each, with gaps of about 1.5 px).
+The rest read clearly at 16 px. All 16 look clean at 48 and 200 px.
+
+Not done: the right-to-left mirror flag that `INTERFACE.md` §6 owes. No frame time was
+measured. Also found, and not fixed: on a large mark the procedural FIELD's pixels-per-unit
+(`v_fp`) is still estimated per vertex, so a vertex behind the eye skews its octave fade.
+The `icons` patch therefore runs with the field off.
+
 ## Resident buffers: what was built and checked, 2026-11-22
 
 Both browser backends can now draw a batch from records already on the GPU. A host calls

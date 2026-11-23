@@ -80,6 +80,14 @@
 //     variant is ever made and no draw pays for shadow code (the same split as HD_SHADOW).
 //   - Text. The atlas pages are r8unorm textures (coverage in red) sampled LINEAR, clamped,
 //     with textureSampleLevel(level 0): the same filtering as the GL ALPHA pages.
+//   - Glyph shapes and the FLOW dash are not ported by hand: draw.js's GLYPH_GLSL (written in
+//     a small subset of GLSL for this) is translated to WGSL line for line by wgslOf below.
+//   - The RING's per-pixel distance. A fragment's position here is the target's pixel from
+//     the TOP-left (GL's gl_FragCoord is from the bottom-left), so the frame carries the
+//     viewport's top-left in the target (Frame.org: opts.viewport's x and h - y - height) and
+//     the vertex stage hands over the ring's centre in those pixels. In the SHADOW pass's frame,
+//     Frame.lvp holds the CAMERA's vp and Frame.view.xy the camera's viewport size (the pass's
+//     own vp is in Frame.vp), so the ring is the camera's there too, as in draw.js.
 //   - Images (kind 12). setImage(slot, source, { nearest }) and deleteImage(slot), as in
 //     draw.js: each slot is an rgba8unorm texture written with copyExternalImageToTexture
 //     (not premultiplied, not flipped), sampled nearest or LINEAR, clamped, level 0. A slot is
@@ -90,14 +98,30 @@
 //
 // Not handled, as in draw.js: a `vp` that mirrors the picture flips winding.
 
-import { KIND, INSTANCE_BYTES, PARAMS_NEUTRAL } from './draw.js';
+import { KIND, INSTANCE_BYTES, PARAMS_NEUTRAL, GLYPH_GLSL } from './draw.js';
 export {
   KIND, INSTANCE_BYTES, PARAM, PARAMS_NEUTRAL, COLOUR, VARIANT_CASING, VARIANT_ROUND, VARIANT_ORIENT,
-  VARIANT_MATERIAL, MATERIAL, DISC_CASING, DISC_CANOPY_FIELD,
+  VARIANT_MATERIAL, MATERIAL, DISC_CASING, DISC_CANOPY_FIELD, VARIANT_FLOW, VARIANT_GLYPH_SHAPE, GLYPH,
 } from './draw.js';
 
+// draw.js's glyph shapes and flow dash (GLYPH_GLSL, a small subset of GLSL written for this)
+// in WGSL, line for line: a function header `T hd_x(T a, ...) {` becomes `fn hd_x(a: T, ...) -> T {`,
+// a local `T x = ` becomes `var x = `, and vecN( becomes vecNf(. Nothing else differs, so the
+// two backends draw the shapes from one source.
+function wgslOf(src) {
+  const T = { float: 'f32', vec2: 'vec2f', vec3: 'vec3f', vec4: 'vec4f' };
+  return src.split('\n').map((line) => {
+    const m = line.match(/^(float|vec2|vec3|vec4) (hd_\w+)\((.*)\) \{$/);
+    if (m) {
+      return 'fn ' + m[2] + '(' + m[3].split(', ').map((a) => { const [t, n] = a.split(' '); return n + ': ' + T[t]; }).join(', ') + ') -> ' + T[m[1]] + ' {';
+    }
+    return line.replace(/^(\s*)(float|vec2|vec3|vec4) (\w+) = /, '$1var $3 = ').replace(/\bvec([234])\(/g, 'vec$1f(');
+  }).join('\n');
+}
+const GLYPH_WGSL = wgslOf(GLYPH_GLSL);
+
 const MAX_PAGES = 4;
-const FRAME_FLOATS = 48;   // struct Frame: 192 bytes
+const FRAME_FLOATS = 52;   // struct Frame: 208 bytes
 const DRAW_FLOATS = 44;    // struct Draw: 176 bytes
 
 // ---- WGSL ----
@@ -110,6 +134,7 @@ struct Frame {
   light: vec4f,    // xyz: unit, toward the light
   view: vec4f,     // x, y: the viewport's width and height in pixels; z: half its height; w: pixels per world unit if given, else 0
   shp: vec4f,      // x strength, y one texel, z bias, w the normal offset in world units
+  org: vec4f,      // x, y: the viewport's top-left in the target's pixels (WebGPU's, from the top), for the RING
 };
 struct Draw {
   params: array<vec4f, 8>,   // the tile's settings
@@ -132,7 +157,9 @@ struct VIn {
 };
 `;
 
-function worldVS(shadow) {
+// zpass: the shadow map's vertex stage, whose ring is the CAMERA's (F.lvp holds the camera's
+// view-projection and F.view.xy its viewport's size in that frame; see draw()).
+function worldVS(shadow, zpass) {
   return /* wgsl */ `
 struct VOut {
   @builtin(position) pos: vec4f,
@@ -142,9 +169,10 @@ struct VOut {
   @location(3) dim: vec4f,     // rgb: DIM; a: the alpha multiplier (class times FADE)
   @location(4) np: vec2f,      // the field's position
   @location(5) fp: vec3f,      // pixels per field unit; the field's amplitude (0 off); which field (0 ground, 1 canopy, 2 roof)
-  @location(6) ring: vec2f,    // (pixel - ring centre) / ring radius; 0 when the ring is off
+  @location(6) ring: vec3f,    // draw.js's v_ring (picture: the centre in the target's pixels, here from the top)
   @location(7) mat: f32,       // the material (0 kind, 1 matte, 2 metal, 3 glow)
-${shadow ? '  @location(8) ls: vec4f,      // the position in the light\'s clip space\n' : ''}};
+${shadow ? '  @location(8) ls: vec4f,      // the position in the light\'s clip space\n' : ''}  @location(9) sp: vec2f,      // draw.js's v_sp: a glyph's shape and half size in pixels; 16 and a flow's upper clamp
+};
 // Pixels per world unit at clip w.
 fn ppuAt(w: f32) -> f32 {
   if (F.view.w > 0.0) { return F.view.w; }
@@ -160,6 +188,13 @@ fn ppuAt(w: f32) -> f32 {
   let bit2 = (vr & 4u) != 0u;
   let orient = kc > 4.5 && kc < 5.5 && (vr & 8u) != 0u;
   let liney = kc > 2.5 && kc < 3.5;
+  let shape = f32(vr & 15u);
+  let bill = kc > 5.5 && shape > 0.5;   // a glyph of shape 1..15: a camera-facing square
+  let flow = liney && bit2;             // a FLOW line or arc
+  var gq = vec2f(0.0);
+  var fU = 0.0;
+  var fLen = 1.0;
+  var fC = vec3f(0.0);
   var p: vec3f;
   var n: vec3f;
   let org = a.i_pos + D.offset.xyz;
@@ -182,6 +217,25 @@ fn ppuAt(w: f32) -> f32 {
       let u = 1.0 - t;
       c0 = org + 2.0 * u * t * ctrl + t * t * d;
       dd = 2.0 * u * ctrl + 2.0 * t * (d - ctrl);
+      if (flow) {
+        // the length along the curve to t and to 1 (Simpson's rule, 8 intervals each)
+        var sT = 0.0;
+        var s1 = 0.0;
+        for (var k = 0; k <= 8; k++) {
+          var wk = 2.0;
+          if (k == 0 || k == 8) { wk = 1.0; } else if ((k & 1) == 1) { wk = 4.0; }
+          let a1 = f32(k) / 8.0;
+          let aT = a1 * t;
+          s1 += wk * length(2.0 * (1.0 - a1) * ctrl + 2.0 * a1 * (d - ctrl));
+          sT += wk * length(2.0 * (1.0 - aT) * ctrl + 2.0 * aT * (d - ctrl));
+        }
+        fU = t;
+        if (s1 > 0.0) { fU = sT * t / s1; }
+        fLen = s1 / 24.0;
+      }
+    } else if (flow) {
+      fU = t;
+      fLen = length(d);
     }
     let len = length(dd);
     var dn = vec3f(0.0, 0.0, 1.0);
@@ -201,6 +255,27 @@ fn ppuAt(w: f32) -> f32 {
     }
     p = c0 + (bx * a.a_p.x + by * a.a_p.y) * r + dn * (e * r);
     n = bx * a.a_n.x + by * a.a_n.y + dn * a.a_n.z;
+    if (flow) {
+      fU += e * r / max(fLen, 1e-6);
+      fC = c0;
+    }
+  } else if (bill) {
+    // the camera's right and up from vp alone (draw.js says how)
+    let r0 = vec3f(F.vp[0][0], F.vp[1][0], F.vp[2][0]);
+    let r1 = vec3f(F.vp[0][1], F.vp[1][1], F.vp[2][1]);
+    let r3 = vec3f(F.vp[0][3], F.vp[1][3], F.vp[2][3]);
+    var rz = vec3f(F.vp[0][2], F.vp[1][2], F.vp[2][2]);
+    if (dot(r3, r3) > 1e-12) { rz = r3; }
+    var R = normalize(cross(r1, rz));
+    if (dot(R, r0) < 0.0) { R = -R; }
+    var U = normalize(cross(rz, r0));
+    if (dot(U, r1) < 0.0) { U = -U; }
+    gq = a.a_p.xy / max(max(abs(a.a_p.x), abs(a.a_p.y)), 1e-6);
+    let c = cos(a.i_angle);
+    let sn = sin(a.i_angle);
+    let cr = vec2f(c * gq.x - sn * gq.y, sn * gq.x + c * gq.y) * a.i_size.x;
+    p = org + R * cr.x + U * cr.y;
+    n = normalize(cross(R, U));
   } else {
     var s = a.i_size;
     if (D.mode.y > 0.5) { s = a.i_size.xxx; }
@@ -244,7 +319,7 @@ fn ppuAt(w: f32) -> f32 {
   var fa = 1.0;
   if ((kc > 1.5 && kc < 2.5) || (kc > 0.5 && kc < 1.5 && ramp)) {
     am = D.params[6].y; fk = 0.0; fa = 1.0 - 0.5 * dens;               // ground
-  } else if (tint && ((kc > 0.5 && kc < 1.5) || kc > 4.5)) {
+  } else if (tint && ((kc > 0.5 && kc < 1.5) || (kc > 4.5 && kc < 5.5))) {
     am = D.params[7].x; fk = 2.0;                                      // roof
   } else if (kc > 0.5 && kc < 1.5) {
     am = D.params[6].z;                                                // a literal quad: a shadow
@@ -257,12 +332,17 @@ fn ppuAt(w: f32) -> f32 {
   let pos = F.vp * vec4f(p, 1.0);
 ${shadow ? '  o.ls = F.lvp * vec4f(p + n * F.shp.w, 1.0);\n' : ''}  o.mat = f32((vr >> 4u) & 3u);
   let ringR = D.params[7].w;
-  if (ringR > 0.0) {
-    let px = vec2f(0.5 + 0.5 * pos.x / pos.w, 0.5 - 0.5 * pos.y / pos.w) * F.view.xy;
-    o.ring = (px - D.params[7].yz) / ringR;
+${zpass ? `  if (ringR > 0.0) {
+    let cc = F.lvp * vec4f(p, 1.0);
+    o.ring = vec3f((0.5 * F.view.x * (cc.x + cc.w) - D.params[7].y * cc.w) / ringR,
+                   (0.5 * F.view.y * (cc.w - cc.y) - D.params[7].z * cc.w) / ringR, cc.w);
   } else {
-    o.ring = vec2f(0.0);
-  }
+    o.ring = vec3f(0.0, 0.0, 1.0);
+  }` : `  if (ringR > 0.0) {
+    o.ring = vec3f(F.org.x + D.params[7].y, F.org.y + D.params[7].z, ringR);
+  } else {
+    o.ring = vec3f(0.0);
+  }`}
   o.c = vec4f(rgb, a.i_color.a);
   o.dim = vec4f(D.params[0].rgb, am * D.params[0].w);
   var amp = D.params[5].x * fa;
@@ -275,6 +355,18 @@ ${shadow ? '  o.ls = F.lvp * vec4f(p + n * F.shp.w, 1.0);\n' : ''}  o.mat = f32(
     o.np = vec2f(0.0);
     o.fp = vec3f(0.0);
   }
+  o.sp = vec2f(0.0);
+  if (bill) {
+    o.np = gq;
+    o.sp = vec2f(shape, a.i_size.x * ppuAt((F.vp * vec4f(org, 1.0)).w));
+  } else if (flow) {
+    var fN = 6.0;
+    if (D.params[5].w > 0.0) { fN = D.params[5].w; }
+    let ph = fract(D.params[5].z);
+    o.np = vec2f(fU * fN - ph, -ph);
+    o.sp = vec2f(16.0, fN - ph);
+    o.fp = vec3f(fLen * ppuAt((F.vp * vec4f(fC, 1.0)).w) / fN, 0.0, 0.0);
+  }
   // GL's clip z in [-w, w] to WebGPU's [0, w]: the same window depth.
   o.pos = vec4f(pos.x, pos.y, 0.5 * (pos.z + pos.w), pos.w);
   return o;
@@ -284,7 +376,7 @@ ${shadow ? '  o.ls = F.lvp * vec4f(p + n * F.shp.w, 1.0);\n' : ''}  o.mat = f32(
 
 function worldFS(shadow) {
   return /* wgsl */ `
-${shadow ? '@group(1) @binding(0) var shadowMap: texture_depth_2d;\n' : ''}
+${shadow ? '@group(1) @binding(0) var shadowMap: texture_depth_2d;\n' : ''}${GLYPH_WGSL}
 // GLSL's mod: x - m * floor(x / m).
 fn gmod(x: vec2f, m: f32) -> vec2f { return x - m * floor(x / m); }
 // Value noise on a lattice that repeats every 4096 units; the twin's hash on mod(i, m) / m.
@@ -327,6 +419,18 @@ fn litFraction(ls: vec4f, ndl: f32) -> f32 {
 }
 ` : ''}
 @fragment fn fs(i: VOut, @builtin(front_facing) ff: bool) -> @location(0) vec4f {
+  // the ring, from this fragment's own position in the target
+  var ring = 1.0;
+  if (i.ring.z > 0.0) {
+    ring = 1.0 - smoothstep(0.85, 1.0, length(min(abs(i.pos.xy - i.ring.xy) / i.ring.z, vec2f(8.0))));
+  }
+  let gk = floor(i.sp.x + 0.5);
+  if (gk > 0.5 && gk < 15.5) {
+    let g = hd_glyphCov(gk, i.np, i.sp.y);
+    let cov = max(g.x, g.y);
+    if (cov < 0.5) { discard; }
+    return vec4f(mix(i.c.rgb, hd_ink(i.c.rgb), g.y) * i.dim.rgb, i.c.a * i.dim.a * ring * cov);
+  }
   var n = normalize(i.n);
   if (!ff) { n = -n; }
   let v = normalize(i.v);
@@ -349,6 +453,12 @@ ${shadow ? `  var shf = 1.0;
   let sp = pow(max(dot(n, h), 0.0), shin) * spec * step(0.0001, ndl) * shf;
   let rim = pow(1.0 - max(dot(n, v), 0.0), 3.0) * rimk;
   var base = i.c.rgb;
+  var flowA = 1.0;
+  if (gk > 15.5) {
+    let fl = hd_flow(clamp(i.np.x, i.np.y, i.sp.y), clamp(1.5 / max(i.fp.x, 0.001), 0.02, 0.25));
+    base = mix(base, vec3f(1.0), fl.x);
+    flowA = fl.y;
+  }
   if (i.fp.y > 0.0) {
     var s: f32;
     if (i.fp.z < 0.5) { s = oct(i.np, 48.0, 0.10, i.fp.x) + oct(i.np, 12.0, 0.07, i.fp.x) + oct(i.np, 3.0, 0.05, i.fp.x); }
@@ -358,21 +468,23 @@ ${shadow ? `  var shf = 1.0;
   }
   let shaded = select(base * (lit + rim) + vec3f(sp), base, glow);
   let flatc = base * mix(1.0 - strength, 1.0, shf);
-  let ring = 1.0 - smoothstep(0.85, 1.0, length(min(abs(i.ring), vec2f(8.0))));
-  return vec4f(mix(flatc, shaded, D.shade.x) * i.dim.rgb, i.c.a * i.dim.a * ring);
+  return vec4f(mix(flatc, shaded, D.shade.x) * i.dim.rgb, i.c.a * i.dim.a * ring * flowA);
 }
 `;
 }
 
-// The shadow map's fragment stage: depth only. A mark under half alpha, or a GLOW mark, casts nothing.
+// The shadow map's fragment stage: depth only. A mark under half alpha, or a GLOW mark, casts
+// nothing; the ring is the camera's at this fragment's point (behind the eye: outside).
 const ZFS = /* wgsl */ `
 @fragment fn zfs(i: VOut) {
-  let ring = 1.0 - smoothstep(0.85, 1.0, length(min(abs(i.ring), vec2f(8.0))));
+  var ring = 0.0;
+  if (i.ring.z > 0.0) { ring = 1.0 - smoothstep(0.85, 1.0, length(min(abs(i.ring.xy / i.ring.z), vec2f(8.0)))); }
   if (i.c.a * i.dim.a * ring < 0.5 || i.mat > 2.5) { discard; }
 }
 `;
 
 const SCREEN = /* wgsl */ `
+${GLYPH_WGSL}
 @group(1) @binding(0) var t0: texture_2d<f32>;
 @group(1) @binding(1) var t1: texture_2d<f32>;
 @group(1) @binding(2) var t2: texture_2d<f32>;
@@ -389,11 +501,19 @@ struct SOut {
   @location(4) page: f32,
   @location(5) c: vec4f,
   @location(6) fade: f32,
+  @location(7) k: vec3f,     // a glyph's ink, or the white a FLOW line's dashes go toward (both times DIM)
+  @location(8) fl: vec2f,    // a FLOW line: the upper clamp, pixels per dash cycle
 };
 @vertex fn svs(a: VIn) -> SOut {
   var o: SOut;
   let org = a.i_pos.xy + D.offset.xy;
   let sm = D.mode.x;
+  let vr = a.i_meta.w;
+  let shape = f32(vr & 15u);
+  let gly = sm > 0.5 && sm < 1.5 && a.i_meta.x > 9u && shape > 0.5;   // a glyph of shape 1..15
+  let flow = sm > 1.5 && sm < 2.5 && (vr & 4u) != 0u;
+  o.k = vec3f(0.0);
+  o.fl = vec2f(0.0);
   var px: vec2f;
   if (sm > 2.5) {
     let tl = floor(org - 0.5 * a.i_size.xy + 0.5);
@@ -415,6 +535,10 @@ struct SOut {
     } else if (sm < 1.5) {
       hs = vec2f(abs(a.i_size.x));
       r = hs.x;
+      if (gly) {
+        r = 0.0;
+        ux = vec2f(cos(a.i_angle), -sin(a.i_angle));   // turned counter-clockwise as seen (y is down)
+      }
     } else {
       let d = a.i_aux.xy - a.i_pos.xy;
       let len = length(d);
@@ -431,6 +555,19 @@ struct SOut {
     o.r = r;
     o.uv = vec2f(0.0);
     o.page = 0.0;
+    if (gly) {
+      o.a = l;
+      o.b = vec2f(0.0);
+      o.r = hs.x;
+      o.page = shape;
+    } else if (flow) {
+      var fN = 6.0;
+      if (D.params[5].w > 0.0) { fN = D.params[5].w; }
+      let ph = fract(D.params[5].z);
+      o.uv = vec2f((0.5 + l.x / max(2.0 * hs.x, 1e-6)) * fN - ph, -ph);
+      o.fl = vec2f(fN - ph, 2.0 * hs.x / fN);
+      o.page = 16.0;
+    }
   }
   var rgb = a.i_color.rgb;
   if (sm < 2.5) {
@@ -439,6 +576,7 @@ struct SOut {
     else if (cm == 2u) { rgb = rgb * D.params[3].rgb; }
   }
   o.c = vec4f(rgb * D.params[0].rgb, a.i_color.a);
+  if (gly) { o.k = hd_ink(rgb) * D.params[0].rgb; } else if (flow) { o.k = D.params[0].rgb; }
   o.fade = D.params[0].w;
   o.pos = vec4f(px.x / F.view.x * 2.0 - 1.0, 1.0 - px.y / F.view.y * 2.0, 0.0, 1.0);
   return o;
@@ -454,10 +592,18 @@ struct SOut {
     else if (i.page < 1.5) { cov = textureSampleLevel(t1, smp, i.uv, 0.0).r; }
     else if (i.page < 2.5) { cov = textureSampleLevel(t2, smp, i.uv, 0.0).r; }
     else { cov = textureSampleLevel(t3, smp, i.uv, 0.0).r; }
+  } else if (i.page > 0.5 && i.page < 15.5) {
+    // a glyph's shape, in its square of half size i.r pixels
+    let g = hd_glyphCov(floor(i.page + 0.5), vec2f(i.a.x, -i.a.y) / i.r, i.r);
+    return vec4f(mix(i.c.rgb, i.k, g.y), i.c.a * max(g.x, g.y) * i.fade);
   } else {
     let q = max(i.a, i.b);
     let d = length(max(q, vec2f(0.0))) + min(max(q.x, q.y), 0.0) - i.r;
     cov = clamp(0.5 - d, 0.0, 1.0);
+    if (i.page > 15.5) {
+      let fl = hd_flow(clamp(i.uv.x, i.uv.y, i.fl.x), clamp(1.5 / max(i.fl.y, 0.001), 0.02, 0.25));
+      return vec4f(mix(i.c.rgb, i.k, fl.x), i.c.a * cov * i.fade * fl.y);
+    }
   }
   return vec4f(i.c.rgb, i.c.a * cov * i.fade);
 }
@@ -623,7 +769,7 @@ function discMesh(sides) {
 }
 
 // Slots as in draw.js: index = kind; 11 and 12 the coarse sphere and rod, 13 and 14 the flat line and arc.
-const KIND_CODE = [0, 1, 3, 3, 4, 5, 5, 0, 0, 2, 0, 0, 0, 3, 3];
+const KIND_CODE = [0, 1, 3, 3, 4, 5, 5, 0, 0, 2, 6, 0, 0, 3, 3];
 const SLOT_COARSE_SPHERE = 11, SLOT_COARSE_ROD = 12, SLOT_FLAT_LINE = 13, SLOT_FLAT_ARC = 14, N_SLOT = 15;
 
 const MESH_LAYOUT = {
@@ -676,9 +822,9 @@ export async function createDrawerWebGPU(device, options) {
 
   // Shader modules: the world with and without shadows, the depth-only shadow pass, the screen.
   const [mWorld, mWorldS, mZ, mScreen] = await Promise.all([
-    checkedModule(device, 'holon-draw world', COMMON + worldVS(false) + worldFS(false)),
-    checkedModule(device, 'holon-draw world+shadow', COMMON + worldVS(true) + worldFS(true)),
-    checkedModule(device, 'holon-draw shadow map', COMMON + worldVS(false) + ZFS),
+    checkedModule(device, 'holon-draw world', COMMON + worldVS(false, false) + worldFS(false)),
+    checkedModule(device, 'holon-draw world+shadow', COMMON + worldVS(true, false) + worldFS(true)),
+    checkedModule(device, 'holon-draw shadow map', COMMON + worldVS(false, true) + ZFS),
     checkedModule(device, 'holon-draw screen', COMMON + SCREEN),
   ]);
 
@@ -1051,14 +1197,16 @@ export async function createDrawerWebGPU(device, options) {
     ustage[base + 40] = shade0; ustage[base + 41] = shade1; ustage[base + 42] = shade2; ustage[base + 43] = shade3;
     return base * 4;
   }
-  function frameSlot(at, m, l, eye, vw, vh, halfH, ppu, shp0, shp1, shp2, shp3) {
+  // m: the frame's vp; m2: what F.lvp holds (the light's in the picture, the camera's in the shadow pass)
+  function frameSlot(at, m, m2, l, eye, vw, vh, halfH, ppu, shp0, shp1, shp2, shp3, ox, oy) {
     const b = at / 4;
     for (let i = 0; i < 16; i++) ustage[b + i] = m[i];
-    for (let i = 0; i < 16; i++) ustage[b + 16 + i] = lvp[i];
+    for (let i = 0; i < 16; i++) ustage[b + 16 + i] = m2[i];
     ustage[b + 32] = eye[0]; ustage[b + 33] = eye[1]; ustage[b + 34] = eye[2]; ustage[b + 35] = eye[3];
     ustage[b + 36] = l[0]; ustage[b + 37] = l[1]; ustage[b + 38] = l[2]; ustage[b + 39] = 0;
     ustage[b + 40] = vw; ustage[b + 41] = vh; ustage[b + 42] = halfH; ustage[b + 43] = ppu;
     ustage[b + 44] = shp0; ustage[b + 45] = shp1; ustage[b + 46] = shp2; ustage[b + 47] = shp3;
+    ustage[b + 48] = ox; ustage[b + 49] = oy; ustage[b + 50] = 0; ustage[b + 51] = 0;
   }
   const eyeL = new Float64Array(4);
   const dynOff = [0, 0];
@@ -1159,7 +1307,8 @@ export async function createDrawerWebGPU(device, options) {
       shadowTarget(size);
       lightMatrix(so.center, +so.radius);
       eyeL[0] = light[0]; eyeL[1] = light[1]; eyeL[2] = light[2]; eyeL[3] = 0;
-      frameSlot(align, lvp, light, eyeL, size, size, 0.5 * size, ppu, 0, 0, 0, 0);
+      // F.lvp holds the camera's vp and F.view.xy its viewport's size: the ring is the camera's
+      frameSlot(align, lvp, vp || lvp, light, eyeL, vw, vh, 0.5 * size, ppu, 0, 0, 0, 0, 0, 0);
       const zp = enc.beginRenderPass({
         label: 'holon-draw shadow map',
         colorAttachments: [],
@@ -1192,11 +1341,12 @@ export async function createDrawerWebGPU(device, options) {
     }
 
     // The main frame: the world's matrix, eye and light; the screen's viewport.
-    frameSlot(0, vp || lvp, light, inv, vw, vh, 0.5 * vh, ppu,
+    frameSlot(0, vp || lvp, lvp, light, inv, vw, vh, 0.5 * vh, ppu,
       shadowsOn ? (typeof so.strength === 'number' ? Math.max(0, Math.min(1, so.strength)) : 0.55) : 0,
       shadowsOn ? 1 / zSize : 0,
       shadowsOn ? (typeof so.bias === 'number' ? so.bias : 0.0006) : 0,
-      shadowsOn ? 3 * +so.radius / zSize : 0);
+      shadowsOn ? 3 * +so.radius / zSize : 0,
+      V ? V[0] : 0, V ? th - V[1] - V[3] : 0);
 
     const cc = clear || [0, 0, 0, 0];
     const colour = sampleCount > 1

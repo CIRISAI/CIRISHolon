@@ -633,3 +633,63 @@ screen lines, and its picks of any TAGGED line move to the corrected rectangle.
 - §10 (3) the budget as a stated input, (4) which modal wins and the focus and screen-reader
   path, (6) the richer `withheld`/`waiting`/`refused` forms, and the preview's owner and tag
   form. These are the UI layer's, as §10 says.
+
+## 14. Glyph shapes, FLOW on a link, and a CORRECTION to the RING (2026-11-22)
+
+A consumer page (the CEWPOS story, an explainer drawn entirely with holon-draw) needed its
+moving items to read as things, and its links to show which way they run. The lead asked for
+both as engine features. Building the page also found the RING bug corrected below. Where
+this section and the text above disagree, this section holds. The code is
+`engine/crates/holon-draw` at the commit that adds this section. The drawing is specified in
+`web/draw.js`'s header (GLYPHS, FLOW, TILE SETTINGS).
+
+**1. D10's closed set (§1).** §1 promised "one shape from a closed set (arrow, tick, cross,
+dot, ring, bar)". Until this date both backends drew every glyph as a flat disc. The set is
+now sixteen shapes in the low four bits of `variant` (`VARIANT_GLYPH_SHAPE = 0x0f`; the top
+two bits stay the colour mode):
+
+| value | shape | | value | shape |
+|---|---|---|---|---|
+| 0 | DISC (§1's "dot"; the old drawing, unchanged) | | 8 | VIDEO |
+| 1 | ARROW (along +x before `angle`) | | 9 | CHAT |
+| 2 | TICK | | 10 | KEY |
+| 3 | CROSS | | 11 | BALLOT |
+| 4 | RING | | 12 | PERSON |
+| 5 | BAR | | 13 | HEART |
+| 6 | DOCUMENT | | 14 | STOP |
+| 7 | PHOTO | | 15 | LOCK |
+
+The core names them `GLYPH_DISC` .. `GLYPH_LOCK` (and `GLYPHS`); `draw.js` exports the frozen
+`GLYPH`. Shapes 1..15 are drawn in a square of half size `size[0]` turned by `angle`
+(counter-clockwise as seen). In a world tile the square faces the camera, is unlit, casts and
+receives no shadow, and writes no depth where it covers under half. In a screen tile it is
+measured in pixels. Each shape is cut from signed distances, so it is crisp at any size. It
+has two tones: the body in `rgba`, and a detail ink derived from the body's luminance. The
+glyph id of §1's table is this shape. The mirror flag that §6 (b) owed for right-to-left
+arrows is NOT built: a host turns an ARROW by `angle = π` today.
+
+Two consequences in the core. A glyph of shape 1..15 has a bounding sphere of `size[0] · √2`,
+because its square's corners reach that far. A screen glyph of shape 1..15 is reported and
+picked by its turned square's box. A DISC glyph keeps its radius in both.
+
+One clash is left in place and recorded here. A SCREEN mark's RAMP `t` is its `angle`, so a
+screen glyph in RAMP mode is turned by its `t`. A host that wants a turned screen glyph uses
+LITERAL or TINT.
+
+**2. FLOW on D2 `line` and D3 `arc` (§1).** `VARIANT_FLOW = 0x04` on a line or arc, world or
+screen, draws dashes moving from `pos` toward `aux`. Two tile settings that were unread
+until now control it: `PARAM_FLOW = 22`, the phase in dash cycles, and `PARAM_FLOW_N = 23`,
+the number of dashes along each mark (0 means 6). `PARAMS_NEUTRAL` has 0 in both. An arc's
+dashes are spaced evenly along the curve as drawn. The phase is a tile setting, so an
+animated link uploads no record, and a link in a resident buffer stays resident. On a disc
+the same bit 0x04 is the canopy field; the kinds differ, so the two never meet.
+
+**3. CORRECTION: the RING was not per pixel.** `draw.js`'s header said the RING (settings
+29..31) was taken per pixel. It was not. The vertex stage projected each vertex to pixels,
+and the fragment stage interpolated `(pixel - centre) / radius` between vertices. Under a
+perspective view that is wrong on any large mark. Where a vertex lies behind the eye, its
+projection is garbage, and a 150-unit ground patch under the ring vanished. Both backends now
+take the distance from the fragment's own window position. In the shadow pass the ring was
+measured in the shadow map's own pixels, which meant nothing. It is now the camera's ring,
+taken at the caster's own point, and a point behind the camera's eye counts as outside. Under
+an orthographic view (the flat map) the old interpolation was exact up to rounding.

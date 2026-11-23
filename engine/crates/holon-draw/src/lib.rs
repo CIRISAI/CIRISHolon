@@ -191,6 +191,8 @@ impl Instance {
     pub fn bound(&self) -> f32 {
         let s = self.size;
         let own = match self.kind {
+            // a glyph of shape 1..15 is a square of half size size[0], turned: its corner
+            Kind::Glyph if self.variant & VARIANT_GLYPH_SHAPE != GLYPH_DISC => s[0].abs() * std::f32::consts::SQRT_2,
             Kind::Disc | Kind::Sphere | Kind::Glyph => s[0].abs(),
             _ => (s[0] * s[0] + s[1] * s[1] + s[2] * s[2]).sqrt() * 0.5,
         };
@@ -257,6 +259,12 @@ pub const PARAM_TINT: usize = 12; // rgb multiplier for COLOUR_TINT (roofs)
 pub const PARAM_NOISE: usize = 16; // the procedural field's origin and scale: x0, y0, sx, sy
 pub const PARAM_TEX: usize = 20; // the field's strength (0 off)
 pub const PARAM_FLOOR_CASING: usize = 21; // least half width of a CASING line, in pixels (0 off)
+/// The FLOW phase of every [`VARIANT_FLOW`] line and arc of the tile, in dash cycles: a host
+/// adds time times a speed; any real number (only its fractional part is used). Because it is
+/// a tile setting, animating it uploads no record (a resident batch stays resident).
+pub const PARAM_FLOW: usize = 22;
+/// How many dashes run along each FLOW mark of the tile; 0 means 6.
+pub const PARAM_FLOW_N: usize = 23;
 pub const PARAM_FLOOR: usize = 24; // least half width of any other world line or arc, in pixels (0 off)
 pub const PARAM_A_GROUND: usize = 25; // alpha multipliers by surface class, 1 neutral
 pub const PARAM_A_CASING: usize = 26;
@@ -281,6 +289,58 @@ pub const VARIANT_ROUND: u8 = 0x02;
 /// of upright slices. In RAMP mode an oriented box reads `t = 0` (its `aux` is taken). The
 /// pick's bounding sphere is about `pos` and turning about `pos` keeps it, so `bound` holds.
 pub const VARIANT_ORIENT: u8 = 0x08;
+/// Bit 2 of a line's or arc's `variant` (world or screen): FLOW. Dashes move from `pos` toward
+/// `aux` along the mark (an arc's dashes evenly spaced along the curve as drawn): in a dash
+/// the mark's colour at its own alpha, a little brightened, brightest at the dash's leading
+/// edge; between dashes the colour at 35 % of its alpha. The phase and the number of dashes
+/// are tile settings ([`PARAM_FLOW`], [`PARAM_FLOW_N`]). On a DISC the same bit is the canopy
+/// field (`twin::DISC_CANOPY_FIELD`); the kinds differ, so the two never meet. A flow line
+/// casts its shadow as a solid line.
+pub const VARIANT_FLOW: u8 = 0x04;
+
+/// The low four bits of a GLYPH's `variant`: its SHAPE, one of the closed list `GLYPH_*`
+/// (`INTERFACE.md` §1 D10, §14). The top two bits stay the colour mode. Shape 0 is the flat
+/// disc a glyph always was; shapes 1..15 are drawn facing the camera in a square of half size
+/// `size[0]` (world units in a world tile, pixels in a screen tile), turned by `angle`
+/// (counter-clockwise as seen), from signed distances in the fragment stage: a BODY in `rgba`
+/// and, where a shape has one, a DETAIL in an ink derived from the body (near black on a light
+/// body, near white on a dark one). Unlit; casts and receives no shadow. `web/draw.js`'s
+/// header has the drawing.
+pub const VARIANT_GLYPH_SHAPE: u8 = 0x0f;
+/// A filled disc (world: flat in the plane z = `pos.z`, radius `size[0]`; screen: a circle).
+pub const GLYPH_DISC: u8 = 0;
+/// An arrow pointing along +x before `angle` turns it.
+pub const GLYPH_ARROW: u8 = 1;
+pub const GLYPH_TICK: u8 = 2;
+pub const GLYPH_CROSS: u8 = 3;
+pub const GLYPH_RING: u8 = 4;
+/// A horizontal bar (a minus).
+pub const GLYPH_BAR: u8 = 5;
+/// A portrait page with a folded corner and three lines of text (detail).
+pub const GLYPH_DOCUMENT: u8 = 6;
+/// A landscape frame with a sun and two hills (detail).
+pub const GLYPH_PHOTO: u8 = 7;
+/// A rounded landscape screen with a play triangle (detail).
+pub const GLYPH_VIDEO: u8 = 8;
+/// A speech bubble with a tail and three dots (detail).
+pub const GLYPH_CHAT: u8 = 9;
+/// A ring bow, a shaft and two teeth.
+pub const GLYPH_KEY: u8 = 10;
+/// A box with a slot (detail) and a paper going in, ticked (detail).
+pub const GLYPH_BALLOT: u8 = 11;
+/// Head and shoulders.
+pub const GLYPH_PERSON: u8 = 12;
+pub const GLYPH_HEART: u8 = 13;
+/// An octagon with a horizontal bar (detail).
+pub const GLYPH_STOP: u8 = 14;
+/// A body, a shackle and a keyhole (detail).
+pub const GLYPH_LOCK: u8 = 15;
+/// The sixteen shapes, in order (the value of each is its index).
+pub const GLYPHS: [u8; 16] = [
+    GLYPH_DISC, GLYPH_ARROW, GLYPH_TICK, GLYPH_CROSS, GLYPH_RING, GLYPH_BAR, GLYPH_DOCUMENT, GLYPH_PHOTO,
+    GLYPH_VIDEO, GLYPH_CHAT, GLYPH_KEY, GLYPH_BALLOT, GLYPH_PERSON, GLYPH_HEART, GLYPH_STOP, GLYPH_LOCK,
+];
+
 /// Bits 4..5 of a LIT mark's `variant` (box, prism, sphere, rod): its material, a closed list.
 /// KIND: the kind's own specular and rim. MATTE: no specular. METAL: a stronger, tighter
 /// specular and rim. GLOW: unlit, the colour as given; it neither casts nor receives a shadow.
@@ -599,13 +659,18 @@ pub const LEGIBLE_PX: f64 = 4.0;
 pub const CONTRAST_MIN: f64 = 4.5;
 
 /// A screen mark's rectangle in pixels: a line or arc by its two ends and its width (an arc
-/// with its control point too), a disc or glyph by its radius, anything else by its size
-/// about `pos`.
+/// with its control point too), a disc or glyph by its radius (a glyph of shape 1..15 by its
+/// turned square's box), anything else by its size about `pos`.
 fn screen_rect(m: &Instance, origin: [f64; 3]) -> [f64; 4] {
     let (cx, cy) = (origin[0] + m.pos[0] as f64, origin[1] + m.pos[1] as f64);
     match m.kind {
         Kind::Disc | Kind::Glyph => {
-            let r = m.size[0].abs() as f64;
+            let mut r = m.size[0].abs() as f64;
+            if m.kind == Kind::Glyph && m.variant & VARIANT_GLYPH_SHAPE != GLYPH_DISC {
+                // a square of half size r turned by angle: its box
+                let a = m.angle as f64;
+                r *= a.cos().abs() + a.sin().abs();
+            }
             [cx - r, cy - r, cx + r, cy + r]
         }
         Kind::Line | Kind::Arc => {
@@ -1048,6 +1113,39 @@ mod tests {
         assert_eq!(a.bound(), 4.0, "an unbent arc is its chord");
         assert_eq!(VARIANT_MATERIAL & (VARIANT_ORIENT | COLOUR_RAMP | COLOUR_TINT), 0, "material bits are their own");
         assert_eq!(MATERIAL_GLOW, VARIANT_MATERIAL);
+    }
+
+    #[test]
+    fn glyph_shapes_and_flow_have_bits_of_their_own() {
+        for (i, &g) in GLYPHS.iter().enumerate() {
+            assert_eq!(g as usize, i, "a shape's value is its index");
+            assert_eq!(g & !VARIANT_GLYPH_SHAPE, 0, "shape {} fits in the shape bits", g);
+        }
+        assert_eq!(VARIANT_GLYPH_SHAPE & (COLOUR_RAMP | COLOUR_TINT), 0, "the shape never touches the colour mode");
+        assert_eq!(VARIANT_GLYPH_SHAPE | COLOUR_RAMP | COLOUR_TINT, 0xcf, "shape and colour mode leave bits 4..5 free");
+        assert_eq!(VARIANT_FLOW & (VARIANT_CASING | VARIANT_ROUND | COLOUR_RAMP | COLOUR_TINT), 0, "flow is a line's own bit");
+        assert_eq!(VARIANT_FLOW, twin::DISC_CANOPY_FIELD, "the same bit as a disc's canopy field, on another kind");
+        // the two new settings take the two numbers no setting read before
+        let taken = [PARAM_DIM, PARAM_DIM + 1, PARAM_DIM + 2, PARAM_DIM + 3, PARAM_RAMP0, PARAM_RAMP0 + 1, PARAM_RAMP0 + 2,
+            PARAM_RAMP1, PARAM_RAMP1 + 1, PARAM_RAMP1 + 2, PARAM_TINT, PARAM_TINT + 1, PARAM_TINT + 2, PARAM_NOISE,
+            PARAM_NOISE + 1, PARAM_NOISE + 2, PARAM_NOISE + 3, PARAM_TEX, PARAM_FLOOR_CASING, PARAM_FLOOR, PARAM_A_GROUND,
+            PARAM_A_CASING, PARAM_A_ROAD, PARAM_A_ROOF, PARAM_RING, PARAM_RING + 1, PARAM_RING + 2];
+        assert!(!taken.contains(&PARAM_FLOW) && !taken.contains(&PARAM_FLOW_N));
+        assert_eq!((PARAM_FLOW, PARAM_FLOW_N), (22, 23));
+        assert_eq!((PARAMS_NEUTRAL[PARAM_FLOW], PARAMS_NEUTRAL[PARAM_FLOW_N]), (0.0, 0.0), "neutral: phase 0, the default count");
+    }
+
+    #[test]
+    fn a_glyph_shape_is_bound_by_its_square() {
+        let mut g = Instance::new(Kind::Glyph, [0.0; 3], [2.0, 0.0, 0.0]);
+        assert_eq!(g.bound(), 2.0, "the disc keeps its radius");
+        g.variant = GLYPH_DOCUMENT | COLOUR_TINT;
+        assert!((g.bound() - 2.0 * std::f32::consts::SQRT_2).abs() < 1e-6, "a shape reaches its square's corner");
+        g.angle = std::f32::consts::FRAC_PI_4;
+        let r = screen_rect(&g, [10.0, 20.0, 0.0]);
+        assert!((r[2] - r[0] - 4.0 * std::f64::consts::SQRT_2).abs() < 1e-5, "a turned square's box: {:?}", r);
+        g.variant = GLYPH_DISC;
+        assert_eq!(screen_rect(&g, [10.0, 20.0, 0.0]), [8.0, 18.0, 12.0, 22.0]);
     }
 
     #[test]

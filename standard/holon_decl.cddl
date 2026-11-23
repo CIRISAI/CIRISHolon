@@ -58,9 +58,9 @@ consumer = {
 }
 
 certificate = {
-  kind: "closure" / "scene" / "bound" / "price" / "none",
+  kind: "closure" / "scene" / "bound" / "none",
   ? for: { view: text1, consumer: text1 },
-  ? bound: { value: number, unit: unit },   ; phase B: below zero only for a price
+  ? bound: { value: number, unit: unit },   ; phase B: not below zero (bound_negative)
   ? basis: "price" / "realised",
   ? evidence: [* evidence],
   ? parts: {
@@ -90,3 +90,10 @@ join = "fade" / "cut" / "none"
 ; evidence //= { digest: sha256, name: text1, ? repository: text1, ? commit: text1 }
 ;           / { run: text1, inputs: [+ { digest: sha256, name: text1 }], printed: text1, ? repository: text1, ? commit: text1 }
 ; holon-decl //= ( ? evidence: [+ evidence], ? plants: [+ { what: text1, planted: int, caught: int, ? evidence: [+ evidence] }] )
+
+; Changed 2026-11-23, after the third review (HOLON-DECL Sections 4.2, 4.5, 4.6.1, 4.6.2):
+; certificate.kind has no "price"; a price is a member of its own.
+; holon-decl //= ( ? price: { for: { view: text1, consumer: text1 }, value: number, ? se: bound-number, ? null: [+ number],
+;                             unit: unit, reads: "carried" / "dropped", evidence: [+ evidence] } )
+; consumer   //= ( kind: "target", stated: reference )
+; a quote is at least 30 characters (phase B: quote_fragment)

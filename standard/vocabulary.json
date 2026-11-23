@@ -2,7 +2,7 @@
   "spec": "ciris/holon-vocabulary/0",
   "says": "The closed vocabularies of the holon declaration, version 0. A declaration that uses a word not listed here is refused (vocabulary_unregistered). Words are added here, with a dated note in standard/HOLON-DECL.md, and nowhere else.",
   "status": {
-    "simulated": "Computed by an engine of the declaring repository. Owes: step.kind computed, with an engine.",
+    "simulated": "Computed by a named engine: a file of the declaring repository (step.engine), or an engine held elsewhere (step.engine_external), in which case the answer is pending. Owes: step.kind computed, with an engine.",
     "measured": "A result of the declaring repository, read from its record. Owes: a source, and a certificate whose evidence carries a sha256.",
     "catalogue": "A value published elsewhere, used at its published size. Owes: a source.",
     "declared": "An input taken as given; nothing here derives it. Owes: a source.",
@@ -26,8 +26,8 @@
     "unchecked": "not checked"
   },
   "standing": {
-    "tier": "A closed view that a consumer carries (OBJECT.md, the corrections of 2026-09-25 and 2026-11-15). Owes: a closure certificate FOR the consumer named in carried_by.",
-    "sector": "A closed view that the consumers it was tested against do not carry. Owes: a closure certificate, and tested_against.",
+    "tier": "A closed view that a consumer carries (OBJECT.md, the corrections of 2026-09-25 and 2026-11-15; TIERS.md section 0: both are measured). Owes TWO things: a closure certificate, and a price that reads carried for the consumer named in carried_by. It also says whether its budget window was measured.",
+    "sector": "A closed view that the consumers it was tested against do not carry. Owes TWO things: a closure certificate, and a price that reads dropped for a consumer listed in tested_against.",
     "rung": "A scale shown or used with no closure claim.",
     "input": "Taken from outside the ladder: a declared or catalogue value.",
     "medium": "Something others are seen through or conditioned on: the air, a mask, a light. Owes: at least one view.",
@@ -53,7 +53,8 @@
     "law": "A conservation law or other stated invariant. Owes: stated, a file of the repository where the law is written.",
     "person": "A reader of a screen: the view must be legible, not only drawn.",
     "verifier": "A second party recomputing the claim from the same inputs.",
-    "dependent": "A component built on this one at a pinned version. Owes: pin, the version or tag it pins."
+    "dependent": "A component built on this one at a pinned version. Owes: pin, the version or tag it pins.",
+    "target": "The stated quantity a gate, a stake or a search was read against (a block's own next state; an increment beyond a named baseline). Not a law. Owes: stated, a file of the repository where the target is written."
   },
   "budget_unit": [
     "px",
@@ -69,8 +70,7 @@
     "closure": "The commuting square v o T = h o v for the named consumer, exactly or within its bound (lean/CIRISHolon/Object.lean, Tier.lean; the statistical form in StatClosure.lean).",
     "scene": "For a generated holon: an exact section law, and a transport cost against a frozen reference sample (lean/CIRISHolon/SceneCert.lean; OBJECT.md, 'The scene certificate').",
     "bound": "A stated bound on the named consumer's error.",
-    "none": "No certificate. Required for an illustration.",
-    "price": "a held-out increment for the named consumer: the prediction that consumer's target loses when this block leaves the dictionary, as the removability gate reads it or as an earlier search of the record read the same increment (the evidence says which). Above the consumer's budget it reads carried (a tier); at or below it, dropped (a sector). It is a price, never a realised cost"
+    "none": "No certificate. Required for an illustration."
   },
   "basis": {
     "price": "The bound is an a-priori price: what the method says the defect is at most (OBJECT.md, correction of 2026-11-15, item 3).",
@@ -140,8 +140,8 @@
     "evidence_undigested": "B. A measured holon cites a file as evidence with no sha256.",
     "gate_not_found": "B. Evidence names a gate that engine/ci-gates.sh does not contain.",
     "regime_missing": "B. A certificate with no regime.",
-    "tier_uncertified": "B. standing is tier or sector and certificate.kind is not closure.",
-    "tier_uncarried": "B. standing is tier and carried_by is not the consumer its certificate is for.",
+    "tier_uncertified": "B. A tier or a sector whose certificate is not a closure certificate.",
+    "tier_uncarried": "B. A tier's carried_by is not a consumer of its views, or is not the consumer its price is for.",
     "carried_not_tier": "B. carried_by on a holon that is not a tier.",
     "sector_untested": "B. A sector does not list the consumers it was tested against; or another standing lists them.",
     "fade_across_theories": "B. draw joins below by fade across a theory_change.",
@@ -150,10 +150,18 @@
     "ladder_disagrees": "B (with --ladder). A declaration that names a rung differs from the engine in name, status, label, unit, marks, band or joins; two declarations claim one rung; or the engine draws a rung no declaration carries.",
     "quote_not_found": "a reference quotes words that its file does not contain",
     "row_missing": "a recorded row quotes no row of the record",
-    "price_contradicts_standing": "a price certificate that does not agree with the standing: a tier's price must exceed its consumer's budget, a sector's must not, the basis must be price, and nothing else holds one",
+    "price_contradicts_standing": "B. A price says carried or dropped and its numbers read the other; or a tier's price reads dropped, a sector's carried; or a price sits on a standing other than tier, sector or recorded.",
     "check_unbacked": "B. A view (or a holon with no per-view status) is proved, model_checked or case_checked and carries no evidence that is a check run.",
     "function_not_computed": "B. standing function with a step that is not computed.",
-    "plants_miscounted": "B. A plant record says more were caught than were planted."
+    "plants_miscounted": "B. A plant record says more were caught than were planted.",
+    "price_missing": "B. A tier or a sector with no price.",
+    "price_unbound": "B. A price names no view and consumer of this holon with a bounded budget in the price's unit.",
+    "budget_outside_window": "B. The budget a price is read against is not inside the declared budget_window.",
+    "tier_window_unstated": "B. A tier with no budget_window: neither a window nor the word not_measured.",
+    "quote_fragment": "B. A quotation is shorter than 30 characters, or starts or ends inside a word of the file.",
+    "source_not_record": "B. A measured recorded row cites, with words, only the file its row is quoted from.",
+    "self_cited": "B. A declaration of the register cites the register or the known answers' fixtures.",
+    "bound_negative": "B. A certificate's bound is below zero."
   },
   "reason_needs": {
     "_": "What a party must hold to run the check. blob: the declaration alone. set: the declarations it names. repository: the declarer's files, so on the wire it is the declarer's attestation and not a verified fact, until the file travels by digest.",
@@ -206,6 +214,18 @@
     "price_contradicts_standing": "blob",
     "check_unbacked": "blob",
     "function_not_computed": "blob",
-    "plants_miscounted": "blob"
+    "plants_miscounted": "blob",
+    "price_missing": "blob",
+    "price_unbound": "blob",
+    "budget_outside_window": "blob",
+    "tier_window_unstated": "blob",
+    "bound_negative": "blob",
+    "self_cited": "blob",
+    "quote_fragment": "repository",
+    "source_not_record": "blob"
+  },
+  "price_reading": {
+    "carried": "The price, less two of its standard errors, is above the consumer's budget, and no null reaches the budget.",
+    "dropped": "Anything else: a price at the budget, or within two standard errors above it, reads dropped."
   }
 }

@@ -52,16 +52,35 @@
         }
       ],
       "certificate": {
-        "kind": "price",
+        "kind": "closure",
         "for": {
           "view": "reading",
           "consumer": "momentum"
         },
         "bound": {
-          "value": 0.2,
+          "value": 0,
           "unit": "relative"
         },
-        "basis": "price",
+        "basis": "realised",
+        "evidence": [
+          {
+            "path": "standard/vectors/fixture/record.txt",
+            "sha256": "2ef465caa982d323351b90e6d501fb79375cb07fffddaa4326a062fce6f03c97"
+          }
+        ]
+      },
+      "regime": "the regime it was measured in",
+      "tested_against": [
+        "momentum"
+      ],
+      "price": {
+        "for": {
+          "view": "reading",
+          "consumer": "momentum"
+        },
+        "value": 0.2,
+        "unit": "relative",
+        "reads": "dropped",
         "evidence": [
           {
             "path": "standard/vectors/fixture/record.txt",
@@ -69,11 +88,7 @@
             "quote": "A fixture for the known-answer vectors of the holon declaration. It is not evidence of anything."
           }
         ]
-      },
-      "regime": "the regime it was measured in",
-      "tested_against": [
-        "momentum"
-      ]
+      }
     }
   ]
 }

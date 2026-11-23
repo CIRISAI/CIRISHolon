@@ -32,6 +32,7 @@
   "not_claimed": [
     "The code calls this a tier of its zoom ladder. No closure or carriage is certified in this format, so its standing here is `rung`.",
     "Nothing relates this tier to the one below it beyond the ladder's order: `below` is context.",
-    "The code's own line says 'certified at a measured 7.0e-10'. That certificate is the sandbox's and is not carried or checked here."
+    "The code's own line says 'certified at a measured 7.0e-10'. That certificate is the sandbox's and is not carried or checked here.",
+    "`simulated` is per scene: the code's own test says 'a gravity tier can still refuse, and one of its declared scenes does'. The engine path cited is the tier table, not the evaluator's code in ciris_sim_core."
   ]
 }

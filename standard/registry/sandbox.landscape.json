@@ -22,7 +22,8 @@
   "source": [
     {
       "path": "engine/crates/holon-sandbox/src/tier.rs",
-      "quote": "name: \"landscape\","
+      "quote": "Two kilometres of stone ground. This is the tier the engine's",
+      "note": "the tier's own plain line in the code's table"
     }
   ],
   "views": [],

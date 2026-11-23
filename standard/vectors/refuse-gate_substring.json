@@ -69,7 +69,23 @@
         ]
       },
       "carried_by": "momentum",
-      "regime": "the regime it was measured in"
+      "regime": "the regime it was measured in",
+      "price": {
+        "for": {
+          "view": "reading",
+          "consumer": "momentum"
+        },
+        "value": 1.1,
+        "unit": "relative",
+        "reads": "carried",
+        "evidence": [
+          {
+            "path": "standard/vectors/fixture/record.txt",
+            "sha256": "2ef465caa982d323351b90e6d501fb79375cb07fffddaa4326a062fce6f03c97"
+          }
+        ]
+      },
+      "budget_window": "not_measured"
     }
   ]
 }

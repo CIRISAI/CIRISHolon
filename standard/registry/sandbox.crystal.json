@@ -3,14 +3,14 @@
   "id": "sandbox.crystal",
   "name": "the sandbox's crystal tier",
   "plain": "A speck of quartz one micrometre across, drawn as the repeating unit cell it is made of.",
-  "status": "declared",
+  "status": "catalogue",
   "standing": "rung",
   "carrier": {
     "state": "a quadtree of holons over a square domain; the terminal holon is one alpha-quartz unit cell. Evaluator: Unavailable (the refusal NoValidatedEvaluator)",
     "unit_log10_m": -9
   },
   "step": {
-    "kind": "declared"
+    "kind": "static"
   },
   "below": [
     {
@@ -19,6 +19,11 @@
     }
   ],
   "source": [
+    {
+      "path": "engine/crates/holon-sandbox/src/tier.rs",
+      "quote": "Rendering a lattice from published cell parameters is",
+      "note": "the code's comment on the refusal goes on: 'data; running dynamics on it would be a number with no ancestor'"
+    },
     {
       "path": "engine/crates/holon-sandbox/src/tier.rs",
       "quote": "evaluator: Evaluator::Unavailable(Refusal::NoValidatedEvaluator),"
@@ -31,6 +36,6 @@
   "not_claimed": [
     "The code calls this a tier of its zoom ladder. No closure or carriage is certified in this format, so its standing here is `rung`.",
     "Nothing relates this tier to the one below it beyond the ladder's order: `below` is context.",
-    "Nothing computes this tier: its evaluator is refused by name. Its sizes and its count of 8,430,505,878 cells are declared in the code."
+    "Nothing computes this tier: its evaluator is refused by name. Its lattice is from published cell parameters, which the code calls data, so the status is catalogue; the code names no publication, and none is cited here. Its count of 8,430,505,878 cells is arithmetic on those sizes."
   ]
 }

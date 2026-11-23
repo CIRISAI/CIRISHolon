@@ -36,7 +36,11 @@
   "source": [
     {
       "path": "conformance/qasm/QVM_ACUITY2_RESULTS.md",
-      "quote": "80/80 on the sweep (every price equal to the bit), 24/24 in the test."
+      "quote": "within 2×: **C 20/20, T 19/20, L 20/20, D 18/20**"
+    },
+    {
+      "path": "conformance/qasm/QVM_ACUITY2_RESULTS.md",
+      "quote": "**0 violations in 80** (with the referee's `τ = 10⁻¹²` floor, Amendment 1 item 3)"
     }
   ],
   "views": [],
@@ -49,7 +53,7 @@
   },
   "remainder": "77 of 80 within `2 ×` of the hand-picked method, certificate 80/80; at `n ≤ 20` choosing costs more than running",
   "not_claimed": [
-    "TIERS.md's '77 of 80' was not found by that spelling in QVM_ACUITY2_RESULTS.md; the quoted words are the record's 80/80.",
+    "TIERS.md's '77 of 80' is S2's `20 + 19 + 20 + 18`, and its 'certificate 80/80' is S3's '0 violations in 80'. S2 itself reads MISSED on T and D, and S1 was KILLED on T. With the search counted as part of the procedure the record's S5 reads C `112×`, L `4.1`, D `4.2`: the view is within 2×, the procedure with its search is not.",
     "Two of ACUITY-2's stakes are void by prereg error (the row).",
     "TIERS.md §2: these 'are not tiers of matter'; they are the dictionary of views the dispatch searches."
   ]

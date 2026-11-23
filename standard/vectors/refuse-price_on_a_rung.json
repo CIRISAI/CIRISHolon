@@ -1,5 +1,6 @@
 {
   "expect": [
+    "certificate_owed",
     "price_contradicts_standing"
   ],
   "declarations": [
@@ -52,16 +53,17 @@
         }
       ],
       "certificate": {
-        "kind": "price",
+        "kind": "none"
+      },
+      "regime": "the regime it was measured in",
+      "price": {
         "for": {
           "view": "reading",
           "consumer": "momentum"
         },
-        "bound": {
-          "value": 0.2,
-          "unit": "relative"
-        },
-        "basis": "price",
+        "value": 0.2,
+        "unit": "relative",
+        "reads": "dropped",
         "evidence": [
           {
             "path": "standard/vectors/fixture/record.txt",
@@ -69,8 +71,7 @@
             "quote": "A fixture for the known-answer vectors of the holon declaration. It is not evidence of anything."
           }
         ]
-      },
-      "regime": "the regime it was measured in"
+      }
     }
   ]
 }

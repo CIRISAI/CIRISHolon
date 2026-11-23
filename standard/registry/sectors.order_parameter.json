@@ -4,7 +4,7 @@
   "name": "the collective order parameter",
   "plain": "How tetrahedral the liquid's local structure is, taken at the box's longest wavelength. It persists, and it adds nothing to the next density and current.",
   "status": "measured",
-  "standing": "sector",
+  "standing": "recorded",
   "carrier": {
     "state": "the first-harmonic tetrahedral-order field `Q_k`"
   },
@@ -16,9 +16,9 @@
       "id": "tiers.molecule",
       "relation": "function",
       "basis": {
-        "path": "conformance/water_observatory/ORDER1_RESULTS.md",
-        "quote": "The first-harmonic tetrahedral-order field closes",
-        "note": "the field is read from the molecules' positions"
+        "path": "conformance/water_observatory/ORDER1_PREREG.md",
+        "quote": "`Q` = `Σ_i (q_i − ⟨q⟩) cos/sin(k x_{i,a})`, `a = x, y, z` (6 columns)",
+        "note": "the field is a sum over molecules of each one's tetrahedral order"
       }
     }
   ],
@@ -29,7 +29,7 @@
     },
     {
       "path": "conformance/water_observatory/SLOW1_RESULTS.md",
-      "quote": "`+0.0283` on every 293 K seed"
+      "quote": "`+0.0283` on every 293 K seed; `+0.0002` at 400 K"
     }
   ],
   "views": [
@@ -39,7 +39,7 @@
       "consumers": [
         {
           "id": "density_and_current",
-          "kind": "law",
+          "kind": "target",
           "stated": {
             "path": "conformance/replace1/REPLACE1_RESULTS.md",
             "quote": "(target `(ρ_k, j^L_k)`, kept `(ρ, j^L)`, 5 time blocks)"
@@ -54,17 +54,31 @@
     }
   ],
   "regime": "the rigid operator at 293 K, three seeds, lags 1 and 5 ps; the target is the collective density and current at the box's longest wavelength",
+  "row": {
+    "path": "TIERS.md",
+    "quote": "| the collective order parameter (tetrahedral order at the box's longest wavelength) | yes: `σ₁ = 0.29–0.36` at 1 ps, outside the hydrodynamic span | **no**: increments `≤ 0` into density and current |"
+  },
+  "not_claimed": [
+    "NOT declared a sector. A sector owes a closure certificate, and the record's closure stake O1 reads 'between': `σ₁` at 1 ps is `0.310 / 0.293 / 0.360` against a bar of `≥ 0.3`, and seed 1 misses by `0.007`. The record's headline calls the field closed (branch (d) under Amendment 1); TIERS.md follows the headline. This format's certificate is an at-most bound and holds no at-least stake, met or missed.",
+    "The price is against ONE target, the next collective density and current at the box's longest wavelength. The six increments run from `−0.0007` to `−0.0126`, all below zero; the price carries the largest, `−0.0007` (seed 1, 1 ps), with that cell's shifted and swapped nulls.",
+    "Its per-molecule form adds `+0.0283` of single-molecule mobility (SLOW-1, 'between'); TIERS.md rounds this to `+0.03`, 'never reaching the fields'. That target is not the one priced here.",
+    "ORDER-1's planted-field check PO-4 first FAILED by `0.004` on the increment, and reads PASS under Amendment 1. The heat-mode confound is 'untested, not excluded'."
+  ],
   "certificate": {
-    "kind": "price",
+    "kind": "none"
+  },
+  "price": {
     "for": {
       "view": "order_field",
       "consumer": "density_and_current"
     },
-    "bound": {
-      "value": -0.0007,
-      "unit": "relative"
-    },
-    "basis": "price",
+    "value": -0.0007,
+    "null": [
+      0.0001,
+      -0.0035
+    ],
+    "unit": "relative",
+    "reads": "dropped",
     "evidence": [
       {
         "path": "conformance/replace1/REPLACE1_RESULTS.md",
@@ -72,18 +86,5 @@
         "quote": "| 1 | 1 ps | `−0.0007` (`−0.0007`) | `+0.0001` (`+0.0001`) | `−0.0035` (`−0.0035`) | `−0.0048` | DROPPED |"
       }
     ]
-  },
-  "tested_against": [
-    "density_and_current"
-  ],
-  "row": {
-    "path": "TIERS.md",
-    "quote": "| the collective order parameter (tetrahedral order at the box's longest wavelength) | yes: `σ₁ = 0.29–0.36` at 1 ps, outside the hydrodynamic span | **no**: increments `≤ 0` into density and current |"
-  },
-  "not_claimed": [
-    "Its closure stake O1 read 'between': seed 1's `σ₁` of `0.293` misses the `0.3` bar by `0.007`.",
-    "The six increments are `−0.0032` to `−0.0126`, all below zero; the certificate carries the largest, `−0.0007`.",
-    "Its per-molecule form adds `+0.0283` of single-molecule mobility (SLOW-1, 'between'); TIERS.md rounds this to `+0.03`, 'never reaching the fields'. That target is not the one certified here.",
-    "ORDER-1's planted-field check PO-4 first FAILED by `0.004` on the increment, and reads PASS under Amendment 1. The heat-mode confound is 'untested, not excluded'."
-  ]
+  }
 }

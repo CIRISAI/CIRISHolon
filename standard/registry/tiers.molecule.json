@@ -16,9 +16,9 @@
       "id": "tiers.chemistry",
       "relation": "function",
       "basis": {
-        "path": "TIERS.md",
-        "quote": "A tier is a closed view of the tier below that the tier above CARRIES",
-        "note": "the rigid unit's six coordinates are read from the all-atom state"
+        "path": "conformance/water_observatory/MOLSEARCH1_RESULTS.md",
+        "quote": "A molecule's centre-of-mass and angular velocities decorrelate in `~30` fs",
+        "note": "the rigid unit's coordinates are a molecule's centre of mass and its orientation, read from its atoms"
       }
     }
   ],
@@ -26,6 +26,14 @@
     {
       "path": "conformance/water_observatory/MOLSEARCH1_RESULTS.md",
       "quote": "cross-block `0.009` at 5 fs rising to `0.023` at 100 fs"
+    },
+    {
+      "path": "conformance/water_observatory/CENSUS_RESULTS.md",
+      "quote": "| longest STRICT held run | **893.8 fs** — clears the staked 834 fs window unbroken |"
+    },
+    {
+      "path": "conformance/water_observatory/replace0/README.md",
+      "quote": "| cross-unit potential | **`+0.325 ± 0.099` kT per water** |"
     }
   ],
   "views": [],
@@ -47,6 +55,6 @@
   "remainder": "none the fluid needs at these cadences",
   "not_claimed": [
     "The strict certificate TIERS.md names (a horizon of 893.8 fs against 834) is a bound that must be AT LEAST its requirement. This format's certificates are at-most bounds, so it is quoted and not checked.",
-    "`893.8` and `+0.325` do not occur in MOLSEARCH1_RESULTS.md, the record the row cites for them."
+    "`893.8` and `+0.325` are not in MOLSEARCH1_RESULTS.md, the one record the row names. They are in CENSUS_RESULTS.md and replace0/README.md, quoted in `source`; TIERS.md drops the `± 0.099` (citation notes of 2026-11-23 in TIERS.md)."
   ]
 }

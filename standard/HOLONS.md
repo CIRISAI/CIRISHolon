@@ -5,7 +5,7 @@
 | id | name | status | standing | step | stands on | views: consumer (budget) | certificate | answer | declaration sha256 |
 |---|---|---|---|---|---|---|---|---|---|
 | `air` | the air | catalogue | medium | static | nothing | transmittance: holon_draw (1 level); inscatter: holon_draw (1 level) | none | holds | `d37a21633b72e6d1…` |
-| `cosmos.ledger_wager` | the cosmological rung | wager | recorded | declared | nothing | none | none | holds | `59dd377336bc5c94…` |
+| `cosmos.ledger_wager` | the cosmological rung | wager | recorded | declared | nothing | none | none | holds | `a6b44990fc8da4e7…` |
 | `ladder.atoms` | hydrogen, atom by atom | simulated | rung | computed | ladder.nucleus (shared_edge) | picture: holon_draw (1 px) | none | holds | `da05498a1b8de9c6…` |
 | `ladder.baryon` | below the nucleus: a baryon on a chain | simulated | rung | computed | ladder.sea (shared_edge) | picture: holon_draw (1 px) | none | holds | `d5713843271c6fc7…` |
 | `ladder.cosmic_web` | the cosmic web | illustration | rung | generated | ladder.local_group (shared_edge) | picture: holon_draw (1 px) | none | holds | `e0b3980b8637cffa…` |
@@ -21,30 +21,30 @@
 | `ladder.water` | liquid water, molecule by molecule | illustration | rung | generated | ladder.atoms (context); depicts tiers.molecule | picture: holon_draw (1 px) | none | holds | `882391f5d4eaa462…` |
 | `qvm.bit_planes` | classical bit-planes | declared | recorded | declared | nothing | none | none | holds | `43cac1eb1edc16c7…` |
 | `qvm.dense` | the dense statevector | declared | recorded | declared | nothing | none | none | holds | `eb96444885ba8321…` |
-| `qvm.dispatch` | the dispatch | measured | recorded | measured | qvm.bit_planes (context), qvm.tableau (context), qvm.rank_sum (context), qvm.mps (context), qvm.dense (context) | none | none | holds | `eba9c453aebdb994…` |
+| `qvm.dispatch` | the dispatch | measured | recorded | measured | qvm.bit_planes (context), qvm.tableau (context), qvm.rank_sum (context), qvm.mps (context), qvm.dense (context) | none | none | holds | `82f9b1d7176130ee…` |
 | `qvm.mps` | the certified matrix-product state | measured | recorded | measured | nothing | none | none | holds | `9c40d2533122354d…` |
-| `qvm.rank_h7` | the stabilizer rank of seven magic states | measured | recorded | measured | nothing | none | none | holds | `26b08825218a2735…` |
+| `qvm.rank_h7` | the stabilizer rank of seven magic states | measured | recorded | measured | nothing | none | none | holds | `375782eb1f485ddf…` |
 | `qvm.rank_sum` | the stabilizer-rank sum | measured | recorded | measured | nothing | none | none | holds | `55efd5dc8c4240eb…` |
-| `qvm.tableau` | the stabilizer tableau | measured | recorded | measured | nothing | none | none | holds | `3c1d299b1605c136…` |
+| `qvm.tableau` | the stabilizer tableau | measured | recorded | measured | nothing | none | none | holds | `472915dffdb86fd2…` |
 | `reasoning.chains` | reasoning chains | measured | recorded | measured | nothing | none | none | holds | `927c0864d51fd65e…` |
 | `reasoning.eleven_plus_one` | the eleven kinds and the remainder, on their own carrier | measured | recorded | measured | nothing | none | none | holds | `4a3a28d0732d3f65…` |
-| `sandbox.cosmic` | the sandbox's cosmic tier | simulated | rung | computed | sandbox.galactic (context) | none | none | holds | `76b889bc987c94ab…` |
-| `sandbox.crystal` | the sandbox's crystal tier | declared | rung | declared | sandbox.gauge (context) | none | none | holds | `fb82d9aaaa183b21…` |
-| `sandbox.galactic` | the sandbox's galactic tier | simulated | rung | computed | sandbox.planet (context) | none | none | holds | `b16c26746054106d…` |
-| `sandbox.gauge` | the sandbox's gauge tier | simulated | rung | computed | nothing | none | none | holds | `2cbb19cc491db4db…` |
-| `sandbox.grain` | the sandbox's grain tier | simulated | rung | computed | sandbox.crystal (context) | none | none | holds | `9efed4ac80adad3a…` |
-| `sandbox.landscape` | the sandbox's landscape tier | simulated | rung | computed | sandbox.sandbox (context) | none | none | holds | `4d1379a554c6f242…` |
-| `sandbox.planet` | the sandbox's planet tier | simulated | rung | computed | sandbox.landscape (context) | none | none | holds | `9c05064627453c2c…` |
-| `sandbox.sandbox` | the sandbox's sandbox tier | simulated | rung | computed | sandbox.grain (context) | none | none | holds | `029472abda98b57b…` |
-| `sectors.hbond_network` | the hydrogen-bond network | measured | sector | measured | tiers.molecule (function) | bond_counts: momentum_law_50fs (0.02 relative) | price, price, 0 relative for momentum_law_50fs | holds | `0cf9e21e6a349a3d…` |
-| `sectors.order_parameter` | the collective order parameter | measured | sector | measured | tiers.molecule (function) | order_field: density_and_current (0.02 relative) | price, price, -0.0007 relative for density_and_current | holds | `567cc90bc11010db…` |
-| `sectors.slow_shell_coordinate` | the VAMPnet's slow shell-geometry coordinate | measured | sector | measured | tiers.molecule (function) | learned_coordinate: mobility (0.02 relative) | price, price, 0.0128 relative for mobility | holds | `d6020c25830181f5…` |
-| `tiers.chemistry` | atom to chemistry | measured | recorded | measured | tiers.nucleus (context) | none | none | holds | `4edf4db9f87ce7ce…` |
+| `sandbox.cosmic` | the sandbox's cosmic tier | simulated | rung | computed | sandbox.galactic (context) | none | none | holds | `406ddf2df4998ee1…` |
+| `sandbox.crystal` | the sandbox's crystal tier | catalogue | rung | static | sandbox.gauge (context) | none | none | holds | `470647cbee5d7f3e…` |
+| `sandbox.galactic` | the sandbox's galactic tier | simulated | rung | computed | sandbox.planet (context) | none | none | holds | `fdf3cb700e476d6d…` |
+| `sandbox.gauge` | the sandbox's gauge tier | simulated | rung | computed | nothing | none | none | holds | `2c318ee269100e58…` |
+| `sandbox.grain` | the sandbox's grain tier | simulated | rung | computed | sandbox.crystal (context) | none | none | holds | `00766a70555d09a5…` |
+| `sandbox.landscape` | the sandbox's landscape tier | simulated | rung | computed | sandbox.sandbox (context) | none | none | holds | `6681644f8914e5ac…` |
+| `sandbox.planet` | the sandbox's planet tier | simulated | rung | computed | sandbox.landscape (context) | none | none | holds | `ec4b72cd9b79ec5b…` |
+| `sandbox.sandbox` | the sandbox's sandbox tier | simulated | rung | computed | sandbox.grain (context) | none | none | holds | `a71c2f570c5b5fbe…` |
+| `sectors.hbond_network` | the hydrogen-bond network | measured | sector | measured | tiers.molecule (function) | bond_counts: momentum_law_50fs (0.02 relative), own_block (0.2 relative) | closure, realised, 0.007 relative for own_block; price 0 relative for momentum_law_50fs, dropped | holds | `d1ad9c5ca3c3c7ab…` |
+| `sectors.order_parameter` | the collective order parameter | measured | recorded | measured | tiers.molecule (function) | order_field: density_and_current (0.02 relative) | none; price -0.0007 relative for density_and_current, dropped | holds | `5662989195569910…` |
+| `sectors.slow_shell_coordinate` | the VAMPnet's slow shell-geometry coordinate | measured | recorded | measured | tiers.molecule (function) | learned_coordinate: beyond_velocity_and_q (0.02 relative) | none; price 0.0128 relative for beyond_velocity_and_q, dropped | holds | `769aa2d0cd67ff55…` |
+| `tiers.chemistry` | atom to chemistry | measured | recorded | measured | tiers.nucleus (context) | none | none | holds | `1a8284a034efab76…` |
 | `tiers.continuum` | the continuum, or the cube | measured | recorded | measured | tiers.fluid_element (context) | none | none | holds | `7a9cac0a4917acd2…` |
-| `tiers.fluid_element` | the fluid element | measured | tier | measured | tiers.molecule (function) | hydrodynamic_block: level_above (0.005 relative) | price, price, 0.039 relative for level_above | holds | `1c4bbaa01b587178…` |
+| `tiers.fluid_element` | the fluid element | measured | tier | measured | tiers.molecule (function) | staggered_chart: continuity (0.2 relative); hydrodynamic_block: own_next_state (0.02 relative) | closure, realised, 0.18 relative for continuity; price 0.039 ± 0.0073 relative for own_next_state, carried | holds | `64db8f000cb1d198…` |
 | `tiers.fold` | the fold below the atom | measured | recorded | measured | nothing | none | none | holds | `d8d25abb628558c5…` |
-| `tiers.molecule` | the molecule | measured | recorded | measured | tiers.chemistry (function) | none | none | holds | `f66c3e253b8b1735…` |
-| `tiers.nucleus` | the nucleus | declared | input | declared | tiers.fold (context) | none | none | holds | `7b944ed972896509…` |
+| `tiers.molecule` | the molecule | measured | recorded | measured | tiers.chemistry (function) | none | none | holds | `42ace5377aacc1fe…` |
+| `tiers.nucleus` | the nucleus | declared | input | declared | tiers.fold (context) | none | none | holds | `221fab1dcf0700c0…` |
 | `twin.alm` | the twin's layer alm | simulated | rung | computed | nothing | picture: twin_page | none | pending | `500bd5055ba60a8e…` |
 | `twin.arcs` | the twin's layer arcs | simulated | rung | computed | nothing | picture: twin_page | none | pending | `abfcb43f61433e92…` |
 | `twin.calibration` | the twin's layer calibration | simulated | rung | computed | nothing | picture: twin_page | none | pending | `7be94052e3ef7ed0…` |
@@ -60,18 +60,19 @@
 | `twin.reach` | the twin's layer reach | simulated | rung | computed | nothing | picture: twin_page | none | pending | `092a96462192bcfc…` |
 | `twin.seat` | the twin's layer seat | simulated | rung | computed | nothing | picture: twin_page | none | pending | `3ed02f749b73b54e…` |
 | `twin.topology` | the twin's layer topology | simulated | rung | computed | nothing | picture: twin_page | none | pending | `1e33312e10301ff4…` |
-| `twin.wm_household` | the twin's layer wm-household | catalogue | rung | static | nothing | picture: twin_page | none | holds | `51454af4fca52c97…` |
-| `twin.wm_power` | the twin's layer wm-power | catalogue | rung | static | nothing | picture: twin_page | none | holds | `4db197344f0fd019…` |
-| `twin.wm_presence` | the twin's layer wm-presence | catalogue | rung | static | nothing | picture: twin_page | none | holds | `3a2d32b4b59b2331…` |
-| `twin.wm_uneven` | the twin's layer wm-uneven | catalogue | rung | static | nothing | picture: twin_page | none | holds | `7c747dfa55aea013…` |
+| `twin.wm_household` | the twin's layer wm-household | catalogue | rung | static | nothing | picture: twin_page | none | holds | `f275f72e73d4692e…` |
+| `twin.wm_power` | the twin's layer wm-power | catalogue | rung | static | nothing | picture: twin_page | none | holds | `73fa3a5e62792317…` |
+| `twin.wm_presence` | the twin's layer wm-presence | catalogue | rung | static | nothing | picture: twin_page | none | holds | `4c8e95834171724c…` |
+| `twin.wm_uneven` | the twin's layer wm-uneven | catalogue | rung | static | nothing | picture: twin_page | none | holds | `1baa524a40fb95e7…` |
 
-60 declarations: 8 catalogue, 5 declared, 7 illustration, 15 measured, 24 simulated, 1 wager.
+60 declarations: 9 catalogue, 4 declared, 7 illustration, 15 measured, 24 simulated, 1 wager.
 
 ## Owed
 
 - `air`: The evaluator: the two integrals along a ray, in an engine of this repository. Nothing draws the air yet, so the renderer named here reads nothing today.
 - `air`: The display transform (exposure, tone map, transfer function) under which a display level is defined.
 - `air`: A bound certificate for each view. Until they exist the status stays catalogue and nothing is claimed of any picture.
+- `cosmos.ledger_wager`: What 'DESI DR3 fires' means: the threshold is not stated anywhere in this repository. Until it is, this kill points at a condition held elsewhere.
 - `ladder.earth_moon`: The ground rung is of no particular place and the Earth rung is the Earth. They meet only when no host draws the band between them; with a host (the CEWP twin) the host's globe stands there, and its sun replaces the almanac's. Only the unhosted ladder is declared and checked.
 - `ladder.nucleus`: The proton drawn here is a declared input and the chain below it is a different theory (one space dimension, one flavour). The engine fades between them. Whether that boundary is a theory_change, and so a cut, is a question for the CIRISOntology session.
 - `ladder.sea`: The engine joins this rung below by a cut, and nothing is declared below it: the rung the cut leads to (the 3+1D gauge field) is not on main.

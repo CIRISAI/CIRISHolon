@@ -20,6 +20,11 @@
     {
       "external": "CIRISAI/CEWP docs/layers/layers.js: CEWP_LAYERS wm-household, drawn from docs/geo/holon/household0_us.json and household0_de.json (ledger holon-household0-us, holon-household0-de)",
       "edition": "commit 04e3b4b"
+    },
+    {
+      "path": "conformance/scene/HOUSEHOLD0_RESULTS.md",
+      "quote": "The twin's household rule is certified on households per leaf and refused on composition",
+      "note": "the record, in this repository, of the table the card draws"
     }
   ],
   "views": [
@@ -40,6 +45,7 @@
   "not_claimed": [
     "The twin's ledger classes this claim MODEL. Here that is `catalogue`: a published table drawn as it is.",
     "Nothing in this repository computes or checks it. Its standing is `rung` for want of a better word: a layer is not a scale.",
-    "The twin's page draws this layer with its own program, not with holon-draw."
+    "The twin's page draws this layer with its own program, not with holon-draw.",
+    "The table was derived in this repository (the record cited by path). The card is declared from the twin's ledger; this declaration certifies nothing about the table."
   ]
 }

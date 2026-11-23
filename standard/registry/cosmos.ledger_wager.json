@@ -23,7 +23,7 @@
     },
     {
       "path": "TIERS_ARCHIVE_2026-09-26.md",
-      "quote": "if DESI DR3 (or the"
+      "quote": "if DESI DR3 (or the lepton-phase and companion kills on adjacent claims) fires, the top rung's wager rows die IN THE STANCE and this section inherits the death"
     },
     {
       "external": "CIRISAI/CIRISOntology, Stance.lean: the keys precedent-is-bits, dark-balance-intensive, dark-balance-extensive, dark-matter-first, dark-medium, gravity-audit, the-ledgers-third-name"
@@ -34,13 +34,16 @@
     "quote": "## 4. The cosmological rung — a wager, and the final remainder unmeasured"
   },
   "kill": {
-    "text": "DESI DR3: if it fires, the top rung's wager rows die in the stance and this rung inherits the death (TIERS_ARCHIVE_2026-09-26.md, 'The kill discipline travels with the import').",
-    "stated_at": "2026-09-26"
+    "text": "If DESI DR3 (or the lepton-phase and companion kills on adjacent claims) fires, the top rung's wager rows die in the stance and this rung inherits the death; nothing here outlives its source claims.",
+    "stated_at": "2026-09-01"
   },
   "remainder": "the Record itself, what no closed view carries; no instrument on this record measures it",
   "not_claimed": [
     "It is not evidence about the sky (TIERS_ARCHIVE_2026-09-26.md). TIERS.md §5: no cosmological remainder is licensed.",
     "Two legs are dead and kept dead: the Landauer normalisation at 3 to 5 dex, and the flow/maintenance rescue.",
-    "The kill's date here is the date of the archive that holds its text in this repository. The wager and its kills are staked in the CIRISOntology stance, which is not held here and is cited as an external source: nothing checks it."
+    "The kill's date is the day its sentence first entered this repository (commit 3b4cfd9, 2026-09-01, by `git log -S`). The wager and its kills are staked in the CIRISOntology stance, which is not held here and is cited as an external source: nothing checks it."
+  ],
+  "owed": [
+    "What 'DESI DR3 fires' means: the threshold is not stated anywhere in this repository. Until it is, this kill points at a condition held elsewhere."
   ]
 }

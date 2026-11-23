@@ -1,21 +1,58 @@
 {
- "says": "PROTOTYPE, unsigned and unregistered. Each entry is what a signer would say in one scores row: 'the checks of ciris/holon-decl/0 held for this claim over these digests'. It does not say the evidence supports the claim.",
+ "says": "PROTOTYPE, unsigned and unregistered. Each entry is what a signer would say in one scores row: 'the checks of ciris/holon-decl/0 held for this claim over these digests'. It does not say the evidence supports the claim. For a price, score 1 says the stated reading (carried or dropped) is what the numbers give, not that it is carried.",
  "checked_by": {
-  "holonc.py": "cb87068f4df21e3f88e44a6f0e0f6bb36f869c5c86201cda1a6290baa64c05f9",
-  "vocabulary.json": "f960f9a27cec76e05b376e282db6d9dd9cd84f2b25492855035da9580f9349c4"
+  "holonc.py": "531d7abcac5587b8cccfee9e0f1838321e472bdc414444854ebcc09ab1afb0f6",
+  "vocabulary.json": "3764677a9ac0c570c2ff6840681b64c5142e5f89a0ccececef63fbe9dff448ea"
  },
  "claims": [
   {
    "family": "x_private:holon:claim",
    "holon": "sectors.hbond_network",
    "view": "bond_counts",
+   "consumer": "own_block",
+   "score": 1,
+   "kind": "closure",
+   "basis": "realised",
+   "bound": {
+    "decimal": "0.007",
+    "unit": "relative"
+   },
+   "budget": {
+    "decimal": "0.2",
+    "unit": "relative"
+   },
+   "evidence_refs": [
+    {
+     "what": "declaration",
+     "path": "standard/registry/sectors.hbond_network.json",
+     "sha256": "d1ad9c5ca3c3c7abfdf6a0ed568a3d562490b6818a39e3933f919b47d8480c59"
+    },
+    {
+     "what": "evidence",
+     "path": "conformance/water_observatory/TSCAN_HBOND_SEARCH_RESULTS.md",
+     "sha256": "f6aef8612d6f8ec57a00a7adfa8a2868af5895983a059196e1dc59a30c1f2ebd"
+    },
+    {
+     "what": "evidence",
+     "path": "conformance/water_observatory/TSCAN_HBOND_SEARCH_RESULTS.md",
+     "sha256": "f6aef8612d6f8ec57a00a7adfa8a2868af5895983a059196e1dc59a30c1f2ebd"
+    }
+   ]
+  },
+  {
+   "family": "x_private:holon:price",
+   "holon": "sectors.hbond_network",
+   "view": "bond_counts",
    "consumer": "momentum_law_50fs",
    "score": 1,
-   "kind": "price",
-   "basis": "price",
-   "bound": {
+   "reads": "dropped",
+   "price": {
     "decimal": "0.0",
-    "unit": "relative"
+    "unit": "relative",
+    "null": [
+     "-0.0002",
+     "-0.0001"
+    ]
    },
    "budget": {
     "decimal": "0.02",
@@ -25,7 +62,7 @@
     {
      "what": "declaration",
      "path": "standard/registry/sectors.hbond_network.json",
-     "sha256": "0cf9e21e6a349a3de993e39ef507c3a05988c14d2a812349ff72af7ae9695207"
+     "sha256": "d1ad9c5ca3c3c7abfdf6a0ed568a3d562490b6818a39e3933f919b47d8480c59"
     },
     {
      "what": "evidence",
@@ -40,16 +77,19 @@
    ]
   },
   {
-   "family": "x_private:holon:claim",
+   "family": "x_private:holon:price",
    "holon": "sectors.order_parameter",
    "view": "order_field",
    "consumer": "density_and_current",
    "score": 1,
-   "kind": "price",
-   "basis": "price",
-   "bound": {
+   "reads": "dropped",
+   "price": {
     "decimal": "-0.0007",
-    "unit": "relative"
+    "unit": "relative",
+    "null": [
+     "0.0001",
+     "-0.0035"
+    ]
    },
    "budget": {
     "decimal": "0.02",
@@ -59,7 +99,7 @@
     {
      "what": "declaration",
      "path": "standard/registry/sectors.order_parameter.json",
-     "sha256": "567cc90bc11010db156fa8f67ccb6e7c8a7c0ff2e26f9da9b4d2a027ed05d229"
+     "sha256": "566298919556991083fd98fa28de36b30472febf01b7c2ae735f1eb3cd585ad1"
     },
     {
      "what": "evidence",
@@ -69,14 +109,13 @@
    ]
   },
   {
-   "family": "x_private:holon:claim",
+   "family": "x_private:holon:price",
    "holon": "sectors.slow_shell_coordinate",
    "view": "learned_coordinate",
-   "consumer": "mobility",
+   "consumer": "beyond_velocity_and_q",
    "score": 1,
-   "kind": "price",
-   "basis": "price",
-   "bound": {
+   "reads": "dropped",
+   "price": {
     "decimal": "0.0128",
     "unit": "relative"
    },
@@ -88,7 +127,7 @@
     {
      "what": "declaration",
      "path": "standard/registry/sectors.slow_shell_coordinate.json",
-     "sha256": "d6020c25830181f5054e772e9d3fdaefc92e0283d7e66f01f9e81a257965ef5b"
+     "sha256": "769aa2d0cd67ff55de5ea62dad2924b73d0aef164215bbafa2f4a6e2961bfa2b"
     },
     {
      "what": "evidence",
@@ -100,34 +139,77 @@
   {
    "family": "x_private:holon:claim",
    "holon": "tiers.fluid_element",
-   "view": "hydrodynamic_block",
-   "consumer": "level_above",
+   "view": "staggered_chart",
+   "consumer": "continuity",
    "score": 1,
-   "kind": "price",
-   "basis": "price",
+   "kind": "closure",
+   "basis": "realised",
    "bound": {
-    "decimal": "0.039",
+    "decimal": "0.18",
     "unit": "relative"
    },
    "budget": {
-    "decimal": "0.005",
+    "decimal": "0.2",
     "unit": "relative"
    },
    "evidence_refs": [
     {
      "what": "declaration",
      "path": "standard/registry/tiers.fluid_element.json",
-     "sha256": "1c4bbaa01b587178561bcab95c782f4b712e12511728eb4fc608941c1c1eb784"
+     "sha256": "64db8f000cb1d1980bacf0f471cb2223193577a2d44c8f26673b6e02ef0e9c6d"
     },
     {
      "what": "evidence",
-     "path": "conformance/replace1/OBJECTIVE1_RESULTS.md",
-     "sha256": "0c8b65e9b600748b6363bf7296723236fa6817daccc7c9eee73ed828cec2db18"
+     "path": "conformance/water_observatory/RESPONSE1_RESULTS.md",
+     "sha256": "51f4a18f40530ee319bfdf24fc9f3a4dafe04a99c80f6f549de7b535acdb1ccd"
     },
     {
      "what": "evidence",
      "path": "conformance/replace1/REPLACE1_RESULTS.md",
      "sha256": "1beacfab3d76cf70518e8ab1fe1a8a439e27db351b54d6157bf3ddd29682f9b6"
+    }
+   ]
+  },
+  {
+   "family": "x_private:holon:price",
+   "holon": "tiers.fluid_element",
+   "view": "hydrodynamic_block",
+   "consumer": "own_next_state",
+   "score": 1,
+   "reads": "carried",
+   "price": {
+    "decimal": "0.039",
+    "unit": "relative",
+    "se": "0.0073",
+    "null": [
+     "-0.0066",
+     "-0.0048"
+    ]
+   },
+   "budget": {
+    "decimal": "0.02",
+    "unit": "relative"
+   },
+   "evidence_refs": [
+    {
+     "what": "declaration",
+     "path": "standard/registry/tiers.fluid_element.json",
+     "sha256": "64db8f000cb1d1980bacf0f471cb2223193577a2d44c8f26673b6e02ef0e9c6d"
+    },
+    {
+     "what": "evidence",
+     "path": "conformance/replace1/REPLACE1_RESULTS.md",
+     "sha256": "1beacfab3d76cf70518e8ab1fe1a8a439e27db351b54d6157bf3ddd29682f9b6"
+    },
+    {
+     "what": "evidence",
+     "path": "conformance/replace1/REPLACE1_RESULTS.md",
+     "sha256": "1beacfab3d76cf70518e8ab1fe1a8a439e27db351b54d6157bf3ddd29682f9b6"
+    },
+    {
+     "what": "evidence",
+     "path": "conformance/replace1/OBJECTIVE1_RESULTS.md",
+     "sha256": "0c8b65e9b600748b6363bf7296723236fa6817daccc7c9eee73ed828cec2db18"
     }
    ]
   }

@@ -2,10 +2,13 @@
 
 *A draft of 2026-11-23, in the shape of the CIRIS Internet-Drafts
 (`draft-moore-scitt-ciris-ceg`, `-trace`, `-trace-context`). NOT FROZEN, and submitted
-nowhere. Reviewed twice, adversarially, on the same day: `standard/REVIEW-2026-11-23.md`
-records what those reviews found and what was changed. The register was then extended
-from 15 declarations to 60 (every row of `TIERS.md`, the sandbox's tiers, the twin's
-layers), with the members that needed; that extension has NOT been reviewed. Section 9 records the first reading of the sessions
+nowhere. Reviewed three times, adversarially, on the same day:
+`standard/REVIEW-2026-11-23.md` records what each review found and what was changed. The
+third covered the register's extension from 15 declarations to 60 (every row of
+`TIERS.md`, the sandbox's tiers, the twin's layers) and the members added for it. NOT
+reviewed: the governance changes (Section 9, the answers' names, `reason_needs`), the
+members of Section 4.8, and the changes made in answer to the third review itself.
+Section 9 records the first reading of the sessions
 that own the CEG and the kernel; nothing in it is agreed. Nothing should pin to this version.*
 
 ## Abstract
@@ -101,11 +104,12 @@ which the two disagreed, each now a known answer (Section 7).
 | `source` | by status | `{ path, note?, quote? }` or `{ external, edition? }` |
 | `views` | yes | a list of `{ id, reads, consumers }`; a consumer is `{ id, kind, budget?, holon?, stated? }` (Section 4.5) |
 | `regime` | by certificate | where it is meant to hold, in words |
-| `budget_window` | no | `[low, high]`: the budgets over which what is carried does not change; or the word `not_measured` |
+| `budget_window` | tier (others may) | `[low, high]`: the budgets over which what is carried does not change; or the word `not_measured`. A tier MUST say one or the other |
 | `row` | recorded only (others may) | `{ path, quote }`: the row of the record this declares, quoted |
-| `remainder` | no | what it owes upward, in words; never checked |
+| `remainder` | no | what it owes upward, in words; never checked. Meant for a tier, a sector or a recorded row; allowed anywhere |
+| `price` | tier and sector (a recorded row may) | Section 4.6.1 |
 | `certificate` | yes | Section 4.6 |
-| `carried_by` | tier only | the id of the consumer that carries it |
+| `carried_by` | tier only | the id of the consumer that carries it: the consumer its price is for |
 | `tested_against` | sector only | the ids of the consumers it was tested against and is not carried by |
 | `drops` | no | `{ what, price, closed? }`: what was closed and dropped, at what cost, and how closed it was |
 | `kill` | wager only | `{ text, stated_at }`: what would show it wrong, and the date that was said |
@@ -121,7 +125,7 @@ disagree, the file holds.
 
 | status | meaning | owes |
 |---|---|---|
-| `simulated` | computed by an engine of the declaring repository | a computed step, with an engine |
+| `simulated` | computed by a named engine: a file of the declaring repository, or one held elsewhere (then the answer is pending) | a computed step, with an engine |
 | `measured` | a result of the declaring repository, read from its record | a source; a certificate whose file evidence carries a sha256 |
 | `catalogue` | a value published elsewhere | a source |
 | `declared` | an input taken as given | a source |
@@ -157,8 +161,8 @@ so nothing declared needs one.
 
 | standing | meaning | owes |
 |---|---|---|
-| `tier` | a closed view that a consumer carries | a closure certificate FOR the consumer named in `carried_by` |
-| `sector` | a closed view that the consumers it was tested against do not carry | a closure certificate; `tested_against` |
+| `tier` | a closed view that a consumer carries | TWO things: a closure certificate, and a `price` that reads carried for the consumer named in `carried_by`. Also `budget_window`, or the word that it was not measured |
+| `sector` | a closed view that the consumers it was tested against do not carry | TWO things: a closure certificate, and a `price` that reads dropped for a consumer in `tested_against` |
 | `rung` | a scale shown or used with no closure claim | nothing more |
 | `input` | taken from outside the ladder | nothing more |
 | `medium` | something others are seen through or conditioned on | at least one view |
@@ -169,10 +173,16 @@ so nothing declared needs one.
 law, the tier above, or a renderer's frame. So `carried_by` may name a consumer of any
 kind. A sector is "not carried relative to the consumers tested", and says which.
 
+A tier is closed AND carried, and "both are measured" (`TIERS.md` §0). Until 2026-11-23
+this format let a price alone make a tier; the third review found that, and found the
+vocabulary still saying a closure certificate was owed. Now both are owed, as two members,
+and they may be for different consumers: what a view closes against, and who carries it.
+
 `recorded` exists so that a row can be declared without being promoted. `TIERS.md` calls
-six rows tiers; one of them (the fluid element) has a carried set and a budget read by the
-engine's gate, and is declared a `tier`. The others are `recorded`, each saying in
-`not_claimed` why.
+six rows tiers and three rows closed sectors. ONE row has both halves on record in a form
+this format can check and is declared a `tier` (the fluid element); one has both halves of
+a sector (the hydrogen-bond network). The others are `recorded`, each saying in
+`not_claimed` exactly which half is missing.
 
 Whatever the standing, a certificate that IS given MUST name what it is for (Section 4.6).
 
@@ -210,7 +220,9 @@ debt. That is a leniency of this version, not a finding.
 
 A consumer's `kind` is `renderer`, `tier_above` (it MUST name, in `holon`, a declared holon
 that stands on this one), `law` (it MUST cite, in `stated`, a file where the law is
-written), `person` or `verifier`. One consumer id MUST NOT have two kinds.
+written), `target` (the stated quantity a gate, a stake or a search was read against, such
+as a block's own next state; not a law, and it MUST cite `stated` likewise), `person`,
+`verifier` or `dependent` (Section 4.8). One consumer id MUST NOT have two kinds.
 
 A budget is `{ quantity, bound, unit }`, the bound a finite number not below zero. A
 renderer's budget MUST be in `px` (position) or `level` (one step of an 8-bit display
@@ -224,7 +236,6 @@ one.
 | `closure` | the commuting square for the named consumer, exactly or within its bound |
 | `scene` | for a generated holon: an exact section law, and a transport cost against a frozen reference sample |
 | `bound` | a stated bound on the named consumer's error |
-| `price` | a held-out increment for the named consumer: the prediction its target loses when this block leaves the dictionary (the removability gate's reading, or the same increment from an earlier search; the evidence says which) |
 | `none` | no certificate |
 
 A certificate other than `none` MUST carry:
@@ -239,16 +250,46 @@ A certificate other than `none` MUST carry:
 - for `scene`: `parts.section_law` and `parts.transport_cost`, and under the latter
   `reference`, the frozen sample `{ path, sha256, frozen_at }`.
 
-A `price` certificate reads the other way from a bound. Its `bound.value` is the price,
-which may be below zero. On a `tier` it MUST exceed the consumer's budget (removing the
-block costs more than the consumer allows: carried). On a `sector` it MUST NOT (dropped).
-Its basis MUST be `price`, and no other standing may hold one. This is the gate of
+A certificate's bound is never below zero (`bound_negative`).
+
+#### 4.6.1. The price
+
+A price is NOT a certificate, and since 2026-11-23 it is its own member:
+
+`price: { for: { view, consumer }, value, se?, null?, unit, reads, evidence }`
+
+It is a held-out increment: the prediction the named consumer's target loses when this
+block leaves the dictionary, as the removability gate reads it, or as an earlier search of
+the record read the same increment (the evidence says which). This is the gate of
 `TIERS.md` §0 as corrected on 2026-11-15: a price, with nothing removed from the running
-system.
+system. `value` may be below zero. `se` is its standard error and `null` its null reads,
+where the record gives them.
+
+`reads` is `carried` or `dropped`, and MUST be what the numbers give:
+
+- **carried**: `value − 2·se` is ABOVE the consumer's budget, and no null is above it;
+- **dropped**: anything else. A price exactly AT the budget is dropped, and so is one
+  within two standard errors above it. That is a convention of this format, chosen so that
+  "carried" is never read from noise; the record's own gate compares the value alone.
+
+A tier's price MUST read carried and a sector's dropped (`price_contradicts_standing`).
+The consumer MUST have a bounded budget in the price's unit (`price_unbound`), and when a
+`budget_window` is given as two numbers that budget MUST lie strictly inside it
+(`budget_outside_window`). A price needs a `regime`. Only a tier, a sector or a recorded
+row may carry one.
+
+#### 4.6.2. Quotations
 
 Any `{ path }` reference (a source, a basis, a law's `stated`, a row, file evidence) MAY
 carry `quote`. The words MUST then occur in that file, runs of white space counting as one
-space. A number cited from a record can so be tied to the record's own text.
+space (`quote_not_found`). A quotation MUST be at least 30 characters and MUST NOT start or
+end inside a word (`quote_fragment`): a status word or a single number is not a quotation.
+A number cited from a record can so be tied to the record's own text. Matching is exact:
+case, markdown marks and Unicode code points all count.
+
+A `measured` row under `recorded` MUST cite, with words, a record other than the file its
+row is quoted from (`source_not_record`): a row is not its own record. And no declaration
+of the register may cite the register itself or the fixtures of Section 7 (`self_cited`).
 
 A `scene` certificate is for a `generated` holon and no other, and a generated holon holds
 no other kind: it "has no fine motion to close over, so `Closed` does not describe it"
@@ -323,11 +364,11 @@ The phase B checks, by what they protect:
 | what | reasons |
 |---|---|
 | what it stands on | `below_unresolved`, `below_cycle`, `below_fails`, `relation_unbacked`, `depicts_unresolved`, `id_duplicate` |
-| what the status owes | `source_missing`, `source_not_found`, `quote_not_found`, `row_missing`, `kill_missing`, `simulated_not_computed`, `engine_missing`, `certificate_owed`, `illustration_certified`, `illustration_undrawn` |
+| what the status owes | `source_missing`, `source_not_found`, `quote_not_found`, `quote_fragment`, `source_not_record`, `self_cited`, `row_missing`, `kill_missing`, `simulated_not_computed`, `engine_missing`, `certificate_owed`, `illustration_certified`, `illustration_undrawn` |
 | views and consumers | `medium_without_view`, `view_without_consumer`, `consumer_conflict`, `consumer_unresolved`, `budget_unit_mismatch` |
-| the certificate and what it is for | `certificate_unbound`, `consumer_without_budget`, `certificate_exceeds_budget`, `price_contradicts_standing`, `regime_missing`, `scene_not_generated`, `scene_certificate_incomplete` |
+| the certificate and what it is for | `certificate_unbound`, `consumer_without_budget`, `certificate_exceeds_budget`, `bound_negative`, `price_contradicts_standing`, `price_unbound`, `budget_outside_window`, `regime_missing`, `scene_not_generated`, `scene_certificate_incomplete` |
 | evidence | `evidence_missing`, `evidence_not_found`, `evidence_digest`, `evidence_undigested`, `gate_not_found` |
-| what the standing owes | `tier_uncertified`, `tier_uncarried`, `carried_not_tier`, `sector_untested` |
+| what the standing owes | `tier_uncertified`, `price_missing`, `tier_uncarried`, `tier_window_unstated`, `carried_not_tier`, `sector_untested` |
 | how it is drawn | `fade_across_theories`, `fade_unbacked`, `join_disagrees` |
 | the engine against the registry | `ladder_disagrees` |
 
@@ -342,9 +383,9 @@ to run its check (the Kernel session's split, CIRISAI/CIRISKernel#27):
 
 | class | a party needs | reasons |
 |---|---|---|
-| `blob` | the declaration alone | `spec_unknown`, `member_missing`, `member_unexpected`, `type_wrong`, `id_malformed`, `vocabulary_unregistered`, `source_missing`, `kill_missing`, `simulated_not_computed`, `medium_without_view`, `view_without_consumer`, `consumer_conflict`, `consumer_without_budget`, `budget_unit_mismatch`, `certificate_owed`, `certificate_unbound`, `certificate_exceeds_budget`, `illustration_certified`, `illustration_undrawn`, `scene_not_generated`, `scene_certificate_incomplete`, `evidence_missing`, `evidence_undigested`, `regime_missing`, `tier_uncertified`, `tier_uncarried`, `carried_not_tier`, `sector_untested`, `fade_across_theories`, `fade_unbacked`, `price_contradicts_standing` |
+| `blob` | the declaration alone | `spec_unknown`, `member_missing`, `member_unexpected`, `type_wrong`, `id_malformed`, `vocabulary_unregistered`, `source_missing`, `kill_missing`, `simulated_not_computed`, `medium_without_view`, `view_without_consumer`, `consumer_conflict`, `consumer_without_budget`, `budget_unit_mismatch`, `certificate_owed`, `certificate_unbound`, `certificate_exceeds_budget`, `illustration_certified`, `illustration_undrawn`, `scene_not_generated`, `scene_certificate_incomplete`, `evidence_missing`, `evidence_undigested`, `regime_missing`, `tier_uncertified`, `tier_uncarried`, `carried_not_tier`, `sector_untested`, `fade_across_theories`, `fade_unbacked`, `price_contradicts_standing`, `check_unbacked`, `function_not_computed`, `plants_miscounted`, `price_missing`, `price_unbound`, `budget_outside_window`, `tier_window_unstated`, `bound_negative`, `self_cited`, `source_not_record` |
 | `set` | the declarations it names | `id_duplicate`, `below_unresolved`, `below_cycle`, `below_fails`, `depicts_unresolved`, `consumer_unresolved`, `join_disagrees` |
-| `repository` | the declarer's files | `relation_unbacked`, `source_not_found`, `engine_missing`, `evidence_not_found`, `evidence_digest`, `gate_not_found`, `ladder_disagrees`, `quote_not_found`, `row_missing` |
+| `repository` | the declarer's files | `relation_unbacked`, `source_not_found`, `engine_missing`, `evidence_not_found`, `evidence_digest`, `gate_not_found`, `ladder_disagrees`, `quote_not_found`, `row_missing`, `quote_fragment` |
 
 A `repository` check, seen from outside, is the DECLARER'S ATTESTATION and not a verified
 fact. A `{ gate }` evidence is the clearest case. It becomes checkable by a third party only
@@ -374,25 +415,43 @@ This version declares 60 holons, each of which already exists somewhere in the r
 - **every row of `TIERS.md`** (19): the six physical tiers, the three sectors, the seven
   rows of the computational dictionary, the two reasoning rows and the cosmological wager;
 - **the eight tiers of the sandbox** (`engine/crates/holon-sandbox/src/tier.rs`), as the
-  code has them: seven computed, one (the crystal) whose evaluator the code refuses;
+  code has them: seven computed, one (the crystal, `catalogue`) whose evaluator the code refuses;
 - **the CEWP twin's 19 layers**, one per layer claim of its ledger at commit `04e3b4b`:
-  the ocean and atmosphere (an illustration), four cards that draw a published table
-  (`catalogue`), and fourteen that draw the twin's simulation (`simulated`, and WAITING,
+  the ocean and atmosphere (an illustration), four cards that draw a table (`catalogue`;
+  each table is this repository's own, and its record or its file here is cited by path), and fourteen that draw the twin's simulation (`simulated`, and WAITING,
   because the engine is the twin's and not held here);
 - **`air`**: the air as a holon, status `catalogue`, with what it owes before more is claimed.
 
-By standing: 1 tier, 3 sectors, 14 recorded rows, 5 inputs, 1 medium, 36 rungs. 46
+By standing: 1 tier, 1 sector, 16 recorded rows, 5 inputs, 1 medium, 36 rungs. 46
 hold and 14 are pending.
 
-**What the tier rows came to.** Of the six rows `TIERS.md` calls physical tiers, ONE is
-declared a `tier` here: the fluid element, whose hydrodynamic block the gate prices at
-`+0.0390` or more against budgets it drops everything else under, with a window of
-`(0.0033, 0.039)`. The nucleus is an `input`, as its row says. The other four are
-`recorded`: quoted, with the record's words, and no certificate checked, because their
-rows state no budget and bound this format can compare (the molecule's strict certificate
-is a horizon that must be at least its requirement; certificates here are at-most). The
-three sectors are declared `sector` with the price each was dropped at. The seven
-computational rows, the two reasoning rows and the wager are `recorded`.
+**What the tier rows came to.** A tier owes a closure AND a price. Of the six rows
+`TIERS.md` calls physical tiers, ONE has both on record in a form this format can check:
+
+- **The fluid element is a `tier`.** Closed: the staggered chart's continuity defect on
+  the driven arms, `D = 0.180` against the stake's `0.2` (R1″, reproduced by the engine as
+  REPLACE-1's G1), which the record itself says was met by "a third of one SE". Carried:
+  the hydrodynamic block's removal price, `+0.0390 ± 0.0073` on the weakest seed, against
+  `β = 0.02`, the one budget REPLACE-1 was read at; less two standard errors that is
+  `0.0244`. Its window is `(0.0033, 0.039)`. The two readings are on DIFFERENT carriers
+  and of different views, and the declaration says so first among what it does not claim.
+- **The nucleus is an `input`**, as its row says.
+- **The other four are `recorded`**: their rows state no budget and bound this format can
+  compare (the molecule's strict certificate is a horizon that must be at least its
+  requirement; certificates here are at-most).
+
+Of the three rows `TIERS.md` calls closed sectors, ONE is declared a `sector`:
+
+- **The hydrogen-bond network.** Closed on the record's S2 alone (the bond and velocity
+  cross-block, at most `0.007` against `< 0.2`); its other closure stake, S1, read
+  "between". Dropped: a price of `0.0000` against `0.02`.
+- **The order parameter is `recorded`, with a price that reads dropped.** Its closure
+  stake O1 reads "between": one seed's `0.293` misses the `≥ 0.3` bar. The record's
+  headline calls it closed; an at-least stake that a seed misses is not a certificate here.
+- **The slow shell coordinate is `recorded`, with a price that reads dropped** under
+  SLOW-2's own bar. SLOW-2 staked no closure for it.
+
+The seven computational rows, the two reasoning rows and the wager are `recorded`.
 
 This is a register of what the record says, checked for quotation. It is not a
 re-certification of any row, and a `recorded` row is not a weaker tier: it is a row this
@@ -404,13 +463,18 @@ Local Group's Milky Way is the first 1300 points of the generator the Milky Way 
 3800 of, but the rest of that rung is its own, so the rung as a whole is not. No rung
 carries a certificate. The relations other than the engine's own dump are a reading of
 the code by one author; they are a claim to be checked, not a finding. The same holds for
-the three `function` relations among the tier rows (the molecule on chemistry, the fluid
-element and the sectors on the molecule): each cites a sentence, and nothing checks the
-function.
+the FIVE `function` relations among the tier rows (the molecule on chemistry; the fluid
+element, the hydrogen-bond network, the order parameter and the slow coordinate on the
+molecule). Until the third review two of their bases quoted `TIERS.md`'s definition of a
+tier, which shows no function. Each now quotes the formula or the sentence that says what
+the view is read from (a sum over molecules, a count per molecule, a molecule's centre of
+mass). That is all it shows: nothing checks the function.
 
 ## 7. Known answers
 
-`standard/vectors/*.json` each hold `{ expect, declarations, ladder? }`. `expect` is
+`standard/vectors/*.json` each hold `{ expect, declarations, ladder?, register? }`. With
+`register: true` the declarations are checked as the register's are, where the fixtures
+below may not be cited. `expect` is
 `holds`, `pending`, or the exact set of reason tokens the declarations give between
 them. `holonc.py --vectors` runs them and fails if any reason in the vocabulary is
 expected by no vector, or if fewer than three vectors carry more than one fault. A second
@@ -473,7 +537,9 @@ same id is a different holon; it cannot void this one. An id is never reused.
 per certificate of a declaration that holds, in the unregistered range `x_private:holon`,
 with the digest of the declaration, of each evidence file, of the engine where there is
 one, and of the compiler and vocabulary that ran. They are not rows: nothing is encoded or
-signed. Today there are few, because few declarations carry a certificate.
+signed. A price has a payload of its own (`x_private:holon:price`), whose score says the
+stated reading is what the numbers give, not that the block is carried. Today there are
+six payloads, because few declarations carry a certificate or a price.
 
 **What the kernel does and does not do.** The kernel crate never sees bytes, hashes, files
 or a clock, and will not run this compiler. The `set` checks above are the part shaped like
@@ -512,20 +578,35 @@ a sample with breaks; one stable signing identity; and the `set` rule stated in 
   tier says so with `depicts`. A status per view may be the better design.
 - **Only the unhosted ladder is checked.** Under a host (the twin) the Earth rung's sun is
   the host's, and its source line changes. That case is not declared.
-- **The tier rows were declared after the two reviews, and neither review covered them.**
-  The quotations are checked by the compiler; the choice of what to quote, the numbers
-  typed into budgets and prices, and every `plain` and `not_claimed` sentence are one
-  author's reading of the records.
+- **The tier rows were reviewed once** (the third pass), and changed in answer to it; the
+  changes were not reviewed again. The quotations are checked by the compiler; the choice
+  of what to quote, the numbers typed into budgets and prices, and every `plain` and
+  `not_claimed` sentence are a reading of the records.
+- **A quotation can be lifted from a negation.** "carried" out of "not carried" is now too
+  short to quote, but a full clause can still follow a "not" that the quotation leaves
+  out. No check for that was added: one that looks for "not" nearby refuses true
+  quotations as often as false ones.
+- **The fluid element's two halves are not shown to be one object.** Its closure is of a
+  chart on driven arms; its price is of a block on equilibrium walks. The format now asks
+  for both and cannot ask that they be the same thing.
+- **A closure certificate compares the value alone.** The fluid element's `0.180` has a
+  standard error of `0.058` and a bar of `0.2`. Only a price is read with its error.
 - **A quotation proves the words are in the file, and nothing more.** Not that they mean
   what the declaration takes them to mean, nor that they are the file's last word: a
   record may correct itself further down.
-- **A price certificate checks one inequality between two typed numbers.** That the price
-  and the budget are the record's is shown only by the quotation beside them.
+- **A price is checked as typed numbers.** The value, its standard error, its nulls and the
+  budget are compared; that they are the record's is shown only by the quotations beside
+  them. Where a record gives no standard error (the hydrogen-bond table, SLOW-2's interval)
+  none is declared and the value is compared alone. A tier may say its window was
+  `not_measured`; that is checked only for being said.
 - **`remainder`, `drops` and `closed` are free text.** The remainder a tier owes upward
   and "more closed than the object" now have a place to be written; nothing checks them.
+- **A recorded row may still carry a `bound` certificate** whose evidence is any digested
+  file of the repository. Nothing ties that file to the row.
 - **`recorded` is a standing that excuses.** A measured row under it owes no certificate.
   That is the point of it, and it is also a way to declare anything measured by quoting
-  one sentence.
+  one clause of a record. The clause must now be 30 characters, whole words, and from a
+  file other than the row's; nothing checks that the file is a RESULT and not a stake.
 - **Only at-most bounds.** A certificate that must be AT LEAST its requirement (a horizon)
   cannot be written; the molecule's is quoted instead.
 - **A twin layer is declared a `rung`** for want of a word; a layer is not a scale.

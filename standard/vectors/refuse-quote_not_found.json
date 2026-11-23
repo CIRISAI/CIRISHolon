@@ -56,8 +56,8 @@
         "kind": "none"
       },
       "row": {
-        "path": "standard/vectors/fixture/record.txt",
-        "quote": "words the record does not hold"
+        "path": "standard/vectors/fixture/law.txt",
+        "quote": "words that this fixture file does not hold at all"
       },
       "budget_window": "not_measured",
       "remainder": "what it owes upward, in words",

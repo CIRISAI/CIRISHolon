@@ -36,6 +36,7 @@ with tempfile.TemporaryDirectory() as d:
     assert run("c").returncode != 0, "a changed byte was accepted"
     (src / one).write_bytes(b"short")
     assert run("c").returncode != 0, "a wrong size was accepted"
-    r = subprocess.run([sys.executable, str(HERE / "build_wheels.py"), "--out", str(d / "e"), "--from-dir", str(src), "--require-pins"], capture_output=True, text=True)
-    assert r.returncode != 0 and "pin is null" in r.stderr, "the real pins.json has null pins and --require-pins let it through"
+    (d / "nopin.json").write_text(json.dumps(dict(fake, jars={k: dict(v, sha256=None) for k, v in fake["jars"].items()})))
+    r = subprocess.run([sys.executable, str(HERE / "build_wheels.py"), "--out", str(d / "e"), "--from-dir", str(src), "--pins", str(d / "nopin.json"), "--require-pins"], capture_output=True, text=True)
+    assert r.returncode != 0 and "pin is null" in r.stderr, "--require-pins let a null pin through"
 print("ok: four wheels, two jars each, byte-identical on rebuild; a changed byte, a wrong size and a null pin are refused")

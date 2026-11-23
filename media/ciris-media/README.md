@@ -29,10 +29,20 @@ wheels are written with fixed timestamps and order, so a rebuild gives the same 
 builds twice and compares. `test_build.py` runs the builder on stand-in jars and plants a
 changed byte, a wrong size and a missing pin.
 
-**Status, 2026-11-23.** Not published. Two of the eight sha256 pins are set (the Linux pair, from the
-client session's own copies, 2026-11-23); the other six are null until a CI run has printed
-them with Maven Central's size and sha1 matching. Publishing refuses while any is null. The
-PyPI project and its trusted publisher do not exist yet.
+**Status, 2026-11-23.** Not published. All eight jars are pinned by sha256. CI has fetched
+them, built the four wheels twice to the same bytes, and installed one. The wheels are
+19.5 to 27.5 MB. The GitHub environment  exists; the PyPI project and its trusted
+publisher do not, and only the account owner can make them:
+
+| PyPI "pending publisher" field | value |
+|---|---|
+| PyPI project name |  |
+| owner |  |
+| repository |  |
+| workflow |  |
+| environment |  |
+
+Then: Actions, ciris-media, Run workflow on main, with publish ticked.
 
 **Versions.** `7.1.0` is FFmpeg 7.1 with JavaCPP 1.5.11, as built by bytedeco. A later
 version is meant to carry a cut-down build of the same libraries (the AV1 codecs and the

@@ -1,0 +1,34 @@
+{
+  "spec": "ciris/holon-decl/0",
+  "id": "qvm.bit_planes",
+  "name": "classical bit-planes",
+  "plain": "A quantum circuit that only permutes or phases basis states, carried as plain bits.",
+  "status": "declared",
+  "standing": "recorded",
+  "carrier": {
+    "state": "closed on permutation and diagonal circuits (TIERS.md)"
+  },
+  "step": {
+    "kind": "declared"
+  },
+  "below": [],
+  "source": [
+    {
+      "path": "TIERS.md",
+      "quote": "| classical bit-planes | permutation / diagonal circuits | everything else, refused by name | BANKED |"
+    }
+  ],
+  "views": [],
+  "certificate": {
+    "kind": "none"
+  },
+  "row": {
+    "path": "TIERS.md",
+    "quote": "| classical bit-planes | permutation / diagonal circuits | everything else, refused by name | BANKED |"
+  },
+  "remainder": "everything else, refused by name",
+  "not_claimed": [
+    "BANKED is the row's word. The row cites no record, so this declaration cites only the row and its status here is `declared`: taken from the row as given.",
+    "TIERS.md §2: these 'are not tiers of matter'; they are the dictionary of views the dispatch searches."
+  ]
+}

@@ -22,7 +22,8 @@
     "sector": "A closed view that the consumers it was tested against do not carry. Owes: a closure certificate, and tested_against.",
     "rung": "A scale shown or used with no closure claim.",
     "input": "Taken from outside the ladder: a declared or catalogue value.",
-    "medium": "Something others are seen through or conditioned on: the air, a mask, a light. Owes: at least one view."
+    "medium": "Something others are seen through or conditioned on: the air, a mask, a light. Owes: at least one view.",
+    "recorded": "a row of this repository's own ladder, declared as the record words it. It owes `row`, a quotation of that row which must occur in the file, and, when measured, a record cited with the words it rests on. Whatever certificate the row has is in the record; this format checks none for it"
   },
   "step": {
     "computed": "Its state is computed by an engine named in step.engine (or engine_external). It may or may not change in time.",
@@ -58,7 +59,8 @@
     "closure": "The commuting square v o T = h o v for the named consumer, exactly or within its bound (lean/CIRISHolon/Object.lean, Tier.lean; the statistical form in StatClosure.lean).",
     "scene": "For a generated holon: an exact section law, and a transport cost against a frozen reference sample (lean/CIRISHolon/SceneCert.lean; OBJECT.md, 'The scene certificate').",
     "bound": "A stated bound on the named consumer's error.",
-    "none": "No certificate. Required for an illustration."
+    "none": "No certificate. Required for an illustration.",
+    "price": "a held-out increment for the named consumer: the prediction that consumer's target loses when this block leaves the dictionary, as the removability gate reads it or as an earlier search of the record read the same increment (the evidence says which). Above the consumer's budget it reads carried (a tier); at or below it, dropped (a sector). It is a price, never a realised cost"
   },
   "basis": {
     "price": "The bound is an a-priori price: what the method says the defect is at most (OBJECT.md, correction of 2026-11-15, item 3).",
@@ -132,6 +134,12 @@
     "fade_across_theories": "B. draw joins below by fade across a theory_change.",
     "fade_unbacked": "B. draw joins below by fade across a context relation and fade_owed does not say what would make that honest.",
     "join_disagrees": "B. Two declarations describe one boundary differently.",
-    "ladder_disagrees": "B (with --ladder). A declaration that names a rung differs from the engine in name, status, label, unit, marks, band or joins; two declarations claim one rung; or the engine draws a rung no declaration carries."
+    "ladder_disagrees": "B (with --ladder). A declaration that names a rung differs from the engine in name, status, label, unit, marks, band or joins; two declarations claim one rung; or the engine draws a rung no declaration carries.",
+    "quote_not_found": "a reference quotes words that its file does not contain",
+    "row_missing": "a recorded row quotes no row of the record",
+    "price_contradicts_standing": "a price certificate that does not agree with the standing: a tier's price must exceed its consumer's budget, a sector's must not, the basis must be price, and nothing else holds one"
+  },
+  "window": {
+    "not_measured": "the range of budgets over which the carried set does not change has not been measured"
   }
 }

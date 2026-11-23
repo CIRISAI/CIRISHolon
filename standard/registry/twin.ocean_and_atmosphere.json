@@ -16,11 +16,11 @@
   "source": [
     {
       "external": "CIRISAI/CEWP docs/evidence/claims.js, claim layer-illustration (class MODEL)",
-      "edition": "commit b091241"
+      "edition": "commit 04e3b4b"
     },
     {
       "external": "CIRISAI/CEWP docs/gfx.js, gfxOcean and the shaders OV/OF",
-      "edition": "commit b091241"
+      "edition": "commit 04e3b4b"
     }
   ],
   "views": [

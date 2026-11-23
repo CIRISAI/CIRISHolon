@@ -1,0 +1,46 @@
+{
+  "spec": "ciris/holon-decl/0",
+  "id": "cosmos.ledger_wager",
+  "name": "the cosmological rung",
+  "plain": "A wager, not a measurement: that the universe's dark matter plays the part of carried precedent and its dark energy the part of the record. One observation could kill it.",
+  "status": "wager",
+  "standing": "recorded",
+  "carrier": {
+    "state": "precedent carried as classical bits (the dark-matter ROLE), receipts and append-only ledgers as the Record (dark energy's) (TIERS.md §4)"
+  },
+  "step": {
+    "kind": "declared"
+  },
+  "below": [],
+  "views": [],
+  "certificate": {
+    "kind": "none"
+  },
+  "source": [
+    {
+      "path": "TIERS.md",
+      "quote": "the shape survives (DESI DR2 `Δχ² = −2.13` against ΛCDM), DESI DR3 the standing kill."
+    },
+    {
+      "path": "TIERS_ARCHIVE_2026-09-26.md",
+      "quote": "if DESI DR3 (or the"
+    },
+    {
+      "external": "CIRISAI/CIRISOntology, Stance.lean: the keys precedent-is-bits, dark-balance-intensive, dark-balance-extensive, dark-matter-first, dark-medium, gravity-audit, the-ledgers-third-name"
+    }
+  ],
+  "row": {
+    "path": "TIERS.md",
+    "quote": "## 4. The cosmological rung — a wager, and the final remainder unmeasured"
+  },
+  "kill": {
+    "text": "DESI DR3: if it fires, the top rung's wager rows die in the stance and this rung inherits the death (TIERS_ARCHIVE_2026-09-26.md, 'The kill discipline travels with the import').",
+    "stated_at": "2026-09-26"
+  },
+  "remainder": "the Record itself, what no closed view carries; no instrument on this record measures it",
+  "not_claimed": [
+    "It is not evidence about the sky (TIERS_ARCHIVE_2026-09-26.md). TIERS.md §5: no cosmological remainder is licensed.",
+    "Two legs are dead and kept dead: the Landauer normalisation at 3 to 5 dex, and the flow/maintenance rescue.",
+    "The kill's date here is the date of the archive that holds its text in this repository. The wager and its kills are staked in the CIRISOntology stance, which is not held here and is cited as an external source: nothing checks it."
+  ]
+}

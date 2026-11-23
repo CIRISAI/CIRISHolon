@@ -18,11 +18,13 @@ holon-decl = {
   ? source: [+ reference],
   views: [* view],
   ? regime: text1,
-  ? budget_window: [2*2 bound-number],   ; low, high
+  ? budget_window: [2*2 bound-number] / "not_measured",   ; low, high
+  ? row: { path: text1, quote: text1 },   ; a recorded row's: the words must occur in the file
+  ? remainder: text1,
   certificate: certificate,
   ? carried_by: text1,            ; a tier's: the id of a consumer of one of its views
   ? tested_against: [+ text1],    ; a sector's: ids of consumers of its views
-  ? drops: [+ { what: text1, price: text1 }],
+  ? drops: [+ { what: text1, price: text1, ? closed: text1 }],
   ? kill: { text: text1, stated_at: date },
   ? draw: draw,
   ? not_claimed: [+ text1],
@@ -36,15 +38,15 @@ sha256 = tstr .regexp "[0-9a-f]{64}"
 bound-number = (uint / float) .ge 0           ; finite
 
 status   = "simulated" / "measured" / "catalogue" / "declared" / "wager" / "illustration"
-standing = "tier" / "sector" / "rung" / "input" / "medium"
+standing = "tier" / "sector" / "rung" / "input" / "medium" / "recorded"
 relation = "function" / "shared_edge" / "theory_change" / "context"
 unit     = "px" / "level" / "relative" / "absolute" / "bits" / "seconds" / "metres" / "count"
 
 step = { kind: "computed" / "static" / "generated" / "measured" / "declared", ? engine: text1, ? engine_external: text1 }
        ; phase B: a computed step names exactly one of the two, and no other kind names either
 
-reference = { path: text1, ? note: text1 } / { external: text1, ? edition: text1 }
-evidence  = { path: text1, ? sha256: sha256 } / { external: text1 } / { gate: text1 }
+reference = { path: text1, ? note: text1, ? quote: text1 } / { external: text1, ? edition: text1 }
+evidence  = { path: text1, ? sha256: sha256, ? quote: text1 } / { external: text1 } / { gate: text1 }
 
 view = { id: text1, reads: text1, consumers: [* consumer] }
 consumer = {
@@ -56,9 +58,9 @@ consumer = {
 }
 
 certificate = {
-  kind: "closure" / "scene" / "bound" / "none",
+  kind: "closure" / "scene" / "bound" / "price" / "none",
   ? for: { view: text1, consumer: text1 },
-  ? bound: { value: bound-number, unit: unit },
+  ? bound: { value: number, unit: unit },   ; phase B: below zero only for a price
   ? basis: "price" / "realised",
   ? evidence: [* evidence],
   ? parts: {

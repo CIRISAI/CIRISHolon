@@ -1,0 +1,56 @@
+{
+  "spec": "ciris/holon-decl/0",
+  "id": "qvm.dispatch",
+  "name": "the dispatch",
+  "plain": "The chooser: given a circuit with no label, it picks which view to carry it in.",
+  "status": "measured",
+  "standing": "recorded",
+  "carrier": {
+    "state": "picks the view unlabelled (TIERS.md)"
+  },
+  "step": {
+    "kind": "measured"
+  },
+  "below": [
+    {
+      "id": "qvm.bit_planes",
+      "relation": "context"
+    },
+    {
+      "id": "qvm.tableau",
+      "relation": "context"
+    },
+    {
+      "id": "qvm.rank_sum",
+      "relation": "context"
+    },
+    {
+      "id": "qvm.mps",
+      "relation": "context"
+    },
+    {
+      "id": "qvm.dense",
+      "relation": "context"
+    }
+  ],
+  "source": [
+    {
+      "path": "conformance/qasm/QVM_ACUITY2_RESULTS.md",
+      "quote": "80/80 on the sweep (every price equal to the bit), 24/24 in the test."
+    }
+  ],
+  "views": [],
+  "certificate": {
+    "kind": "none"
+  },
+  "row": {
+    "path": "TIERS.md",
+    "quote": "MEASURED (ACUITY-2; two stakes void by prereg error)"
+  },
+  "remainder": "77 of 80 within `2 ×` of the hand-picked method, certificate 80/80; at `n ≤ 20` choosing costs more than running",
+  "not_claimed": [
+    "TIERS.md's '77 of 80' was not found by that spelling in QVM_ACUITY2_RESULTS.md; the quoted words are the record's 80/80.",
+    "Two of ACUITY-2's stakes are void by prereg error (the row).",
+    "TIERS.md §2: these 'are not tiers of matter'; they are the dictionary of views the dispatch searches."
+  ]
+}

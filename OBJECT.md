@@ -535,9 +535,12 @@ whether that bound is a price or a realised cost. A view that is closed and not 
 a `sector`, and says which consumers it was tested against.
 
 What it does not do: it does not replace the status words of `TIERS.md` (its Section 4.1
-maps them, and lists the ones it cannot express), and no tier of `TIERS.md` is declared in
-it yet. Its first register is the scale ladder's 13 rungs, the air, and the twin's ocean and
-atmosphere layer. It was reviewed
+maps them, and quotes the ones it cannot map). Its register holds 60 declarations: the
+scale ladder's 13 rungs, every row of `TIERS.md`, the sandbox's eight tiers, the CEWP twin's
+19 layers, and the air. Of the six rows `TIERS.md` calls physical tiers it declares ONE a
+tier, the fluid element, on the gate's price and window; the nucleus an input; and the other
+four `recorded`, quoted and not certified, because their rows state no budget and bound it
+can compare. That is a limit of the format, not a reading of the rows. It was reviewed
 adversarially, twice, before it was committed (`standard/REVIEW-2026-11-23.md`); the first form of
 this entry made three claims that review showed false, and they are not here.
 

@@ -1,0 +1,37 @@
+{
+  "spec": "ciris/holon-decl/0",
+  "id": "qvm.rank_sum",
+  "name": "the stabilizer-rank sum",
+  "plain": "A circuit with a few T gates, carried as a sum of Clifford circuits with a certified remainder.",
+  "status": "measured",
+  "standing": "recorded",
+  "carrier": {
+    "state": "closed on Clifford+T via Magic5FromCat (credited) (TIERS.md)"
+  },
+  "step": {
+    "kind": "measured"
+  },
+  "below": [],
+  "source": [
+    {
+      "path": "conformance/qasm/QVM_ACUITY1_RESULTS.md",
+      "quote": "certificate holding on every one of 450 runs."
+    },
+    {
+      "path": "conformance/qasm/QVM_GPUFOLD1_RESULTS.md",
+      "quote": "runs at 0.022–0.025× the S = 8 mesh at N = 8,748"
+    }
+  ],
+  "views": [],
+  "certificate": {
+    "kind": "none"
+  },
+  "row": {
+    "path": "TIERS.md",
+    "quote": "IN THE ENGINE (ACUITY-1 (a)); on the GPU bit-identical at `0.022–0.025 ×` the CPU mesh (GPUFOLD-1 (a))"
+  },
+  "remainder": "a certified remainder `R_k ≤ ε`; 450 of 450 runs",
+  "not_claimed": [
+    "TIERS.md §2: these 'are not tiers of matter'; they are the dictionary of views the dispatch searches."
+  ]
+}

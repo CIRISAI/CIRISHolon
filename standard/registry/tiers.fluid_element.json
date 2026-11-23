@@ -1,0 +1,110 @@
+{
+  "spec": "ciris/holon-decl/0",
+  "id": "tiers.fluid_element",
+  "name": "the fluid element",
+  "plain": "A small cell of liquid: its density, and its momentum read on the cell's faces. The one tier whose carried set and window of budgets are both measured by the engine's gate.",
+  "status": "measured",
+  "standing": "tier",
+  "carrier": {
+    "state": "the conserved densities with fluxes on the FACES: density in cells, momentum on the faces within `0.25 Å` (the staggered chart)",
+    "unit_log10_m": -9
+  },
+  "step": {
+    "kind": "measured"
+  },
+  "below": [
+    {
+      "id": "tiers.molecule",
+      "relation": "function",
+      "basis": {
+        "path": "TIERS.md",
+        "quote": "A tier is a closed view of the tier below that the tier above CARRIES",
+        "note": "the densities are sums over the molecules in a cell"
+      }
+    }
+  ],
+  "source": [
+    {
+      "path": "conformance/replace1/OBJECTIVE1_RESULTS.md",
+      "quote": "for every budget in **`(0.0033, 0.039)`** the carried set is `{H}` on every defined cell of every seed at 0.5 and 1 ps, and at 2 ps on seed 2."
+    },
+    {
+      "path": "conformance/replace1/REPLACE1_RESULTS.md",
+      "quote": "all three seeds: `(ρ, j_L)` survives alone, REFUSED at **`+0.0622 / +0.0390 / +0.1039`**"
+    }
+  ],
+  "views": [
+    {
+      "id": "hydrodynamic_block",
+      "reads": "`H` = `(ρ, j_L)`: the density and the longitudinal current at the box's longest wavelength",
+      "consumers": [
+        {
+          "id": "level_above",
+          "kind": "tier_above",
+          "holon": "tiers.continuum",
+          "budget": {
+            "quantity": "the held-out R² the target (the hydrodynamic block's own next state) loses when a block leaves the dictionary, under ordered admission",
+            "bound": 0.005,
+            "unit": "relative"
+          }
+        }
+      ]
+    }
+  ],
+  "regime": "the rigid water operator at 293 K, three seeds; lags 0.5 and 1 ps on all three, 2 ps on seed 2 only (beyond that the target is not predictable); a derived model of water, not water",
+  "budget_window": [
+    0.0033,
+    0.039
+  ],
+  "certificate": {
+    "kind": "price",
+    "for": {
+      "view": "hydrodynamic_block",
+      "consumer": "level_above"
+    },
+    "bound": {
+      "value": 0.039,
+      "unit": "relative"
+    },
+    "basis": "price",
+    "evidence": [
+      {
+        "path": "conformance/replace1/OBJECTIVE1_RESULTS.md",
+        "sha256": "0c8b65e9b600748b6363bf7296723236fa6817daccc7c9eee73ed828cec2db18",
+        "quote": "the largest `β*` of any dropped block is `+0.0033` (C, seed 2, 1 ps), and the smallest `β*` of `H` is `+0.0390`"
+      },
+      {
+        "path": "conformance/replace1/REPLACE1_RESULTS.md",
+        "sha256": "1beacfab3d76cf70518e8ab1fe1a8a439e27db351b54d6157bf3ddd29682f9b6",
+        "quote": "`(ρ, j_L)` **`+0.0390 ± 0.0073`** (`−0.0066 / −0.0048`)"
+      }
+    ]
+  },
+  "carried_by": "level_above",
+  "drops": [
+    {
+      "what": "the structural block `(q, s2)` and the count block `(n33, n50, nb)`",
+      "price": "at most `+0.0033` on any defined 293 K cell (OBJECTIVE1_RESULTS.md)"
+    },
+    {
+      "what": "the collective order parameter",
+      "price": "`≤ 0` (ORDER-1; TIERS.md)"
+    },
+    {
+      "what": "the hydrogen-bond count",
+      "price": "exactly `0` (TIERS.md)"
+    }
+  ],
+  "remainder": "the leak the cell chart cannot carry at one molecular diameter, carried by the faces: `D = 0.180 ± 0.058` on the graded 36-cycle average against the cell chart's `0.31`",
+  "row": {
+    "path": "TIERS.md",
+    "quote": "IN THE ENGINE (REPLACE-1: `holon-lens::staggered`, the gate reproducing every banked number)"
+  },
+  "not_claimed": [
+    "The price is a PRICE (TIERS.md §0, CORRECTION 2026-11-15): the gate reads the prediction the target loses, and removes nothing from the running system. No realised cost has been taken.",
+    "The budget of 0.005 is the smallest the sweep ran, chosen here from inside the window; at 0.05 the set is EMPTY on seed 1 at 1 ps.",
+    "REPLACE-1's first read, by the marginal rule, DROPPED this block at 1 ps (`+0.0087 / +0.0094 / +0.0091` against 0.02) and killed stake G3a. The carried reading is under Amendment 1's ordered admission, where one bar was still missed on seed 1 by `0.001`.",
+    "OBJECTIVE-1 itself read branch (e) by the letter, and its stakes Q1 and Q4 were killed at the cell named above.",
+    "The consumer is declared as the tier above because TIERS.md says a tier is carried by the tier above. The gate's target is the block's own next state; the continuum tier is itself only a recorded row."
+  ]
+}

@@ -54,9 +54,9 @@ GATE = re.compile(r'\bok "([^"$]+)"')  # a gate is the whole message of an ok li
 # ("anynum",) a finite number; ("word", vocabulary); ("list", shape, least length);
 # ("map", {member: (shape, required)}); ("one", [shapes]) the first that fits; ("sha",); ("date",).
 def shapes():
-    ref = ("one", [("map", {"path": (("str",), True), "note": (("str",), False)}),
+    ref = ("one", [("map", {"path": (("str",), True), "note": (("str",), False), "quote": (("str",), False)}),
                    ("map", {"external": (("str",), True), "edition": (("str",), False)})])
-    evid = ("one", [("map", {"path": (("str",), True), "sha256": (("sha",), False)}),
+    evid = ("one", [("map", {"path": (("str",), True), "sha256": (("sha",), False), "quote": (("str",), False)}),
                     ("map", {"external": (("str",), True)}),
                     ("map", {"gate": (("str",), True)})])
     budget = ("map", {"quantity": (("str",), True), "bound": (("num",), True), "unit": (("word", "budget_unit"), True)})
@@ -67,7 +67,7 @@ def shapes():
     cert = ("map", {
         "kind": (("word", "certificate"), True),
         "for": (("map", {"view": (("str",), True), "consumer": (("str",), True)}), False),
-        "bound": (("map", {"value": (("num",), True), "unit": (("word", "budget_unit"), True)}), False),
+        "bound": (("map", {"value": (("anynum",), True), "unit": (("word", "budget_unit"), True)}), False),
         "basis": (("word", "basis"), False),
         "evidence": (("list", evid, 0), False),
         "parts": (("map", {
@@ -91,11 +91,13 @@ def shapes():
         "source": (("list", ref, 1), False),
         "views": (("list", view, 0), True),
         "regime": (("str",), False),
-        "budget_window": (("list", ("num",), 2, 2), False),
+        "budget_window": (("one", [("list", ("num",), 2, 2), ("word", "window")]), False),
+        "row": (("map", {"path": (("str",), True), "quote": (("str",), True)}), False),
+        "remainder": (("str",), False),
         "certificate": (cert, True),
         "carried_by": (("str",), False),
         "tested_against": (("list", ("str",), 1), False),
-        "drops": (("list", ("map", {"what": (("str",), True), "price": (("str",), True)}), 1), False),
+        "drops": (("list", ("map", {"what": (("str",), True), "price": (("str",), True), "closed": (("str",), False)}), 1), False),
         "kill": (("map", {"text": (("str",), True), "stated_at": (("date",), True)}), False),
         "draw": (draw, False),
         "not_claimed": (("list", ("str",), 1), False),
@@ -175,6 +177,19 @@ def held(path, root):
     return r if r.is_file() else None
 
 
+def quoted(ref, where, root, fail):
+    """A reference's quote must occur in its file, word for word (runs of white space count as one space)."""
+    if "quote" in ref and "path" in ref:
+        f = held(ref["path"], root)
+        if f is not None:
+            try:
+                text = " ".join(f.read_text(encoding="utf-8").split())
+            except (UnicodeDecodeError, OSError):
+                text = ""
+            if " ".join(ref["quote"].split()) not in text:
+                fail("quote_not_found", f"{where}: {ref['path']} does not contain {ref['quote']!r}")
+
+
 def evidence(items, where, status, root, gates, fail, waiting):
     if not items:
         fail("evidence_missing", f"{where}: no evidence")
@@ -191,8 +206,11 @@ def evidence(items, where, status, root, gates, fail, waiting):
                         h.update(chunk)
                 if h.hexdigest() != e["sha256"]:
                     fail("evidence_digest", f"{where}: {e['path']} hashes to {h.hexdigest()}")
+                quoted(e, where, root, fail)
             elif status == "measured":
                 fail("evidence_undigested", f"{where}: {e['path']} is cited for a measured holon with no sha256")
+            else:
+                quoted(e, where, root, fail)
         elif "gate" in e:
             if e["gate"] not in gates:
                 fail("gate_not_found", f"{where}: no gate of engine/ci-gates.sh says {e['gate']!r}")
@@ -219,6 +237,7 @@ def meaning(d, world, root, gates):
             fail("below_unresolved", f"below names {b['id']!r}, which no declaration carries")
         if b["relation"] in ("function", "shared_edge") and held(b.get("basis", {}).get("path"), root) is None:
             fail("relation_unbacked", f"below {b['id']}: a {b['relation']} relation cites no file of this repository as its basis")
+        quoted(b.get("basis", {}), f"below {b['id']}", root, fail)
     if "depicts" in d and d["depicts"]["id"] not in world:
         fail("depicts_unresolved", f"depicts names {d['depicts']['id']!r}, which no declaration carries")
 
@@ -231,6 +250,17 @@ def meaning(d, world, root, gates):
     for s in d.get("source", []) + [s for p in d.get("parts", []) for s in p.get("source", [])]:
         if "path" in s and held(s["path"], root) is None:
             fail("source_not_found", f"source {s['path']!r} is not a file of this repository")
+        quoted(s, "source", root, fail)
+    row = d.get("row")
+    if row is not None:
+        if held(row["path"], root) is None:
+            fail("source_not_found", f"row {row['path']!r} is not a file of this repository")
+        quoted(row, "row", root, fail)
+    if standing == "recorded":
+        if row is None:
+            fail("row_missing", "a recorded row quotes no row of the record")
+        if status == "measured" and not any("path" in s and "quote" in s for s in d.get("source", [])):
+            fail("source_missing", "a recorded row that is measured cites no record with the words it rests on")
     if status == "wager" and "kill" not in d:
         fail("kill_missing", "a wager states no dated kill")
     if status == "simulated" and step["kind"] != "computed":
@@ -266,15 +296,16 @@ def meaning(d, world, root, gates):
                     fail("consumer_unresolved", f"tier_above consumer {c['id']} names no declared holon that stands on this one")
             if c["kind"] == "law" and held(c.get("stated", {}).get("path"), root) is None:
                 fail("consumer_unresolved", f"law consumer {c['id']} cites no file of this repository where the law is stated")
+            quoted(c.get("stated", {}), f"consumer {c['id']}", root, fail)
 
     # the certificate, and what it is a certificate FOR
-    if status == "measured" and kind == "none":
+    if status == "measured" and kind == "none" and standing != "recorded":
         fail("certificate_owed", "a measured holon with no certificate")
     if status == "illustration" and kind != "none":
         fail("illustration_certified", "an illustration carrying a certificate")
     if kind == "scene" and step["kind"] != "generated":
         fail("scene_not_generated", f"a scene certificate on a {step['kind']} holon")
-    if kind in ("closure", "bound") and step["kind"] == "generated":
+    if kind in ("closure", "bound", "price") and step["kind"] == "generated":
         fail("scene_not_generated", f"a generated holon holds a {kind} certificate; only the scene certificate describes it")
     if kind == "none":
         if any(k in cert for k in ("for", "bound", "basis", "evidence", "parts")):
@@ -288,6 +319,14 @@ def meaning(d, world, root, gates):
             b = target.get("budget")
             if not b:
                 fail("consumer_without_budget", f"the certificate is for {f['consumer']} on {f['view']}, which states no budget")
+            elif kind == "price":
+                # a price is the removability gate's reading: what the consumer's target loses when this block leaves
+                carried = bound["value"] > b["bound"]
+                if b["unit"] != bound["unit"] or cert["basis"] != "price" or (standing == "tier") != carried or standing not in ("tier", "sector"):
+                    fail("price_contradicts_standing", f"a price of {bound['value']} {bound['unit']} against a budget of {b['bound']} {b['unit']} "
+                         f"reads {'carried' if carried else 'dropped'}, on a {standing} with basis {cert['basis']}")
+            elif bound["value"] < 0:
+                fail("certificate_unbound", f"a {kind} certificate's bound is {bound['value']}: only a price may be below zero")
             elif b["unit"] != bound["unit"] or bound["value"] > b["bound"]:
                 fail("certificate_exceeds_budget", f"the certificate's {bound['value']} {bound['unit']} does not meet the budget of {b['bound']} {b['unit']}")
         if "regime" not in d:
@@ -306,7 +345,7 @@ def meaning(d, world, root, gates):
             evidence(cert.get("evidence"), "certificate", status, root, gates, fail, waiting)
 
     # what the standing owes
-    if standing in ("tier", "sector") and kind != "closure":
+    if standing in ("tier", "sector") and kind not in ("closure", "price"):
         fail("tier_uncertified", f"a {standing} whose certificate is {kind}")
     if standing == "tier":
         cb = d.get("carried_by")

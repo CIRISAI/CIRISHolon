@@ -1,0 +1,38 @@
+{
+  "spec": "ciris/holon-decl/0",
+  "id": "reasoning.eleven_plus_one",
+  "name": "the eleven kinds and the remainder, on their own carrier",
+  "plain": "Eleven kinds of change in a record, plus what is left over, tested on 269 of this programme's own corrections by two blind coders.",
+  "status": "measured",
+  "standing": "recorded",
+  "carrier": {
+    "state": "every change takes one of the eleven kinds for both coders; the Record axis (TIERS.md, carried)"
+  },
+  "step": {
+    "kind": "measured"
+  },
+  "below": [],
+  "source": [
+    {
+      "path": "conformance/record/RECORD1_RESULTS.md",
+      "quote": "the partition is shared only at κ = 0.52"
+    },
+    {
+      "path": "conformance/record/RECORD1_RESULTS.md",
+      "quote": "The Record axis is more robust than the kinds (κ = 0.72)"
+    }
+  ],
+  "views": [],
+  "certificate": {
+    "kind": "none"
+  },
+  "row": {
+    "path": "TIERS.md",
+    "quote": "MEASURED (`RECORD1_RESULTS.md`, branch (b)); the transition map's succession rules ABSENT"
+  },
+  "not_claimed": [
+    "The transition map's succession rules are ABSENT (the row).",
+    "TIERS.md §3: the eleven kinds 'are coordinates of change in a RECORD, not of matter'.",
+    "RECORD-1 reports 188 of 264 entries (0.71) as contested."
+  ]
+}

@@ -1,0 +1,94 @@
+{
+  "spec": "ciris/holon-decl/0",
+  "id": "sectors.hbond_network",
+  "name": "the hydrogen-bond network",
+  "plain": "The web of hydrogen bonds between water molecules. It has its own memory, and the law for how molecules move does not need it.",
+  "status": "measured",
+  "standing": "sector",
+  "carrier": {
+    "state": "bonds donated and accepted per molecule (a count)"
+  },
+  "step": {
+    "kind": "measured"
+  },
+  "below": [
+    {
+      "id": "tiers.molecule",
+      "relation": "function",
+      "basis": {
+        "path": "conformance/water_observatory/TSCAN_HBOND_SEARCH_RESULTS.md",
+        "quote": "bonds donated/accepted per molecule",
+        "note": "the counts are read from the all-atom state"
+      }
+    }
+  ],
+  "source": [
+    {
+      "path": "conformance/water_observatory/TSCAN_HBOND_SEARCH_RESULTS.md",
+      "quote": "the bond state's own `σ` is `0.46` at 100 fs"
+    },
+    {
+      "path": "conformance/water_observatory/LIQUID2_RESULTS.md",
+      "quote": "**`1.6876`** on the lens = **`3.375`** both-ends"
+    }
+  ],
+  "views": [
+    {
+      "id": "bond_counts",
+      "reads": "the per-molecule bond counts",
+      "consumers": [
+        {
+          "id": "momentum_law_50fs",
+          "kind": "law",
+          "stated": {
+            "path": "conformance/replace1/REPLACE1_RESULTS.md",
+            "quote": "(`Δv_com` over 50 fs, velocity kept, molecule folds)"
+          },
+          "budget": {
+            "quantity": "the held-out R² the bond counts add to predicting the change of a molecule's velocity over 50 fs, beyond the velocity itself; the budget is REPLACE-1 G2's β",
+            "bound": 0.02,
+            "unit": "relative"
+          }
+        }
+      ]
+    }
+  ],
+  "regime": "all-atom walks of 128 waters at 299 K, 396 K and a 5 ps walk from 294 K; the target is the momentum change over 50 fs; a derived model of water",
+  "certificate": {
+    "kind": "price",
+    "for": {
+      "view": "bond_counts",
+      "consumer": "momentum_law_50fs"
+    },
+    "bound": {
+      "value": 0.0,
+      "unit": "relative"
+    },
+    "basis": "price",
+    "evidence": [
+      {
+        "path": "conformance/replace1/REPLACE1_RESULTS.md",
+        "sha256": "1beacfab3d76cf70518e8ab1fe1a8a439e27db351b54d6157bf3ddd29682f9b6",
+        "quote": "| `molsearch2_5ps` | `0.3988` (`0.399`) | `+0.0000` (`+0.000`) | `−0.0002 / −0.0001` |"
+      },
+      {
+        "path": "conformance/water_observatory/TSCAN_HBOND_SEARCH_RESULTS.md",
+        "sha256": "f6aef8612d6f8ec57a00a7adfa8a2868af5895983a059196e1dc59a30c1f2ebd",
+        "quote": "the bonds' increment to predicting the momentum change beyond the velocity itself is `+0.000` (velocity alone `0.399`)"
+      }
+    ]
+  },
+  "tested_against": [
+    "momentum_law_50fs"
+  ],
+  "row": {
+    "path": "TIERS.md",
+    "quote": "| the hydrogen-bond network | yes: the count's own `σ = 0.46` at 100 fs, memory `~350` fs; 3.375 bonds/molecule, spanning cluster `1.0` | **no**: increment to the momentum law exactly `0` on three walks |"
+  },
+  "not_claimed": [
+    "That it is closed rests on the record's S2 (the bond and velocity cross-block, `0.007` and `0.002` against `< 0.2`). Its S1 stake, the count's own `σ ≥ 0.5` at 100 fs, read `0.44`, `0.30` and `0.46`: 'between', not met. TIERS.md's 'closed? yes' quotes the `0.46`.",
+    "The three increments through the gate are `−0.0001`, `−0.0008` and `+0.0000`; the certificate carries the largest.",
+    "'Not carried' is relative to the one target tested, the momentum law at 50 fs. TIERS.md: the network 'may be the carried sector for targets nobody has pointed the gate at', the dielectric response and freezing above all.",
+    "A price, not a realised cost. Plant PH-2 read `5 × 10⁻²` against a `10⁻²` bar, recorded in the record as an artefact."
+  ]
+}

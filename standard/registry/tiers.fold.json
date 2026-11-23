@@ -1,0 +1,44 @@
+{
+  "spec": "ciris/holon-decl/0",
+  "id": "tiers.fold",
+  "name": "the fold below the atom",
+  "plain": "The gauge vacuum and the hadron: what is below the atom. Measured on a model in one space and one time dimension only.",
+  "status": "measured",
+  "standing": "recorded",
+  "carrier": {
+    "state": "colour-singlet closure on Gauss's law; the vacuum's conserved charges (TIERS.md, carried)"
+  },
+  "step": {
+    "kind": "measured"
+  },
+  "below": [],
+  "source": [
+    {
+      "path": "conformance/crystal/SCHWINGER3_RESULTS.md",
+      "quote": "M_V/g = 0.553116, against the staked continuum target 1/√π = 0.564190"
+    },
+    {
+      "path": "conformance/crystal/GF1_RESULTS.md",
+      "quote": "The extensive density is the finding."
+    },
+    {
+      "path": "conformance/crystal/SCHWINGER4_RESULTS.md",
+      "quote": "The rate is the gap to **0.6 %**"
+    }
+  ],
+  "views": [],
+  "certificate": {
+    "kind": "none"
+  },
+  "row": {
+    "path": "TIERS.md",
+    "quote": "MEASURED on 1+1D only; SCHWINGER-3 `M_V/g = 0.553116`"
+  },
+  "budget_window": "not_measured",
+  "remainder": "the magic density `c(x)·N`, extensive at every coupling; a ten-site box's price `2^{M₂} ≤ 16` (TIERS.md; GF1_RESULTS.md calls the extensive density a re-finding of Phys. Rev. B 111, L081102)",
+  "regime": "one space and one time dimension (the Schwinger model); nothing in 3+1 dimensions",
+  "not_claimed": [
+    "Nothing in three space dimensions. TIERS.md: 'MEASURED on 1+1D only', and 'GF2 GATED'.",
+    "No certificate is checked here: this is the row as the record words it."
+  ]
+}

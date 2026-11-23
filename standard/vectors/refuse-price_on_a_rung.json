@@ -1,0 +1,76 @@
+{
+  "expect": [
+    "price_contradicts_standing"
+  ],
+  "declarations": [
+    {
+      "spec": "ciris/holon-decl/0",
+      "id": "v.price",
+      "name": "a vector",
+      "plain": "A declaration made to be checked.",
+      "status": "measured",
+      "standing": "rung",
+      "carrier": {
+        "state": "one number"
+      },
+      "step": {
+        "kind": "static"
+      },
+      "below": [],
+      "source": [
+        {
+          "path": "standard/vectors/fixture/record.txt"
+        }
+      ],
+      "views": [
+        {
+          "id": "reading",
+          "reads": "the number",
+          "consumers": [
+            {
+              "id": "screen",
+              "kind": "renderer",
+              "budget": {
+                "quantity": "position",
+                "bound": 1.0,
+                "unit": "px"
+              }
+            },
+            {
+              "id": "momentum",
+              "kind": "law",
+              "stated": {
+                "path": "standard/vectors/fixture/law.txt"
+              },
+              "budget": {
+                "quantity": "defect",
+                "bound": 0.05,
+                "unit": "relative"
+              }
+            }
+          ]
+        }
+      ],
+      "certificate": {
+        "kind": "price",
+        "for": {
+          "view": "reading",
+          "consumer": "momentum"
+        },
+        "bound": {
+          "value": 0.2,
+          "unit": "relative"
+        },
+        "basis": "price",
+        "evidence": [
+          {
+            "path": "standard/vectors/fixture/record.txt",
+            "sha256": "2ef465caa982d323351b90e6d501fb79375cb07fffddaa4326a062fce6f03c97",
+            "quote": "A fixture for the known-answer vectors of the holon declaration. It is not evidence of anything."
+          }
+        ]
+      },
+      "regime": "the regime it was measured in"
+    }
+  ]
+}

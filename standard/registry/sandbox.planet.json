@@ -1,0 +1,37 @@
+{
+  "spec": "ciris/holon-decl/0",
+  "id": "sandbox.planet",
+  "name": "the sandbox's planet tier",
+  "plain": "The Earth, counted in ten-metre blocks, where a thrown ball falls along a geodesic of a declared curved chart.",
+  "status": "simulated",
+  "standing": "rung",
+  "carrier": {
+    "state": "a quadtree of holons over a square domain; the terminal holon is one ten-metre block. Evaluator: GeodesicChart, screened against the frozen stake PLANET_EPS_MAX",
+    "unit_log10_m": 1
+  },
+  "step": {
+    "kind": "computed",
+    "engine": "engine/crates/holon-sandbox/src/tier.rs"
+  },
+  "below": [
+    {
+      "id": "sandbox.landscape",
+      "relation": "context"
+    }
+  ],
+  "source": [
+    {
+      "path": "engine/crates/holon-sandbox/src/tier.rs",
+      "quote": "tier_eps_max: ciris_sim_core::bridge::PLANET_EPS_MAX,"
+    }
+  ],
+  "views": [],
+  "certificate": {
+    "kind": "none"
+  },
+  "not_claimed": [
+    "The code calls this a tier of its zoom ladder. No closure or carriage is certified in this format, so its standing here is `rung`.",
+    "Nothing relates this tier to the one below it beyond the ladder's order: `below` is context.",
+    "The code's own line says 'certified at a measured 7.0e-10'. That certificate is the sandbox's and is not carried or checked here."
+  ]
+}

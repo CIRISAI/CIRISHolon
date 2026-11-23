@@ -1,0 +1,50 @@
+{
+  "spec": "ciris/holon-decl/0",
+  "id": "tiers.chemistry",
+  "name": "atom to chemistry",
+  "plain": "Atoms and the force law between them, derived and not fitted: exact cores, and charges, walls, contacts and charge transfer.",
+  "status": "measured",
+  "standing": "recorded",
+  "carrier": {
+    "state": "exact full-CI cores; the derived force law (charges, walls, contacts, charge transfer as a table) (TIERS.md, carried)"
+  },
+  "step": {
+    "kind": "measured"
+  },
+  "below": [
+    {
+      "id": "tiers.nucleus",
+      "relation": "context"
+    }
+  ],
+  "source": [
+    {
+      "path": "conformance/water_observatory/EMBED2_RESULTS.md",
+      "quote": "a residual; it MEASURED the three-body dispersion energy of the carrier**, exactly, to a floor"
+    },
+    {
+      "path": "conformance/water_observatory/COMPARE0_RESULTS.md",
+      "quote": "by `7.059e-3` hartree RMS over all sixty-five and `1.599e-3` over the thirty-seven bound ones."
+    }
+  ],
+  "views": [],
+  "certificate": {
+    "kind": "none"
+  },
+  "row": {
+    "path": "TIERS.md",
+    "quote": "MEASURED; derived, not fitted; `2.10` mHa RMS against MB-pol (COMPARE-0)"
+  },
+  "budget_window": "not_measured",
+  "drops": [
+    {
+      "what": "the higher many-body terms",
+      "price": "priced at the seam (TIERS.md); no single number"
+    }
+  ],
+  "remainder": "the seam: three-body dispersion harvested to `10⁻¹²` (`EMBED2_RESULTS.md`); charge transfer, the sixth channel (CT-1…3); dE5 does NOT terminate (24/24 over bound)",
+  "not_claimed": [
+    "Nothing about real water: TIERS.md §5, 'the carrier is a derived model, sluggish'.",
+    "TIERS.md's `2.10` mHa is not a number found in COMPARE0_RESULTS.md by that spelling; the record's own RMS figures are quoted in `source`."
+  ]
+}

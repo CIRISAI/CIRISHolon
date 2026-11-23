@@ -1,0 +1,36 @@
+{
+  "spec": "ciris/holon-decl/0",
+  "id": "sandbox.grain",
+  "name": "the sandbox's grain tier",
+  "plain": "One grain of sand, half a millimetre across, and the flaws inside it that decide how it breaks.",
+  "status": "simulated",
+  "standing": "rung",
+  "carrier": {
+    "state": "a quadtree of holons over a square domain; the terminal holon is one micrometre of crystal. Evaluator: Cohesive (bilinear cohesive relations with irreversible damage)",
+    "unit_log10_m": -6
+  },
+  "step": {
+    "kind": "computed",
+    "engine": "engine/crates/holon-sandbox/src/tier.rs"
+  },
+  "below": [
+    {
+      "id": "sandbox.crystal",
+      "relation": "context"
+    }
+  ],
+  "source": [
+    {
+      "path": "engine/crates/holon-sandbox/src/tier.rs",
+      "quote": "name: \"grain\","
+    }
+  ],
+  "views": [],
+  "certificate": {
+    "kind": "none"
+  },
+  "not_claimed": [
+    "The code calls this a tier of its zoom ladder. No closure or carriage is certified in this format, so its standing here is `rung`.",
+    "Nothing relates this tier to the one below it beyond the ladder's order: `below` is context."
+  ]
+}

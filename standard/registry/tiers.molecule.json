@@ -1,0 +1,52 @@
+{
+  "spec": "ciris/holon-decl/0",
+  "id": "tiers.molecule",
+  "name": "the molecule",
+  "plain": "The water molecule as a rigid unit with six degrees of freedom. Its three vibrations are closed too, and dropped at a price.",
+  "status": "measured",
+  "standing": "recorded",
+  "carrier": {
+    "state": "the rigid unit: six degrees of freedom, mass, momentum, orientation (TIERS.md, carried)"
+  },
+  "step": {
+    "kind": "measured"
+  },
+  "below": [
+    {
+      "id": "tiers.chemistry",
+      "relation": "function",
+      "basis": {
+        "path": "TIERS.md",
+        "quote": "A tier is a closed view of the tier below that the tier above CARRIES",
+        "note": "the rigid unit's six coordinates are read from the all-atom state"
+      }
+    }
+  ],
+  "source": [
+    {
+      "path": "conformance/water_observatory/MOLSEARCH1_RESULTS.md",
+      "quote": "cross-block `0.009` at 5 fs rising to `0.023` at 100 fs"
+    }
+  ],
+  "views": [],
+  "certificate": {
+    "kind": "none"
+  },
+  "row": {
+    "path": "TIERS.md",
+    "quote": "MEASURED on three all-atom walks (`MOLSEARCH1_RESULTS.md`); CERTIFIED-STRICT on the 12-atom scene (893.8 fs against 834, 0/111 controls)"
+  },
+  "budget_window": "not_measured",
+  "drops": [
+    {
+      "what": "the three vibrations",
+      "price": "`+0.325 kT`/water at the handoff (TIERS.md)",
+      "closed": "MORE closed than the object (purity `1.00`, cross-block `0.009`) (TIERS.md)"
+    }
+  ],
+  "remainder": "none the fluid needs at these cadences",
+  "not_claimed": [
+    "The strict certificate TIERS.md names (a horizon of 893.8 fs against 834) is a bound that must be AT LEAST its requirement. This format's certificates are at-most bounds, so it is quoted and not checked.",
+    "`893.8` and `+0.325` do not occur in MOLSEARCH1_RESULTS.md, the record the row cites for them."
+  ]
+}

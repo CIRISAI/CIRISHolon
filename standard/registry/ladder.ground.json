@@ -1,0 +1,62 @@
+{
+  "spec": "ciris/holon-decl/0",
+  "id": "ladder.ground",
+  "name": "the ground underfoot",
+  "plain": "A picture at true size, of no particular place: 40 cm paving slabs with 8 mm joints, a 10 cm kerb, soil crumbs of 1 to 7 mm, grass blades 4 to 10 cm tall, grit, and a dew drop 2 mm across on the slab. Every position is drawn from a seed; nothing is measured or computed.",
+  "status": "illustration",
+  "standing": "rung",
+  "carrier": {
+    "state": "paving, kerb, soil, grass and grit of no particular place, at true size",
+    "unit_log10_m": -2
+  },
+  "step": {
+    "kind": "generated"
+  },
+  "below": [
+    {
+      "id": "ladder.drop",
+      "relation": "shared_edge",
+      "basis": {
+        "path": "engine/crates/holon-draw-ladder/src/scenes/micro/mod.rs",
+        "note": "'what the ground and the drop share, in metres, so the two rungs show one thing': the drop's radius, its height and the slab's colour are one set of constants"
+      }
+    }
+  ],
+  "views": [
+    {
+      "id": "picture",
+      "reads": "the rung's marks at the zoom's metres per pixel",
+      "consumers": [
+        {
+          "id": "holon_draw",
+          "kind": "renderer",
+          "budget": {
+            "quantity": "what drawing a tile coarse may move against drawing it fine: the draw allocator's tolerance (Acuity, eps_px). It is not a bound on the picture's faithfulness to the holon.",
+            "bound": 1.0,
+            "unit": "px"
+          }
+        }
+      ]
+    }
+  ],
+  "certificate": {
+    "kind": "none"
+  },
+  "draw": {
+    "rung": "the ground underfoot",
+    "marks": [
+      "box",
+      "disc",
+      "line",
+      "quad",
+      "sphere"
+    ],
+    "span_z": [
+      -5.0,
+      1.5
+    ],
+    "join_below": "fade",
+    "join_above": "fade",
+    "label": "illustration, not computed"
+  }
+}

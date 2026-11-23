@@ -1,0 +1,42 @@
+{
+ "expect": [
+  "illustration_undrawn"
+ ],
+ "declarations": [
+  {
+   "spec": "ciris/holon-decl/0",
+   "id": "v.base",
+   "name": "a vector",
+   "plain": "A declaration made to be checked.",
+   "status": "illustration",
+   "standing": "rung",
+   "carrier": {
+    "state": "one number"
+   },
+   "step": {
+    "kind": "static"
+   },
+   "below": [],
+   "views": [
+    {
+     "id": "reading",
+     "reads": "the number",
+     "consumers": [
+      {
+       "id": "screen",
+       "kind": "renderer",
+       "budget": {
+        "quantity": "position",
+        "bound": 1.0,
+        "unit": "px"
+       }
+      }
+     ]
+    }
+   ],
+   "certificate": {
+    "kind": "none"
+   }
+  }
+ ]
+}

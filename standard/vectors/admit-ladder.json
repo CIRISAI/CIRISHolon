@@ -1,0 +1,60 @@
+{
+ "expect": "admitted",
+ "declarations": [
+  {
+   "spec": "ciris/holon-decl/0",
+   "id": "v.rung",
+   "name": "a rung",
+   "plain": "A declaration made to be checked.",
+   "status": "declared",
+   "standing": "rung",
+   "carrier": {
+    "state": "one number",
+    "unit_log10_m": 3
+   },
+   "step": {
+    "kind": "static"
+   },
+   "below": [],
+   "source": [
+    {
+     "path": "standard/vectors/fixture/record.txt"
+    }
+   ],
+   "views": [
+    {
+     "id": "reading",
+     "reads": "the number",
+     "consumers": [
+      {
+       "id": "screen",
+       "kind": "renderer",
+       "budget": {
+        "quantity": "position",
+        "bound": 1.0,
+        "unit": "px"
+       }
+      }
+     ]
+    }
+   ],
+   "certificate": {
+    "kind": "none"
+   },
+   "draw": {
+    "marks": [
+     "sphere"
+    ],
+    "label": "declared input",
+    "join_below": "none",
+    "join_above": "none",
+    "rung": "a rung",
+    "span_z": [
+     0.0,
+     1.0
+    ]
+   }
+  }
+ ],
+ "ladder": "a rung\t3\tdeclared input\t0.000\t1.000\tfalse\tfalse\tsphere\tThe engine's line for the one rung of the ladder vectors.\n"
+}

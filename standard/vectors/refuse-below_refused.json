@@ -1,0 +1,93 @@
+{
+ "expect": [
+  "below_refused",
+  "kill_missing"
+ ],
+ "declarations": [
+  {
+   "spec": "ciris/holon-decl/0",
+   "id": "v.bad",
+   "name": "a vector",
+   "plain": "A declaration made to be checked.",
+   "status": "wager",
+   "standing": "rung",
+   "carrier": {
+    "state": "one number"
+   },
+   "step": {
+    "kind": "static"
+   },
+   "below": [],
+   "source": [
+    {
+     "path": "standard/vectors/fixture/record.txt"
+    }
+   ],
+   "views": [
+    {
+     "id": "reading",
+     "reads": "the number",
+     "consumers": [
+      {
+       "id": "screen",
+       "kind": "renderer",
+       "budget": {
+        "quantity": "position",
+        "bound": 1.0,
+        "unit": "px"
+       }
+      }
+     ]
+    }
+   ],
+   "certificate": {
+    "kind": "none"
+   }
+  },
+  {
+   "spec": "ciris/holon-decl/0",
+   "id": "v.up",
+   "name": "a vector",
+   "plain": "A declaration made to be checked.",
+   "status": "declared",
+   "standing": "rung",
+   "carrier": {
+    "state": "one number"
+   },
+   "step": {
+    "kind": "static"
+   },
+   "below": [
+    {
+     "id": "v.bad",
+     "relation": "context"
+    }
+   ],
+   "source": [
+    {
+     "path": "standard/vectors/fixture/record.txt"
+    }
+   ],
+   "views": [
+    {
+     "id": "reading",
+     "reads": "the number",
+     "consumers": [
+      {
+       "id": "screen",
+       "kind": "renderer",
+       "budget": {
+        "quantity": "position",
+        "bound": 1.0,
+        "unit": "px"
+       }
+      }
+     ]
+    }
+   ],
+   "certificate": {
+    "kind": "none"
+   }
+  }
+ ]
+}

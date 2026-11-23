@@ -1,0 +1,71 @@
+{
+ "expect": [
+  "evidence_missing"
+ ],
+ "declarations": [
+  {
+   "spec": "ciris/holon-decl/0",
+   "id": "v.tier",
+   "name": "a vector",
+   "plain": "A declaration made to be checked.",
+   "status": "measured",
+   "standing": "tier",
+   "carrier": {
+    "state": "one number"
+   },
+   "step": {
+    "kind": "static"
+   },
+   "below": [],
+   "source": [
+    {
+     "path": "standard/vectors/fixture/record.txt"
+    }
+   ],
+   "views": [
+    {
+     "id": "reading",
+     "reads": "the number",
+     "consumers": [
+      {
+       "id": "screen",
+       "kind": "renderer",
+       "budget": {
+        "quantity": "position",
+        "bound": 1.0,
+        "unit": "px"
+       }
+      },
+      {
+       "id": "momentum",
+       "kind": "law",
+       "stated": {
+        "path": "standard/vectors/fixture/law.txt"
+       },
+       "budget": {
+        "quantity": "defect",
+        "bound": 0.05,
+        "unit": "relative"
+       }
+      }
+     ]
+    }
+   ],
+   "certificate": {
+    "kind": "closure",
+    "for": {
+     "view": "reading",
+     "consumer": "momentum"
+    },
+    "bound": {
+     "value": 0.01,
+     "unit": "relative"
+    },
+    "basis": "realised",
+    "evidence": []
+   },
+   "carried_by": "momentum",
+   "regime": "the regime it was measured in"
+  }
+ ]
+}

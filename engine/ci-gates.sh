@@ -537,6 +537,17 @@ n_hdl=$(cargo test -q -p holon-draw-ladder -- --list 2>/dev/null | grep -c ': te
 cargo test -q -p holon-draw-ladder 2>/dev/null >/dev/null \
   && ok "holon-draw-ladder: rungs tile the range, a pixel spans the same metres on every window, the hadron chain solves and steps" \
   || no "holon-draw-ladder: rungs tile the range, a pixel spans the same metres on every window, the hadron chain solves and steps"
+# The holon declaration, version 0 (standard/HOLON-DECL.md): the registry compiles; the engine's
+# ladder agrees with it in the name, unit, status and cuts of every rung and draws no rung that
+# is not declared, with the same marks, band, label and joins; every refusal of the vocabulary is
+# expected by a known-answer vector; and standard/HOLONS.md is what the registry generates. A
+# failure prints the compiler's reasons.
+rungs_tsv=$(mktemp)
+cargo run -q -p holon-draw-ladder --example rungs_dump 2>/dev/null > "$rungs_tsv" \
+  && { python3 ../standard/tools/holonc.py --ladder "$rungs_tsv" --vectors --check > "$rungs_tsv.out" 2>&1 || { cat "$rungs_tsv.out"; false; }; } \
+  && ok "holon declarations: the registry compiles, agrees with the engine's ladder, every refusal has a vector, HOLONS.md is fresh" \
+  || no "holon declarations: the registry compiles, agrees with the engine's ladder, every refusal has a vector, HOLONS.md is fresh"
+rm -f "$rungs_tsv" "$rungs_tsv.out"
 
 # 12. A CROSS-REFERENCE IS A WARRANT ONLY IF ITS TARGET EXISTS (team-lead's ruling,
 #     2026-08-24). Q10_PREREG.md §10 cites "M1-M6 carry over from Q9's brief unchanged" —

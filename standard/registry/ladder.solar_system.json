@@ -1,0 +1,74 @@
+{
+  "spec": "ciris/holon-decl/0",
+  "id": "ladder.solar_system",
+  "name": "the solar system",
+  "plain": "The Sun and the eight planets on circles at their semi-major axes, each at its mean longitude today (JPL's approximate elements, Standish; within 24 degrees for Mercury, 11 for Mars, 6 for the rest), and Pluto on its tilted orbit drawn as a circle. Bodies are at their true radii but never under 3 to 7 pixels, so their sizes are exaggerated at almost every zoom; their night sides are drawn at three tenths of full light, not black; a ring marks the Earth. The Kuiper belt's points (30 to 50 au) are an illustration.",
+  "status": "catalogue",
+  "standing": "input",
+  "carrier": {
+    "state": "the Sun and the eight planets on circles at their semi-major axes, each at its mean longitude for the host's clock",
+    "unit_log10_m": 11
+  },
+  "step": {
+    "kind": "computed",
+    "engine": "engine/crates/holon-draw-ladder/src/scenes/cosmos.rs"
+  },
+  "below": [
+    {
+      "id": "ladder.earth_moon",
+      "relation": "shared_edge",
+      "basis": {
+        "path": "engine/crates/holon-draw-ladder/src/scenes/cosmos.rs",
+        "note": "'How the rungs meet': each scene moves its own origin and frame with z, so that at the shared edge the two draw the same thing in the same place"
+      }
+    }
+  ],
+  "parts": [
+    {
+      "id": "kuiper_belt",
+      "what": "the Kuiper belt's points, 30 to 50 au",
+      "status": "illustration"
+    }
+  ],
+  "source": [
+    {
+      "external": "E. M. Standish, 'Keplerian Elements for Approximate Positions of the Major Planets', JPL Solar System Dynamics"
+    }
+  ],
+  "views": [
+    {
+      "id": "picture",
+      "reads": "the rung's marks at the zoom's metres per pixel",
+      "consumers": [
+        {
+          "id": "holon_draw",
+          "kind": "renderer",
+          "budget": {
+            "quantity": "what drawing a tile coarse may move against drawing it fine: the draw allocator's tolerance (Acuity, eps_px). It is not a bound on the picture's faithfulness to the holon.",
+            "bound": 1.0,
+            "unit": "px"
+          }
+        }
+      ]
+    }
+  ],
+  "certificate": {
+    "kind": "none"
+  },
+  "draw": {
+    "rung": "the solar system",
+    "marks": [
+      "line"
+    ],
+    "span_z": [
+      6.5,
+      11.0
+    ],
+    "join_below": "fade",
+    "join_above": "fade",
+    "label": "catalogue values"
+  },
+  "not_claimed": [
+    "Bodies are never drawn under 3 to 7 pixels, so their sizes are exaggerated at almost every zoom."
+  ]
+}

@@ -1,0 +1,67 @@
+{
+ "expect": [
+  "evidence_not_found",
+  "scene_certificate_incomplete"
+ ],
+ "declarations": [
+  {
+   "spec": "ciris/holon-decl/0",
+   "id": "v.scene",
+   "name": "a vector",
+   "plain": "A declaration made to be checked.",
+   "status": "measured",
+   "standing": "rung",
+   "carrier": {
+    "state": "one number"
+   },
+   "step": {
+    "kind": "generated"
+   },
+   "below": [],
+   "source": [
+    {
+     "path": "standard/vectors/fixture/record.txt"
+    }
+   ],
+   "views": [
+    {
+     "id": "reading",
+     "reads": "the number",
+     "consumers": [
+      {
+       "id": "screen",
+       "kind": "renderer",
+       "budget": {
+        "quantity": "position",
+        "bound": 1.0,
+        "unit": "px"
+       }
+      }
+     ]
+    }
+   ],
+   "certificate": {
+    "kind": "scene",
+    "for": {
+     "view": "reading",
+     "consumer": "screen"
+    },
+    "bound": {
+     "value": 0.5,
+     "unit": "px"
+    },
+    "basis": "realised",
+    "parts": {
+     "section_law": {
+      "evidence": [
+       {
+        "path": "NOPE"
+       }
+      ]
+     }
+    }
+   },
+   "regime": "the reference sample's population"
+  }
+ ]
+}

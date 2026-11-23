@@ -1,0 +1,58 @@
+{
+  "spec": "ciris/holon-decl/0",
+  "id": "ladder.milky_way",
+  "name": "the Milky Way",
+  "plain": "A drawing, not a map: a barred spiral of four arms made by rule, at the Milky Way's measured size (a disc about 100,000 light years, 1e21 m, across) with the Sun ringed at its measured 26,000 light years from the centre and its orbit drawn. No point is a real star, and the points are far fewer than the stars.",
+  "status": "illustration",
+  "standing": "rung",
+  "carrier": {
+    "state": "a barred spiral of four arms made by rule, at the galaxy's measured size",
+    "unit_log10_m": 18
+  },
+  "step": {
+    "kind": "generated"
+  },
+  "below": [
+    {
+      "id": "ladder.neighbourhood",
+      "relation": "shared_edge",
+      "basis": {
+        "path": "engine/crates/holon-draw-ladder/src/scenes/cosmos.rs",
+        "note": "'How the rungs meet': each scene moves its own origin and frame with z, so that at the shared edge the two draw the same thing in the same place"
+      }
+    }
+  ],
+  "views": [
+    {
+      "id": "picture",
+      "reads": "the rung's marks at the zoom's metres per pixel",
+      "consumers": [
+        {
+          "id": "holon_draw",
+          "kind": "renderer",
+          "budget": {
+            "quantity": "what drawing a tile coarse may move against drawing it fine: the draw allocator's tolerance (Acuity, eps_px). It is not a bound on the picture's faithfulness to the holon.",
+            "bound": 1.0,
+            "unit": "px"
+          }
+        }
+      ]
+    }
+  ],
+  "certificate": {
+    "kind": "none"
+  },
+  "draw": {
+    "rung": "the Milky Way",
+    "marks": [
+      "line"
+    ],
+    "span_z": [
+      15.5,
+      18.5
+    ],
+    "join_below": "fade",
+    "join_above": "fade",
+    "label": "illustration, not computed"
+  }
+}

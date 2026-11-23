@@ -1,0 +1,137 @@
+{
+  "spec": "ciris/holon-vocabulary/0",
+  "says": "The closed vocabularies of the holon declaration, version 0. A declaration that uses a word not listed here is refused (vocabulary_unregistered). Words are added here, with a dated note in standard/HOLON-DECL.md, and nowhere else.",
+  "status": {
+    "simulated": "Computed by an engine of the declaring repository. Owes: step.kind computed, with an engine.",
+    "measured": "A result of the declaring repository, read from its record. Owes: a source, and a certificate whose evidence carries a sha256.",
+    "catalogue": "A value published elsewhere, used at its published size. Owes: a source.",
+    "declared": "An input taken as given; nothing here derives it. Owes: a source.",
+    "wager": "A chosen position that could be wrong. Owes: a kill with the date it was stated.",
+    "illustration": "A picture; nothing computes it. Owes: no certificate (one is refused), and a draw view with a label."
+  },
+  "label": {
+    "simulated": "simulated live",
+    "measured": "measured",
+    "declared": "declared input",
+    "catalogue": "catalogue values",
+    "wager": "a wager",
+    "illustration": "illustration, not computed"
+  },
+  "standing": {
+    "tier": "A closed view that a consumer carries (OBJECT.md, the corrections of 2026-09-25 and 2026-11-15). Owes: a closure certificate FOR the consumer named in carried_by.",
+    "sector": "A closed view that the consumers it was tested against do not carry. Owes: a closure certificate, and tested_against.",
+    "rung": "A scale shown or used with no closure claim.",
+    "input": "Taken from outside the ladder: a declared or catalogue value.",
+    "medium": "Something others are seen through or conditioned on: the air, a mask, a light. Owes: at least one view."
+  },
+  "step": {
+    "computed": "Its state is computed by an engine named in step.engine (or engine_external). It may or may not change in time.",
+    "static": "It is given as it stands, and nothing computes it.",
+    "generated": "Built by rule from a seed. It has no dynamics: any motion shown is animation, not a step.",
+    "measured": "Its motion is read from a record, not computed here.",
+    "declared": "Its motion is given from outside."
+  },
+  "relation": {
+    "function": "This holon's reading is a function of the one below. Owes: a basis, a file of the repository that shows it.",
+    "shared_edge": "The two are built to show the same thing in the same place where they meet. Owes: a basis, a file of the repository that says so.",
+    "theory_change": "The one below is a different theory. A cross-fade would show frames that are states of neither.",
+    "context": "The one below is context only: nothing here is derived from it."
+  },
+  "consumer": {
+    "renderer": "Reads the view at a screen's acuity. Its budget is in px (position) or level (one step of an 8-bit display channel).",
+    "tier_above": "A declared holon that stands on this one and reads the view as its state. Owes: holon, its id.",
+    "law": "A conservation law or other stated invariant. Owes: stated, a file of the repository where the law is written.",
+    "person": "A reader of a screen: the view must be legible, not only drawn.",
+    "verifier": "A second party recomputing the claim from the same inputs."
+  },
+  "budget_unit": [
+    "px",
+    "level",
+    "relative",
+    "absolute",
+    "bits",
+    "seconds",
+    "metres",
+    "count"
+  ],
+  "certificate": {
+    "closure": "The commuting square v o T = h o v for the named consumer, exactly or within its bound (lean/CIRISHolon/Object.lean, Tier.lean; the statistical form in StatClosure.lean).",
+    "scene": "For a generated holon: an exact section law, and a transport cost against a frozen reference sample (lean/CIRISHolon/SceneCert.lean; OBJECT.md, 'The scene certificate').",
+    "bound": "A stated bound on the named consumer's error.",
+    "none": "No certificate. Required for an illustration."
+  },
+  "basis": {
+    "price": "The bound is an a-priori price: what the method says the defect is at most (OBJECT.md, correction of 2026-11-15, item 3).",
+    "realised": "The bound is a realised cost: what was measured on the run cited."
+  },
+  "mark": [
+    "quad",
+    "line",
+    "arc",
+    "disc",
+    "box",
+    "prism",
+    "sphere",
+    "rod",
+    "patch",
+    "glyph",
+    "run",
+    "image"
+  ],
+  "join": {
+    "fade": "A cross-fade across the boundary. Refused across a theory_change; across context it must say what is owed.",
+    "cut": "A hard switch.",
+    "none": "No neighbour on that side."
+  },
+  "answer": {
+    "admitted": "Every check held and everything cited is held here.",
+    "waiting": "Every check held, but something cited is not held here, or it stands on a declaration that is waiting. Never counted as admitted.",
+    "refused": "One or more checks failed. The reason is the sorted set of their tokens."
+  },
+  "refusal": {
+    "spec_unknown": "A. spec is not ciris/holon-decl/0.",
+    "member_missing": "A. A required member is absent.",
+    "member_unexpected": "A. A member this version does not define, at any depth.",
+    "type_wrong": "A. A member has the wrong type or form: an empty string, a negative or non-finite bound, a list too short, a malformed sha256 or date.",
+    "id_malformed": "A. An id is not lower-case words joined by full stops.",
+    "vocabulary_unregistered": "A. A word from a closed vocabulary is not in it.",
+    "id_duplicate": "B. Two declarations carry one id.",
+    "below_unresolved": "B. below names an id no declaration carries.",
+    "below_cycle": "B. Following below (and depicts) returns to the same holon.",
+    "below_refused": "B. It stands on a declaration that is refused.",
+    "relation_unbacked": "B. A function or shared_edge relation cites no file of the repository as its basis.",
+    "depicts_unresolved": "B. depicts names an id no declaration carries.",
+    "source_missing": "B. A declared, catalogue or measured holon, or such a part, cites no source.",
+    "source_not_found": "B. A source names a path that is not a file of the repository.",
+    "kill_missing": "B. A wager states no dated kill.",
+    "simulated_not_computed": "B. status is simulated and step.kind is not computed.",
+    "engine_missing": "B. A computed step does not name exactly one engine (a file of the repository, or an external one); or another kind of step names one.",
+    "medium_without_view": "B. standing is medium and no view is declared.",
+    "view_without_consumer": "B. A view names no consumer.",
+    "consumer_conflict": "B. One consumer id has two kinds in two views.",
+    "consumer_unresolved": "B. A tier_above consumer names no declared holon standing on this one; or a law consumer cites no file where the law is stated.",
+    "consumer_without_budget": "B. The consumer a certificate is for states no budget.",
+    "budget_unit_mismatch": "B. A renderer's budget is in neither px nor level.",
+    "certificate_owed": "B. status is measured and certificate.kind is none.",
+    "certificate_unbound": "B. A certificate does not name a view and consumer of this holon, its bound, and whether that is a price or a realised cost; or kind is none and it carries those members.",
+    "certificate_exceeds_budget": "B. The certificate's bound is in another unit than the consumer's budget, or looser than it.",
+    "illustration_certified": "B. status is illustration and certificate.kind is not none.",
+    "illustration_undrawn": "B. status is illustration and there is no draw view, so no label says it is one.",
+    "scene_not_generated": "B. A scene certificate on a holon that is not generated; or a generated holon with a closure or bound certificate.",
+    "scene_certificate_incomplete": "B. A scene certificate lacks its section law, its transport cost, or the frozen reference sample.",
+    "evidence_missing": "B. A certificate names no evidence.",
+    "evidence_not_found": "B. Evidence names a path that is not a file of the repository (absolute paths, '..' and directories are not).",
+    "evidence_digest": "B. Evidence carries a sha256 that is not the file's.",
+    "evidence_undigested": "B. A measured holon cites a file as evidence with no sha256.",
+    "gate_not_found": "B. Evidence names a gate that engine/ci-gates.sh does not contain.",
+    "regime_missing": "B. A certificate with no regime.",
+    "tier_uncertified": "B. standing is tier or sector and certificate.kind is not closure.",
+    "tier_uncarried": "B. standing is tier and carried_by is not the consumer its certificate is for.",
+    "carried_not_tier": "B. carried_by on a holon that is not a tier.",
+    "sector_untested": "B. A sector does not list the consumers it was tested against; or another standing lists them.",
+    "fade_across_theories": "B. draw joins below by fade across a theory_change.",
+    "fade_unbacked": "B. draw joins below by fade across a context relation and fade_owed does not say what would make that honest.",
+    "join_disagrees": "B. Two declarations describe one boundary differently.",
+    "ladder_disagrees": "B (with --ladder). A declaration that names a rung differs from the engine in name, status, label, unit, marks, band or joins; two declarations claim one rung; or the engine draws a rung no declaration carries."
+  }
+}

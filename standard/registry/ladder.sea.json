@@ -1,0 +1,56 @@
+{
+  "spec": "ciris/holon-decl/0",
+  "id": "ladder.sea",
+  "name": "the gauge vacuum: the sea",
+  "plain": "Computed in this page by the same engine: the B = 0 ground state of the same 4-site chain (one-flavour QCD in one space dimension, x = 4, 216 determinants, exact), the sea the baryon stands in. Its quark density is 1.5 on every site, half filling, summed over colours; the tubes are the computed colour-electric energy on each link (0.94, 0.31, 0.94 in the model's units), drawn as in the baryon's rung. It is an eigenstate and does not move, so nothing here moves. A model's vacuum, not the vacuum: one dimension, no transverse gluons, the gauge field removed by Gauss's law; the spacing (0.42 fm) is set by choice. The gauge vacuum this repository has MEASURED is a different model's: the Schwinger (U(1)) vacuum's magic density, 0.437 bits per site at x = 4, converged in volume to 3.7% (conformance/crystal/GF1_RESULTS.md).",
+  "status": "simulated",
+  "standing": "rung",
+  "carrier": {
+    "state": "the B = 0 ground state of one-flavour QCD in one space dimension, 4 sites: an eigenstate, so nothing in it moves",
+    "unit_log10_m": -16
+  },
+  "step": {
+    "kind": "computed",
+    "engine": "engine/crates/holon-render/src/hadron.rs"
+  },
+  "below": [],
+  "views": [
+    {
+      "id": "picture",
+      "reads": "the rung's marks at the zoom's metres per pixel",
+      "consumers": [
+        {
+          "id": "holon_draw",
+          "kind": "renderer",
+          "budget": {
+            "quantity": "what drawing a tile coarse may move against drawing it fine: the draw allocator's tolerance (Acuity, eps_px). It is not a bound on the picture's faithfulness to the holon.",
+            "bound": 1.0,
+            "unit": "px"
+          }
+        }
+      ]
+    }
+  ],
+  "certificate": {
+    "kind": "none"
+  },
+  "draw": {
+    "rung": "the gauge vacuum: the sea",
+    "marks": [
+      "box",
+      "disc",
+      "line",
+      "rod"
+    ],
+    "span_z": [
+      -20.0,
+      -17.6
+    ],
+    "join_below": "cut",
+    "join_above": "fade",
+    "label": "simulated live"
+  },
+  "owed": [
+    "The engine joins this rung below by a cut, and nothing is declared below it: the rung the cut leads to (the 3+1D gauge field) is not on main."
+  ]
+}

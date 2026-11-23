@@ -1,0 +1,853 @@
+{
+ "expect": "admitted",
+ "declarations": [
+  {
+   "spec": "ciris/holon-decl/0",
+   "id": "a.declared",
+   "name": "a vector",
+   "plain": "A declaration made to be checked.",
+   "status": "declared",
+   "standing": "rung",
+   "carrier": {
+    "state": "one number"
+   },
+   "step": {
+    "kind": "static"
+   },
+   "below": [],
+   "source": [
+    {
+     "path": "standard/vectors/fixture/record.txt"
+    }
+   ],
+   "views": [
+    {
+     "id": "reading",
+     "reads": "the number",
+     "consumers": [
+      {
+       "id": "screen",
+       "kind": "renderer",
+       "budget": {
+        "quantity": "position",
+        "bound": 1.0,
+        "unit": "px"
+       }
+      }
+     ]
+    }
+   ],
+   "certificate": {
+    "kind": "none"
+   }
+  },
+  {
+   "spec": "ciris/holon-decl/0",
+   "id": "a.tier",
+   "name": "a vector",
+   "plain": "A declaration made to be checked.",
+   "status": "measured",
+   "standing": "tier",
+   "carrier": {
+    "state": "one number"
+   },
+   "step": {
+    "kind": "static"
+   },
+   "below": [],
+   "source": [
+    {
+     "path": "standard/vectors/fixture/record.txt"
+    }
+   ],
+   "views": [
+    {
+     "id": "reading",
+     "reads": "the number",
+     "consumers": [
+      {
+       "id": "screen",
+       "kind": "renderer",
+       "budget": {
+        "quantity": "position",
+        "bound": 1.0,
+        "unit": "px"
+       }
+      },
+      {
+       "id": "momentum",
+       "kind": "law",
+       "stated": {
+        "path": "standard/vectors/fixture/law.txt"
+       },
+       "budget": {
+        "quantity": "defect",
+        "bound": 0.05,
+        "unit": "relative"
+       }
+      }
+     ]
+    }
+   ],
+   "certificate": {
+    "kind": "closure",
+    "for": {
+     "view": "reading",
+     "consumer": "momentum"
+    },
+    "bound": {
+     "value": 0.01,
+     "unit": "relative"
+    },
+    "basis": "realised",
+    "evidence": [
+     {
+      "path": "standard/vectors/fixture/record.txt",
+      "sha256": "2ef465caa982d323351b90e6d501fb79375cb07fffddaa4326a062fce6f03c97"
+     }
+    ]
+   },
+   "carried_by": "momentum",
+   "regime": "the regime it was measured in"
+  },
+  {
+   "spec": "ciris/holon-decl/0",
+   "id": "a.sector",
+   "name": "a vector",
+   "plain": "A declaration made to be checked.",
+   "status": "measured",
+   "standing": "sector",
+   "carrier": {
+    "state": "one number"
+   },
+   "step": {
+    "kind": "static"
+   },
+   "below": [],
+   "source": [
+    {
+     "path": "standard/vectors/fixture/record.txt"
+    }
+   ],
+   "views": [
+    {
+     "id": "reading",
+     "reads": "the number",
+     "consumers": [
+      {
+       "id": "screen",
+       "kind": "renderer",
+       "budget": {
+        "quantity": "position",
+        "bound": 1.0,
+        "unit": "px"
+       }
+      },
+      {
+       "id": "momentum",
+       "kind": "law",
+       "stated": {
+        "path": "standard/vectors/fixture/law.txt"
+       },
+       "budget": {
+        "quantity": "defect",
+        "bound": 0.05,
+        "unit": "relative"
+       }
+      }
+     ]
+    }
+   ],
+   "certificate": {
+    "kind": "closure",
+    "for": {
+     "view": "reading",
+     "consumer": "momentum"
+    },
+    "bound": {
+     "value": 0.01,
+     "unit": "relative"
+    },
+    "basis": "realised",
+    "evidence": [
+     {
+      "path": "standard/vectors/fixture/record.txt",
+      "sha256": "2ef465caa982d323351b90e6d501fb79375cb07fffddaa4326a062fce6f03c97"
+     }
+    ]
+   },
+   "regime": "the regime it was measured in",
+   "tested_against": [
+    "momentum"
+   ]
+  },
+  {
+   "spec": "ciris/holon-decl/0",
+   "id": "a.frame_tier",
+   "name": "a vector",
+   "plain": "A declaration made to be checked.",
+   "status": "measured",
+   "standing": "tier",
+   "carrier": {
+    "state": "one number"
+   },
+   "step": {
+    "kind": "static"
+   },
+   "below": [],
+   "source": [
+    {
+     "path": "standard/vectors/fixture/record.txt"
+    }
+   ],
+   "views": [
+    {
+     "id": "reading",
+     "reads": "the number",
+     "consumers": [
+      {
+       "id": "screen",
+       "kind": "renderer",
+       "budget": {
+        "quantity": "position",
+        "bound": 1.0,
+        "unit": "px"
+       }
+      }
+     ]
+    }
+   ],
+   "certificate": {
+    "kind": "closure",
+    "for": {
+     "view": "reading",
+     "consumer": "screen"
+    },
+    "bound": {
+     "value": 0.5,
+     "unit": "px"
+    },
+    "basis": "realised",
+    "evidence": [
+     {
+      "path": "standard/vectors/fixture/record.txt",
+      "sha256": "2ef465caa982d323351b90e6d501fb79375cb07fffddaa4326a062fce6f03c97"
+     }
+    ]
+   },
+   "carried_by": "screen",
+   "regime": "the regime it was measured in"
+  },
+  {
+   "spec": "ciris/holon-decl/0",
+   "id": "a.scene",
+   "name": "a vector",
+   "plain": "A declaration made to be checked.",
+   "status": "measured",
+   "standing": "rung",
+   "carrier": {
+    "state": "one number"
+   },
+   "step": {
+    "kind": "generated"
+   },
+   "below": [],
+   "source": [
+    {
+     "path": "standard/vectors/fixture/record.txt"
+    }
+   ],
+   "views": [
+    {
+     "id": "reading",
+     "reads": "the number",
+     "consumers": [
+      {
+       "id": "screen",
+       "kind": "renderer",
+       "budget": {
+        "quantity": "position",
+        "bound": 1.0,
+        "unit": "px"
+       }
+      }
+     ]
+    }
+   ],
+   "certificate": {
+    "kind": "scene",
+    "for": {
+     "view": "reading",
+     "consumer": "screen"
+    },
+    "bound": {
+     "value": 0.5,
+     "unit": "px"
+    },
+    "basis": "realised",
+    "parts": {
+     "section_law": {
+      "evidence": [
+       {
+        "path": "standard/vectors/fixture/record.txt",
+        "sha256": "2ef465caa982d323351b90e6d501fb79375cb07fffddaa4326a062fce6f03c97"
+       }
+      ]
+     },
+     "transport_cost": {
+      "evidence": [
+       {
+        "path": "standard/vectors/fixture/record.txt",
+        "sha256": "2ef465caa982d323351b90e6d501fb79375cb07fffddaa4326a062fce6f03c97"
+       }
+      ],
+      "reference": {
+       "path": "standard/vectors/fixture/record.txt",
+       "sha256": "2ef465caa982d323351b90e6d501fb79375cb07fffddaa4326a062fce6f03c97",
+       "frozen_at": "2026-11-01"
+      }
+     }
+    }
+   },
+   "regime": "the reference sample's population"
+  },
+  {
+   "spec": "ciris/holon-decl/0",
+   "id": "a.drawn",
+   "name": "a vector",
+   "plain": "A declaration made to be checked.",
+   "status": "declared",
+   "standing": "rung",
+   "carrier": {
+    "state": "one number"
+   },
+   "step": {
+    "kind": "static"
+   },
+   "below": [],
+   "source": [
+    {
+     "path": "standard/vectors/fixture/record.txt"
+    }
+   ],
+   "views": [
+    {
+     "id": "reading",
+     "reads": "the number",
+     "consumers": [
+      {
+       "id": "screen",
+       "kind": "renderer",
+       "budget": {
+        "quantity": "position",
+        "bound": 1.0,
+        "unit": "px"
+       }
+      }
+     ]
+    }
+   ],
+   "certificate": {
+    "kind": "none"
+   },
+   "draw": {
+    "marks": [
+     "sphere"
+    ],
+    "label": "declared input",
+    "join_below": "none",
+    "join_above": "none"
+   }
+  },
+  {
+   "spec": "ciris/holon-decl/0",
+   "id": "a.picture",
+   "name": "a vector",
+   "plain": "A declaration made to be checked.",
+   "status": "illustration",
+   "standing": "rung",
+   "carrier": {
+    "state": "one number"
+   },
+   "step": {
+    "kind": "static"
+   },
+   "below": [],
+   "views": [
+    {
+     "id": "reading",
+     "reads": "the number",
+     "consumers": [
+      {
+       "id": "screen",
+       "kind": "renderer",
+       "budget": {
+        "quantity": "position",
+        "bound": 1.0,
+        "unit": "px"
+       }
+      }
+     ]
+    }
+   ],
+   "certificate": {
+    "kind": "none"
+   },
+   "draw": {
+    "marks": [
+     "disc"
+    ],
+    "label": "illustration, not computed"
+   }
+  },
+  {
+   "spec": "ciris/holon-decl/0",
+   "id": "a.wager",
+   "name": "a vector",
+   "plain": "A declaration made to be checked.",
+   "status": "wager",
+   "standing": "rung",
+   "carrier": {
+    "state": "one number"
+   },
+   "step": {
+    "kind": "static"
+   },
+   "below": [],
+   "source": [
+    {
+     "path": "standard/vectors/fixture/record.txt"
+    }
+   ],
+   "views": [
+    {
+     "id": "reading",
+     "reads": "the number",
+     "consumers": [
+      {
+       "id": "screen",
+       "kind": "renderer",
+       "budget": {
+        "quantity": "position",
+        "bound": 1.0,
+        "unit": "px"
+       }
+      }
+     ]
+    }
+   ],
+   "certificate": {
+    "kind": "none"
+   },
+   "kill": {
+    "text": "It dies if the measured value falls outside the stated band.",
+    "stated_at": "2026-11-01"
+   }
+  },
+  {
+   "spec": "ciris/holon-decl/0",
+   "id": "a.simulated",
+   "name": "a vector",
+   "plain": "A declaration made to be checked.",
+   "status": "simulated",
+   "standing": "rung",
+   "carrier": {
+    "state": "one number"
+   },
+   "step": {
+    "kind": "computed",
+    "engine": "standard/vectors/fixture/engine.rs"
+   },
+   "below": [],
+   "source": [
+    {
+     "path": "standard/vectors/fixture/record.txt"
+    }
+   ],
+   "views": [
+    {
+     "id": "reading",
+     "reads": "the number",
+     "consumers": [
+      {
+       "id": "screen",
+       "kind": "renderer",
+       "budget": {
+        "quantity": "position",
+        "bound": 1.0,
+        "unit": "px"
+       }
+      }
+     ]
+    }
+   ],
+   "certificate": {
+    "kind": "none"
+   }
+  },
+  {
+   "spec": "ciris/holon-decl/0",
+   "id": "a.lo",
+   "name": "a vector",
+   "plain": "A declaration made to be checked.",
+   "status": "declared",
+   "standing": "rung",
+   "carrier": {
+    "state": "one number"
+   },
+   "step": {
+    "kind": "static"
+   },
+   "below": [],
+   "source": [
+    {
+     "path": "standard/vectors/fixture/record.txt"
+    }
+   ],
+   "views": [
+    {
+     "id": "reading",
+     "reads": "the number",
+     "consumers": [
+      {
+       "id": "screen",
+       "kind": "renderer",
+       "budget": {
+        "quantity": "position",
+        "bound": 1.0,
+        "unit": "px"
+       }
+      }
+     ]
+    }
+   ],
+   "certificate": {
+    "kind": "none"
+   },
+   "draw": {
+    "marks": [
+     "sphere"
+    ],
+    "label": "declared input",
+    "join_below": "none",
+    "join_above": "fade"
+   }
+  },
+  {
+   "spec": "ciris/holon-decl/0",
+   "id": "a.hi",
+   "name": "a vector",
+   "plain": "A declaration made to be checked.",
+   "status": "declared",
+   "standing": "rung",
+   "carrier": {
+    "state": "one number"
+   },
+   "step": {
+    "kind": "static"
+   },
+   "below": [
+    {
+     "id": "a.lo",
+     "relation": "shared_edge",
+     "basis": {
+      "path": "standard/vectors/fixture/engine.rs"
+     }
+    }
+   ],
+   "source": [
+    {
+     "path": "standard/vectors/fixture/record.txt"
+    }
+   ],
+   "views": [
+    {
+     "id": "reading",
+     "reads": "the number",
+     "consumers": [
+      {
+       "id": "screen",
+       "kind": "renderer",
+       "budget": {
+        "quantity": "position",
+        "bound": 1.0,
+        "unit": "px"
+       }
+      }
+     ]
+    }
+   ],
+   "certificate": {
+    "kind": "none"
+   },
+   "draw": {
+    "marks": [
+     "sphere"
+    ],
+    "label": "declared input",
+    "join_below": "fade",
+    "join_above": "none"
+   }
+  },
+  {
+   "spec": "ciris/holon-decl/0",
+   "id": "a.ctx",
+   "name": "a vector",
+   "plain": "A declaration made to be checked.",
+   "status": "declared",
+   "standing": "rung",
+   "carrier": {
+    "state": "one number"
+   },
+   "step": {
+    "kind": "static"
+   },
+   "below": [
+    {
+     "id": "a.lo2",
+     "relation": "context"
+    }
+   ],
+   "source": [
+    {
+     "path": "standard/vectors/fixture/record.txt"
+    }
+   ],
+   "views": [
+    {
+     "id": "reading",
+     "reads": "the number",
+     "consumers": [
+      {
+       "id": "screen",
+       "kind": "renderer",
+       "budget": {
+        "quantity": "position",
+        "bound": 1.0,
+        "unit": "px"
+       }
+      }
+     ]
+    }
+   ],
+   "certificate": {
+    "kind": "none"
+   },
+   "draw": {
+    "marks": [
+     "sphere"
+    ],
+    "label": "declared input",
+    "join_below": "fade",
+    "join_above": "none",
+    "fade_owed": "Nothing relates the two; a cut would be the honest join."
+   }
+  },
+  {
+   "spec": "ciris/holon-decl/0",
+   "id": "a.lo2",
+   "name": "a vector",
+   "plain": "A declaration made to be checked.",
+   "status": "declared",
+   "standing": "rung",
+   "carrier": {
+    "state": "one number"
+   },
+   "step": {
+    "kind": "static"
+   },
+   "below": [],
+   "source": [
+    {
+     "path": "standard/vectors/fixture/record.txt"
+    }
+   ],
+   "views": [
+    {
+     "id": "reading",
+     "reads": "the number",
+     "consumers": [
+      {
+       "id": "screen",
+       "kind": "renderer",
+       "budget": {
+        "quantity": "position",
+        "bound": 1.0,
+        "unit": "px"
+       }
+      }
+     ]
+    }
+   ],
+   "certificate": {
+    "kind": "none"
+   },
+   "draw": {
+    "marks": [
+     "sphere"
+    ],
+    "label": "declared input",
+    "join_below": "none",
+    "join_above": "fade"
+   }
+  },
+  {
+   "spec": "ciris/holon-decl/0",
+   "id": "a.depiction",
+   "name": "a vector",
+   "plain": "A declaration made to be checked.",
+   "status": "illustration",
+   "standing": "rung",
+   "carrier": {
+    "state": "one number"
+   },
+   "step": {
+    "kind": "static"
+   },
+   "below": [],
+   "views": [
+    {
+     "id": "reading",
+     "reads": "the number",
+     "consumers": [
+      {
+       "id": "screen",
+       "kind": "renderer",
+       "budget": {
+        "quantity": "position",
+        "bound": 1.0,
+        "unit": "px"
+       }
+      }
+     ]
+    }
+   ],
+   "certificate": {
+    "kind": "none"
+   },
+   "draw": {
+    "marks": [
+     "disc"
+    ],
+    "label": "illustration, not computed"
+   },
+   "depicts": {
+    "id": "a.tier"
+   }
+  },
+  {
+   "spec": "ciris/holon-decl/0",
+   "id": "a.parts",
+   "name": "a vector",
+   "plain": "A declaration made to be checked.",
+   "status": "declared",
+   "standing": "rung",
+   "carrier": {
+    "state": "one number"
+   },
+   "step": {
+    "kind": "static"
+   },
+   "below": [],
+   "source": [
+    {
+     "path": "standard/vectors/fixture/record.txt"
+    }
+   ],
+   "views": [
+    {
+     "id": "reading",
+     "reads": "the number",
+     "consumers": [
+      {
+       "id": "screen",
+       "kind": "renderer",
+       "budget": {
+        "quantity": "position",
+        "bound": 1.0,
+        "unit": "px"
+       }
+      }
+     ]
+    }
+   ],
+   "certificate": {
+    "kind": "none"
+   },
+   "parts": [
+    {
+     "id": "cloud",
+     "what": "a part drawn beside it",
+     "status": "illustration"
+    },
+    {
+     "id": "stars",
+     "what": "a part with its own source",
+     "status": "catalogue",
+     "source": [
+      {
+       "external": "a catalogue",
+       "edition": "1997"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "spec": "ciris/holon-decl/0",
+   "id": "a.gated",
+   "name": "a vector",
+   "plain": "A declaration made to be checked.",
+   "status": "simulated",
+   "standing": "rung",
+   "carrier": {
+    "state": "one number"
+   },
+   "step": {
+    "kind": "computed",
+    "engine": "standard/vectors/fixture/engine.rs"
+   },
+   "below": [],
+   "source": [
+    {
+     "path": "standard/vectors/fixture/record.txt"
+    }
+   ],
+   "views": [
+    {
+     "id": "reading",
+     "reads": "the number",
+     "consumers": [
+      {
+       "id": "screen",
+       "kind": "renderer",
+       "budget": {
+        "quantity": "position",
+        "bound": 1.0,
+        "unit": "px"
+       }
+      }
+     ]
+    }
+   ],
+   "certificate": {
+    "kind": "bound",
+    "for": {
+     "view": "reading",
+     "consumer": "screen"
+    },
+    "bound": {
+     "value": 0.5,
+     "unit": "px"
+    },
+    "basis": "realised",
+    "evidence": [
+     {
+      "gate": "holon declarations: the registry compiles, agrees with the engine's ladder, every refusal has a vector, HOLONS.md is fresh"
+     }
+    ]
+   },
+   "regime": "the regime it was measured in"
+  }
+ ]
+}

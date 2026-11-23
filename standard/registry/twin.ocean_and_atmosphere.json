@@ -1,0 +1,48 @@
+{
+  "spec": "ciris/holon-decl/0",
+  "id": "twin.ocean_and_atmosphere",
+  "name": "the twin's ocean and atmosphere layer",
+  "plain": "The CEWP twin's globe layer for the ocean's colour, the sun's glint and the atmosphere's limb: one shader, with colours and glint chosen for looks. The twin's own claims ledger records it as claim layer-illustration, class MODEL, 'labelled decoration'.",
+  "status": "illustration",
+  "standing": "rung",
+  "carrier": {
+    "state": "a shell drawn at 1.032 Earth radii (about twice the real 100 km), Rayleigh weights 1/λ⁴ at 680/550/440 nm, Mie g = 0.76, lit from the twin's simulated sun",
+    "unit_log10_m": 5
+  },
+  "step": {
+    "kind": "static"
+  },
+  "below": [],
+  "source": [
+    {
+      "external": "CIRISAI/CEWP docs/evidence/claims.js, claim layer-illustration (class MODEL)",
+      "edition": "commit b091241"
+    },
+    {
+      "external": "CIRISAI/CEWP docs/gfx.js, gfxOcean and the shaders OV/OF",
+      "edition": "commit b091241"
+    }
+  ],
+  "views": [
+    {
+      "id": "picture",
+      "reads": "colour drawn over and around the globe",
+      "consumers": [
+        {
+          "id": "twin_page",
+          "kind": "renderer"
+        }
+      ]
+    }
+  ],
+  "certificate": {
+    "kind": "none"
+  },
+  "draw": {
+    "marks": [],
+    "label": "decoration, no data"
+  },
+  "not_claimed": [
+    "Nothing checks this shader against an atmosphere or an ocean. No holon-draw mark draws it: it is the twin's own program."
+  ]
+}

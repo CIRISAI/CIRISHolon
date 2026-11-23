@@ -513,6 +513,34 @@ band-flip law (a tier only on a closure certificate against the dynamics beneath
 | the fold | one baryon's quark density on a 1+1D chain, exact, on the lane kernel | the solver, not the object | a model, credited as prior art on its face; a tier only through GF2 |
 | the view | two-box law, fluid zoom, descent glide, filmstrip | draws the holon's own cut and moves nothing in the physics | machinery, correctly placed |
 
+## The declaration — one way to write a holon down (2026-11-23; version 0 of a draft, not frozen)
+
+A holon is written several ways here with nothing tying them: the Lean bundle
+(`lean/CIRISHolon/Tier.lean`), this file and `TIERS.md`, a struct in one engine
+(`holon-sandbox`), and a drawable rung (`holon-draw-ladder`'s `Scene`). A consumer, the CEWP
+twin, keeps a fifth, its generated claims ledger. Each has its own words for how a thing is
+known.
+
+`standard/HOLON-DECL.md` is a first attempt at ONE declaration: carrier, step, what it
+stands on, views with their consumers and budgets, regime, certificate, status, standing,
+and how it is drawn. It is data, checked by a compiler that refuses by name
+(`standard/tools/holonc.py`), in the shape of the CIRIS Internet-Drafts. It adds no
+mathematics, and it changes nothing above: what a certificate means is still defined here
+and in `lean/`.
+
+What it takes from this file: a tier is a closed view that a CONSUMER carries, and that
+consumer may be a law, the tier above or a renderer's frame (the corrections of 2026-09-25
+and 2026-11-15), so a certificate must name the view and consumer it is for, its bound, and
+whether that bound is a price or a realised cost. A view that is closed and not carried is
+a `sector`, and says which consumers it was tested against.
+
+What it does not do: it does not replace the status words of `TIERS.md` (its Section 4.1
+maps them, and lists the ones it cannot express), and no tier of `TIERS.md` is declared in
+it yet. Its first register is the scale ladder's 13 rungs, the air, and the twin's ocean and
+atmosphere layer. It was reviewed
+adversarially, twice, before it was committed (`standard/REVIEW-2026-11-23.md`); the first form of
+this entry made three claims that review showed false, and they are not here.
+
 ## The lock
 
 The steelman changes in two ways only: a move's own kill fires (marked dead and kept), or a

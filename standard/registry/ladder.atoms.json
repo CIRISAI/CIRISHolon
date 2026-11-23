@@ -1,0 +1,61 @@
+{
+  "spec": "ciris/holon-decl/0",
+  "id": "ladder.atoms",
+  "name": "hydrogen, atom by atom",
+  "plain": "Computed as you watch by this repository's engine (holon-render's Sim, through holon-draw-atoms): one H2 molecule, started stretched 15% and turning with kT at 300 K, in the engine's 24-bohr walled box (the frame), followed by its first atom. The pair curve is the engine's own: H2 in the STO-3G basis, full CI (holon-chem), computed ahead of time on the 492 knots the atoms page solves on load and built in (holon-draw-atoms/data/h2_sto3g.json; R_e 1.3887 bohr, D_e 0.2041 Eh), because the solve takes over a second. Exact in that model, not a prediction of experiment. No three-body table is loaded; two atoms need none. Atoms are drawn as the engine draws them, as balls of half that bond length.",
+  "status": "simulated",
+  "standing": "rung",
+  "carrier": {
+    "state": "one H2 molecule: two nuclei on the engine's full-CI curve",
+    "unit_log10_m": -10
+  },
+  "step": {
+    "kind": "computed",
+    "engine": "engine/crates/holon-draw-atoms/src/lib.rs"
+  },
+  "below": [
+    {
+      "id": "ladder.nucleus",
+      "relation": "shared_edge",
+      "basis": {
+        "path": "engine/crates/holon-draw-ladder/src/scenes/micro/mod.rs",
+        "note": "'Every rung is centred on ONE point going in': each finer rung is drawn about the point the coarser one shows at its centre. The same file names this rung 'the exception it has to be': the live simulation is of H2, not of water, so the atom this rung centres on is a hydrogen atom of H2 and not the water molecule's that the chain follows."
+      }
+    }
+  ],
+  "views": [
+    {
+      "id": "picture",
+      "reads": "the rung's marks at the zoom's metres per pixel",
+      "consumers": [
+        {
+          "id": "holon_draw",
+          "kind": "renderer",
+          "budget": {
+            "quantity": "what drawing a tile coarse may move against drawing it fine: the draw allocator's tolerance (Acuity, eps_px). It is not a bound on the picture's faithfulness to the holon.",
+            "bound": 1.0,
+            "unit": "px"
+          }
+        }
+      ]
+    }
+  ],
+  "certificate": {
+    "kind": "none"
+  },
+  "draw": {
+    "rung": "hydrogen, atom by atom",
+    "marks": [
+      "line",
+      "rod",
+      "sphere"
+    ],
+    "span_z": [
+      -13.3,
+      -12.0
+    ],
+    "join_below": "fade",
+    "join_above": "fade",
+    "label": "simulated live"
+  }
+}

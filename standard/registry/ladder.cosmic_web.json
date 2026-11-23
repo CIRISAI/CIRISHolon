@@ -1,0 +1,58 @@
+{
+  "spec": "ciris/holon-decl/0",
+  "id": "ladder.cosmic_web",
+  "name": "the cosmic web",
+  "plain": "A drawing, not a survey: threads and knots of galaxies made by rule, inside a sphere at the edge of the observable universe (4.4e26 m, 46 billion light years, from the standard cosmology). The cells are true to size (about 100 million light years) only near the middle; farther out they are enlarged ten and a hundred times so that a web can be seen at all. Only the ring about the Local Group and the Virgo cluster beside it are placed by measurement. This repository computes nothing at this scale: its cosmological rung is a wager (TIERS.md section 4).",
+  "status": "illustration",
+  "standing": "rung",
+  "carrier": {
+    "state": "threads and knots of galaxies made by rule inside the observable universe's sphere",
+    "unit_log10_m": 24
+  },
+  "step": {
+    "kind": "generated"
+  },
+  "below": [
+    {
+      "id": "ladder.local_group",
+      "relation": "shared_edge",
+      "basis": {
+        "path": "engine/crates/holon-draw-ladder/src/scenes/cosmos.rs",
+        "note": "both rungs place the Virgo cluster from the one constant VIRGO. That is all they share: nothing relates the web's threads to the Local Group's galaxies."
+      }
+    }
+  ],
+  "views": [
+    {
+      "id": "picture",
+      "reads": "the rung's marks at the zoom's metres per pixel",
+      "consumers": [
+        {
+          "id": "holon_draw",
+          "kind": "renderer",
+          "budget": {
+            "quantity": "what drawing a tile coarse may move against drawing it fine: the draw allocator's tolerance (Acuity, eps_px). It is not a bound on the picture's faithfulness to the holon.",
+            "bound": 1.0,
+            "unit": "px"
+          }
+        }
+      ]
+    }
+  ],
+  "certificate": {
+    "kind": "none"
+  },
+  "draw": {
+    "rung": "the cosmic web",
+    "marks": [
+      "line"
+    ],
+    "span_z": [
+      21.0,
+      24.5
+    ],
+    "join_below": "fade",
+    "join_above": "none",
+    "label": "illustration, not computed"
+  }
+}

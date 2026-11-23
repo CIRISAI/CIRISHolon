@@ -1,0 +1,75 @@
+{
+  "spec": "ciris/holon-decl/0",
+  "id": "ladder.nucleus",
+  "name": "inside the atom: the nucleus",
+  "plain": "Hydrogen. The nucleus is a DECLARED input of this repository (TIERS.md, the nucleus row: Z, mass, spin, charge radius; nothing here computes it): one proton, drawn at its charge radius, 0.84 fm (CODATA). The cloud is 6000 dots drawn from a seed with the textbook 1s density exp(-2r/a0)/(pi a0^3), a0 = 52.9 pm; it thins to nothing because the atom is that empty. The dots' size and the ring that marks where the proton is are not physical.",
+  "status": "declared",
+  "standing": "input",
+  "carrier": {
+    "state": "one proton: Z, mass, spin, charge radius",
+    "unit_log10_m": -15
+  },
+  "step": {
+    "kind": "declared"
+  },
+  "below": [
+    {
+      "id": "ladder.baryon",
+      "relation": "context"
+    }
+  ],
+  "parts": [
+    {
+      "id": "cloud",
+      "what": "the 1s electron cloud drawn round the proton",
+      "status": "catalogue",
+      "source": [
+        {
+          "external": "The hydrogen 1s orbital, textbook quantum mechanics"
+        }
+      ]
+    }
+  ],
+  "source": [
+    {
+      "path": "TIERS.md",
+      "note": "the nucleus row: a DECLARED input"
+    }
+  ],
+  "views": [
+    {
+      "id": "picture",
+      "reads": "the rung's marks at the zoom's metres per pixel",
+      "consumers": [
+        {
+          "id": "holon_draw",
+          "kind": "renderer",
+          "budget": {
+            "quantity": "what drawing a tile coarse may move against drawing it fine: the draw allocator's tolerance (Acuity, eps_px). It is not a bound on the picture's faithfulness to the holon.",
+            "bound": 1.0,
+            "unit": "px"
+          }
+        }
+      ]
+    }
+  ],
+  "certificate": {
+    "kind": "none"
+  },
+  "draw": {
+    "rung": "inside the atom: the nucleus",
+    "marks": [
+      "box",
+      "line",
+      "sphere"
+    ],
+    "span_z": [
+      -17.1,
+      -13.3
+    ],
+    "join_below": "fade",
+    "join_above": "fade",
+    "label": "declared input",
+    "fade_owed": "The proton drawn here is a declared input and the chain below it is a different theory (one space dimension, one flavour). The engine fades between them. Whether that boundary is a theory_change, and so a cut, is a question for the CIRISOntology session."
+  }
+}

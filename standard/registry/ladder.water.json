@@ -1,0 +1,63 @@
+{
+  "spec": "ciris/holon-decl/0",
+  "id": "ladder.water",
+  "name": "liquid water, molecule by molecule",
+  "plain": "A picture of the model this repository MEASURED its water on (TIERS.md, the molecule and fluid rows; MOLSEARCH1_RESULTS.md): rigid molecules, O-H 0.9572 Å, H-O-H 104.52°, at the liquid's 33.4 molecules per nm³, at the drop's surface. The positions, orientations and slow motion are drawn from a seed, NOT read from the measured trajectories; atoms are drawn as balls of 0.5 and 0.3 Å (on a coarser mesh where a pixel cannot tell), and the surface beyond the 6 nm patch as the drop rung draws it.",
+  "status": "illustration",
+  "standing": "rung",
+  "carrier": {
+    "state": "rigid water molecules placed by rule at the liquid's density, turning on the host's clock",
+    "unit_log10_m": -10
+  },
+  "step": {
+    "kind": "generated"
+  },
+  "below": [
+    {
+      "id": "ladder.atoms",
+      "relation": "context"
+    }
+  ],
+  "views": [
+    {
+      "id": "picture",
+      "reads": "the rung's marks at the zoom's metres per pixel",
+      "consumers": [
+        {
+          "id": "holon_draw",
+          "kind": "renderer",
+          "budget": {
+            "quantity": "what drawing a tile coarse may move against drawing it fine: the draw allocator's tolerance (Acuity, eps_px). It is not a bound on the picture's faithfulness to the holon.",
+            "bound": 1.0,
+            "unit": "px"
+          }
+        }
+      ]
+    }
+  ],
+  "certificate": {
+    "kind": "none"
+  },
+  "draw": {
+    "rung": "liquid water, molecule by molecule",
+    "marks": [
+      "disc",
+      "rod",
+      "sphere"
+    ],
+    "span_z": [
+      -12.0,
+      -10.5
+    ],
+    "join_below": "fade",
+    "join_above": "fade",
+    "label": "illustration, not computed",
+    "fade_owed": "The rung below simulates H2, not water: 'the hydrogen rung is the exception it has to be' (micro/mod.rs). Nothing ties a water molecule drawn here to the hydrogen molecule simulated there."
+  },
+  "not_claimed": [
+    "Nothing here is computed. It pictures the model the repository measured its water on."
+  ],
+  "owed": [
+    "A `depicts` link to the measured molecule tier (TIERS.md, the molecule row), once that tier is declared in this registry."
+  ]
+}

@@ -19,6 +19,15 @@ graphics backend of its own yet.
   uniforms and draw order are untouched.
 - `abi.rs`: the wasm boundary, plain `extern "C"`.
 
+## CORRECTION 2026-11-23: the eye derived from `vp`
+
+Both backends derived the eye (specular's and rim's view vector, and now the GLOBE limb's) from the third ROW of
+`vp`'s inverse, where the third COLUMN is the preimage of clip (0, 0, -1, 0). They agree only for a camera that
+does not turn. `tools/eye_check.mjs` (run first by `webgpu_parity.py`) now checks both against a plain inverse
+over 400 matrices: largest difference 7.3e-16; the old formula, `--plant`, fails all 800. Found by the twin's
+globe (`INTERFACE.md` §16 item 4). The lit 3D modes' pictures change by up to 77 to 79 levels on 6 to 8 % of
+their pixels: the highlights move to where the camera is. Flat-map, tiles, add and globe pictures are unchanged.
+
 ## A triangle, a globe light and a multiplying blend: what was built and checked, 2026-11-23
 
 Three additions to both browser backends, for the CEWP twin's globe (CIRISAI/CEWP#24: its land,

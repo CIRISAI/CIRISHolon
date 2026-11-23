@@ -19,3 +19,11 @@ def jar_dir() -> pathlib.Path:
 def jars() -> list:
     """The native jars of this platform's wheel, sorted by name."""
     return sorted(jar_dir().glob("*.jar"))
+
+
+def verify() -> bool:
+    """True when each jar here hashes to its line in jars/SHA256SUMS and there are no others."""
+    import hashlib
+    want = dict(reversed(line.split("  ", 1)) for line in (jar_dir() / "SHA256SUMS").read_text().splitlines() if line)
+    have = {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in jars()}
+    return have == want and len(have) > 0

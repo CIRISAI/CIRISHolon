@@ -10,8 +10,11 @@ client wheel is about 20 MiB smaller and each client release adds about 90 MB le
 as the client session gave them: CIRISAI/CIRISHolon#9.
 
 **What is in a wheel.** `ciris_media/jars/ffmpeg-7.1-1.5.11-<platform>.jar`,
-`ciris_media/jars/javacpp-1.5.11-<platform>.jar`, a few lines of Python that say where they
-are (`ciris_media.jar_dir()`, `ciris_media.jars()`), and `NOTICE.md`.
+`ciris_media/jars/javacpp-1.5.11-<platform>.jar`, `ciris_media/jars/SHA256SUMS` (the two jars' digests, so a loader can check what it found),
+a few lines of Python (`ciris_media.jar_dir()`, `jars()`, `verify()`), and `NOTICE.md`.
+
+The client's jar sits at `site-packages/ciris_client/_artifacts/`, so from there the jars are
+at `../../ciris_media/jars/<name>.jar`.
 
 | platform | wheel tag |
 |---|---|
@@ -26,8 +29,9 @@ wheels are written with fixed timestamps and order, so a rebuild gives the same 
 builds twice and compares. `test_build.py` runs the builder on stand-in jars and plants a
 changed byte, a wrong size and a missing pin.
 
-**Status, 2026-11-23.** Not published. The sha256 pins are null until the first CI run has
-printed them and they have been cross-checked; publishing refuses while any is null. The
+**Status, 2026-11-23.** Not published. Two of the eight sha256 pins are set (the Linux pair, from the
+client session's own copies, 2026-11-23); the other six are null until a CI run has printed
+them with Maven Central's size and sha1 matching. Publishing refuses while any is null. The
 PyPI project and its trusted publisher do not exist yet.
 
 **Versions.** `7.1.0` is FFmpeg 7.1 with JavaCPP 1.5.11, as built by bytedeco. A later

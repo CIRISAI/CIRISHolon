@@ -37,14 +37,14 @@ jobs:
         run: python3 media/ciris-media/build_wheels.py --out dist --record ${{ inputs.publish && '--require-pins' || '' }}
       - name: Build again and compare
         run: |
-          mkdir jars && for w in dist/*.whl; do unzip -q -j -o "$w" 'ciris_media/jars/*' -d jars; done
+          mkdir jars && for w in dist/*.whl; do unzip -q -j -o "$w" 'ciris_media/jars/*.jar' -d jars; done
           python3 media/ciris-media/build_wheels.py --out dist2 --from-dir jars
           diff dist/SHA256SUMS dist2/SHA256SUMS
           cat dist/SHA256SUMS
       - name: Each wheel installs and finds its two jars
         run: |
           python3 -m venv v && v/bin/pip -q install --no-deps dist/*manylinux*.whl
-          v/bin/python -c "import ciris_media as m; j = m.jars(); print(m.__version__, [p.name for p in j]); assert len(j) == 2"
+          v/bin/python -c "import ciris_media as m; j = m.jars(); print(m.__version__, [p.name for p in j]); assert len(j) == 2 and m.verify()"
       - uses: actions/upload-artifact@v4
         with:
           name: ciris-media-wheels

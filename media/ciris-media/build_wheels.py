@@ -83,6 +83,9 @@ def main():
                     print(f"jar {name} sha256 {got}")
         if len(files) != 3:
             sys.exit(f"{classifier}: expected two jars, found {len(files) - 1}")
+        # the jars' own digests travel with them, so whoever loads them can check what was found (the client asked for this)
+        files["ciris_media/jars/SHA256SUMS"] = "".join(
+            f"{hashlib.sha256(b).hexdigest()}  {pathlib.PurePosixPath(n).name}\n" for n, b in sorted(files.items()) if n.endswith(".jar")).encode()
         w = wheel(out, pins["version"], t["wheel_tag"], files)
         sums.append(f"{hashlib.sha256(w.read_bytes()).hexdigest()}  {w.name}")
         print(f"wheel {w.name} {w.stat().st_size} bytes")

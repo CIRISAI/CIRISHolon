@@ -261,6 +261,29 @@ viewer is shown. An illustration MUST have a draw view. For a rung of the scale 
 label MUST be the engine's own label for that status (`label` in the vocabulary), checked
 against the engine. For anything else the label is the declarer's and is not checked.
 
+### 4.8. Members added for a thing that is checked, not measured (2026-11-23)
+
+Drafting a declaration of the causal kernel (CIRISAI/CIRISKernel#27) showed eight places
+where this format could not say what is true of it. The Kernel session agreed with all
+eight. These members answer them. They have known answers and no review.
+
+- **Statuses `proved`, `model_checked`, `case_checked`, `unchecked`**, and a `status` per
+  VIEW, which overrides the holon's for that view. One of the first three owes evidence
+  that includes a check run (`check_unbacked`).
+- **Evidence as a run**: `{ run, inputs: [{ digest, name }], printed, repository?, commit? }`:
+  the command, its inputs by digest, and the line it printed.
+- **Evidence by digest alone**: `{ digest, name, repository?, commit? }`: a file held
+  elsewhere. Both make the answer `pending` here: this compiler repeats no run and fetches
+  nothing, so both are the declarer's attestation.
+- **`evidence` on a view and on the holon**, apart from a certificate's.
+- **Consumer kind `dependent`**, with `pin`: a component built on this one at a version.
+- **An exact budget**: `{ quantity, agrees_with, over }`: the need is agreement with a
+  stated reference over stated cases. Only a bound of zero meets it.
+- **`plants`**: `{ what, planted, caught, evidence? }`: faults put in on purpose and how
+  many were caught (`plants_miscounted` if more caught than planted).
+- **Standing `function`**: a pure function of what it is given, with no state of its own.
+  It owes a computed step (`function_not_computed`) and implies no closure claim.
+
 ## 5. The checks, and the three answers
 
 The reference compiler is `standard/tools/holonc.py`. It executes nothing a declaration
@@ -280,8 +303,11 @@ compiler "refuses" a declaration, it means the answer is `fails`, and nothing ab
 
 An answer is a function of the SET of declarations and files held when it was computed. It
 is not final: a declaration that holds today fails when one it stands on is corrected.
-Nothing is concluded from a date. `stated_at` and `frozen_at` are content; "current" will
-have to be decided by which row supersedes which (Section 9), never by the later date.
+Nothing is ranked ACROSS signers by a date. `stated_at` and `frozen_at` are content;
+"current" will have to be decided by which row supersedes which (Section 9), never by the
+later date. (An earlier form of this paragraph said nothing is concluded from a date. That
+was too strong, and the Kernel session corrected its own words: an instant may be an
+argument where an answer reads one, as within one key's own records.)
 
 The answer is a set so that it does not depend on the order in which an implementation
 runs its checks. There are two phases, and the phase is the only ordering:

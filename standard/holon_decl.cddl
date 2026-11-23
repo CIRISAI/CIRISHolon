@@ -80,3 +80,13 @@ draw = {
 }
 mark = "quad" / "line" / "arc" / "disc" / "box" / "prism" / "sphere" / "rod" / "patch" / "glyph" / "run" / "image"
 join = "fade" / "cut" / "none"
+
+; Added 2026-11-23 (HOLON-DECL Section 4.8); phase A of the compiler holds the exact shape.
+; status   //= "proved" / "model_checked" / "case_checked" / "unchecked"
+; standing //= "function"
+; view     //= ( ? status: status, ? evidence: [+ evidence] )
+; consumer //= ( kind: "dependent", pin: text1 )
+; budget   //= { quantity: text1, agrees_with: text1, over: text1 }
+; evidence //= { digest: sha256, name: text1, ? repository: text1, ? commit: text1 }
+;           / { run: text1, inputs: [+ { digest: sha256, name: text1 }], printed: text1, ? repository: text1, ? commit: text1 }
+; holon-decl //= ( ? evidence: [+ evidence], ? plants: [+ { what: text1, planted: int, caught: int, ? evidence: [+ evidence] }] )

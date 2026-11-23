@@ -1,0 +1,121 @@
+{
+  "expect": "pending",
+  "declarations": [
+    {
+      "spec": "ciris/holon-decl/0",
+      "id": "v.function",
+      "name": "a vector: a pure function",
+      "plain": "A declaration made to be checked: a function with checked views.",
+      "status": "unchecked",
+      "standing": "function",
+      "carrier": {
+        "state": "none of its own"
+      },
+      "step": {
+        "kind": "computed",
+        "engine_external": "example/repo at tag v1"
+      },
+      "below": [],
+      "views": [
+        {
+          "id": "answer",
+          "reads": "the answer",
+          "status": "proved",
+          "evidence": [
+            {
+              "run": "./check.sh",
+              "inputs": [
+                {
+                  "digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                  "name": "check.sh"
+                }
+              ],
+              "printed": "all 3 steps passed",
+              "repository": "example/repo",
+              "commit": "0000000"
+            },
+            {
+              "digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+              "name": "Proof.lean",
+              "repository": "example/repo",
+              "commit": "0000000"
+            }
+          ],
+          "consumers": [
+            {
+              "id": "user_crate",
+              "kind": "dependent",
+              "pin": "v1",
+              "budget": {
+                "quantity": "the answer",
+                "agrees_with": "the reference model",
+                "over": "every set of up to three rows"
+              }
+            }
+          ]
+        },
+        {
+          "id": "other",
+          "reads": "another answer",
+          "status": "case_checked",
+          "evidence": [
+            {
+              "run": "./check.sh",
+              "inputs": [
+                {
+                  "digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                  "name": "check.sh"
+                }
+              ],
+              "printed": "all 3 steps passed",
+              "repository": "example/repo",
+              "commit": "0000000"
+            }
+          ],
+          "consumers": [
+            {
+              "id": "user_crate",
+              "kind": "dependent",
+              "pin": "v1"
+            }
+          ]
+        },
+        {
+          "id": "rest",
+          "reads": "an answer nothing checks",
+          "consumers": [
+            {
+              "id": "user_crate",
+              "kind": "dependent",
+              "pin": "v1"
+            }
+          ]
+        }
+      ],
+      "plants": [
+        {
+          "what": "planted breaks in the function",
+          "planted": 5,
+          "caught": 5,
+          "evidence": [
+            {
+              "run": "./check.sh",
+              "inputs": [
+                {
+                  "digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                  "name": "check.sh"
+                }
+              ],
+              "printed": "all 3 steps passed",
+              "repository": "example/repo",
+              "commit": "0000000"
+            }
+          ]
+        }
+      ],
+      "certificate": {
+        "kind": "none"
+      }
+    }
+  ]
+}

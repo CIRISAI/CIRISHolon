@@ -58,11 +58,20 @@ def shapes():
                    ("map", {"external": (("str",), True), "edition": (("str",), False)})])
     evid = ("one", [("map", {"path": (("str",), True), "sha256": (("sha",), False), "quote": (("str",), False)}),
                     ("map", {"external": (("str",), True)}),
-                    ("map", {"gate": (("str",), True)})])
-    budget = ("map", {"quantity": (("str",), True), "bound": (("num",), True), "unit": (("word", "budget_unit"), True)})
+                    ("map", {"gate": (("str",), True)}),
+                    # a file held elsewhere, named by its digest; the repository and commit are a hint for finding it
+                    ("map", {"digest": (("sha",), True), "name": (("str",), True), "repository": (("str",), False), "commit": (("str",), False)}),
+                    # a check that was run: the command, its inputs by digest, and the line it printed
+                    ("map", {"run": (("str",), True), "inputs": (("list", ("map", {"digest": (("sha",), True), "name": (("str",), True)}), 1), True),
+                             "printed": (("str",), True), "repository": (("str",), False), "commit": (("str",), False)})])
+    budget = ("one", [("map", {"quantity": (("str",), True), "bound": (("num",), True), "unit": (("word", "budget_unit"), True)}),
+                      # exact: the need is agreement with a stated reference over stated cases, not a bound
+                      ("map", {"quantity": (("str",), True), "agrees_with": (("str",), True), "over": (("str",), True)})])
     consumer = ("map", {"id": (("str",), True), "kind": (("word", "consumer"), True), "budget": (budget, False),
-                        "holon": (("id",), False), "stated": (ref, False)})
-    view = ("map", {"id": (("str",), True), "reads": (("str",), True), "consumers": (("list", consumer, 0), True)})
+                        "holon": (("id",), False), "stated": (ref, False), "pin": (("str",), False)})
+    view = ("map", {"id": (("str",), True), "reads": (("str",), True), "consumers": (("list", consumer, 0), True),
+                    "status": (("word", "status"), False), "evidence": (("list", evid, 1), False)})
+    plant = ("map", {"what": (("str",), True), "planted": (("int",), True), "caught": (("int",), True), "evidence": (("list", evid, 1), False)})
     part = ("map", {"id": (("str",), True), "what": (("str",), True), "status": (("word", "status"), True), "source": (("list", ref, 1), False)})
     cert = ("map", {
         "kind": (("word", "certificate"), True),
@@ -100,6 +109,8 @@ def shapes():
         "drops": (("list", ("map", {"what": (("str",), True), "price": (("str",), True), "closed": (("str",), False)}), 1), False),
         "kill": (("map", {"text": (("str",), True), "stated_at": (("date",), True)}), False),
         "draw": (draw, False),
+        "evidence": (("list", evid, 1), False),
+        "plants": (("list", plant, 1), False),
         "not_claimed": (("list", ("str",), 1), False),
         "owed": (("list", ("str",), 1), False),
     })
@@ -211,6 +222,10 @@ def evidence(items, where, status, root, gates, fail, waiting):
                 fail("evidence_undigested", f"{where}: {e['path']} is cited for a measured holon with no sha256")
             else:
                 quoted(e, where, root, fail)
+        elif "digest" in e:
+            waiting.append(f"{where}: {e['name']} by digest, not held here")
+        elif "run" in e:
+            waiting.append(f"{where}: the run {e['run']!r}, not repeated here")
         elif "gate" in e:
             if e["gate"] not in gates:
                 fail("gate_not_found", f"{where}: no gate of engine/ci-gates.sh says {e['gate']!r}")
@@ -276,6 +291,26 @@ def meaning(d, world, root, gates):
     elif eng is not None or ext is not None:
         fail("engine_missing", f"a {step['kind']} step names an engine")
 
+    # checked statuses, per view; a function; plants
+    CHECKED = ("proved", "model_checked", "case_checked")
+    has_run = lambda items: any("run" in e for e in items or [])
+    for v in d["views"]:
+        if v.get("status", status) in CHECKED and not has_run(v.get("evidence")) and not ("status" not in v and has_run(d.get("evidence"))):
+            fail("check_unbacked", f"view {v['id']} is {v.get('status', status)} with no check run as evidence")
+        if v.get("evidence"):
+            evidence(v["evidence"], f"view {v['id']}", v.get("status", status), root, gates, fail, waiting)
+    if status in CHECKED and not d["views"] and not has_run(d.get("evidence")):
+        fail("check_unbacked", f"the holon is {status} with no check run as evidence")
+    if d.get("evidence"):
+        evidence(d["evidence"], "evidence", status, root, gates, fail, waiting)
+    if standing == "function" and step["kind"] != "computed":
+        fail("function_not_computed", f"standing function with step.kind {step['kind']}")
+    for pl in d.get("plants", []):
+        if pl["caught"] > pl["planted"] or pl["planted"] < 0 or pl["caught"] < 0:
+            fail("plants_miscounted", f"{pl['what']}: {pl['caught']} caught of {pl['planted']} planted")
+        if pl.get("evidence"):
+            evidence(pl["evidence"], f"plants {pl['what']}", status, root, gates, fail, waiting)
+
     # views, consumers, budgets
     if standing == "medium" and not d["views"]:
         fail("medium_without_view", "a medium with no view")
@@ -288,7 +323,9 @@ def meaning(d, world, root, gates):
                 fail("consumer_conflict", f"consumer {c['id']} is {consumers[c['id']]} in one view and {c['kind']} in another")
             pairs[(v["id"], c["id"])] = c
             b = c.get("budget")
-            if b and c["kind"] == "renderer" and b["unit"] not in ("px", "level"):
+            if c["kind"] == "dependent" and "pin" not in c:
+                fail("consumer_unresolved", f"dependent consumer {c['id']} names no pin")
+            if b and c["kind"] == "renderer" and b.get("unit") not in ("px", "level"):
                 fail("budget_unit_mismatch", f"renderer {c['id']} budgets in {b['unit']}")
             if c["kind"] == "tier_above":
                 above = world.get(c.get("holon"))
@@ -319,6 +356,10 @@ def meaning(d, world, root, gates):
             b = target.get("budget")
             if not b:
                 fail("consumer_without_budget", f"the certificate is for {f['consumer']} on {f['view']}, which states no budget")
+            elif "bound" not in b:
+                # an exact budget: only a bound of zero meets it, and never a price
+                if kind == "price" or bound["value"] != 0:
+                    fail("certificate_exceeds_budget", f"{f['consumer']} needs agreement with {b['agrees_with']}; a bound of {bound['value']} is not zero")
             elif kind == "price":
                 # a price is the removability gate's reading: what the consumer's target loses when this block leaves
                 carried = bound["value"] > b["bound"]
@@ -521,7 +562,7 @@ def table(decls, answers):
              "|---|---|---|---|---|---|---|---|---|---|"]
     for label, d in decls:
         views = "; ".join(
-            f"{v['id']}: " + ", ".join(c["id"] + (f" ({c['budget']['bound']:g} {c['budget']['unit']})" if c.get("budget") else "") for c in v["consumers"])
+            f"{v['id']}: " + ", ".join(c["id"] + ((f" ({c['budget']['bound']:g} {c['budget']['unit']})" if "bound" in c["budget"] else " (exact)") if c.get("budget") else "") for c in v["consumers"])
             for v in d["views"]) or "none"
         below = ", ".join(f"{b['id']} ({b['relation']})" for b in d["below"]) or "nothing"
         if "depicts" in d:
@@ -599,7 +640,8 @@ def claims(decls, answers, root):
         out.append({"family": "x_private:holon:claim", "holon": d["id"], "view": cert["for"]["view"], "consumer": cert["for"]["consumer"],
                     "score": 1, "kind": cert["kind"], "basis": cert["basis"],
                     "bound": {"decimal": raw["certificate"]["bound"]["value"], "unit": cert["bound"]["unit"]},
-                    "budget": {"decimal": cons["budget"]["bound"], "unit": cons["budget"]["unit"]},
+                    "budget": ({"decimal": cons["budget"]["bound"], "unit": cons["budget"]["unit"]} if "bound" in cons["budget"]
+                               else {"agrees_with": cons["budget"]["agrees_with"], "over": cons["budget"]["over"]}),
                     "evidence_refs": refs})
     return {"says": "PROTOTYPE, unsigned and unregistered. Each entry is what a signer would say in one scores row: 'the checks of "
                     "ciris/holon-decl/0 held for this claim over these digests'. It does not say the evidence supports the claim.",

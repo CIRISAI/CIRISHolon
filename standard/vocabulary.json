@@ -7,7 +7,11 @@
     "catalogue": "A value published elsewhere, used at its published size. Owes: a source.",
     "declared": "An input taken as given; nothing here derives it. Owes: a source.",
     "wager": "A chosen position that could be wrong. Owes: a kill with the date it was stated.",
-    "illustration": "A picture; nothing computes it. Owes: no certificate (one is refused), and a draw view with a label."
+    "illustration": "A picture; nothing computes it. Owes: no certificate (one is refused), and a draw view with a label.",
+    "proved": "A theorem checked by a proof assistant. Owes: evidence on the view (or the holon) that includes a check run.",
+    "model_checked": "Every state of a stated finite model was explored. Owes: evidence that includes a check run.",
+    "case_checked": "Agreement with a reference over a stated set of cases. Owes: evidence that includes a check run.",
+    "unchecked": "Nothing checks it. Said so that a view among checked ones is not taken for one of them."
   },
   "label": {
     "simulated": "simulated live",
@@ -15,7 +19,11 @@
     "declared": "declared input",
     "catalogue": "catalogue values",
     "wager": "a wager",
-    "illustration": "illustration, not computed"
+    "illustration": "illustration, not computed",
+    "proved": "proved",
+    "model_checked": "model-checked",
+    "case_checked": "checked by cases",
+    "unchecked": "not checked"
   },
   "standing": {
     "tier": "A closed view that a consumer carries (OBJECT.md, the corrections of 2026-09-25 and 2026-11-15). Owes: a closure certificate FOR the consumer named in carried_by.",
@@ -23,7 +31,8 @@
     "rung": "A scale shown or used with no closure claim.",
     "input": "Taken from outside the ladder: a declared or catalogue value.",
     "medium": "Something others are seen through or conditioned on: the air, a mask, a light. Owes: at least one view.",
-    "recorded": "a row of this repository's own ladder, declared as the record words it. It owes `row`, a quotation of that row which must occur in the file, and, when measured, a record cited with the words it rests on. Whatever certificate the row has is in the record; this format checks none for it"
+    "recorded": "a row of this repository's own ladder, declared as the record words it. It owes `row`, a quotation of that row which must occur in the file, and, when measured, a record cited with the words it rests on. Whatever certificate the row has is in the record; this format checks none for it",
+    "function": "A pure function of what it is given: it has no state of its own and no step in time. Owes: step.kind computed. No closure claim is implied."
   },
   "step": {
     "computed": "Its state is computed by an engine named in step.engine (or engine_external). It may or may not change in time.",
@@ -43,7 +52,8 @@
     "tier_above": "A declared holon that stands on this one and reads the view as its state. Owes: holon, its id.",
     "law": "A conservation law or other stated invariant. Owes: stated, a file of the repository where the law is written.",
     "person": "A reader of a screen: the view must be legible, not only drawn.",
-    "verifier": "A second party recomputing the claim from the same inputs."
+    "verifier": "A second party recomputing the claim from the same inputs.",
+    "dependent": "A component built on this one at a pinned version. Owes: pin, the version or tag it pins."
   },
   "budget_unit": [
     "px",
@@ -140,7 +150,10 @@
     "ladder_disagrees": "B (with --ladder). A declaration that names a rung differs from the engine in name, status, label, unit, marks, band or joins; two declarations claim one rung; or the engine draws a rung no declaration carries.",
     "quote_not_found": "a reference quotes words that its file does not contain",
     "row_missing": "a recorded row quotes no row of the record",
-    "price_contradicts_standing": "a price certificate that does not agree with the standing: a tier's price must exceed its consumer's budget, a sector's must not, the basis must be price, and nothing else holds one"
+    "price_contradicts_standing": "a price certificate that does not agree with the standing: a tier's price must exceed its consumer's budget, a sector's must not, the basis must be price, and nothing else holds one",
+    "check_unbacked": "B. A view (or a holon with no per-view status) is proved, model_checked or case_checked and carries no evidence that is a check run.",
+    "function_not_computed": "B. standing function with a step that is not computed.",
+    "plants_miscounted": "B. A plant record says more were caught than were planted."
   },
   "reason_needs": {
     "_": "What a party must hold to run the check. blob: the declaration alone. set: the declarations it names. repository: the declarer's files, so on the wire it is the declarer's attestation and not a verified fact, until the file travels by digest.",
@@ -190,6 +203,9 @@
     "ladder_disagrees": "repository",
     "quote_not_found": "repository",
     "row_missing": "repository",
-    "price_contradicts_standing": "blob"
+    "price_contradicts_standing": "blob",
+    "check_unbacked": "blob",
+    "function_not_computed": "blob",
+    "plants_miscounted": "blob"
   }
 }

@@ -1,8 +1,8 @@
 {
  "says": "PROTOTYPE, unsigned and unregistered. Each entry is what a signer would say in one scores row: 'the checks of ciris/holon-decl/0 held for this claim over these digests'. It does not say the evidence supports the claim.",
  "checked_by": {
-  "holonc.py": "61fdf4cb3770e49d98e819d734e762cee372368c47277cc9d89a471b81e36187",
-  "vocabulary.json": "1fbe392bd2a24255ada3de8fd34d4813fa137885fc3b77bbd95709bae1ade358"
+  "holonc.py": "cb87068f4df21e3f88e44a6f0e0f6bb36f869c5c86201cda1a6290baa64c05f9",
+  "vocabulary.json": "f960f9a27cec76e05b376e282db6d9dd9cd84f2b25492855035da9580f9349c4"
  },
  "claims": [
   {

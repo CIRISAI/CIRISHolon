@@ -355,7 +355,7 @@ This version declares 60 holons, each of which already exists somewhere in the r
   because the engine is the twin's and not held here);
 - **`air`**: the air as a holon, status `catalogue`, with what it owes before more is claimed.
 
-By standing: 1 tier, 3 sectors, 14 recorded rows, 5 inputs, 1 medium, 36 rungs. 46 are
+By standing: 1 tier, 3 sectors, 14 recorded rows, 5 inputs, 1 medium, 36 rungs. 46
 hold and 14 are pending.
 
 **What the tier rows came to.** Of the six rows `TIERS.md` calls physical tiers, ONE is

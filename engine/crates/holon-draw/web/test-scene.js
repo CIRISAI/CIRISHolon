@@ -575,3 +575,196 @@ export function sumStats(a, b) {
   for (const k of ['drawCalls', 'instances', 'bytesUploaded', 'paramUploads', 'uniformBytes', 'missingImages']) if (typeof b[k] === 'number') o[k] = (a[k] || 0) + b[k];
   return o;
 }
+
+// ---- ?tiles=1, ?tiles=2: many small tiles, each with its own matrix (BATCH MATRIX in draw.js) ----
+// tiles=1 is the twin's street tier in small: a flat map (no depth test) of `n` tiles (default
+// 48, an 8 x 6 grid; ?n=N for the timing page), each in its own local frame (0..10 units) with its
+// own affine to the screen (a scale of 9 to 9.75 device pixels a unit and a turn of up to 0.08
+// radians), its own pixelsPerUnit and its own tile settings (DIM, RAMP, TINT, NOISE, the field,
+// FLOOR, the RING about the canvas's centre): a RAMP ground patch, three trees, two casings and
+// two streets, two TINT roofs and a cast shadow, in five batches. tiles=2 is a perspective view
+// of 42 tiles (7 x 6) on one plane, each tile's matrix the camera's times its own translation,
+// with the depth test on and lit marks (a METAL box, a sphere, a rod, a tube) and two
+// camera-facing glyphs a tile, so the eye and the billboards are taken from each batch's own
+// matrix. A tile is { batches, vp, ppu }; opts is the draw() options every tile shares.
+export function tilesScene(q, canvas) {
+  const W = canvas.width, H = canvas.height;
+  const three = q.get('tiles') === '2';
+  const n = Math.max(1, +(q.get('n') || (three ? 42 : 48)) | 0);
+  const tiles = [];
+  if (!three) {
+    const cols = Math.max(1, Math.round(Math.sqrt(n * W / H)));
+    const rows = Math.ceil(n / cols);
+    const cw = W / cols, ch = H / rows;
+    for (let i = 0; i < n; i++) {
+      const cx = i % cols, ry = Math.floor(i / cols);
+      const s = (9 + 0.25 * (i % 4)) * Math.min(cw / 120, ch / 100), th = 0.04 * ((i % 5) - 2);
+      const ox = cx * cw + 0.08 * cw, oy = ry * ch + 0.05 * ch + (th < 0 ? 10 * s * Math.sin(-th) : 0);
+      const c = Math.cos(th), sn = Math.sin(th);
+      const vp = new Float32Array([2 * s * c / W, 2 * s * sn / H, 0, 0, -2 * s * sn / W, 2 * s * c / H, 0, 0, 0, 0, -0.01, 0, 2 * ox / W - 1, 2 * oy / H - 1, 0, 1]);
+      const p = Float32Array.from(PARAMS_NEUTRAL);
+      const d = 0.7 + 0.3 * ((i * 7) % 5) / 4;
+      p.set([d, d, d, 1], PARAM.DIM);
+      p.set([0.14 + 0.02 * (i % 3), 0.30, 0.13], PARAM.RAMP0); p.set([0.52, 0.48 - 0.03 * (i % 4), 0.42], PARAM.RAMP1);
+      p.set([1.0, 0.72 + 0.05 * (i % 3), 0.55], PARAM.TINT);
+      p.set([cx * 200, ry * 200, 20, 20], PARAM.NOISE); p[PARAM.TEX] = 1;
+      p[PARAM.FLOOR] = 0.6; p[PARAM.FLOOR_CASING] = 1.1;
+      p.set([W / 2, H / 2, 0.62 * Math.min(W, H)], PARAM.RING);
+      const ground = new Batch(KIND.PATCH), trees = new Batch(KIND.DISC), casings = new Batch(KIND.LINE), streets = new Batch(KIND.LINE), roofs = new Batch(KIND.QUAD);
+      ground.add([5, 5, 0], [10, 10, 0], [0.25 + 0.5 * ((i * 3) % 7) / 6, 0, 0], 0, [255, 255, 255, 255], 0, COLOUR.RAMP);
+      for (let k = 0; k < 3; k++) trees.add([1.6 + 3.2 * k, 8.3 - 0.6 * (k % 2), 0], [0.7 + 0.15 * ((i + k) % 3), 0, 0], null, 0, [46, 92, 50, 235], 0, DISC_CASING | DISC_CANOPY_FIELD);
+      casings.add([0.5, 3, 0], [1.1, 0, 0], [9.5, 3.4, 0], 0, [70, 70, 74, 255], 0, VARIANT_CASING | VARIANT_ROUND);
+      casings.add([6.5, 0.5, 0], [0.9, 0, 0], [6.1, 9.5, 0], 0, [70, 70, 74, 255], 0, VARIANT_CASING | VARIANT_ROUND);
+      streets.add([0.5, 3, 0], [0.7, 0, 0], [9.5, 3.4, 0], 0, [236, 232, 220, 255], 0, VARIANT_ROUND);
+      streets.add([6.5, 0.5, 0], [0.5, 0, 0], [6.1, 9.5, 0], 0, [236, 232, 220, 255], 0, VARIANT_ROUND);
+      roofs.add([2.9, 5.7, 0], [2.4, 1.6, 0], null, 0.12, [0, 0, 0, 80]);   // a cast shadow (a literal quad)
+      roofs.add([2.6, 6.0, 0], [2.4, 1.6, 0], null, 0.12, [200, 128, 96, 255], 0, COLOUR.TINT);
+      roofs.add([8.3, 1.6, 0], [1.6, 1.8, 0], null, -0.3, [180, 170, 160, 255], 0, COLOUR.TINT);
+      const batches = [ground, trees, casings, streets, roofs];
+      for (const b of batches) b.params = p;
+      tiles.push({ batches, vp, ppu: s });
+    }
+    return { tiles, opts: { viewport: [0, 0, W, H], depthTest: false }, flat: true };
+  }
+  const aspect = W / H;
+  const camVP = mul(perspective((40 * Math.PI) / 180, aspect, 0.5, 200), lookAt([4, -34, 22], [0, 1, 0], [0, 0, 1]));
+  const cols = 7;
+  for (let i = 0; i < n; i++) {
+    const cx = i % cols, ry = Math.floor(i / cols);
+    const tx = (cx - cols / 2) * 5, ty = (ry - 3) * 5;
+    const T = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, tx, ty, 0, 1]);
+    const vp = mul(camVP, T);
+    const p = Float32Array.from(PARAMS_NEUTRAL);
+    const d = 0.75 + 0.25 * ((i * 3) % 4) / 3;
+    p.set([d, d, d, 1], PARAM.DIM);
+    p.set([0.20, 0.34, 0.18], PARAM.RAMP0); p.set([0.46, 0.44, 0.40], PARAM.RAMP1);
+    const ground = new Batch(KIND.PATCH), boxes = new Batch(KIND.BOX), spheres = new Batch(KIND.SPHERE), rods = new Batch(KIND.ROD), tubes = new Batch(KIND.LINE), glyphs = new Batch(KIND.GLYPH);
+    ground.add([2, 2, 0], [4.6, 4.6, 0], [((i * 5) % 7) / 6, 0, 0], 0, [255, 255, 255, 255], 0, COLOUR.RAMP);
+    boxes.add([1.2, 1.4, 0], [1.2, 1.0, 0.8 + 0.3 * (i % 4)], null, 0.2 * (i % 3), [205, 130 + 10 * (i % 5), 90, 255], 0, MATERIAL.METAL);
+    spheres.add([3.0, 2.8, 0.6], [0.55, 0, 0], null, 0, [120, 170, 230, 255]);
+    rods.add([3.2, 0.8, 0.2], [0.15, 0, 0], [3.6, 1.2, 1.6], 0, [230, 200, 120, 255]);
+    tubes.add([0.4, 3.6, 0.15], [0.12, 0, 0], [2.4, 3.8, 0.15], 0, [240, 240, 240, 255]);
+    const cl = ICON_COLOURS_LIGHT[i % 4], cd = ICON_COLOURS_DARK[i % 4];
+    glyphs.add([1.2, 1.4, 2.6], [0.45, 0, 0], null, 0.3 * (i % 3), [cl[0], cl[1], cl[2], 255], 0, 1 + (i % 15));
+    glyphs.add([3.0, 2.8, 1.7], [0.3, 0, 0], null, 0, [cd[0], cd[1], cd[2], 255], 0, 1 + ((i + 7) % 15));
+    const batches = [ground, boxes, spheres, rods, tubes, glyphs];
+    for (const b of batches) b.params = p;
+    tiles.push({ batches, vp, ppu: 0 });
+  }
+  return { tiles, opts: { viewport: [0, 0, W, H], light: [0.35, -0.5, 0.8], ambient: 0.25 }, flat: false };
+}
+
+// A batch as draw() takes it, with every field the engine reads (and `extra` on top).
+const asBatch = (b, extra) => Object.assign({ kind: b.kind, count: b.count, bytes: b.bytes, handle: b.handle, first: b.first, offset: b.offset, params: b.params, coarse: b.coarse, screen: b.screen, shade: b.shade, blend: b.blend }, extra);
+// The batches of `list` (bytes) in ONE resident buffer, each a range of it; returns the new batches.
+export function toResident(drawer, list) {
+  let n = 0;
+  for (const b of list) n += b.count * INSTANCE_BYTES;
+  const out = new Uint8Array(n), firsts = [];
+  let at = 0;
+  for (const b of list) { firsts.push(at / INSTANCE_BYTES); out.set(b.bytes.subarray(0, b.count * INSTANCE_BYTES), at); at += b.count * INSTANCE_BYTES; }
+  const h = drawer.resident(out);
+  return list.map((b, j) => { const r = asBatch(b, { handle: h, first: firsts[j] }); delete r.bytes; return r; });
+}
+// ?resident=1: every tile's batches in a buffer of its own (the twin's way); returns the bytes made resident.
+export function tilesResident(drawer, ts) {
+  let bytes = 0;
+  for (const t of ts.tiles) { for (const b of t.batches) bytes += b.count * INSTANCE_BYTES; t.batches = toResident(drawer, t.batches); }
+  return bytes;
+}
+// One frame of the tiles: PER CALL (one draw() per tile with its matrix as the call's vp and its
+// pixelsPerUnit in opts, then the state the twin puts back after each, `restore()`; the panels in
+// a last draw()) or in ONE draw() (each batch carrying its tile's `vp` and `pixelsPerUnit`, the
+// panels after them). draw(batches, vp, opts) draws and returns a copy of stats(). Returns the
+// counts summed over the frame's calls.
+export function tilesFrame(ts, panels, perCall, draw, restore) {
+  const parts = [];
+  if (perCall) {
+    for (const t of ts.tiles) {
+      parts.push(draw(t.batches, t.vp, t.ppu > 0 ? { ...ts.opts, pixelsPerUnit: t.ppu } : ts.opts));
+      if (restore) restore();
+    }
+    if (panels.length) parts.push(draw(panels, IDENTITY, { viewport: ts.opts.viewport }));
+  } else {
+    if (!ts.one) {
+      ts.one = [];
+      for (const t of ts.tiles) for (const b of t.batches) ts.one.push(asBatch(b, t.ppu > 0 ? { vp: t.vp, pixelsPerUnit: t.ppu } : { vp: t.vp }));
+    }
+    parts.push(draw(ts.one.concat(panels), null, ts.opts));
+  }
+  let s = parts[0];
+  for (let k = 1; k < parts.length; k++) s = sumStats(s, parts[k]);
+  return { ...s, calls: parts.length };
+}
+export const IDENTITY = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
+
+// ---- ?add=1: BLEND 'add' (draw.js), checked against the arithmetic ----
+// World units are device pixels here (x right, y UP from the canvas's bottom; vp maps them to
+// clip). Three draw() calls a frame:
+//   main   (no depth test) a dark ground on the left half and a bright one on the right; on each,
+//          two overlapping ADDITIVE world discs (A: rgb 200 40 20 at alpha 128; B: 30 120 200 at
+//          255), and the same two as additive SCREEN discs lower down. The last batch adds.
+//   depthA (depth test on) one additive world disc at z 0.5, over the dark ground
+//   depthB (depth test on) an opaque quad at z 0.2 under it (farther from this top-down view):
+//          an additive batch writes no depth, so the quad must show where the disc is.
+// `points` are where the screenshot is checked, top-left device pixels, with the colour the
+// arithmetic gives (8-bit: dst + round(src * alpha), clamped at 255, one add after another).
+export function addScene(canvas) {
+  const W = canvas.width, H = canvas.height;
+  const vp = new Float32Array([2 / W, 0, 0, 0, 0, 2 / H, 0, 0, 0, 0, -0.01, 0, -1, -1, 0, 1]);
+  const DARK = [20, 22, 30], BRIGHT = [210, 200, 190], A = [200, 40, 20, 128], B = [30, 120, 200, 255], Q = [90, 160, 110];
+  const ground = new Batch(KIND.QUAD);
+  ground.add([W / 4, H / 2, 0], [W / 2, H, 0], null, 0, [...DARK, 255]);
+  ground.add([3 * W / 4, H / 2, 0], [W / 2, H, 0], null, 0, [...BRIGHT, 255]);
+  const r = Math.round(Math.min(W, H) * 0.11), dx = Math.round(r * 0.6);
+  const wy = Math.round(H * 0.75), sy = Math.round(H * 0.55);   // world discs' y (from the bottom), screen discs' y (from the top)
+  const world = new Batch(KIND.DISC), scr = new Batch(KIND.DISC, [0, 0, 0], false, true);
+  for (const cx of [Math.round(W / 4), Math.round(3 * W / 4)]) {
+    world.add([cx - dx, wy, 0], [r, 0, 0], null, 0, A);
+    world.add([cx + dx, wy, 0], [r, 0, 0], null, 0, B);
+    scr.add([cx - dx, sy, 0], [r, 0, 0], null, 0, A);
+    scr.add([cx + dx, sy, 0], [r, 0, 0], null, 0, B);
+  }
+  world.blend = 'add'; scr.blend = 'add';
+  const dz = new Batch(KIND.DISC), dq = new Batch(KIND.QUAD);
+  const qx = Math.round(W / 4), qy = Math.round(H * 0.12);
+  dz.add([qx, qy, 0.5], [r * 0.5, 0, 0], null, 0, [255, 255, 255, 255]); dz.blend = 'add';
+  dq.add([qx, qy, 0.2], [r * 1.6, r * 0.8, 0], null, 0, [...Q, 255]);
+  const add = (d, c) => d.map((v, k) => Math.min(255, v + Math.round(c[k] * c[3] / 255)));
+  const points = [];
+  for (const [g, cx, name] of [[DARK, Math.round(W / 4), 'dark'], [BRIGHT, Math.round(3 * W / 4), 'bright']]) {
+    for (const [y, what] of [[H - wy, 'world'], [sy, 'screen']]) {
+      points.push({ what: what + ' ' + name + ' ground', x: cx, y: y - r - Math.round(r * 0.5), want: g });
+      points.push({ what: what + ' ' + name + ' A alone', x: cx - dx - Math.round(r * 0.7), y, want: add(g, A) });
+      points.push({ what: what + ' ' + name + ' B alone', x: cx + dx + Math.round(r * 0.7), y, want: add(g, B) });
+      points.push({ what: what + ' ' + name + ' A then B', x: cx, y, want: add(add(g, A), B) });
+    }
+  }
+  points.push({ what: 'depth: the quad over an additive disc nearer the eye', x: qx, y: H - qy, want: Q });
+  return { vp, main: [ground, world, scr], depthA: [dz], depthB: [dq], points, opts: { viewport: [0, 0, W, H], depthTest: false } };
+}
+// The GL blend and depth-write state now, as names (draw.js's GL STATE promises it on return).
+export function glBlendState(gl) {
+  const nm = (v) => ({ [gl.ONE]: 'ONE', [gl.ZERO]: 'ZERO', [gl.SRC_ALPHA]: 'SRC_ALPHA', [gl.ONE_MINUS_SRC_ALPHA]: 'ONE_MINUS_SRC_ALPHA', [gl.FUNC_ADD]: 'FUNC_ADD' }[v] || String(v));
+  return { blend: gl.isEnabled(gl.BLEND), srcRGB: nm(gl.getParameter(gl.BLEND_SRC_RGB)), dstRGB: nm(gl.getParameter(gl.BLEND_DST_RGB)),
+    srcAlpha: nm(gl.getParameter(gl.BLEND_SRC_ALPHA)), dstAlpha: nm(gl.getParameter(gl.BLEND_DST_ALPHA)),
+    equation: nm(gl.getParameter(gl.BLEND_EQUATION_RGB)), depthMask: gl.getParameter(gl.DEPTH_WRITEMASK) };
+}
+export const BLEND_PROMISED = { blend: true, srcRGB: 'SRC_ALPHA', dstRGB: 'ONE_MINUS_SRC_ALPHA', srcAlpha: 'ONE', dstAlpha: 'ONE_MINUS_SRC_ALPHA', equation: 'FUNC_ADD', depthMask: true };
+
+// ?tiles=1|2: what draw() must refuse (BATCH MATRIX, BLEND), each tried once before the first
+// frame. tryDraw(batches, vp, opts) draws and returns the error's message, or null if none.
+// The last try is a draw that must NOT throw: a batch's own pixelsPerUnit with shadows.
+export function tilesRefusals(ts, tryDraw) {
+  const b = ts.tiles[0].batches[0], vp = ts.tiles[0].vp, viewport = ts.opts.viewport;
+  const shadow = { center: [5, 5, 0], radius: 8 };
+  const log = {
+    vpWithShadow: tryDraw([asBatch(b, { vp })], vp, { viewport, shadow }),
+    badBlend: tryDraw([asBatch(b, { blend: 'screen' })], vp, { viewport }),
+    shortVp: tryDraw([asBatch(b, { vp: vp.subarray(0, 12) })], vp, { viewport }),
+    noVpAtAll: tryDraw([asBatch(b)], null, { viewport }),
+    ppuWithShadow: tryDraw([asBatch(b, { pixelsPerUnit: 9 })], vp, { viewport, shadow }),
+  };
+  log.ok = !!log.vpWithShadow && !!log.badBlend && !!log.shortVp && !!log.noVpAtAll && log.ppuWithShadow === null;
+  return log;
+}

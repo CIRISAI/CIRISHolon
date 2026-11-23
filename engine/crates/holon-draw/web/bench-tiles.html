@@ -1,0 +1,96 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>holon-draw tiles timing</title>
+<style>
+  html, body { margin: 0; background: #10141c; height: 100%; overflow: hidden; }
+  canvas { display: block; width: 100vw; height: 100vh; }
+</style>
+<canvas id="c"></canvas>
+<script type="module">
+// The street tier's question in small (tools/tiles_timing.py runs it): N flat-map tiles of few
+// records each (tilesScene ?tiles=1 in ./test-scene.js: 11 records in 5 batches a tile), every
+// tile's batches RESIDENT in a buffer of its own, drawn every animation frame either
+//   ?mode=percall  one draw() per tile, its matrix the call's vp, then the GL state the twin puts
+//                  back after each (its tiling.js, tlHdTile: depth test off, culling off,
+//                  blendFunc, its own program), or
+//   ?mode=one      ONE draw() for every tile, each batch carrying its tile's vp and pixelsPerUnit.
+// ?n=N tiles (default 44). The page draws unthrottled when Chrome runs with vsync and the frame
+// limit off. window.__bench.start(ms) records, for ms, every animation frame's timestamp and the
+// script time of its drawing (performance.now() around the draw() calls and the restores: what
+// the page spends issuing them, not the GPU's time), and resolves with { t, draw }. Served
+// cross-origin isolated (tools/tiles_timing.py sends the headers), the timers are fine-grained;
+// otherwise Chrome coarsens them to 0.1 ms (dataset.info.isolated says which). ?count=1 instead wraps the context's methods and counts every GL call of ONE frame
+// (after a few frames, so every vertex array is made), by name, in document.body.dataset.count.
+// WebGL 2 (?gl=1: WebGL 1). Nothing else is drawn: the frame is the tiles.
+import { createDrawer } from './draw.js';
+import { tilesScene, tilesResident, tilesFrame } from './test-scene.js';
+
+const q = new URLSearchParams(location.search);
+const canvas = document.getElementById('c');
+canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+const gl = canvas.getContext(q.get('gl') === '1' ? 'webgl' : 'webgl2', { antialias: true, alpha: false });
+const qs = new URLSearchParams({ tiles: '1', n: q.get('n') || '44' });
+const ts = tilesScene(qs, canvas);
+const drawer = createDrawer(gl, {});
+const residentBytes = tilesResident(drawer, ts);
+const perCall = q.get('mode') === 'percall';
+const ownProg = gl.createProgram();   // stands for the twin's own program, made current after each tile
+{
+  const vs = gl.createShader(gl.VERTEX_SHADER); gl.shaderSource(vs, 'attribute vec2 p; void main(){ gl_Position = vec4(p, 0.0, 1.0); }'); gl.compileShader(vs);
+  const fs = gl.createShader(gl.FRAGMENT_SHADER); gl.shaderSource(fs, 'precision mediump float; void main(){ gl_FragColor = vec4(1.0); }'); gl.compileShader(fs);
+  gl.attachShader(ownProg, vs); gl.attachShader(ownProg, fs); gl.linkProgram(ownProg);
+}
+const restore = () => { gl.disable(gl.DEPTH_TEST); gl.disable(gl.CULL_FACE); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.useProgram(ownProg); };
+const drawCopy = (bs, v, o) => { drawer.draw(bs, v, o); return drawer.stats(); };
+let last = null;
+function drawFrame() {
+  gl.viewport(0, 0, canvas.width, canvas.height);
+  gl.clearColor(0.063, 0.078, 0.11, 1);
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  last = tilesFrame(ts, [], perCall, drawCopy, perCall ? restore : null);
+}
+
+const rec = { on: false, t: [], d: [] };
+window.__bench = {
+  start(ms) { rec.t = []; rec.d = []; rec.on = true; return new Promise((done) => setTimeout(() => { rec.on = false; done({ t: rec.t.slice(), draw: rec.d.slice() }); }, ms)); },
+};
+let frames = 0;
+function count() {
+  const counts = {};
+  const names = [];
+  for (let p = Object.getPrototypeOf(gl); p && p !== Object.prototype; p = Object.getPrototypeOf(p)) {
+    for (const k of Object.getOwnPropertyNames(p)) if (typeof gl[k] === 'function' && k !== 'constructor' && !names.includes(k)) names.push(k);
+  }
+  const exts = ['ANGLE_instanced_arrays', 'OES_vertex_array_object'].map((n) => gl.getExtension(n)).filter(Boolean);
+  const real = new Map();
+  for (const k of names) { real.set(k, gl[k]); gl[k] = function (...a) { counts[k] = (counts[k] || 0) + 1; return real.get(k).apply(gl, a); }; }
+  const xreal = [];
+  for (const e of exts) for (const k of Object.getOwnPropertyNames(Object.getPrototypeOf(e))) {
+    if (typeof e[k] !== 'function' || k === 'constructor') continue;
+    const f = e[k]; xreal.push([e, k, f]); e[k] = function (...a) { counts[k] = (counts[k] || 0) + 1; return f.apply(e, a); };
+  }
+  drawFrame();
+  for (const [k, f] of real) gl[k] = f;
+  for (const [e, k, f] of xreal) e[k] = f;
+  const total = Object.values(counts).reduce((a, b) => a + b, 0);
+  return { counts, total, calls: last.calls, drawCalls: last.drawCalls, batches: ts.tiles.reduce((n, t) => n + t.batches.length, 0), tiles: ts.tiles.length };
+}
+function frame(t) {
+  if (rec.on) rec.t.push(t);
+  frames++;
+  if (q.get('count') === '1' && frames === 5) {
+    document.body.dataset.count = JSON.stringify(count());
+  } else {
+    const t0 = performance.now();
+    drawFrame();
+    if (rec.on) rec.d.push(performance.now() - t0);
+  }
+  if (frames === 5) {
+    const dbg = gl.getExtension('WEBGL_debug_renderer_info');
+    document.body.dataset.info = JSON.stringify({ renderer: dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : null, version: gl.getParameter(gl.VERSION), size: [canvas.width, canvas.height], tiles: ts.tiles.length, residentBytes, isolated: self.crossOriginIsolated, glError: gl.getError(), stats: { ...last } });
+    document.body.dataset.ready = '1';
+  }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>

@@ -693,3 +693,57 @@ take the distance from the fragment's own window position. In the shadow pass th
 measured in the shadow map's own pixels, which meant nothing. It is now the camera's ring,
 taken at the caster's own point, and a point behind the camera's eye counts as outside. Under
 an orthographic view (the flat map) the old interpolation was exact up to rounding.
+
+## 15. A matrix per batch, and additive blending (2026-11-23)
+
+The CEWP twin is moving to draw only through holon-draw. Two gaps in the browser backends
+blocked it, and both are built. Where this section and the text above disagree, this section
+holds. The code is `engine/crates/holon-draw/web` (`draw.js`, whose header is the contract:
+BATCH MATRIX, BLEND, GL STATE; and `draw-webgpu.js`) at the commit that adds this section. The
+core, `lib.rs`, is unchanged.
+
+**1. S1 `camera` (§1): a matrix per batch.** §1 says the camera is "orthographic or
+perspective, as an input; orbit, map and globe are hosts' choices over one matrix." A host
+still chooses the matrix, but it may now choose one per batch: a world batch may carry its own
+`vp` (and its own `pixelsPerUnit`), and is drawn with it; a batch without one is drawn with the
+call's. The twin's street tier draws many small tiles, each with its own flat-map affine. Until
+now it made one `draw()` call per tile and paid the call's setup each time. It can now put
+every tile in one call. Everything a backend derives from the matrix (the eye, so specular
+and rim; the camera-facing glyph squares; the pixels per unit estimated from the clip w) is
+derived from the batch's own. C1's "one draw call per tile and mark" is unchanged: what
+changed is how many `draw()` calls a host needs around those draw calls.
+
+The matrix is a backend option, like `castShadow` and `shade`, and not a field of the core's
+`Batch`. The core places a tile by its offset from the camera's focus and draws a frame with
+one camera, so a host that uses the core's frames has no need of it.
+
+**Shadows are refused with it.** A `draw()` with `opts.shadow` and any world batch carrying its
+own `vp` throws before it changes any state. A shadow map is one light over one world space. A
+batch's own matrix folds a model matrix into the camera, so it does not say where the batch is
+in that world, and a shadow drawn from it would mean nothing. A batch's own `pixelsPerUnit` is
+allowed with shadows.
+
+**2. The marks' blending (§1).** §1 does not say how marks blend. Both backends have always
+blended every mark as straight alpha over what is already drawn (`SRC_ALPHA,
+ONE_MINUS_SRC_ALPHA`). A batch may now carry `blend: 'add'`, for light that adds, such as the
+twin's night-lights glow. Its colour is added: destination plus source rgb times source alpha,
+clamped by the target. The destination's alpha is left unchanged. The default is `'alpha'`,
+and any other value throws. It works for world and screen batches, resident or not. An
+additive batch writes no depth and casts no shadow. In GL, `draw()` still returns with the
+alpha blend function and `depthMask(true)`, as its GL STATE section promises. On WebGPU, blend
+is pipeline state, so additive pipeline variants are made on first use.
+
+Blending is set per batch, not per mark. In the core's terms, additive marks go in a tile of
+their own.
+
+**Checked** (SwiftShader in headless Chrome, both backends, `tools/webgpu_parity.py`; numbers
+in the crate README's 2026-11-23 section). Pixel for pixel, one `draw()` of 48 flat-map tiles,
+each batch with its tile's matrix, draws what one `draw()` per tile draws. The same holds for
+42 perspective tiles with lit marks and glyphs. It holds on both backends, for resident and
+`bytes` batches, and on WebGL 1, mediump, the no-highp gate and bare WebGL 1. Additive discs
+over a dark ground and a bright one, in the world and on screen, match the arithmetic at all
+17 points checked, and the GL blend state read back after `draw()` is the promised one. On the
+machine's GPU, the GL calls for flat-map tiles fell from 51.0 a tile (one call per tile, the
+twin's way) to 19.1 (one call for all). **NOT checked:** the twin's own timing witness with the
+twin using one call. The twin's code is not changed here, so the stake in its README (at most
+1.10 x its own program's frame) is not yet answered.

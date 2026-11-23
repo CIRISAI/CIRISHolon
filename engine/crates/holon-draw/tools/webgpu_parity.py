@@ -9,7 +9,10 @@ For each mode (default: the 3D scene with shadows; map: ?map=1; noshadow: ?shado
 and images modes with ?resident=1, the world batches, and in residentimages the image panel's
 batches, drawn from resident buffers; icons: ?icons=1, the 16 glyph shapes in the world and on
 a screen panel, FLOW on lines and arcs (tube, flat ribbon, screen, one resident) at phase
-0.25, and a 400-unit ground patch under the RING; iconsmove: the same at phase 0.75) and for
+0.25, and a 400-unit ground patch under the RING; iconsmove: the same at phase 0.75; tiles:
+?tiles=1, 48 small flat-map tiles each with its own matrix (BATCH MATRIX), drawn in one draw();
+tiles3d: ?tiles=2, 42 tiles of lit marks and camera-facing glyphs in one perspective view, each
+tile's matrix the camera's times its own translation; add: ?add=1, BLEND 'add') and for
 the scene alone (?overlay=0) and with the panels, it loads both pages in one headless Google
 Chrome at the same size, device pixel ratio 1 and camera, waits for the page's own
 `document.body.dataset.ready`, takes a screenshot of the canvas, and compares the two:
@@ -42,6 +45,22 @@ iconsmove must differ from icons on the same backend (the dashes moved); and tes
 with the panels must draw with gl error 0 on WebGL 1, with ?mediump=1, both, ?nohigh=1 (the
 twin's no-highp gate; no fragment source may still say highp) and bare WebGL 1 (?novao=1),
 each compared with WebGL 2 and the numbers reported.
+TILES MODES ARE GATED on each backend: draw() must throw on a batch's own vp with opts.shadow,
+on a blend other than 'alpha' or 'add', on a vp of fewer than 16 numbers and on a world batch
+with no matrix at all, and must draw a batch's own pixelsPerUnit with shadows
+(document.body.dataset.refusals.ok); the one-draw() picture against ?percall=1 (one draw() per
+tile, with the twin's GL state restore after each on WebGL), ?resident=1 (each tile's batches
+in a resident buffer of its own) and ?resident=1&percall=1 must be identical (max 0), with the
+same draw calls and instances, and with the panels off the resident pages upload no record;
+with the panels, test.html is also drawn on WebGL 1, with ?mediump=1, both, ?nohigh=1 and bare
+WebGL 1, one draw() against per call (max 0) with gl error 0 and no highp left.
+THE ADD MODE IS GATED on each backend, with the panels off: at every point the page lists
+(document.body.dataset.add.points: each ground alone, each additive disc alone, the two
+overlapping, world and screen, over a dark and a bright ground, and the depth check) the
+screenshot is the arithmetic's colour within ADD_TOL per channel; on WebGL the blend state read
+back after draw() is the one GL STATE promises (dataset.add.ok); ?resident=1 is identical to
+the bytes page (max 0), panels on and off; and the WebGL 1 / mediump / nohigh / bare WebGL 1
+pages pass the same points with gl error 0.
 Exit status 0 when all of that holds; the pixel numbers are REPORTED, not gated (the two
 backends rasterise on different paths, see the README).
 
@@ -83,7 +102,11 @@ CHROME_ARGS = [
 ]
 MODES = {"default": "", "map": "map=1", "noshadow": "shadow=0", "images": "images=1",
          "resident": "resident=1", "residentmap": "map=1&resident=1", "residentimages": "images=1&resident=1",
-         "icons": "icons=1", "iconsmove": "icons=1&phase=0.75"}
+         "icons": "icons=1", "iconsmove": "icons=1&phase=0.75",
+         "tiles": "tiles=1", "tiles3d": "tiles=2", "add": "add=1"}
+TILES_MODES = ("tiles", "tiles3d")
+GL_VARIANTS = ("gl=1", "mediump=1", "gl=1&mediump=1", "nohigh=1", "gl=1&novao=1")
+ADD_TOL = 2
 RESIDENT_BASE = {"resident": "default", "residentmap": "map", "residentimages": "images"}
 MESH_FUNCS = ["sphereMesh", "tubeMesh", "capsuleMesh", "arcCapsuleMesh", "arcRibbonMesh",
               "ribbonMesh", "boxMesh", "quadMesh", "discMesh"]
@@ -139,6 +162,16 @@ async ([b64, x, y]) => {
 # clear colour), at 960x600: between the panels, inside the ring, and near its rim.
 GROUND_PX = [(480, 180), (480, 250), (300, 330)]
 
+PIXELS_JS = """
+async ([b64, pts]) => {
+  const bmp = await createImageBitmap(await (await fetch('data:image/png;base64,' + b64)).blob(), { colorSpaceConversion: 'none', premultiplyAlpha: 'none' });
+  const c = new OffscreenCanvas(bmp.width, bmp.height);
+  const g = c.getContext('2d');
+  g.drawImage(bmp, 0, 0);
+  return pts.map(([x, y]) => Array.from(g.getImageData(x, y, 1, 1).data));
+}
+"""
+
 FPS_JS = """
 (ms) => new Promise((done) => {
   let n = 0; const t0 = performance.now();
@@ -184,7 +217,9 @@ def load(browser, url, w, h, shot):
     info = page.evaluate("({ error: document.body.dataset.error || null, verdict: document.body.dataset.verdict || null,"
                          "  stats: document.body.dataset.stats ? JSON.parse(document.body.dataset.stats) : null,"
                          "  resident: document.body.dataset.resident ? JSON.parse(document.body.dataset.resident) : null,"
-                         "  flow: document.body.dataset.flow ? JSON.parse(document.body.dataset.flow) : null })")
+                         "  flow: document.body.dataset.flow ? JSON.parse(document.body.dataset.flow) : null,"
+                         "  add: document.body.dataset.add ? JSON.parse(document.body.dataset.add) : null,"
+                         "  refusals: document.body.dataset.refusals ? JSON.parse(document.body.dataset.refusals) : null })")
     png = page.locator("#c").screenshot(type="png") if shot else None
     return page, info, errs, png
 
@@ -324,6 +359,95 @@ def main():
                 for x in bad:
                     print("FAIL icons %s %s: %s" % (mode, tag, x))
 
+        def pixels(png, pts):
+            pg = browser.new_page()
+            pg.goto(base + "test-scene.js")
+            v = pg.evaluate(PIXELS_JS, [png, pts])
+            pg.close()
+            return v
+
+        def same_as(label, png, info, ref, want_bytes=None):
+            """A page that must draw ref's picture exactly (max 0) with the same draw calls and instances."""
+            nonlocal ok
+            r = compare(png, ref[0])
+            r.pop("diff_png", None)
+            st, rs = info["stats"] or {}, ref[1]["stats"] or {}
+            bad = []
+            if r.get("max") != 0: bad.append("pixels differ (max %s, mean_abs %s)" % (r.get("max"), r.get("mean_abs")))
+            if st.get("drawCalls") != rs.get("drawCalls") or st.get("instances") != rs.get("instances"):
+                bad.append("draw calls/instances %s/%s, want %s/%s" % (st.get("drawCalls"), st.get("instances"), rs.get("drawCalls"), rs.get("instances")))
+            if want_bytes is not None and st.get("bytesUploaded") != want_bytes: bad.append("bytesUploaded %s, want %s" % (st.get("bytesUploaded"), want_bytes))
+            if "glError" in st and st.get("glError") != 0: bad.append("glError %s" % st.get("glError"))
+            if st.get("fragHighp"): bad.append("a fragment source still says highp outside the gate")
+            print("     %-58s max %s  draw calls %s (in %s draw() calls)  bytesUploaded %s" % (label, r.get("max"), st.get("drawCalls"), st.get("calls"), st.get("bytesUploaded")))
+            report.setdefault("same", []).append(dict(label=label, max=r.get("max"), mean_abs=r.get("mean_abs"), drawCalls=st.get("drawCalls"),
+                                                      calls=st.get("calls"), bytesUploaded=st.get("bytesUploaded"), glError=st.get("glError")))
+            if bad:
+                ok = False
+                print("FAIL %s: %s" % (label, "; ".join(bad)))
+
+        def tiles_gate(mode, overlay, qs, pngs, infos):
+            """One draw() with a matrix per batch draws what one draw() per tile does, resident or not."""
+            nonlocal ok
+            tag = "scene" if overlay == "0" else "panels"
+            for k, name in enumerate(("test.html", "test-webgpu.html")):
+                be = "webgl" if k == 0 else "webgpu"
+                ref = (pngs[k], infos[k])
+                rf = infos[k].get("refusals") or {}
+                print("     %-58s %s" % ("%s %s %s refusals" % (mode, tag, be), "ok: throws on a vp with shadows, a bad blend, a short vp, no vp at all; a batch's pixelsPerUnit with shadows draws" if rf.get("ok") else "FAILED"))
+                report.setdefault("refusals", []).append(dict(mode=mode, tag=tag, backend=be, **rf))
+                if not rf.get("ok"):
+                    ok = False
+                    print("FAIL %s %s %s refusals: %s" % (mode, tag, be, json.dumps(rf)))
+                for extra in ("percall=1", "resident=1", "resident=1&percall=1"):
+                    png, info = shot(name, qs + "&" + extra, "%s_%s_%s_%s" % (mode, tag, be, extra.replace("&", "_").replace("=", "")))
+                    wb = None
+                    if "resident" in extra:
+                        wb = (infos[k]["stats"] or {}).get("bytesUploaded", 0) - ((info.get("resident") or {}).get("worldBytes") or 0)
+                    same_as("%s %s %s ?%s vs one draw()" % (mode, tag, be, extra), png, info, ref, wb)
+            if overlay == "1":
+                for extra in GL_VARIANTS:
+                    one = shot("test.html", qs + "&" + extra, "%s_%s_webgl_%s" % (mode, tag, extra.replace("&", "_").replace("=", "")))
+                    per = shot("test.html", qs + "&" + extra + "&percall=1", "%s_%s_webgl_%s_percall" % (mode, tag, extra.replace("&", "_").replace("=", "")))
+                    same_as("%s %s test.html?%s: per call vs one draw()" % (mode, tag, extra), per[0], per[1], one)
+                    r = compare(one[0], pngs[0])
+                    r.pop("diff_png", None)
+                    print("     %-58s vs WebGL 2 highp: max %s, over_8 %s%%" % ("%s %s test.html?%s (%s)" % (mode, tag, extra, (one[1]["stats"] or {}).get("version")), r.get("max"), r.get("over_8")))
+
+        def add_points(label, png, info, gl_state):
+            nonlocal ok
+            a = info.get("add") or {}
+            pts = a.get("points") or []
+            got = pixels(png, [[p["x"], p["y"]] for p in pts])
+            worst, bad = 0, []
+            for p, g in zip(pts, got):
+                d = max(abs(g[c] - p["want"][c]) for c in range(3))
+                worst = max(worst, d)
+                if d > ADD_TOL: bad.append("%s at (%d, %d): rgb %s, want %s" % (p["what"], p["x"], p["y"], g[:3], p["want"]))
+            if not pts: bad.append("the page listed no points")
+            if gl_state and not a.get("ok"): bad.append("the blend state after draw() is not GL STATE's: %s" % json.dumps({k: a.get(k) for k in ("afterMain", "afterDepthA")}))
+            st = info["stats"] or {}
+            if "glError" in st and st.get("glError") != 0: bad.append("glError %s" % st.get("glError"))
+            print("     %-58s %d points, largest difference from the arithmetic %d (tolerance %d)%s" % (label, len(pts), worst, ADD_TOL, "; blend state after draw() as promised" if gl_state and a.get("ok") else ""))
+            report.setdefault("add", []).append(dict(label=label, points=len(pts), worst=worst, state=a.get("afterMain") if gl_state else None, state_ok=a.get("ok") if gl_state else None))
+            if bad:
+                ok = False
+                for x in bad: print("FAIL add %s: %s" % (label, x))
+
+        def add_gate(overlay, qs, pngs, infos):
+            tag = "scene" if overlay == "0" else "panels"
+            for k, name in enumerate(("test.html", "test-webgpu.html")):
+                be = "webgl" if k == 0 else "webgpu"
+                if overlay == "0":
+                    add_points("add %s %s" % (tag, be), pngs[k], infos[k], k == 0)
+                png, info = shot(name, qs + "&resident=1", "add_%s_%s_resident" % (tag, be))
+                wb = (infos[k]["stats"] or {}).get("bytesUploaded", 0) - ((info.get("resident") or {}).get("worldBytes") or 0)
+                same_as("add %s %s ?resident=1 vs bytes" % (tag, be), png, info, (pngs[k], infos[k]), wb)
+            if overlay == "0":
+                for extra in GL_VARIANTS:
+                    png, info = shot("test.html", qs + "&" + extra, "add_%s_webgl_%s" % (tag, extra.replace("&", "_").replace("=", "")))
+                    add_points("add %s test.html?%s (%s)" % (tag, extra, (info["stats"] or {}).get("version")), png, info, True)
+
         for mode in args.modes.split(","):
             for overlay in ("0", "1"):
                 qs = "&".join(x for x in (MODES[mode], "overlay=0" if overlay == "0" else "") if x)
@@ -352,6 +476,10 @@ def main():
                                               stats={"webgl": infos[0]["stats"], "webgpu": infos[1]["stats"]}))
                 if mode in ("icons", "iconsmove"):
                     icons_gate(mode, overlay, qs, pngs, infos)
+                if mode in TILES_MODES:
+                    tiles_gate(mode, overlay, qs, pngs, infos)
+                if mode == "add":
+                    add_gate(overlay, qs, pngs, infos)
                 if mode in RESIDENT_BASE:
                     bm = RESIDENT_BASE[mode]
                     bqs = "&".join(x for x in (MODES[bm], "overlay=0" if overlay == "0" else "") if x)

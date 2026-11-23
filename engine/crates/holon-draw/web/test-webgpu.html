@@ -14,14 +14,14 @@
 // test.html's scene (./test-scene.js: the same records, camera and panels), drawn by
 // ./draw-webgpu.js. Query, as test.html: ?map=1 the flat map (and its ?ppu, ?floor, ?floorc,
 // ?ring, ?alphas, ?fade), ?shadow=0, ?ortho=1, ?az, ?el, ?spin=1, ?dim, ?tex=0, ?page, ?pages,
-// ?overlay=0, ?resident=1, ?icons=1 (and ?phase). Also ?msaa=0 draws at one sample (default four, as a WebGL canvas made with
+// ?overlay=0, ?resident=1, ?icons=1 (and ?phase), ?tiles=1|2 (and ?percall=1, ?n), ?add=1. Also ?msaa=0 draws at one sample (default four, as a WebGL canvas made with
 // antialias: true). WebGL-only switches (?gl, ?novao, ?nohigh, ?mediump) do not apply.
 // The verdict panel says PASS only when the device reported no validation error, no
 // out-of-memory and no uncaptured error during any frame drawn so far; otherwise FAIL and
 // the first message (also in document.body.dataset.stats).
 import { createDrawerWebGPU } from './draw-webgpu.js';
 import { createTextProviderWebGPU } from './text.js';
-import { scene, createOverlay, viewProjection, makeResident, makeResidentImages, iconsScene, iconsResident, sumStats } from './test-scene.js';
+import { scene, createOverlay, viewProjection, makeResident, makeResidentImages, iconsScene, iconsResident, sumStats, tilesScene, tilesResident, tilesFrame, addScene, toResident, tilesRefusals } from './test-scene.js';
 
 const q = new URLSearchParams(location.search);
 const canvas = document.getElementById('c');
@@ -52,6 +52,9 @@ const { OFF, batches, city, pA, pB, pRest, pC } = scene();
 const isMap = q.get('map') === '1';
 const isIcons = !isMap && q.get('icons') === '1';   // ?icons=1: glyph shapes, FLOW, the ring on a huge patch (iconsScene)
 const ic = isIcons ? iconsScene(q, OFF, canvas) : null;
+const ts = q.get('tiles') === '1' || q.get('tiles') === '2' ? tilesScene(q, canvas) : null;   // ?tiles=1|2: BATCH MATRIX
+const ad = !ts && q.get('add') === '1' ? addScene(canvas) : null;   // ?add=1: BLEND 'add'
+const perCall = q.get('percall') === '1';
 const state = { dim: Math.min(1, Math.max(0.3, +(q.get('dim') || 1))), tex: q.get('tex') === '0' ? 0 : 1 };
 const hit = { slider: null, button: null };
 const ui = createOverlay({ q, canvas, dpr, isMap, state, hit, pA, pB, pRest, pC });
@@ -85,7 +88,7 @@ const dist = 19;
 
 const noShadow = q.get('shadow') === '0';
 const SHADOW = { center: [OFF[0], OFF[1], 1], radius: 10 };
-const all = (isMap ? city : isIcons ? ic.world : batches).slice();
+const all = (ts ? [] : ad ? ad.main : isMap ? city : isIcons ? ic.world : batches).slice();
 const showOverlay = q.get('overlay') !== '0';
 if (showOverlay) for (const p of panels) all.push(...p.batches);
 const viewport = [0, 0, canvas.width, canvas.height];
@@ -93,7 +96,18 @@ const viewport = [0, 0, canvas.width, canvas.height];
 // resident buffers (see makeResident in ./test-scene.js); the picture must be the same.
 const isResident = q.get('resident') === '1';
 const tryDraw = (bs) => { try { drawer.draw(bs, new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]), { target: ctx.getCurrentTexture(), viewport }); return null; } catch (e) { return String(e && e.message || e); } };
-const residentLog = isResident ? makeResident(drawer, all, tryDraw) : null;
+let residentLog = null;
+if (isResident && ts) residentLog = { worldBytes: tilesResident(drawer, ts), imageBytes: 0, buffers: drawer.stats().residentBuffers, ok: true };
+else if (isResident && ad) {
+  const n = ad.main.length;
+  const r = toResident(drawer, ad.main.concat(ad.depthA, ad.depthB));
+  residentLog = { worldBytes: drawer.stats().residentBytes, imageBytes: 0, buffers: drawer.stats().residentBuffers, ok: true };
+  for (let k = 0; k < n; k++) all[k] = r[k];
+  ad.main = r.slice(0, n); ad.depthA = [r[n]]; ad.depthB = [r[n + 1]];
+} else if (isResident) residentLog = makeResident(drawer, all, tryDraw);
+const panelBatches = all.slice(ad ? ad.main.length : 0);
+// ?tiles=1|2: what draw() refuses, tried once (tilesRefusals), in document.body.dataset.refusals.
+const refusals = ts ? tilesRefusals(ts, (bs, v, o) => { try { drawer.draw(bs, v, { ...o, target: ctx.getCurrentTexture(), }); return null; } catch (e) { return String(e && e.message || e); } }) : null;
 // ?icons=1: one flow arc moved into a resident buffer and drawn alone at three phases (iconsResident).
 const flowLog = isIcons ? iconsResident(drawer, all, ic, (bs) => { drawer.draw(bs, new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]), { target: ctx.getCurrentTexture(), viewport }); return { ...drawer.stats() }; }) : null;
 const CLEAR = [0.063, 0.078, 0.11, 1];
@@ -133,13 +147,22 @@ async function frame() {
   const scoped = frames < 3 || q.get('spin') !== '1';
   if (scoped) { device.pushErrorScope('validation'); device.pushErrorScope('out-of-memory'); }
   const t0 = performance.now();
-  // ?icons=1: the flat ribbons first (a draw() of their own, with flatLines, which clears), then the rest over them.
-  const s0 = isIcons ? (drawer.draw(ic.ribbons, vp, { target: ctx.getCurrentTexture(), clear: CLEAR, viewport, flatLines: true }), { ...drawer.stats() }) : null;
-  drawer.draw(all, vp, isMap
-    ? { target: ctx.getCurrentTexture(), clear: CLEAR, viewport, depthTest: false, pixelsPerUnit: mapPpu }
-    : { target: ctx.getCurrentTexture(), clear: isIcons ? undefined : CLEAR, light: [0.35, -0.5, 0.8], ambient: 0.25, viewport, shadow: noShadow ? undefined : SHADOW });
+  let s;
+  if (ts || ad) {
+    // the first draw() of the frame clears; the rest load what is there
+    let first = true;
+    const drawCopy = (bs, v, o) => { drawer.draw(bs, v, { ...o, target: ctx.getCurrentTexture(), clear: first ? CLEAR : undefined }); first = false; return { ...drawer.stats() }; };
+    if (ts) s = tilesFrame(ts, panelBatches, perCall, drawCopy, null);
+    else s = sumStats(sumStats(drawCopy(all, ad.vp, ad.opts), drawCopy(ad.depthA, ad.vp, { viewport })), drawCopy(ad.depthB, ad.vp, { viewport }));
+  } else {
+    // ?icons=1: the flat ribbons first (a draw() of their own, with flatLines, which clears), then the rest over them.
+    const s0 = isIcons ? (drawer.draw(ic.ribbons, vp, { target: ctx.getCurrentTexture(), clear: CLEAR, viewport, flatLines: true }), { ...drawer.stats() }) : null;
+    drawer.draw(all, vp, isMap
+      ? { target: ctx.getCurrentTexture(), clear: CLEAR, viewport, depthTest: false, pixelsPerUnit: mapPpu }
+      : { target: ctx.getCurrentTexture(), clear: isIcons ? undefined : CLEAR, light: [0.35, -0.5, 0.8], ambient: 0.25, viewport, shadow: noShadow ? undefined : SHADOW });
+    s = isIcons ? sumStats(s0, drawer.stats()) : drawer.stats();
+  }
   const ms = performance.now() - t0;
-  const s = isIcons ? sumStats(s0, drawer.stats()) : drawer.stats();
   last.drawCalls = s.drawCalls; last.instances = s.instances; last.bytesUploaded = s.bytesUploaded;
   document.body.dataset.missingImages = String(s.missingImages);
   if (scoped) {
@@ -157,6 +180,8 @@ async function frame() {
     document.body.dataset.verdict = errors.length ? 'FAIL' : 'PASS';
     if (residentLog) document.body.dataset.resident = JSON.stringify(residentLog);
     if (flowLog) document.body.dataset.flow = JSON.stringify(flowLog);
+    if (refusals) document.body.dataset.refusals = JSON.stringify(refusals);
+    if (ad) document.body.dataset.add = JSON.stringify({ points: ad.points, ok: true });
     document.body.dataset.ready = '1';
   }
   if (q.get('spin') === '1' || frames < 2 || !settled) invalidate();

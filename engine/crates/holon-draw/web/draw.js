@@ -98,7 +98,8 @@
 //                                      else the buffer is reallocated; the handle stays h
 //   drawer.release(h)                  frees it; h may be handed out again by resident()
 //   batch = { kind, handle: h, first, count, offset, params, screen?, coarse?, shade?,
-//             castShadow?, slot? }     records first .. first + count - 1 of that buffer,
+//             castShadow?, slot?, vp?, pixelsPerUnit?, blend? }
+//                                      records first .. first + count - 1 of that buffer,
 //                                      drawn with NO upload. `first` defaults to 0.
 // Everything else about a resident batch is a `bytes` batch's: one handle may hold many
 // batches of any kinds (the batch's `kind` says how its range is drawn), a world one is drawn
@@ -113,16 +114,31 @@
 // in 0..255. On a `bytes` image batch `slot` is not read (byte 51 names it, as before).
 // stats() gains residentBuffers and residentBytes: what is resident now (bytes allocated, so
 // a shrinking update() does not lower it), not reset by draw().
-// WHAT A RESIDENT BATCH COSTS IN GL CALLS, after its first draw:
+// WHAT A BATCH COSTS IN GL CALLS (revised 2026-11-23), a resident one after its first draw:
 //   with vertex array objects (WebGL 2, or WebGL 1 with OES_vertex_array_object):
-//     bind its vertex array (skipped when it is the one bound), the offset uniform, the draw.
+//     bind its vertex array (skipped when it is the one bound) and the draw.
 //     Each distinct (handle, slot's mesh, first) gets its own vertex array, made on first use
 //     (about 25 calls, once; the shadow pass and the picture share it) and deleted with the
 //     handle; at most 256 per handle, beyond which that batch is drawn the bare way below.
-//   bare WebGL 1: bind the buffer, 6 attribute pointers, the offset uniform, the draw.
+//   bare WebGL 1: bind the buffer, 6 attribute pointers, the draw.
 //   a `bytes` batch, for comparison: the same plus its upload.
-// As before, add the slot's uniforms when the slot changes from the batch before, and the
-// tile settings when they differ from the last uploaded.
+// Then, each only where its numbers differ from what the program holds now (a program keeps its
+// uniforms between draw() calls, and this file remembers them, so the comparison spans calls):
+//   the offset (uniform3f); the tile settings (uniform4fv; not even compared when the batch's
+//   `params` is the same object as the batch before's in this draw()); the kind's vertex mode
+//   (uniform2f), and the half height, pixels per unit and kind code (uniform3f): so a change of
+//   kind usually costs these two; the shade (uniform4f); the culling switch; the matrix
+//   (uniformMatrix4fv) and the eye derived from it (uniform4f), see BATCH MATRIX; the blend
+//   (blendFuncSeparate and depthMask), see BLEND.
+// A draw() call costs, besides its batches, 8 calls of frame state, useProgram, the light and
+// viewport uniforms where they differ, and 4 calls on return (more with shadows or screen
+// batches). Counted with every method of a WebGL 2 context wrapped (web/bench-tiles.html
+// ?count=1; tools/tiles_timing.py --count-only), for flat-map tiles of 5 resident batches (11
+// records) each, as the twin draws them, on Chrome 152 / ANGLE / Mesa Intel RPL-S:
+//   one draw() per tile plus the twin's 4-call restore after each: 51.0 calls a tile with the
+//     draw.js before 2026-11-23, 38.0 with this one (the same pictures);
+//   ONE draw() for all, each batch with its tile's vp and pixelsPerUnit: 19.1 calls a tile, 3.8
+//     a batch (at 200 tiles: 3 818 calls a frame, against 10 203 before).
 //
 // TILE SETTINGS (`batch.params`, 32 numbers = 8 groups of 4; absent means neutral). Slots:
 //   [0..2]   DIM     rgb multiplier on every colour of the tile, applied last (after lighting)
@@ -265,6 +281,44 @@
 // disc, ..., patch) and orders tiles by layer: a host splits a leaf into tiles on layers
 // (ground, streets, buildings).
 //
+// BATCH MATRIX (2026-11-23). A world batch may carry its own `vp` (16 numbers, column-major, the
+// meaning of draw()'s `vp` argument) and its own `pixelsPerUnit` (the meaning of
+// `opts.pixelsPerUnit`). It is drawn with them; a batch without them is drawn with the call's.
+// So many tiles, each with its own flat-map affine, go in ONE draw() (the twin's street tier
+// made one draw() per tile and paid the call's setup every time). Everything this header derives
+// from vp is derived from the batch's own: the clip position, the eye (the view vector, so
+// specular and rim), the camera-facing glyph squares, and the pixels per unit estimated from
+// the clip w when no pixelsPerUnit is given (the field's fade, FLOOR, a glyph's antialiasing,
+// FLOW's dash softness). The rest is the call's: the light, `ambient`, the viewport, `flatLit`,
+// `depthTest`, `flatLines`. The RING is in viewport pixels and does not involve vp. Screen
+// batches ignore both fields. The call's `vp` may be null when every world batch carries its
+// own. draw() throws, before it changes any state, on a world batch with no `vp` when the call
+// has none, and on a `vp` of fewer than 16 numbers.
+// SHADOWS ARE REFUSED with it: draw() throws (before any state is changed) when `opts.shadow` is
+// set and any world batch carries its own `vp`. A shadow map is one light over one world space.
+// A batch's own matrix says only where its records land on the screen (a model matrix and the
+// camera folded together), not where they are in that world, so neither what it would cast nor
+// its own lookup would mean anything; drawing it without shadows instead would be a silent
+// difference. A host draws such batches in a draw() without `opts.shadow`. A batch's own
+// `pixelsPerUnit` IS allowed with shadows (the shadow pass reads it as it reads the call's).
+// Order and depth are as for any batches: one draw() of tiles A, B, C, each batch with its own
+// matrix, draws what draw(A, vpA), draw(B, vpB), draw(C, vpC) do, pixel for pixel
+// (tools/webgpu_parity.py's tiles modes check exactly that on both backends).
+// What switching costs: see WHAT A BATCH COSTS IN GL CALLS below.
+//
+// BLEND (2026-11-23), per batch: `blend: 'add'` draws a batch ADDITIVELY, for light that adds
+// (a glow, lit windows at night): colour = destination + source rgb x source alpha (clamped by
+// the target), destination alpha unchanged, i.e. blendFuncSeparate(SRC_ALPHA, ONE, ZERO, ONE)
+// with the equation the host leaves (FUNC_ADD; see GL STATE). `blend: 'alpha'`, the default, is
+// the frame's blend (GL STATE). Any other value throws, before any state is changed. World and
+// screen batches, resident or `bytes`. An additive batch WRITES NO DEPTH (depthMask(false)
+// while it is drawn; where the depth test is on it is still tested), so what is drawn after it
+// is not hidden by it, and it CASTS NO SHADOW (it is left out of the shadow map; it receives
+// as any mark does). It adds to what was drawn before it, so order matters as for translucent
+// marks. The switch is one blendFuncSeparate and one depthMask each way, made only where two
+// consecutive batches differ; draw() returns with the frame's blend and depthMask(true) in
+// every case.
+//
 // PRECISION (INTERFACE.md §7): NO UNIFORM NAME APPEARS IN BOTH SHADER STAGES, in either
 // program. World programs: the vertex stage owns u_vp, u_offset, u_eye, u_mode, u_pix,
 // u_wview, u_params (and, with HD_SHADOW, u_lvp and u_lno); the fragment stage owns u_light,
@@ -300,10 +354,13 @@
 // framebuffer, scissor, stencil or colour mask. It CHANGES, and leaves changed:
 //   - the current program (left as one of this drawer's two programs);
 //   - BLEND enabled, blendFuncSeparate(SRC_ALPHA, ONE_MINUS_SRC_ALPHA, ONE, ONE_MINUS_SRC_ALPHA)
-//     (the blend equation is not touched: a host that uses another must restore FUNC_ADD first);
+//     on return in every case; while a `blend: 'add'` batch is drawn it is (SRC_ALPHA, ONE,
+//     ZERO, ONE) (see BLEND). The blend equation is not touched: a host that uses another must
+//     restore FUNC_ADD first;
 //   - DEPTH_TEST enabled, depthFunc(LEQUAL), depthMask(true) (the test is off while screen
 //     batches are drawn, and for world batches under `opts.depthTest: false`; it is
-//     enabled again on return in every case);
+//     enabled again on return in every case; depthMask is false while an additive batch is
+//     drawn and true on return in every case);
 //   - CULL_FACE is off while flat marks are drawn and enabled again on return;
 //   - CULL_FACE (left enabled), cullFace(BACK), frontFace(CCW);
 //   - ARRAY_BUFFER binding (left null);
@@ -1307,6 +1364,7 @@ export function createDrawer(gl, options) {
   const headV = med + PF_HEAD_V, headF = med + PF_HEAD_F;
   // Two world programs: without shadows (what every draw() without opts.shadow uses, at no
   // cost from them) and with them (HD_SHADOW: the light-space varying and the four-tap lookup).
+  const nan = (n) => new Float32Array(n).fill(NaN);
   function worldProgram(defs, fsrc) {
     const vs = compile(gl, gl.VERTEX_SHADER, defs + headV + VS);
     const fs = compile(gl, gl.FRAGMENT_SHADER, defs + headF + fsrc.replace('HD_GLYPH_SOURCE', GLYPH_GLSL));
@@ -1335,6 +1393,10 @@ export function createDrawer(gl, options) {
       uLight: u('u_light'), uShade: u('u_shade'), uPix: u('u_pix'), uWView: u('u_wview'),
       uParams: u('u_params[0]'), uLvp: u('u_lvp'), uLno: u('u_lno'), uShadow: u('u_shadow'),
       uShp: u('u_shp'), uCvp: u('u_cvp'), samplerSet: false, last: new Float32Array(32).fill(NaN),
+      // What each uniform holds now (a program keeps its uniforms between frames): an upload is
+      // skipped when the value is the same, number by number. NaN at the start: the first uploads.
+      cVP: nan(16), cEye: nan(4), cOff: nan(3), cShade: nan(4), cMode: nan(2), cPix: nan(3),
+      cWView: nan(4), cLight: nan(3), pRef: undefined,
     };
   }
   const WP = worldProgram('', FS);
@@ -1542,8 +1604,14 @@ export function createDrawer(gl, options) {
   // The settings last uploaded to each program (a program keeps its uniforms between
   // frames, so these do too). NaN at the start: the first batch always uploads.
   const lastS = new Float32Array(32).fill(NaN);
-  function settings(loc, last, src) {
+  // The screen program's uniform values now, as a world program's cOff and pRef.
+  const SP = { cOff: nan(3), cView: nan(2), pRef: undefined };
+  // P: the program's record (its pRef is the params object of the batch before in this draw();
+  // the same object again is not compared: nothing can change it during one draw()).
+  function settings(loc, last, src, P) {
     if (!src) src = PARAMS_NEUTRAL;
+    if (src === P.pRef) return;
+    P.pRef = src;
     let same = true;
     for (let i = 0; i < 32; i++) {
       const v = Math.fround(src[i]);
@@ -1552,6 +1620,52 @@ export function createDrawer(gl, options) {
     if (same) return;
     gl.uniform4fv(loc, last);
     st.paramUploads++;
+  }
+
+  // Uniforms through the program's record of their values: uploaded only when a number differs.
+  function set2(loc, c, x, y) {
+    x = Math.fround(x); y = Math.fround(y);
+    if (c[0] === x && c[1] === y) return;
+    c[0] = x; c[1] = y;
+    gl.uniform2f(loc, x, y);
+  }
+  function set3(loc, c, x, y, z) {
+    x = Math.fround(x); y = Math.fround(y); z = Math.fround(z);
+    if (c[0] === x && c[1] === y && c[2] === z) return;
+    c[0] = x; c[1] = y; c[2] = z;
+    gl.uniform3f(loc, x, y, z);
+  }
+  function set4(loc, c, x, y, z, w) {
+    x = Math.fround(x); y = Math.fround(y); z = Math.fround(z); w = Math.fround(w);
+    if (c[0] === x && c[1] === y && c[2] === z && c[3] === w) return;
+    c[0] = x; c[1] = y; c[2] = z; c[3] = w;
+    gl.uniform4f(loc, x, y, z, w);
+  }
+  // A world program's view-projection (and the eye, which is derived from it alone): uploaded
+  // only when a number of the matrix differs from what the program holds.
+  function setVP(P, m) {
+    const c = P.cVP;
+    let same = true;
+    for (let i = 0; i < 16; i++) {
+      const v = Math.fround(m[i]);
+      if (c[i] !== v) { c[i] = v; same = false; }   // a NaN never equals: it uploads every time
+    }
+    if (same) return;
+    gl.uniformMatrix4fv(P.uVP, false, c);
+    eyeFrom(m);
+    set4(P.uEye, P.cEye, inv[0], inv[1], inv[2], inv[3]);
+  }
+  function setOffset(loc, c, o) {
+    if (o) set3(loc, c, o[0], o[1], o[2]); else set3(loc, c, 0, 0, 0);
+  }
+  // Blend for one batch: 'alpha' (the frame's) or 'add'; an additive batch writes no depth.
+  let adding = false;
+  function blendFor(add) {
+    if (add === adding) return;
+    adding = add;
+    if (add) gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE, gl.ZERO, gl.ONE);
+    else gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+    gl.depthMask(!add);
   }
 
   // Upload one `bytes` batch at its kind's cursor; its offset in that kind's buffer.
@@ -1670,6 +1784,24 @@ export function createDrawer(gl, options) {
     pointers(r.buf, first * INSTANCE_BYTES);
   }
 
+  // The per-batch fields of BATCH MATRIX and BLEND (at the top): what draw() refuses.
+  function checkBatch(b, i, vp, wantShadow) {
+    const bl = b.blend;
+    if (bl !== undefined && bl !== 'alpha' && bl !== 'add') {
+      throw new Error('holon-draw: batch ' + i + ' has blend ' + JSON.stringify(bl) + ': a batch\'s blend is \'alpha\' (the default) or \'add\'');
+    }
+    if (b.screen === true) return;
+    const m = b.vp;
+    if (m !== undefined && m !== null) {
+      if (!(m.length >= 16)) throw new Error('holon-draw: batch ' + i + ' has a `vp` that is not a 4x4 matrix (16 numbers, column-major)');
+      if (wantShadow) {
+        throw new Error('holon-draw: batch ' + i + ' has its own `vp` and this draw() asks for shadows (opts.shadow): a shadow map is drawn from one light over one world, and a batch with its own matrix is in its own space. Draw such batches in a draw() without opts.shadow');
+      }
+    } else if (!vp) {
+      throw new Error('holon-draw: batch ' + i + ' is a world batch with no `vp` of its own, and draw() was given no vp');
+    }
+  }
+
   // The light's orthographic view-projection over the sphere (c, r), into lvp.
   function lightMatrix(c, r) {
     const lx = light[0], ly = light[1], lz = light[2];
@@ -1720,7 +1852,9 @@ export function createDrawer(gl, options) {
    *   BUFFERS; `first` its first record, and `slot` on a resident image batch).
    *   `shade`, optional on a world batch of a lit kind: [specular, rim] for that batch in place
    *   of the kind's own (box and prism 0.05, 0; sphere 0.3, 0.18; rod 0.18, 0.08).
-   * @param {Float32Array} vp column-major, 16 (world batches only)
+   *   `vp` and `pixelsPerUnit`, optional on a world batch: its own (BATCH MATRIX at the top);
+   *   `blend`, optional on any batch: 'alpha' (default) or 'add' (BLEND at the top).
+   * @param {Float32Array|null} vp column-major, 16 (world batches without their own; null if every one has its own)
    * @param {{light?:ArrayLike<number>, ambient?:number, flatLit?:boolean, viewport?:ArrayLike<number>, pixelsPerUnit?:number, depthTest?:boolean, flatLines?:boolean, shadow?:{center:ArrayLike<number>, radius:number, size?:number, strength?:number, bias?:number}}} [opts]
    *   A world batch may also carry `castShadow: false`.
    */
@@ -1728,10 +1862,12 @@ export function createDrawer(gl, options) {
     if (dead) throw new Error('holon-draw: draw() after destroy()');
     st.drawCalls = 0; st.instances = 0; st.bytesUploaded = 0; st.paramUploads = 0; st.missingImages = 0;
     flat = !!opts && (opts.flatLines === true || (opts.flatLines !== false && opts.depthTest === false));
-    if (opts && opts.shadow && opts.shadow.center && opts.shadow.radius > 0) shadowPrograms();
+    const wantShadow = !!(opts && opts.shadow && opts.shadow.center && opts.shadow.radius > 0);
+    if (wantShadow) shadowPrograms();
     const nb = batches.length;
 
-    // Pass 1: bytes needed per kind; how many world and screen batches there are.
+    // Pass 1: bytes needed per kind; how many world and screen batches there are. Every throw
+    // is here, before any GL state is changed.
     need.fill(0);
     let nWorld = 0, nScreen = 0;
     for (let i = 0; i < nb; i++) {
@@ -1739,6 +1875,7 @@ export function createDrawer(gl, options) {
       if (c <= 0) continue;
       const s = slotOf(b);
       if (!s) continue;
+      checkBatch(b, i, vp, wantShadow);
       if (b.handle !== undefined) {
         const r = handleOf(b.handle, 'batch ' + i), first = b.first === undefined ? 0 : b.first;
         if (first !== (first | 0) || first < 0 || (first + c) * INSTANCE_BYTES > r.size) {
@@ -1770,6 +1907,8 @@ export function createDrawer(gl, options) {
 
     // Frame state.
     bound = null;
+    adding = false;
+    WP.pRef = undefined; if (WS) WS.pRef = undefined; if (Z) Z.pRef = undefined; SP.pRef = undefined;
     gl.enable(gl.BLEND);
     gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
     gl.enable(gl.DEPTH_TEST);
@@ -1803,7 +1942,6 @@ export function createDrawer(gl, options) {
       const vx = V ? V[0] : 0, vy = V ? V[1] : 0;
       const halfH = 0.5 * vh;
       const ppu = opts && opts.pixelsPerUnit > 0 ? +opts.pixelsPerUnit : 0;
-      eyeFrom(vp);
 
       // The shadow map, drawn from the light, before the picture.
       const so = opts && opts.shadow;
@@ -1833,23 +1971,22 @@ export function createDrawer(gl, options) {
         for (let i = 0; i < nb; i++) {
           if (wAt[i] === -1) continue;
           const b = batches[i];
-          if (b.castShadow === false) continue;
+          if (b.castShadow === false || b.blend === 'add') continue;
           const s = slotOf(b);
           if (!(s.lit || ((s.kind === KIND.LINE || s.kind === KIND.ARC) && !flat))) continue;
           if (s !== zcur) {
             zcur = s;
             if (!hasVAO) meshAttribs(s.mesh);
-            gl.uniform2f(Z.uMode, s.mx, s.my);
-            gl.uniform3f(Z.uPix, 0.5 * size, ppu, s.kc);
+            set2(Z.uMode, Z.cMode, s.mx, s.my);
             if (s.cull !== culling) {
               culling = s.cull;
               if (culling) gl.enable(gl.CULL_FACE); else gl.disable(gl.CULL_FACE);
             }
           }
+          set3(Z.uPix, Z.cPix, 0.5 * size, b.pixelsPerUnit > 0 ? +b.pixelsPerUnit : ppu, s.kc);
           attach(b, s, wAt[i], s.vao, b.count | 0);
-          settings(Z.uParams, Z.last, b.params);
-          const o = b.offset;
-          if (o) gl.uniform3f(Z.uOffset, o[0], o[1], o[2]); else gl.uniform3f(Z.uOffset, 0, 0, 0);
+          settings(Z.uParams, Z.last, b.params, Z);
+          setOffset(Z.uOffset, Z.cOff, b.offset);
           drawInstanced(s.mesh.n, b.count | 0);
         }
         gl.cullFace(gl.BACK);
@@ -1866,10 +2003,8 @@ export function createDrawer(gl, options) {
 
       const W = shadowsOn ? WS : WP;
       gl.useProgram(W.program);
-      gl.uniformMatrix4fv(W.uVP, false, vp);
-      gl.uniform4f(W.uEye, inv[0], inv[1], inv[2], inv[3]);
-      gl.uniform3fv(W.uLight, light);
-      gl.uniform4f(W.uWView, vx, vy, vw, vh);
+      set3(W.uLight, W.cLight, light[0], light[1], light[2]);
+      set4(W.uWView, W.cWView, vx, vy, vw, vh);
       if (shadowsOn) {
         gl.uniformMatrix4fv(W.uLvp, false, lvp);
         // look the shadow up a texel and a half out along the normal: no self-shadow banding
@@ -1882,31 +2017,29 @@ export function createDrawer(gl, options) {
       }
       if (opts && opts.depthTest === false) gl.disable(gl.DEPTH_TEST);
 
-      let cur = null, curSpec = -1, curRim = -1;
+      let cur = null, curM = null;
       for (let i = 0; i < nb; i++) {
         if (wAt[i] === -1) continue;
         const b = batches[i], c = b.count | 0;
         const s = slotOf(b);
         const sh = b.shade;
-        const spec = sh ? +sh[0] : s.spec, rim = sh ? +sh[1] : s.rim;
-        if (s !== cur || spec !== curSpec || rim !== curRim) {
-          curSpec = spec; curRim = rim;
-          gl.uniform4f(W.uShade, s.lit || flatLit ? 1 : 0, ambient, spec, rim);
-        }
+        const m = b.vp || vp;
+        if (m !== curM) { curM = m; setVP(W, m); }
+        set4(W.uShade, W.cShade, s.lit || flatLit ? 1 : 0, ambient, sh ? +sh[0] : s.spec, sh ? +sh[1] : s.rim);
+        set3(W.uPix, W.cPix, halfH, b.pixelsPerUnit > 0 ? +b.pixelsPerUnit : ppu, s.kc);
         if (s !== cur) {
           cur = s;
           if (!hasVAO) meshAttribs(s.mesh);
-          gl.uniform2f(W.uMode, s.mx, s.my);
-          gl.uniform3f(W.uPix, halfH, ppu, s.kc);
+          set2(W.uMode, W.cMode, s.mx, s.my);
           if (s.cull !== culling) {
             culling = s.cull;
             if (culling) gl.enable(gl.CULL_FACE); else gl.disable(gl.CULL_FACE);
           }
         }
+        blendFor(b.blend === 'add');
         attach(b, s, wAt[i], s.vao, c);
-        settings(W.uParams, W.last, b.params);
-        const o = b.offset;
-        if (o) gl.uniform3f(W.uOffset, o[0], o[1], o[2]); else gl.uniform3f(W.uOffset, 0, 0, 0);
+        settings(W.uParams, W.last, b.params, W);
+        setOffset(W.uOffset, W.cOff, b.offset);
         drawInstanced(s.mesh.n, c);
       }
     }
@@ -1917,7 +2050,7 @@ export function createDrawer(gl, options) {
       gl.disable(gl.DEPTH_TEST);
       if (culling) { gl.disable(gl.CULL_FACE); culling = false; }
       const V = (opts && opts.viewport) || gl.getParameter(gl.VIEWPORT);
-      gl.uniform2f(uView, V[2], V[3]);
+      set2(uView, SP.cView, V[2], V[3]);
       if (!hasVAO) meshAttribs(mQuad);
       let smode = -1, fmode = -1, textured = false, imageUnitSet = false;
       for (let i = 0; i < nb; i++) {
@@ -1958,14 +2091,16 @@ export function createDrawer(gl, options) {
           }
           gl.activeTexture(gl.TEXTURE0);
         }
+        blendFor(b.blend === 'add');
         attach(b, s, b.handle !== undefined ? -2 : upload(b, s.kind, c * INSTANCE_BYTES), screenVAO, c);
-        settings(uSParams, lastS, b.params);
+        settings(uSParams, lastS, b.params, SP);
         const o = b.offset;
-        if (o) gl.uniform3f(uSOffset, o[0], o[1], 0); else gl.uniform3f(uSOffset, 0, 0, 0);
+        if (o) set3(uSOffset, SP.cOff, o[0], o[1], 0); else set3(uSOffset, SP.cOff, 0, 0, 0);
         drawInstanced(mQuad.n, c);
       }
     }
     gl.enable(gl.DEPTH_TEST);
+    blendFor(false);   // the frame's blend and depthMask(true) again, if the last batch added
 
     // Leave as documented at the top of this file.
     if (hasVAO) {

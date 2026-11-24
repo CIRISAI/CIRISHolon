@@ -1,0 +1,173 @@
+{
+  "spec": "ciris/holon-decl/0",
+  "id": "tiers.fluid_element",
+  "name": "the fluid element",
+  "plain": "A small cell of liquid: its density, and its momentum read on the cell's faces. The one row of the ladder with both halves of a tier on record: a chart that closes, and a block the gate refuses to drop.",
+  "status": "measured",
+  "standing": "tier",
+  "carrier": {
+    "state": "the conserved densities with fluxes on the FACES: density in cells, momentum on the faces within `0.25 Å` (the staggered chart)",
+    "unit_log10_m": -9
+  },
+  "step": {
+    "kind": "measured"
+  },
+  "below": [
+    {
+      "id": "tiers.molecule",
+      "relation": "function",
+      "basis": {
+        "path": "conformance/water_observatory/r1_closure_test.py",
+        "quote": "face-centred: the x-velocity sum of molecules within +/-h of the face, over 2h",
+        "note": "the face momentum is a sum over the molecules near a face, and the density a count of the molecules in a cell"
+      }
+    }
+  ],
+  "source": [
+    {
+      "path": "conformance/replace1/OBJECTIVE1_RESULTS.md",
+      "quote": "for every budget in **`(0.0033, 0.039)`** the carried set is `{H}` on every defined cell of every seed at 0.5 and 1 ps, and at 2 ps on seed 2."
+    },
+    {
+      "path": "conformance/replace1/REPLACE1_RESULTS.md",
+      "quote": "all three seeds: `(ρ, j_L)` survives alone, REFUSED at **`+0.0622 / +0.0390 / +0.1039`**"
+    },
+    {
+      "path": "conformance/replace1/REPLACE1_RESULTS.md",
+      "quote": "The engine is banked: the fluid-element tier runs on the staggered chart with ORDERED admission and a price certificate"
+    },
+    {
+      "path": "conformance/replace1/REPLACE1_RESULTS.md",
+      "quote": "## The lead's verdict (2026-09-26): BANKED AS (a), with G3's two bars recorded as the lead's"
+    }
+  ],
+  "views": [
+    {
+      "id": "staggered_chart",
+      "reads": "density in cells and momentum on the cell faces within `0.25 Å`: the chart whose continuity defect was read",
+      "consumers": [
+        {
+          "id": "continuity",
+          "kind": "law",
+          "stated": {
+            "path": "conformance/replace1/REPLACE1_PREREG.md",
+            "quote": "The staggered chart's continuity defect on the three 200 m/s longitudinal arms, 36-cycle aligned average, `D ≤ 0.2`"
+          },
+          "budget": {
+            "quantity": "the continuity defect `D` of the chart on the 36-cycle aligned average: the root of the squared miss of each cell's occupancy change over its square; the bar is the stake's `D ≤ 0.2`, set before the read (RESPONSE-1 Amendment 5, REPLACE-1 G1)",
+            "bound": 0.2,
+            "unit": "relative"
+          }
+        }
+      ]
+    },
+    {
+      "id": "hydrodynamic_block",
+      "reads": "`H` = `(ρ, j_L)`: the density and the longitudinal current at the box's longest wavelength",
+      "consumers": [
+        {
+          "id": "own_next_state",
+          "kind": "target",
+          "stated": {
+            "path": "conformance/replace1/REPLACE1_RESULTS.md",
+            "quote": "The hydrodynamic block `(ρ, j^L)` is the candidate. The target is its own next state."
+          },
+          "budget": {
+            "quantity": "the held-out R² the target loses when a block leaves the dictionary, under ordered admission; `β = 0.02` is the one budget REPLACE-1 was read at (OBJECTIVE1_PREREG.md: 'read it at ONE budget (`β = 0.02`) and ONE cadence')",
+            "bound": 0.02,
+            "unit": "relative"
+          }
+        }
+      ]
+    }
+  ],
+  "regime": "Two readings on two carriers of the same derived model of water (not water). The closure: the rigid operator driven at 200 m/s, three longitudinal arms, 36 cycles pooled, 8 cells. The price: the rigid operator at 293 K in equilibrium, three seeds, lag 1 ps, ordered admission (Amendment 1).",
+  "budget_window": [
+    0.0033,
+    0.039
+  ],
+  "certificate": {
+    "kind": "closure",
+    "for": {
+      "view": "staggered_chart",
+      "consumer": "continuity"
+    },
+    "bound": {
+      "value": 0.18,
+      "unit": "relative"
+    },
+    "basis": "realised",
+    "evidence": [
+      {
+        "path": "conformance/water_observatory/RESPONSE1_RESULTS.md",
+        "sha256": "51f4a18f40530ee319bfdf24fc9f3a4dafe04a99c80f6f549de7b535acdb1ccd",
+        "quote": "on the graded 36-cycle aligned average: **`D = 0.180`, SE `0.058`**"
+      },
+      {
+        "path": "conformance/replace1/REPLACE1_RESULTS.md",
+        "sha256": "1beacfab3d76cf70518e8ab1fe1a8a439e27db351b54d6157bf3ddd29682f9b6",
+        "quote": "`D_lead 0.180`, SE `0.058`, `D_tail 0.689`, `α 1.03`, `R² 0.97`"
+      }
+    ]
+  },
+  "carried_by": "own_next_state",
+  "drops": [
+    {
+      "what": "the structural block `(q, s2)` and the count block `(n33, n50, nb)`",
+      "price": "at most `+0.0033` on any defined 293 K cell (OBJECTIVE1_RESULTS.md)"
+    },
+    {
+      "what": "the collective order parameter",
+      "price": "`≤ 0` (ORDER-1; TIERS.md)"
+    },
+    {
+      "what": "the hydrogen-bond count",
+      "price": "exactly `0` (TIERS.md)"
+    }
+  ],
+  "remainder": "the leak the cell chart cannot carry at one molecular diameter, carried by the faces: `D = 0.180 ± 0.058` on the graded 36-cycle average against the cell chart's `0.31`",
+  "row": {
+    "path": "TIERS.md",
+    "quote": "IN THE ENGINE (REPLACE-1: `holon-lens::staggered`, the gate reproducing every banked number)"
+  },
+  "not_claimed": [
+    "The closure and the price are read on DIFFERENT carriers and of different views: the staggered chart's continuity on the driven arms, and the hydrodynamic block's removal price on the equilibrium walks. TIERS.md's row joins them as one tier; nothing here shows the closed chart and the carried block are one object.",
+    "The closure was MET by `0.02`, which the record calls 'a third of one SE; the stake carries no significance clause'. `0.180 + 0.058` is above the `0.2` bar. This format's closure check compares the value alone.",
+    "The price is a PRICE (TIERS.md §0, CORRECTION 2026-11-15): the gate reads the prediction the target loses, and removes nothing from the running system. No realised cost has been taken.",
+    "The price certified is the SMALLEST of the three seeds' (`+0.0622 / +0.0390 / +0.1039`), with that seed's standard error and nulls. Less two standard errors it is `0.0244`, above the `0.02` budget.",
+    "REPLACE-1's first read, by the marginal rule, DROPPED this block at 1 ps (`+0.0087 / +0.0094 / +0.0091` against 0.02) and killed stake G3a. The carried reading is under Amendment 1's ordered admission, where the amended bar of `≥ 0.04` was missed on seed 1 by `0.001`. The lead banked it as branch (a) and registered that bar as M-BAR-FROM-THE-READ.",
+    "OBJECTIVE-1 itself read branch (e) by the letter, and its stakes Q1 and Q4 were killed; at a budget of 0.05 the carried set is EMPTY on seed 1 at 1 ps.",
+    "The carrier is the gate's own target, the block's next state. TIERS.md says a tier is carried by the tier above; the continuum row is only a recorded row here, and it declares nothing derived from this one."
+  ],
+  "price": {
+    "for": {
+      "view": "hydrodynamic_block",
+      "consumer": "own_next_state"
+    },
+    "value": 0.039,
+    "se": 0.0073,
+    "null": [
+      -0.0066,
+      -0.0048
+    ],
+    "unit": "relative",
+    "reads": "carried",
+    "evidence": [
+      {
+        "path": "conformance/replace1/REPLACE1_RESULTS.md",
+        "sha256": "1beacfab3d76cf70518e8ab1fe1a8a439e27db351b54d6157bf3ddd29682f9b6",
+        "quote": "`(ρ, j_L)` **`+0.0390 ± 0.0073`** (`−0.0066 / −0.0048`)"
+      },
+      {
+        "path": "conformance/replace1/REPLACE1_RESULTS.md",
+        "sha256": "1beacfab3d76cf70518e8ab1fe1a8a439e27db351b54d6157bf3ddd29682f9b6",
+        "quote": "all three seeds: `(ρ, j_L)` survives alone, REFUSED at **`+0.0622 / +0.0390 / +0.1039`**"
+      },
+      {
+        "path": "conformance/replace1/OBJECTIVE1_RESULTS.md",
+        "sha256": "0c8b65e9b600748b6363bf7296723236fa6817daccc7c9eee73ed828cec2db18",
+        "quote": "the largest `β*` of any dropped block is `+0.0033` (C, seed 2, 1 ps), and the smallest `β*` of `H` is `+0.0390`"
+      }
+    ]
+  }
+}

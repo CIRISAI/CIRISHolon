@@ -1,0 +1,54 @@
+{
+  "spec": "ciris/holon-decl/0",
+  "id": "twin.wm_presence",
+  "name": "the twin's layer wm-presence",
+  "plain": "Globe layer card: PRESENCE-0 drawn as it is, a stacked 24-hour band of six states per day type, with its headline numbers and verdict.",
+  "status": "catalogue",
+  "standing": "rung",
+  "carrier": {
+    "state": "all_persons.table (day type x clock hour x six states) as published, no parameter of the twin's"
+  },
+  "step": {
+    "kind": "static"
+  },
+  "below": [],
+  "source": [
+    {
+      "external": "CIRISAI/CEWP docs/evidence/claims.js, claim layer-wm-presence (class MODEL, schema cewp-page-claims/v1)",
+      "edition": "commit 04e3b4b"
+    },
+    {
+      "external": "Source: U.S. Bureau of Labor Statistics, American Time Use Survey, 2003-2024 multi-year microdata files. A derived work; not endorsed by the Bureau. Via CIRISHolon PRESENCE-0."
+    },
+    {
+      "external": "CIRISAI/CEWP docs/layers/layers.js: CEWP_LAYERS wm-presence, from docs/geo/holon/presence0_us.json (ledger holon-presence0-us)",
+      "edition": "commit 04e3b4b"
+    },
+    {
+      "path": "conformance/scene/PRESENCE0_RESULTS.md",
+      "quote": "People are awake 15 hours a day, not 20; half the employed are at a workplace at the peak, not all",
+      "note": "the record, in this repository, of the table the card draws"
+    }
+  ],
+  "views": [
+    {
+      "id": "picture",
+      "reads": "what the layer draws on the twin's page",
+      "consumers": [
+        {
+          "id": "twin_page",
+          "kind": "renderer"
+        }
+      ]
+    }
+  ],
+  "certificate": {
+    "kind": "none"
+  },
+  "not_claimed": [
+    "The twin's ledger classes this claim MODEL. Here that is `catalogue`: a published table drawn as it is.",
+    "Nothing in this repository computes or checks it. Its standing is `rung` for want of a better word: a layer is not a scale.",
+    "The twin's page draws this layer with its own program, not with holon-draw.",
+    "The table was derived in this repository (the record cited by path). The card is declared from the twin's ledger; this declaration certifies nothing about the table."
+  ]
+}

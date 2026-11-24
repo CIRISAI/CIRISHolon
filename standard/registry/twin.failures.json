@@ -1,0 +1,42 @@
+{
+  "spec": "ciris/holon-decl/0",
+  "id": "twin.failures",
+  "name": "the twin's layer failures",
+  "plain": "Globe layer: one correlated outage on a generated 2,000-node world of twelve generated countries (a national shutdown, a nationwide ISP outage or a regional power failure), hour by hour from before onset to past recovery: which nodes are down because of it, which survivors stay on the mainland and which are cut off in islands, with a timeline of the counts.",
+  "status": "simulated",
+  "standing": "rung",
+  "carrier": {
+    "state": "failure.rs FAILURE_SPECS defaults (MODEL; power.tower_backup_h and world.reach_home_share FRONTIER): world.nodes set to 2,000, seed 2026; shutdown.median_h 48 h (full shutdown, cellular too) on the second most populous generated country; isp.median_h 4 h on the busiest fixed ISP of the most populous; view_demo's 12 h power failure with power.ramp_share 0.6; placement on the page's localities is display only"
+  },
+  "step": {
+    "kind": "computed",
+    "engine_external": "CIRISAI/CEWP at 04e3b4b: docs/layers/layers.js: CEWP_LAYERS failures; kernel-wasm views.rs view_failures(s) (slots 26-31); crates/cewp-sim/src/failure_view.rs failure_view, failure_view_scenario, metro_positions over crates/cewp-sim/src/failure.rs DomainWorld::build, evaluate, view_event_steps, view_event_components, view_demo; FSD/twin/failures.md"
+  },
+  "below": [],
+  "source": [
+    {
+      "external": "CIRISAI/CEWP docs/evidence/claims.js, claim layer-failures (class MODEL, schema cewp-page-claims/v1)",
+      "edition": "commit 04e3b4b"
+    }
+  ],
+  "views": [
+    {
+      "id": "picture",
+      "reads": "what the layer draws on the twin's page",
+      "consumers": [
+        {
+          "id": "twin_page",
+          "kind": "renderer"
+        }
+      ]
+    }
+  ],
+  "certificate": {
+    "kind": "none"
+  },
+  "not_claimed": [
+    "The twin's ledger classes this claim MODEL. Here that is `simulated`: the output of the twin's simulation over its own stated inputs, which are themselves MODEL.",
+    "Nothing in this repository computes or checks it. Its engine is the twin's, not held here, so this declaration waits. Its standing is `rung` for want of a better word: a layer is not a scale.",
+    "The twin's page draws this layer with its own program, not with holon-draw."
+  ]
+}

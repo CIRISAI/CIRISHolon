@@ -1,0 +1,37 @@
+{
+ "expect": [
+  "view_without_consumer"
+ ],
+ "declarations": [
+  {
+   "spec": "ciris/holon-decl/0",
+   "id": "v.base",
+   "name": "a vector",
+   "plain": "A declaration made to be checked.",
+   "status": "declared",
+   "standing": "rung",
+   "carrier": {
+    "state": "one number"
+   },
+   "step": {
+    "kind": "static"
+   },
+   "below": [],
+   "source": [
+    {
+     "path": "standard/vectors/fixture/record.txt"
+    }
+   ],
+   "views": [
+    {
+     "id": "reading",
+     "reads": "the number",
+     "consumers": []
+    }
+   ],
+   "certificate": {
+    "kind": "none"
+   }
+  }
+ ]
+}

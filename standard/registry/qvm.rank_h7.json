@@ -1,0 +1,34 @@
+{
+  "spec": "ciris/holon-decl/0",
+  "id": "qvm.rank_h7",
+  "name": "the stabilizer rank of seven magic states",
+  "plain": "An open question: how few Clifford pieces seven copies of the magic state need. Bracketed, not settled.",
+  "status": "measured",
+  "standing": "recorded",
+  "carrier": {
+    "state": "an open cell, `6 ≤ χ ≤ 9` (TIERS.md)"
+  },
+  "step": {
+    "kind": "measured"
+  },
+  "below": [],
+  "source": [
+    {
+      "path": "conformance/rank/QVM_RANK1_RESULTS.md",
+      "quote": "**none found** in 30.4 h of wall on seven cores"
+    }
+  ],
+  "views": [],
+  "certificate": {
+    "kind": "none"
+  },
+  "row": {
+    "path": "TIERS.md",
+    "quote": "no six-term witness in 30.4 h; no 3+3 or 2+4 split; a second class of six-copy decompositions found | RANK-1 (b) |"
+  },
+  "remainder": "open cell `6 ≤ χ ≤ 9`: no six-term witness in 30.4 h; no 3+3 or 2+4 split; a second class of six-copy decompositions found",
+  "not_claimed": [
+    "Not a view: a row of the table about an open number. What is measured is a search that found no witness.",
+    "TIERS.md §2: these 'are not tiers of matter'; they are the dictionary of views the dispatch searches."
+  ]
+}

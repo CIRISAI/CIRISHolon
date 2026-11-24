@@ -1,0 +1,31 @@
+{
+ "expect": [
+  "medium_without_view"
+ ],
+ "declarations": [
+  {
+   "spec": "ciris/holon-decl/0",
+   "id": "v.base",
+   "name": "a vector",
+   "plain": "A declaration made to be checked.",
+   "status": "declared",
+   "standing": "medium",
+   "carrier": {
+    "state": "one number"
+   },
+   "step": {
+    "kind": "static"
+   },
+   "below": [],
+   "source": [
+    {
+     "path": "standard/vectors/fixture/record.txt"
+    }
+   ],
+   "views": [],
+   "certificate": {
+    "kind": "none"
+   }
+  }
+ ]
+}

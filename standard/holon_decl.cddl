@@ -1,0 +1,101 @@
+; The holon declaration, version 0 (standard/HOLON-DECL.md, Section 3), as written in
+; standard/registry/*.json. Not a wire form: Section 9 of the document proposes one.
+; Phase A of the compiler (standard/tools/holonc.py) is written to this shape by hand; no CDDL tool has been run.
+; The closed vocabularies are restated for a reader; standard/vocabulary.json is the one copy.
+
+holon-decl = {
+  spec: "ciris/holon-decl/0",
+  id: holon-id,
+  name: text1,
+  plain: text1,
+  status: status,
+  standing: standing,
+  carrier: { state: text1, ? unit_log10_m: int },
+  step: step,
+  below: [* { id: holon-id, relation: relation, ? basis: reference }],
+  ? depicts: { id: holon-id },
+  ? parts: [+ { id: text1, what: text1, status: status, ? source: [+ reference] }],
+  ? source: [+ reference],
+  views: [* view],
+  ? regime: text1,
+  ? budget_window: [2*2 bound-number] / "not_measured",   ; low, high
+  ? row: { path: text1, quote: text1 },   ; a recorded row's: the words must occur in the file
+  ? remainder: text1,
+  certificate: certificate,
+  ? carried_by: text1,            ; a tier's: the id of a consumer of one of its views
+  ? tested_against: [+ text1],    ; a sector's: ids of consumers of its views
+  ? drops: [+ { what: text1, price: text1, ? closed: text1 }],
+  ? kill: { text: text1, stated_at: date },
+  ? draw: draw,
+  ? not_claimed: [+ text1],
+  ? owed: [+ text1],
+}
+
+text1 = tstr .regexp "[^\\n\\r]*[^ \\t\\r\\n][^\\n\\r]*"   ; one line, not only white space
+holon-id = tstr .regexp "[a-z][a-z0-9]*(_[a-z0-9]+)*(\\.[a-z][a-z0-9]*(_[a-z0-9]+)*)*"
+date = tstr .regexp "[0-9]{4}-[0-9]{2}-[0-9]{2}"
+sha256 = tstr .regexp "[0-9a-f]{64}"
+bound-number = (uint / float) .ge 0           ; finite
+
+status   = "simulated" / "measured" / "catalogue" / "declared" / "wager" / "illustration"
+standing = "tier" / "sector" / "rung" / "input" / "medium" / "recorded"
+relation = "function" / "shared_edge" / "theory_change" / "context"
+unit     = "px" / "level" / "relative" / "absolute" / "bits" / "seconds" / "metres" / "count"
+
+step = { kind: "computed" / "static" / "generated" / "measured" / "declared", ? engine: text1, ? engine_external: text1 }
+       ; phase B: a computed step names exactly one of the two, and no other kind names either
+
+reference = { path: text1, ? note: text1, ? quote: text1 } / { external: text1, ? edition: text1 }
+evidence  = { path: text1, ? sha256: sha256, ? quote: text1 } / { external: text1 } / { gate: text1 }
+
+view = { id: text1, reads: text1, consumers: [* consumer] }
+consumer = {
+  id: text1,
+  kind: "renderer" / "tier_above" / "law" / "person" / "verifier",
+  ? budget: { quantity: text1, bound: bound-number, unit: unit },
+  ? holon: holon-id,            ; a tier_above's: the declared holon that stands on this one
+  ? stated: reference,          ; a law's: where it is written
+}
+
+certificate = {
+  kind: "closure" / "scene" / "bound" / "none",
+  ? for: { view: text1, consumer: text1 },
+  ? bound: { value: number, unit: unit },   ; phase B: not below zero (bound_negative)
+  ? basis: "price" / "realised",
+  ? evidence: [* evidence],
+  ? parts: {
+    ? section_law: { evidence: [* evidence] },
+    ? transport_cost: { evidence: [* evidence], ? reference: { path: text1, sha256: sha256, frozen_at: date } },
+  },
+}
+
+draw = {
+  marks: [* mark],
+  label: text1,
+  ? join_below: join,
+  ? join_above: join,
+  ? fade_owed: text1,
+  ? rung: text1,                ; the name of a rung of the scale ladder
+  ? span_z: [2*2 number],        ; log10 metres per device pixel, finest then coarsest
+}
+mark = "quad" / "line" / "arc" / "disc" / "box" / "prism" / "sphere" / "rod" / "patch" / "glyph" / "run" / "image"
+join = "fade" / "cut" / "none"
+
+; Added 2026-11-23 (HOLON-DECL Section 4.8); phase A of the compiler holds the exact shape.
+; status   //= "proved" / "model_checked" / "case_checked" / "unchecked"
+; standing //= "function"
+; view     //= ( ? status: status, ? evidence: [+ evidence] )
+; consumer //= ( kind: "dependent", pin: text1 )
+; budget   //= { quantity: text1, agrees_with: text1, over: text1 }
+; evidence //= { digest: sha256, name: text1, ? repository: text1, ? commit: text1 }
+;           / { run: text1, inputs: [+ { digest: sha256, name: text1 }], printed: text1, ? repository: text1, ? commit: text1 }
+; holon-decl //= ( ? evidence: [+ evidence], ? plants: [+ { what: text1, planted: int, caught: int, ? evidence: [+ evidence] }] )
+
+; Changed 2026-11-23, after the third review (HOLON-DECL Sections 4.2, 4.5, 4.6.1, 4.6.2):
+; certificate.kind has no "price"; a price is a member of its own.
+; holon-decl //= ( ? price: { for: { view: text1, consumer: text1 }, value: number, ? se: bound-number, ? null: [+ number],
+;                             unit: unit, reads: "carried" / "dropped", evidence: [+ evidence] } )
+; consumer   //= ( kind: "target", stated: reference )
+; a quote is at least 30 characters (phase B: quote_fragment)
+; view     //= ( ? specification: { status: "proved" / "model_checked", states: text1, evidence: [+ evidence] } )
+; a run's inputs may also hold { tree: text1, repository: text1 }, a git commit id

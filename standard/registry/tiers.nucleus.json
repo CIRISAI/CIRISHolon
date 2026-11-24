@@ -1,0 +1,39 @@
+{
+  "spec": "ciris/holon-decl/0",
+  "id": "tiers.nucleus",
+  "name": "the nucleus",
+  "plain": "The nucleus, taken as given: its charge, mass, spin and charge radius are inputs, not derived from the tier below.",
+  "status": "declared",
+  "standing": "input",
+  "carrier": {
+    "state": "`Z`, mass, spin, charge radius (TIERS.md, carried)",
+    "unit_log10_m": -15
+  },
+  "step": {
+    "kind": "declared"
+  },
+  "below": [
+    {
+      "id": "tiers.fold",
+      "relation": "context"
+    }
+  ],
+  "source": [
+    {
+      "path": "TIERS.md",
+      "quote": "| **nucleus** | `Z`, mass, spin, charge radius | — | none measured; the fold's interior is the owed item | — | DECLARED input |"
+    }
+  ],
+  "views": [],
+  "certificate": {
+    "kind": "none"
+  },
+  "row": {
+    "path": "TIERS.md",
+    "quote": "| **nucleus** | `Z`, mass, spin, charge radius | — | none measured; the fold's interior is the owed item | — | DECLARED input |"
+  },
+  "remainder": "none measured; the fold's interior is the owed item",
+  "not_claimed": [
+    "Nothing here is derived from the fold below it."
+  ]
+}

@@ -1,0 +1,47 @@
+{
+ "expect": [
+  "certificate_unbound"
+ ],
+ "declarations": [
+  {
+   "spec": "ciris/holon-decl/0",
+   "id": "v.base",
+   "name": "a vector",
+   "plain": "A declaration made to be checked.",
+   "status": "measured",
+   "standing": "rung",
+   "carrier": {
+    "state": "one number"
+   },
+   "step": {
+    "kind": "static"
+   },
+   "below": [],
+   "source": [
+    {
+     "path": "standard/vectors/fixture/record.txt"
+    }
+   ],
+   "views": [],
+   "certificate": {
+    "kind": "bound",
+    "for": {
+     "view": "reading",
+     "consumer": "screen"
+    },
+    "bound": {
+     "value": 0.5,
+     "unit": "px"
+    },
+    "basis": "realised",
+    "evidence": [
+     {
+      "path": "standard/vectors/fixture/record.txt",
+      "sha256": "2ef465caa982d323351b90e6d501fb79375cb07fffddaa4326a062fce6f03c97"
+     }
+    ]
+   },
+   "regime": "the regime it was measured in"
+  }
+ ]
+}

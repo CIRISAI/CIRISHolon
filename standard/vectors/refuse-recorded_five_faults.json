@@ -1,0 +1,88 @@
+{
+  "expect": [
+    "evidence_not_found",
+    "price_unbound",
+    "quote_not_found",
+    "regime_missing",
+    "row_missing"
+  ],
+  "declarations": [
+    {
+      "spec": "ciris/holon-decl/0",
+      "id": "v.row",
+      "name": "a vector",
+      "plain": "A declaration made to be checked.",
+      "status": "measured",
+      "standing": "recorded",
+      "carrier": {
+        "state": "one number"
+      },
+      "step": {
+        "kind": "static"
+      },
+      "below": [],
+      "source": [
+        {
+          "path": "standard/vectors/fixture/record.txt",
+          "quote": "words that this fixture file does not hold at all"
+        }
+      ],
+      "views": [
+        {
+          "id": "reading",
+          "reads": "the number",
+          "consumers": [
+            {
+              "id": "screen",
+              "kind": "renderer",
+              "budget": {
+                "quantity": "position",
+                "bound": 1.0,
+                "unit": "px"
+              }
+            },
+            {
+              "id": "momentum",
+              "kind": "law",
+              "stated": {
+                "path": "standard/vectors/fixture/law.txt"
+              },
+              "budget": {
+                "quantity": "defect",
+                "bound": 0.05,
+                "unit": "relative"
+              }
+            }
+          ]
+        }
+      ],
+      "certificate": {
+        "kind": "none"
+      },
+      "budget_window": "not_measured",
+      "remainder": "what it owes upward, in words",
+      "drops": [
+        {
+          "what": "a part",
+          "price": "a price",
+          "closed": "more closed than the object"
+        }
+      ],
+      "price": {
+        "for": {
+          "view": "reading",
+          "consumer": "nobody"
+        },
+        "value": 0.0,
+        "unit": "relative",
+        "reads": "dropped",
+        "evidence": [
+          {
+            "path": "standard/vectors/fixture/absent.txt",
+            "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+          }
+        ]
+      }
+    }
+  ]
+}

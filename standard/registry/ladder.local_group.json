@@ -1,0 +1,70 @@
+{
+  "spec": "ciris/holon-decl/0",
+  "id": "ladder.local_group",
+  "name": "the Local Group",
+  "plain": "The Milky Way, Andromeda (2.5 million light years away), Triangulum and the two Magellanic Clouds, each a drawing at its measured place, distance and rough size (galactic coordinates from NED, rounded); the tilt of each disc is chosen, not measured. Once they are specks the measured ones wear a thin ring. The galaxies and small groups beyond are scattered by rule, none of them a real one, except that the Virgo cluster is put at its measured direction and distance (54 million light years).",
+  "status": "illustration",
+  "standing": "rung",
+  "carrier": {
+    "state": "five galaxies, each a drawing at its measured place and rough size, and a field scattered by rule",
+    "unit_log10_m": 21
+  },
+  "step": {
+    "kind": "generated"
+  },
+  "below": [
+    {
+      "id": "ladder.milky_way",
+      "relation": "shared_edge",
+      "basis": {
+        "path": "engine/crates/holon-draw-ladder/src/scenes/cosmos.rs",
+        "note": "its Milky Way is spiral(0x4d57, 1300) and the rung below draws spiral(0x4d57, 3800): one seed, a sequential generator, so this rung's Milky Way is the first 1300 points of the finer one, at the same metres. That PART is a function of the rung below; the other galaxies and the field are this rung's own, so the rung as a whole is not."
+      }
+    }
+  ],
+  "parts": [
+    {
+      "id": "places",
+      "what": "each galaxy's direction, distance and rough size; the Virgo cluster's direction and distance",
+      "status": "catalogue",
+      "source": [
+        {
+          "external": "NASA/IPAC Extragalactic Database (NED), galactic coordinates, rounded"
+        }
+      ]
+    }
+  ],
+  "views": [
+    {
+      "id": "picture",
+      "reads": "the rung's marks at the zoom's metres per pixel",
+      "consumers": [
+        {
+          "id": "holon_draw",
+          "kind": "renderer",
+          "budget": {
+            "quantity": "what drawing a tile coarse may move against drawing it fine: the draw allocator's tolerance (Acuity, eps_px). It is not a bound on the picture's faithfulness to the holon.",
+            "bound": 1.0,
+            "unit": "px"
+          }
+        }
+      ]
+    }
+  ],
+  "certificate": {
+    "kind": "none"
+  },
+  "draw": {
+    "rung": "the Local Group",
+    "marks": [
+      "line"
+    ],
+    "span_z": [
+      18.5,
+      21.0
+    ],
+    "join_below": "fade",
+    "join_above": "fade",
+    "label": "illustration, not computed"
+  }
+}

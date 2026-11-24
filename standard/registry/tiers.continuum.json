@@ -1,0 +1,39 @@
+{
+  "spec": "ciris/holon-decl/0",
+  "id": "tiers.continuum",
+  "name": "the continuum, or the cube",
+  "plain": "The liquid as hydrodynamic fields. Its viscosity was read once from a driven shear; the cube's own dynamics are fenced, not measured.",
+  "status": "measured",
+  "standing": "recorded",
+  "carrier": {
+    "state": "the hydrodynamic fields (TIERS.md, carried)"
+  },
+  "step": {
+    "kind": "measured"
+  },
+  "below": [
+    {
+      "id": "tiers.fluid_element",
+      "relation": "context"
+    }
+  ],
+  "source": [
+    {
+      "path": "conformance/water_observatory/RESPONSE1_RESULTS.md",
+      "quote": "`η(0.27 Å⁻¹) = 4.4 × 10⁻⁴`, spread `[3.9, 5.0]`, overdamped on every seed"
+    }
+  ],
+  "views": [],
+  "certificate": {
+    "kind": "none"
+  },
+  "row": {
+    "path": "TIERS.md",
+    "quote": "MEASURED once (RESPONSE-1 R3); the cube's dynamics FENCED"
+  },
+  "remainder": "textbook; the viscosity as the driven mode's rent",
+  "not_claimed": [
+    "One reading. TIERS.md: 'MEASURED once', and the cube's dynamics are FENCED.",
+    "Nothing here is derived from the fluid element by a checked relation: `below` is context."
+  ]
+}

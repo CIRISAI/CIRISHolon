@@ -1,0 +1,42 @@
+{
+  "spec": "ciris/holon-decl/0",
+  "id": "twin.people",
+  "name": "the twin's layer people",
+  "plain": "Globe layer: localities sized by the week-intensity multiplier at the simulation's hour of week, the strongest cross-locality ties, and the week's synchronized events (flash crowd first).",
+  "status": "simulated",
+  "standing": "rung",
+  "carrier": {
+    "state": "people ActivityParams (MODEL); locality centroids and weights DERIVED from the population grid; synchronized-event inputs FRONTIER"
+  },
+  "step": {
+    "kind": "computed",
+    "engine_external": "CIRISAI/CEWP at 04e3b4b: docs/layers/layers.js: CEWP_LAYERS people; kernel-wasm views.rs view_people; crates/cewp-sim/src/people_hooks.rs people_view_localities, people_view_week, people_view_ties, people_view_flash over GLOBE_PERSONS = 6000 generated persons; FSD/twin/people.md"
+  },
+  "below": [],
+  "source": [
+    {
+      "external": "CIRISAI/CEWP docs/evidence/claims.js, claim layer-people (class MODEL, schema cewp-page-claims/v1)",
+      "edition": "commit 04e3b4b"
+    }
+  ],
+  "views": [
+    {
+      "id": "picture",
+      "reads": "what the layer draws on the twin's page",
+      "consumers": [
+        {
+          "id": "twin_page",
+          "kind": "renderer"
+        }
+      ]
+    }
+  ],
+  "certificate": {
+    "kind": "none"
+  },
+  "not_claimed": [
+    "The twin's ledger classes this claim MODEL. Here that is `simulated`: the output of the twin's simulation over its own stated inputs, which are themselves MODEL.",
+    "Nothing in this repository computes or checks it. Its engine is the twin's, not held here, so this declaration waits. Its standing is `rung` for want of a better word: a layer is not a scale.",
+    "The twin's page draws this layer with its own program, not with holon-draw."
+  ]
+}

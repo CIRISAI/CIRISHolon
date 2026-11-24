@@ -1,0 +1,34 @@
+{
+  "spec": "ciris/holon-decl/0",
+  "id": "qvm.dense",
+  "name": "the dense statevector",
+  "plain": "The whole quantum state written out, for circuits small enough. The referee the other views are checked against.",
+  "status": "declared",
+  "standing": "recorded",
+  "carrier": {
+    "state": "closed on `n ≤ 24` (TIERS.md)"
+  },
+  "step": {
+    "kind": "declared"
+  },
+  "below": [],
+  "source": [
+    {
+      "path": "TIERS.md",
+      "quote": "| dense | `n ≤ 24` | none | referee |"
+    }
+  ],
+  "views": [],
+  "certificate": {
+    "kind": "none"
+  },
+  "row": {
+    "path": "TIERS.md",
+    "quote": "| dense | `n ≤ 24` | none | referee |"
+  },
+  "remainder": "none",
+  "not_claimed": [
+    "'referee' is the row's word. The row cites no record.",
+    "TIERS.md §2: these 'are not tiers of matter'; they are the dictionary of views the dispatch searches."
+  ]
+}

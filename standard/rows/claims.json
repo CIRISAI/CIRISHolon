@@ -1,0 +1,216 @@
+{
+ "says": "PROTOTYPE of holon:claim payloads (wire leaf holon:claim:v1). Unsigned, unencoded, no signer. Each entry is what a signer would say in one scores row: 'the checks of the declaration's spec held for this claim over these digests'. It does not say the evidence supports the claim. For a price, score 1 says the reading the declaration states (carried or dropped) is what the numbers give. bound and realised are [exponent, mantissa]. A price's standard error and null, the budget, and all prose stay in the declaration. An exact-agreement claim carries no body.",
+ "realised": "bound is the bound the claim certifies, the number a reader compares with the consumer's budget; realised is the cost measured on the run cited. In this format a realised certificate has one number, so both carry it (the Constitution session's reading, CIRISAI/CIRISConstitution#215). The budget is never in a row.",
+ "names": {
+  "00766a70555d09a5a6717cd5f5aacd40ce4de2557e02100ccf23bd1bcb4cb24e": "standard/registry/sandbox.grain.json",
+  "0c8b65e9b600748b6363bf7296723236fa6817daccc7c9eee73ed828cec2db18": "conformance/replace1/OBJECTIVE1_RESULTS.md",
+  "15bf5e92676260b27a8ece683555e77a3dd65672e844589d949a8dde299dd1e9": "conformance/water_observatory/SLOW2_RESULTS.md",
+  "1baa524a40fb95e787ebc32112d53d9362f526e810f0be7f19e1b5d205b6f50e": "standard/registry/twin.wm_uneven.json",
+  "1beacfab3d76cf70518e8ab1fe1a8a439e27db351b54d6157bf3ddd29682f9b6": "conformance/replace1/REPLACE1_RESULTS.md",
+  "1bf3457e137d8d4e0fc4fc249290e97f564c0fa023ba8cf2a36a7a4cc7e6ec1a": "standard/registry/tiers.chemistry.json",
+  "221fab1dcf0700c00d7869a5151f9002f78c2351c6d652011c1d7a2a59f4730f": "standard/registry/tiers.nucleus.json",
+  "2c318ee269100e5857f258815a043fd863b594c7b3270de86db4a944ae494366": "standard/registry/sandbox.gauge.json",
+  "2ff52ea6178376a0a0340b65103a62979c8ad76695786da023ef804d308e11f0": "standard/registry/tiers.molecule.json",
+  "375782eb1f485ddf0c41374640032ae28dc566a196dc9fe51349d8b3f1170aed": "standard/registry/qvm.rank_h7.json",
+  "38ba2589da93d3954b642fa0f6c8afb95c6126e9a2c3b9450fbcca631bf2b6bc": "standard/vocabulary.json",
+  "3a293fe768f05d09fe4f45d193a321d44c14020da09497e13b2bcf1f98d47e0e": "standard/registry/ladder.sea.json",
+  "3ff919de07e664ae6ab0421cbbef5d874b20afc95e5683ef66d211eda6695ebf": "standard/registry/ladder.solar_system.json",
+  "406ddf2df4998ee106aa2126ab179e9ba2e0e368219b5b282435ea07b0eeb184": "standard/registry/sandbox.cosmic.json",
+  "43cac1eb1edc16c7dc6eafa6b6f1307ac4256e376dddbe49895de221e4c34eed": "standard/registry/qvm.bit_planes.json",
+  "470647cbee5d7f3eb7e981e20ae39f0420417574a6a530e0607a68943b012dea": "standard/registry/sandbox.crystal.json",
+  "472915dffdb86fd270993a0dc5128f5d20e89998bff57bc9e02f5183b0d6799b": "standard/registry/qvm.tableau.json",
+  "4a3a28d0732d3f651d32e8495f8b245c5b33920ea814b534954d7ed071e03872": "standard/registry/reasoning.eleven_plus_one.json",
+  "4c8e95834171724c48d634c9a37e294e03b400a1fb4669f9f418216fbeadc92b": "standard/registry/twin.wm_presence.json",
+  "51f4a18f40530ee319bfdf24fc9f3a4dafe04a99c80f6f549de7b535acdb1ccd": "conformance/water_observatory/RESPONSE1_RESULTS.md",
+  "55efd5dc8c4240ebab9de3861d4e04119fdca8df937df7fa181b8b35729dd2f0": "standard/registry/qvm.rank_sum.json",
+  "566298919556991083fd98fa28de36b30472febf01b7c2ae735f1eb3cd585ad1": "standard/registry/sectors.order_parameter.json",
+  "63b8bceeb04d0b5b74da6d0f4abd085e57927e34ee005e6bc4eeb573475f85d9": "standard/registry/twin.ocean_and_atmosphere.json",
+  "64db8f000cb1d1980bacf0f471cb2223193577a2d44c8f26673b6e02ef0e9c6d": "standard/registry/tiers.fluid_element.json",
+  "6681644f8914e5ac6cf4d0fd713e5a4cc1e837b9e714d53e7be0aafe63c7da95": "standard/registry/sandbox.landscape.json",
+  "6a7d1e47662e0e3e916113f759fe67f625fbc52063134a3e0a8c31595b62490f": "standard/tools/holonc.py",
+  "6b99434088892dc91b9bd66407dedcb014c0b8aa5c5f8667da2cf30c6acd43a6": "standard/registry/ladder.local_group.json",
+  "73fa3a5e627923172a73987b4062cdd3f25ee90925b91c06e453f6b947c55eee": "standard/registry/twin.wm_power.json",
+  "769aa2d0cd67ff55de5ea62dad2924b73d0aef164215bbafa2f4a6e2961bfa2b": "standard/registry/sectors.slow_shell_coordinate.json",
+  "7a9cac0a4917acd218f4e9046271dcdfe0e17b944d0bde71baff54b5cb4de29e": "standard/registry/tiers.continuum.json",
+  "82f9b1d7176130ee6680031c8bd655a9d8716f8d6db5d7b8c38186b018ee5d7d": "standard/registry/qvm.dispatch.json",
+  "882391f5d4eaa462b8547dde815832e556502ea970e32873c79d226e6e1a45bb": "standard/registry/ladder.water.json",
+  "927c0864d51fd65e7e314ebd551ed0fa301dc5f8dcc464bf1df5d49340b58702": "standard/registry/reasoning.chains.json",
+  "9c40d2533122354dd00575d6eb81c151073ff3d2b8de7c406a2b41433148e674": "standard/registry/qvm.mps.json",
+  "9c42bdea8024e8906acddd740f0d3377aff18ae5756743c97a94aeebfedeff89": "standard/registry/ladder.milky_way.json",
+  "a17e5a0f440f58aeef02076817f6f4e99a7bec436d48b0317fc67901555b1bd8": "standard/registry/sectors.hbond_network.json",
+  "a273abb52ca533b6d1898f551176eb60dd424b14bdbae6a246b6e30e61dd6f00": "standard/registry/ladder.drop.json",
+  "a6b44990fc8da4e711d27a31fc8a80bcaf94c19de97764f449a927f00cc8e05f": "standard/registry/cosmos.ledger_wager.json",
+  "a71c2f570c5b5fbe7bb709551fbf078e10ae0231c49bf8badc7cdfd7a671dc1e": "standard/registry/sandbox.sandbox.json",
+  "aebf5bb55d1fcae74d0962078d8fa2757b4e7cb07a2992f59e33d99c4e08186c": "standard/registry/ladder.nucleus.json",
+  "c5c4d3628958f81f5ba9b0ff6747caabc99be02daa8043ed47c1e32e0363caff": "standard/registry/ladder.ground.json",
+  "d37a21633b72e6d1cc4073b98cea037e11073b2b75153f7d8988d1eb9d401ba5": "standard/registry/air.json",
+  "d5713843271c6fc7674d8b9a7999676ab0e8ce809157832a05defba0ebf15902": "standard/registry/ladder.baryon.json",
+  "d8d25abb628558c52596de2bdac38e33bd35a28dc82c1cd0f15b82d8add9a3f4": "standard/registry/tiers.fold.json",
+  "d982fbd834890b4b82a04dfe33426de9497233d2fa03877e659b48e74e4bc5c0": "standard/registry/ladder.earth_moon.json",
+  "da05498a1b8de9c6316ce2948ce0e8c9f087b4f97a6103d536b950b9f9f864b1": "standard/registry/ladder.atoms.json",
+  "e0b3980b8637cffa037dac90016cca50a35e4eb864fa59f48f3df71c64fa37f6": "standard/registry/ladder.cosmic_web.json",
+  "e4e6164563602180a420b76b55c2024491c42ccc568462e338e1394e527e6205": "standard/registry/ladder.neighbourhood.json",
+  "eb96444885ba83218108f34b997973641a207f4ab1a16bbcd23a09ec84eb8692": "standard/registry/qvm.dense.json",
+  "ec4b72cd9b79ec5bc2431ce2c344bd927d3014c135911cc27942ca210949753b": "standard/registry/sandbox.planet.json",
+  "f275f72e73d4692ecc15c840307fa8e98371b28fb9c4f7ea40d1f9563404c435": "standard/registry/twin.wm_household.json",
+  "f6aef8612d6f8ec57a00a7adfa8a2868af5895983a059196e1dc59a30c1f2ebd": "conformance/water_observatory/TSCAN_HBOND_SEARCH_RESULTS.md",
+  "fdf3cb700e476d6d24c4cc35d3782388c2d43d39670f30c3ee8af482ac6ebd16": "standard/registry/sandbox.galactic.json"
+ },
+ "claims": [
+  {
+   "family": "holon:claim",
+   "spec": "ciris/holon-decl/0",
+   "holon": "sectors.hbond_network",
+   "view": "bond_counts",
+   "consumer": "own_block",
+   "kind": "closure",
+   "score": 1,
+   "declaration": "a17e5a0f440f58aeef02076817f6f4e99a7bec436d48b0317fc67901555b1bd8",
+   "evidence_refs": [
+    "38ba2589da93d3954b642fa0f6c8afb95c6126e9a2c3b9450fbcca631bf2b6bc",
+    "6a7d1e47662e0e3e916113f759fe67f625fbc52063134a3e0a8c31595b62490f",
+    "a17e5a0f440f58aeef02076817f6f4e99a7bec436d48b0317fc67901555b1bd8",
+    "f6aef8612d6f8ec57a00a7adfa8a2868af5895983a059196e1dc59a30c1f2ebd"
+   ],
+   "body": {
+    "bound": [
+     -3,
+     7
+    ],
+    "unit": "relative",
+    "basis": "realised",
+    "realised": [
+     -3,
+     7
+    ]
+   }
+  },
+  {
+   "family": "holon:claim",
+   "spec": "ciris/holon-decl/0",
+   "holon": "sectors.hbond_network",
+   "view": "bond_counts",
+   "consumer": "momentum_law_50fs",
+   "kind": "price",
+   "score": 1,
+   "declaration": "a17e5a0f440f58aeef02076817f6f4e99a7bec436d48b0317fc67901555b1bd8",
+   "evidence_refs": [
+    "1beacfab3d76cf70518e8ab1fe1a8a439e27db351b54d6157bf3ddd29682f9b6",
+    "38ba2589da93d3954b642fa0f6c8afb95c6126e9a2c3b9450fbcca631bf2b6bc",
+    "6a7d1e47662e0e3e916113f759fe67f625fbc52063134a3e0a8c31595b62490f",
+    "a17e5a0f440f58aeef02076817f6f4e99a7bec436d48b0317fc67901555b1bd8",
+    "f6aef8612d6f8ec57a00a7adfa8a2868af5895983a059196e1dc59a30c1f2ebd"
+   ],
+   "body": {
+    "bound": [
+     0,
+     0
+    ],
+    "unit": "relative",
+    "basis": "price"
+   }
+  },
+  {
+   "family": "holon:claim",
+   "spec": "ciris/holon-decl/0",
+   "holon": "sectors.order_parameter",
+   "view": "order_field",
+   "consumer": "density_and_current",
+   "kind": "price",
+   "score": 1,
+   "declaration": "566298919556991083fd98fa28de36b30472febf01b7c2ae735f1eb3cd585ad1",
+   "evidence_refs": [
+    "1beacfab3d76cf70518e8ab1fe1a8a439e27db351b54d6157bf3ddd29682f9b6",
+    "38ba2589da93d3954b642fa0f6c8afb95c6126e9a2c3b9450fbcca631bf2b6bc",
+    "566298919556991083fd98fa28de36b30472febf01b7c2ae735f1eb3cd585ad1",
+    "6a7d1e47662e0e3e916113f759fe67f625fbc52063134a3e0a8c31595b62490f"
+   ],
+   "body": {
+    "bound": [
+     -4,
+     -7
+    ],
+    "unit": "relative",
+    "basis": "price"
+   }
+  },
+  {
+   "family": "holon:claim",
+   "spec": "ciris/holon-decl/0",
+   "holon": "sectors.slow_shell_coordinate",
+   "view": "learned_coordinate",
+   "consumer": "beyond_velocity_and_q",
+   "kind": "price",
+   "score": 1,
+   "declaration": "769aa2d0cd67ff55de5ea62dad2924b73d0aef164215bbafa2f4a6e2961bfa2b",
+   "evidence_refs": [
+    "15bf5e92676260b27a8ece683555e77a3dd65672e844589d949a8dde299dd1e9",
+    "38ba2589da93d3954b642fa0f6c8afb95c6126e9a2c3b9450fbcca631bf2b6bc",
+    "6a7d1e47662e0e3e916113f759fe67f625fbc52063134a3e0a8c31595b62490f",
+    "769aa2d0cd67ff55de5ea62dad2924b73d0aef164215bbafa2f4a6e2961bfa2b"
+   ],
+   "body": {
+    "bound": [
+     -4,
+     128
+    ],
+    "unit": "relative",
+    "basis": "price"
+   }
+  },
+  {
+   "family": "holon:claim",
+   "spec": "ciris/holon-decl/0",
+   "holon": "tiers.fluid_element",
+   "view": "staggered_chart",
+   "consumer": "continuity",
+   "kind": "closure",
+   "score": 1,
+   "declaration": "64db8f000cb1d1980bacf0f471cb2223193577a2d44c8f26673b6e02ef0e9c6d",
+   "evidence_refs": [
+    "1beacfab3d76cf70518e8ab1fe1a8a439e27db351b54d6157bf3ddd29682f9b6",
+    "38ba2589da93d3954b642fa0f6c8afb95c6126e9a2c3b9450fbcca631bf2b6bc",
+    "51f4a18f40530ee319bfdf24fc9f3a4dafe04a99c80f6f549de7b535acdb1ccd",
+    "64db8f000cb1d1980bacf0f471cb2223193577a2d44c8f26673b6e02ef0e9c6d",
+    "6a7d1e47662e0e3e916113f759fe67f625fbc52063134a3e0a8c31595b62490f"
+   ],
+   "body": {
+    "bound": [
+     -2,
+     18
+    ],
+    "unit": "relative",
+    "basis": "realised",
+    "realised": [
+     -2,
+     18
+    ]
+   }
+  },
+  {
+   "family": "holon:claim",
+   "spec": "ciris/holon-decl/0",
+   "holon": "tiers.fluid_element",
+   "view": "hydrodynamic_block",
+   "consumer": "own_next_state",
+   "kind": "price",
+   "score": 1,
+   "declaration": "64db8f000cb1d1980bacf0f471cb2223193577a2d44c8f26673b6e02ef0e9c6d",
+   "evidence_refs": [
+    "0c8b65e9b600748b6363bf7296723236fa6817daccc7c9eee73ed828cec2db18",
+    "1beacfab3d76cf70518e8ab1fe1a8a439e27db351b54d6157bf3ddd29682f9b6",
+    "38ba2589da93d3954b642fa0f6c8afb95c6126e9a2c3b9450fbcca631bf2b6bc",
+    "64db8f000cb1d1980bacf0f471cb2223193577a2d44c8f26673b6e02ef0e9c6d",
+    "6a7d1e47662e0e3e916113f759fe67f625fbc52063134a3e0a8c31595b62490f"
+   ],
+   "body": {
+    "bound": [
+     -3,
+     39
+    ],
+    "unit": "relative",
+    "basis": "price"
+   }
+  }
+ ]
+}

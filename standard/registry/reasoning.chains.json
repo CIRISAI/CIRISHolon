@@ -1,0 +1,43 @@
+{
+  "spec": "ciris/holon-decl/0",
+  "id": "reasoning.chains",
+  "name": "reasoning chains",
+  "plain": "Chains of an agent's reasoning steps, 444 parent-to-child transitions. The one tier whose carried sector is not a conservation law, and only narrowly carried.",
+  "status": "measured",
+  "standing": "recorded",
+  "carrier": {
+    "state": "depth, tokens, the action; the conscience sector (TIERS.md, carried)"
+  },
+  "step": {
+    "kind": "measured"
+  },
+  "below": [],
+  "source": [
+    {
+      "path": "conformance/reasoning/REASON_SEARCH0_RESULTS.md",
+      "quote": "| S3 the DMA sector is closed above its null by `≥ 3×` | **MET, `8.9×`** |"
+    },
+    {
+      "path": "conformance/replace1/REPLACE1_RESULTS.md",
+      "quote": "conscience block **`+0.0164 ± 0.0081`** (null `−0.0013`)"
+    },
+    {
+      "path": "conformance/replace1/OBJECTIVE1_RESULTS.md",
+      "quote": "`β 0.005 {DMA, proc}`, `0.01 {DMA, proc}`, `0.02 {proc}`"
+    }
+  ],
+  "views": [],
+  "certificate": {
+    "kind": "none"
+  },
+  "row": {
+    "path": "TIERS.md",
+    "quote": "MEASURED (`REASON_SEARCH0_RESULTS.md` under Amendment 1; REPLACE-1; OBJECTIVE-1 Q3)"
+  },
+  "remainder": "not stated in the row",
+  "not_claimed": [
+    "Not declared a `tier` with a price certificate, because the carried set depends on the budget: the conscience (DMA) block is kept at β of 0.005 and 0.01 and dropped at 0.02. TIERS.md: 'its price is one SE from its null', 'level-RELATIVE'.",
+    "REPLACE-1 G3b, by the marginal rule, DROPPED the block and was killed; under Amendment 1 it survives and misses its `≥ 0.02` bar.",
+    "A price, not a realised cost. On a language model, price and realised cost parted in both directions (TIERS.md §0, CORRECTION 2026-11-15)."
+  ]
+}

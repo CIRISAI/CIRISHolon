@@ -1,0 +1,32 @@
+{
+  "spec": "ciris/holon-decl/0",
+  "id": "sandbox.gauge",
+  "name": "the sandbox's gauge tier",
+  "plain": "One square of the vacuum's own bookkeeping: four links carrying electric flux, and a rule for how much may meet at a corner.",
+  "status": "simulated",
+  "standing": "rung",
+  "carrier": {
+    "state": "a quadtree of holons over a square domain; the terminal holon is one oriented link. Evaluator: GaugePlaquette, the one-plaquette U(1) quantum link, exact finite algebra"
+  },
+  "step": {
+    "kind": "computed",
+    "engine": "engine/crates/holon-sandbox/src/tier.rs"
+  },
+  "below": [],
+  "source": [
+    {
+      "path": "engine/crates/holon-sandbox/src/tier.rs",
+      "quote": "One square of the vacuum's own bookkeeping: four links carrying",
+      "note": "the tier's own plain line in the code's table"
+    }
+  ],
+  "views": [],
+  "certificate": {
+    "kind": "none"
+  },
+  "not_claimed": [
+    "The code calls this a tier of its zoom ladder. No closure or carriage is certified in this format, so its standing here is `rung`.",
+    "Nothing relates this tier to the one below it beyond the ladder's order: `below` is context.",
+    "Its grain constant is not a length: `g0_m` is NaN in the code, 'saying otherwise would invent a number'."
+  ]
+}

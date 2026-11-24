@@ -1,0 +1,34 @@
+{
+  "spec": "ciris/holon-decl/0",
+  "id": "qvm.tableau",
+  "name": "the stabilizer tableau",
+  "plain": "A circuit of Clifford gates carried exactly as a table of signs.",
+  "status": "measured",
+  "standing": "recorded",
+  "carrier": {
+    "state": "closed on Clifford motions (`tableau_closed_under_hadamard`) (TIERS.md)"
+  },
+  "step": {
+    "kind": "measured"
+  },
+  "below": [],
+  "source": [
+    {
+      "path": "conformance/bigqvm/MESH_CLIFFORD_RESULTS.md",
+      "quote": "`d = 221`, `S = 8` reads `25.35` s against `31.08` s at `S = 1` (`0.82 ×`) and `35.78` s for stim"
+    }
+  ],
+  "views": [],
+  "certificate": {
+    "kind": "none"
+  },
+  "row": {
+    "path": "TIERS.md",
+    "quote": "BANKED; parity with stim on one core at `d = 221`"
+  },
+  "remainder": "the T-gates in the light cone, `expected_branches(t_eff)`: exact, printed before the run",
+  "not_claimed": [
+    "TIERS.md's row names no record for 'parity with stim on one core at `d = 221`'. The numbers are in MESH_CLIFFORD_RESULTS.md, quoted in `source`: `31.08` s on one shard against stim's `35.78` s (citation note of 2026-11-23 in TIERS.md). In that record G3, the stake that the column-sharded cut pays, was KILLED: 'the cut is correct and does not pay on this box'.",
+    "TIERS.md §2: these 'are not tiers of matter'; they are the dictionary of views the dispatch searches."
+  ]
+}

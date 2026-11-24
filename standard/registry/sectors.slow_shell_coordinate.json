@@ -1,0 +1,82 @@
+{
+  "spec": "ciris/holon-decl/0",
+  "id": "sectors.slow_shell_coordinate",
+  "name": "the VAMPnet's slow shell-geometry coordinate",
+  "plain": "A slow coordinate of a molecule's shell of neighbours that a learned search found. It carries a sliver more than the hand-made order parameter, under the bar SLOW-2 set for it.",
+  "status": "measured",
+  "standing": "recorded",
+  "carrier": {
+    "state": "the first learned coordinate of the VAMPnet dictionary (arm D)"
+  },
+  "step": {
+    "kind": "measured"
+  },
+  "below": [
+    {
+      "id": "tiers.molecule",
+      "relation": "function",
+      "basis": {
+        "path": "conformance/water_observatory/SLOW2_RESULTS.md",
+        "quote": "Sixty per cent of D's leading slow function is therefore nonlinear shell geometry",
+        "note": "the coordinate is a learned function of the geometry of a molecule's shell of neighbours"
+      }
+    }
+  ],
+  "source": [
+    {
+      "path": "conformance/water_observatory/SLOW2_RESULTS.md",
+      "quote": "| D VAMPnet | **0.498** | +0.0428 | **+0.0128** [+0.0121, +0.0139]"
+    }
+  ],
+  "views": [
+    {
+      "id": "learned_coordinate",
+      "reads": "the VAMPnet's first coordinate, per molecule",
+      "consumers": [
+        {
+          "id": "beyond_velocity_and_q",
+          "kind": "target",
+          "stated": {
+            "path": "conformance/water_observatory/SLOW2_RESULTS.md",
+            "quote": "the best of D/E/F: ≥ +0.02 beyond velocity and q on HELD-OUT, PS-2 ≤ 0.01"
+          },
+          "budget": {
+            "quantity": "the held-out R² a learned dictionary adds beyond velocity and q; the bar is SLOW-2's own stake C2, `≥ +0.02`. A stake's bar, not a law and not the removability gate's budget",
+            "bound": 0.02,
+            "unit": "relative"
+          }
+        }
+      ]
+    }
+  ],
+  "regime": "SLOW-1's walks: the rigid operator, 250 waters, 50 ps at 20 fs; trained on 293 K seeds 0 and 1, read on held-out seed 2",
+  "row": {
+    "path": "TIERS.md",
+    "quote": "| the VAMPnet's slow shell-geometry coordinate | yes, slower than q (`0.50` vs `0.33`) | a sliver, `+0.013` beyond q, under the bar | an uncarried sector |"
+  },
+  "not_claimed": [
+    "NOT declared a sector. A sector owes a closure certificate, and SLOW-2 staked none for this coordinate: 'slower than q' is its own `σ₁` of `0.498` against `0.331` at 1 ps, with no bar. TIERS.md rounds these to `0.50` and `0.33`.",
+    "'Not carried' means under SLOW-2's chosen bar: `+0.0128`, interval `[+0.0121, +0.0139]`, against C2's `≥ +0.02`. The record gives an interval over training seeds and no standard error, so none is declared.",
+    "This increment was read by SLOW-2's own held-out search, not by the removability gate.",
+    "One held-out seed."
+  ],
+  "certificate": {
+    "kind": "none"
+  },
+  "price": {
+    "for": {
+      "view": "learned_coordinate",
+      "consumer": "beyond_velocity_and_q"
+    },
+    "value": 0.0128,
+    "unit": "relative",
+    "reads": "dropped",
+    "evidence": [
+      {
+        "path": "conformance/water_observatory/SLOW2_RESULTS.md",
+        "sha256": "15bf5e92676260b27a8ece683555e77a3dd65672e844589d949a8dde299dd1e9",
+        "quote": "best is **D (VAMPnet): +0.0128** [+0.0121, +0.0139]; PS-2 −0.0005; 400 K +0.0007"
+      }
+    ]
+  }
+}

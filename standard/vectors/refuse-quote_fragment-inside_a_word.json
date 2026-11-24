@@ -1,0 +1,73 @@
+{
+  "expect": [
+    "quote_fragment"
+  ],
+  "declarations": [
+    {
+      "spec": "ciris/holon-decl/0",
+      "id": "v.row",
+      "name": "a vector",
+      "plain": "A declaration made to be checked.",
+      "status": "measured",
+      "standing": "recorded",
+      "carrier": {
+        "state": "one number"
+      },
+      "step": {
+        "kind": "static"
+      },
+      "below": [],
+      "source": [
+        {
+          "path": "standard/vectors/fixture/record.txt",
+          "quote": "fixture for the known-answer vectors of the holon declaratio"
+        }
+      ],
+      "views": [
+        {
+          "id": "reading",
+          "reads": "the number",
+          "consumers": [
+            {
+              "id": "screen",
+              "kind": "renderer",
+              "budget": {
+                "quantity": "position",
+                "bound": 1.0,
+                "unit": "px"
+              }
+            },
+            {
+              "id": "momentum",
+              "kind": "law",
+              "stated": {
+                "path": "standard/vectors/fixture/law.txt"
+              },
+              "budget": {
+                "quantity": "defect",
+                "bound": 0.05,
+                "unit": "relative"
+              }
+            }
+          ]
+        }
+      ],
+      "certificate": {
+        "kind": "none"
+      },
+      "row": {
+        "path": "standard/vectors/fixture/law.txt",
+        "quote": "A fixture standing in for a file where a law is stated. It states no law."
+      },
+      "budget_window": "not_measured",
+      "remainder": "what it owes upward, in words",
+      "drops": [
+        {
+          "what": "a part",
+          "price": "a price",
+          "closed": "more closed than the object"
+        }
+      ]
+    }
+  ]
+}

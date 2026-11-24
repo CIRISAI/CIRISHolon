@@ -1,0 +1,229 @@
+{
+  "expect": [
+    "below_unresolved",
+    "id_duplicate"
+  ],
+  "declarations": [
+    {
+      "spec": "ciris/holon-decl/0",
+      "id": "v.dup",
+      "name": "the air",
+      "plain": "The atmosphere as a holon: a column of gas whose density falls with height, read by anything that looks through it as how much light is lost along a ray and how much sunlight is scattered into it.",
+      "status": "catalogue",
+      "standing": "medium",
+      "carrier": {
+        "state": "number density of air by height, and a Rayleigh scattering cross-section per wavelength. Which density profile (the 1976 standard atmosphere's layers, or an exponential fitted to it) is the evaluator's choice and is owed.",
+        "unit_log10_m": 4
+      },
+      "step": {
+        "kind": "static"
+      },
+      "below": [],
+      "source": [
+        {
+          "external": "U.S. Standard Atmosphere, 1976",
+          "edition": "NOAA, NASA and USAF, NOAA-S/T 76-1562"
+        },
+        {
+          "external": "A. Bucholtz, 'Rayleigh-scattering calculations for the terrestrial atmosphere', Applied Optics 34, 2765",
+          "edition": "1995"
+        }
+      ],
+      "views": [
+        {
+          "id": "transmittance",
+          "reads": "the fraction of light that survives a ray, per wavelength: exp(-optical depth)",
+          "consumers": [
+            {
+              "id": "holon_draw",
+              "kind": "renderer",
+              "budget": {
+                "quantity": "numerical error of the drawn value against the SAME model's single-scattering integral evaluated exactly, after a stated display transform",
+                "bound": 1.0,
+                "unit": "level"
+              }
+            }
+          ]
+        },
+        {
+          "id": "inscatter",
+          "reads": "sunlight scattered into a ray, per wavelength (single scattering)",
+          "consumers": [
+            {
+              "id": "holon_draw",
+              "kind": "renderer",
+              "budget": {
+                "quantity": "numerical error of the drawn value against the SAME model's single-scattering integral evaluated exactly, after a stated display transform",
+                "bound": 1.0,
+                "unit": "level"
+              }
+            }
+          ]
+        }
+      ],
+      "regime": "single scattering by air molecules only; a clear sky (no cloud, no aerosol, no ozone absorption); view rays from outside the atmosphere or from the ground; 440 to 680 nm",
+      "certificate": {
+        "kind": "none"
+      },
+      "not_claimed": [
+        "The budget is numerical: it bounds the drawing against the model, not the model against the real sky.",
+        "Multiple scattering, clouds, aerosols, refraction and ozone are outside the regime.",
+        "No weather: the profile does not change."
+      ],
+      "owed": [
+        "The evaluator: the two integrals along a ray, in an engine of this repository. Nothing draws the air yet, so the renderer named here reads nothing today.",
+        "The display transform (exposure, tone map, transfer function) under which a display level is defined.",
+        "A bound certificate for each view. Until they exist the status stays catalogue and nothing is claimed of any picture."
+      ]
+    },
+    {
+      "spec": "ciris/holon-decl/0",
+      "id": "v.dup",
+      "name": "another",
+      "plain": "The atmosphere as a holon: a column of gas whose density falls with height, read by anything that looks through it as how much light is lost along a ray and how much sunlight is scattered into it.",
+      "status": "catalogue",
+      "standing": "medium",
+      "carrier": {
+        "state": "number density of air by height, and a Rayleigh scattering cross-section per wavelength. Which density profile (the 1976 standard atmosphere's layers, or an exponential fitted to it) is the evaluator's choice and is owed.",
+        "unit_log10_m": 4
+      },
+      "step": {
+        "kind": "static"
+      },
+      "below": [],
+      "source": [
+        {
+          "external": "U.S. Standard Atmosphere, 1976",
+          "edition": "NOAA, NASA and USAF, NOAA-S/T 76-1562"
+        },
+        {
+          "external": "A. Bucholtz, 'Rayleigh-scattering calculations for the terrestrial atmosphere', Applied Optics 34, 2765",
+          "edition": "1995"
+        }
+      ],
+      "views": [
+        {
+          "id": "transmittance",
+          "reads": "the fraction of light that survives a ray, per wavelength: exp(-optical depth)",
+          "consumers": [
+            {
+              "id": "holon_draw",
+              "kind": "renderer",
+              "budget": {
+                "quantity": "numerical error of the drawn value against the SAME model's single-scattering integral evaluated exactly, after a stated display transform",
+                "bound": 1.0,
+                "unit": "level"
+              }
+            }
+          ]
+        },
+        {
+          "id": "inscatter",
+          "reads": "sunlight scattered into a ray, per wavelength (single scattering)",
+          "consumers": [
+            {
+              "id": "holon_draw",
+              "kind": "renderer",
+              "budget": {
+                "quantity": "numerical error of the drawn value against the SAME model's single-scattering integral evaluated exactly, after a stated display transform",
+                "bound": 1.0,
+                "unit": "level"
+              }
+            }
+          ]
+        }
+      ],
+      "regime": "single scattering by air molecules only; a clear sky (no cloud, no aerosol, no ozone absorption); view rays from outside the atmosphere or from the ground; 440 to 680 nm",
+      "certificate": {
+        "kind": "none"
+      },
+      "not_claimed": [
+        "The budget is numerical: it bounds the drawing against the model, not the model against the real sky.",
+        "Multiple scattering, clouds, aerosols, refraction and ozone are outside the regime.",
+        "No weather: the profile does not change."
+      ],
+      "owed": [
+        "The evaluator: the two integrals along a ray, in an engine of this repository. Nothing draws the air yet, so the renderer named here reads nothing today.",
+        "The display transform (exposure, tone map, transfer function) under which a display level is defined.",
+        "A bound certificate for each view. Until they exist the status stays catalogue and nothing is claimed of any picture."
+      ]
+    },
+    {
+      "spec": "ciris/holon-decl/0",
+      "id": "v.top",
+      "name": "the air",
+      "plain": "The atmosphere as a holon: a column of gas whose density falls with height, read by anything that looks through it as how much light is lost along a ray and how much sunlight is scattered into it.",
+      "status": "catalogue",
+      "standing": "medium",
+      "carrier": {
+        "state": "number density of air by height, and a Rayleigh scattering cross-section per wavelength. Which density profile (the 1976 standard atmosphere's layers, or an exponential fitted to it) is the evaluator's choice and is owed.",
+        "unit_log10_m": 4
+      },
+      "step": {
+        "kind": "static"
+      },
+      "below": [
+        {
+          "id": "v.dup",
+          "relation": "context"
+        }
+      ],
+      "source": [
+        {
+          "external": "U.S. Standard Atmosphere, 1976",
+          "edition": "NOAA, NASA and USAF, NOAA-S/T 76-1562"
+        },
+        {
+          "external": "A. Bucholtz, 'Rayleigh-scattering calculations for the terrestrial atmosphere', Applied Optics 34, 2765",
+          "edition": "1995"
+        }
+      ],
+      "views": [
+        {
+          "id": "transmittance",
+          "reads": "the fraction of light that survives a ray, per wavelength: exp(-optical depth)",
+          "consumers": [
+            {
+              "id": "holon_draw",
+              "kind": "renderer",
+              "budget": {
+                "quantity": "numerical error of the drawn value against the SAME model's single-scattering integral evaluated exactly, after a stated display transform",
+                "bound": 1.0,
+                "unit": "level"
+              }
+            }
+          ]
+        },
+        {
+          "id": "inscatter",
+          "reads": "sunlight scattered into a ray, per wavelength (single scattering)",
+          "consumers": [
+            {
+              "id": "holon_draw",
+              "kind": "renderer",
+              "budget": {
+                "quantity": "numerical error of the drawn value against the SAME model's single-scattering integral evaluated exactly, after a stated display transform",
+                "bound": 1.0,
+                "unit": "level"
+              }
+            }
+          ]
+        }
+      ],
+      "regime": "single scattering by air molecules only; a clear sky (no cloud, no aerosol, no ozone absorption); view rays from outside the atmosphere or from the ground; 440 to 680 nm",
+      "certificate": {
+        "kind": "none"
+      },
+      "not_claimed": [
+        "The budget is numerical: it bounds the drawing against the model, not the model against the real sky.",
+        "Multiple scattering, clouds, aerosols, refraction and ozone are outside the regime.",
+        "No weather: the profile does not change."
+      ],
+      "owed": [
+        "The evaluator: the two integrals along a ray, in an engine of this repository. Nothing draws the air yet, so the renderer named here reads nothing today.",
+        "The display transform (exposure, tone map, transfer function) under which a display level is defined.",
+        "A bound certificate for each view. Until they exist the status stays catalogue and nothing is claimed of any picture."
+      ]
+    }
+  ]
+}

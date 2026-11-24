@@ -1,0 +1,60 @@
+{
+  "spec": "ciris/holon-decl/0",
+  "id": "ladder.drop",
+  "name": "a drop of water",
+  "plain": "A picture at true size: a dew drop 2 mm across on the paving, then its surface, which is smooth at every scale down to the molecules. The specks afloat on it (25 nm to 24 µm across, soot to a pollen grain) are drawn from a seed so that something of known size is always in view. Nothing is measured or computed.",
+  "status": "illustration",
+  "standing": "rung",
+  "carrier": {
+    "state": "a dew drop and the specks on it, drawn at true size",
+    "unit_log10_m": -6
+  },
+  "step": {
+    "kind": "generated"
+  },
+  "below": [
+    {
+      "id": "ladder.water",
+      "relation": "shared_edge",
+      "basis": {
+        "path": "engine/crates/holon-draw-ladder/src/scenes/micro/mod.rs",
+        "note": "'Every rung is centred on ONE point going in': each finer rung is drawn about the point the coarser one shows at its centre"
+      }
+    }
+  ],
+  "views": [
+    {
+      "id": "picture",
+      "reads": "the rung's marks at the zoom's metres per pixel",
+      "consumers": [
+        {
+          "id": "holon_draw",
+          "kind": "renderer",
+          "budget": {
+            "quantity": "what drawing a tile coarse may move against drawing it fine: the draw allocator's tolerance (Acuity, eps_px). It is not a bound on the picture's faithfulness to the holon.",
+            "bound": 1.0,
+            "unit": "px"
+          }
+        }
+      ]
+    }
+  ],
+  "certificate": {
+    "kind": "none"
+  },
+  "draw": {
+    "rung": "a drop of water",
+    "marks": [
+      "disc",
+      "quad",
+      "sphere"
+    ],
+    "span_z": [
+      -10.5,
+      -5.0
+    ],
+    "join_below": "fade",
+    "join_above": "fade",
+    "label": "illustration, not computed"
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "spec": "ciris/holon-decl/0",
+  "id": "twin.media",
+  "name": "the twin's layer media",
+  "plain": "Globe layer: one generated room call (four homes, six phones joining and leaving, two hard-NAT phones relayed through a home that leaves at 30 s), one relay tree per publisher, the tree repairing, and per-second legs attached, wire rate and sessions stalled; over the call the median and slowest audio resume gaps, the median video resume gap, and the sessions whose video never resumed split into receivers that left first and real cases. Every figure MODEL.",
+  "status": "simulated",
+  "standing": "rung",
+  "carrier": {
+    "state": "media.rs access profiles, Gilbert-Elliott loss, Markov cellular capacity, queue buffers, frame sizes and SETUP_RTTS (all MODEL, FSD/twin/media.md §2-§3); seed 1"
+  },
+  "step": {
+    "kind": "computed",
+    "engine_external": "CIRISAI/CEWP at 04e3b4b: docs/layers/layers.js: CEWP_LAYERS media; kernel-wasm views.rs view_media(1) (slots 20-25); crates/cewp-sim/src/media_view.rs media_view (scenario_view: the churn room, household traffic off, tail-drop); FSD/twin/media.md §9"
+  },
+  "below": [],
+  "source": [
+    {
+      "external": "CIRISAI/CEWP docs/evidence/claims.js, claim layer-media (class MODEL, schema cewp-page-claims/v1)",
+      "edition": "commit 04e3b4b"
+    }
+  ],
+  "views": [
+    {
+      "id": "picture",
+      "reads": "what the layer draws on the twin's page",
+      "consumers": [
+        {
+          "id": "twin_page",
+          "kind": "renderer"
+        }
+      ]
+    }
+  ],
+  "certificate": {
+    "kind": "none"
+  },
+  "not_claimed": [
+    "The twin's ledger classes this claim MODEL. Here that is `simulated`: the output of the twin's simulation over its own stated inputs, which are themselves MODEL.",
+    "Nothing in this repository computes or checks it. Its engine is the twin's, not held here, so this declaration waits. Its standing is `rung` for want of a better word: a layer is not a scale.",
+    "The twin's page draws this layer with its own program, not with holon-draw."
+  ]
+}

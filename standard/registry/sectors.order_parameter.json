@@ -1,0 +1,90 @@
+{
+  "spec": "ciris/holon-decl/0",
+  "id": "sectors.order_parameter",
+  "name": "the collective order parameter",
+  "plain": "How tetrahedral the liquid's local structure is, taken at the box's longest wavelength. It persists, and it adds nothing to the next density and current.",
+  "status": "measured",
+  "standing": "recorded",
+  "carrier": {
+    "state": "the first-harmonic tetrahedral-order field `Q_k`"
+  },
+  "step": {
+    "kind": "measured"
+  },
+  "below": [
+    {
+      "id": "tiers.molecule",
+      "relation": "function",
+      "basis": {
+        "path": "conformance/water_observatory/ORDER1_PREREG.md",
+        "quote": "`Q` = `Σ_i (q_i − ⟨q⟩) cos/sin(k x_{i,a})`, `a = x, y, z` (6 columns)",
+        "note": "the field is a sum over molecules of each one's tetrahedral order"
+      }
+    }
+  ],
+  "source": [
+    {
+      "path": "conformance/water_observatory/ORDER1_RESULTS.md",
+      "quote": "σ₁ at 1 ps `0.310 / 0.293 / 0.360`, residual ratio `0.95–1.04`; seed 1 misses `0.3` by `0.007`"
+    },
+    {
+      "path": "conformance/water_observatory/SLOW1_RESULTS.md",
+      "quote": "`+0.0283` on every 293 K seed; `+0.0002` at 400 K"
+    }
+  ],
+  "views": [
+    {
+      "id": "order_field",
+      "reads": "`Q` at the box's longest wavelength",
+      "consumers": [
+        {
+          "id": "density_and_current",
+          "kind": "target",
+          "stated": {
+            "path": "conformance/replace1/REPLACE1_RESULTS.md",
+            "quote": "(target `(ρ_k, j^L_k)`, kept `(ρ, j^L)`, 5 time blocks)"
+          },
+          "budget": {
+            "quantity": "the held-out R² `Q` adds to predicting the next collective density and current; the budget is REPLACE-1 G2's β",
+            "bound": 0.02,
+            "unit": "relative"
+          }
+        }
+      ]
+    }
+  ],
+  "regime": "the rigid operator at 293 K, three seeds, lags 1 and 5 ps; the target is the collective density and current at the box's longest wavelength",
+  "row": {
+    "path": "TIERS.md",
+    "quote": "| the collective order parameter (tetrahedral order at the box's longest wavelength) | yes: `σ₁ = 0.29–0.36` at 1 ps, outside the hydrodynamic span | **no**: increments `≤ 0` into density and current |"
+  },
+  "not_claimed": [
+    "NOT declared a sector. A sector owes a closure certificate, and the record's closure stake O1 reads 'between': `σ₁` at 1 ps is `0.310 / 0.293 / 0.360` against a bar of `≥ 0.3`, and seed 1 misses by `0.007`. The record's headline calls the field closed (branch (d) under Amendment 1); TIERS.md follows the headline. This format's certificate is an at-most bound and holds no at-least stake, met or missed.",
+    "The price is against ONE target, the next collective density and current at the box's longest wavelength. The six increments run from `−0.0007` to `−0.0126`, all below zero; the price carries the largest, `−0.0007` (seed 1, 1 ps), with that cell's shifted and swapped nulls.",
+    "Its per-molecule form adds `+0.0283` of single-molecule mobility (SLOW-1, 'between'); TIERS.md rounds this to `+0.03`, 'never reaching the fields'. That target is not the one priced here.",
+    "ORDER-1's planted-field check PO-4 first FAILED by `0.004` on the increment, and reads PASS under Amendment 1. The heat-mode confound is 'untested, not excluded'."
+  ],
+  "certificate": {
+    "kind": "none"
+  },
+  "price": {
+    "for": {
+      "view": "order_field",
+      "consumer": "density_and_current"
+    },
+    "value": -0.0007,
+    "null": [
+      0.0001,
+      -0.0035
+    ],
+    "unit": "relative",
+    "reads": "dropped",
+    "evidence": [
+      {
+        "path": "conformance/replace1/REPLACE1_RESULTS.md",
+        "sha256": "1beacfab3d76cf70518e8ab1fe1a8a439e27db351b54d6157bf3ddd29682f9b6",
+        "quote": "| 1 | 1 ps | `−0.0007` (`−0.0007`) | `+0.0001` (`+0.0001`) | `−0.0035` (`−0.0035`) | `−0.0048` | DROPPED |"
+      }
+    ]
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "spec": "ciris/holon-decl/0",
+  "id": "sandbox.sandbox",
+  "name": "the sandbox's sandbox tier",
+  "plain": "Sand, in a box. Throw something at it and the grains move because they push on each other.",
+  "status": "simulated",
+  "standing": "rung",
+  "carrier": {
+    "state": "a quadtree of holons over a square domain; the terminal holon is one grain of sand. Evaluator: GranularContact (grain-on-grain unilateral contact with Coulomb friction)",
+    "unit_log10_m": -3
+  },
+  "step": {
+    "kind": "computed",
+    "engine": "engine/crates/holon-sandbox/src/tier.rs"
+  },
+  "below": [
+    {
+      "id": "sandbox.grain",
+      "relation": "context"
+    }
+  ],
+  "source": [
+    {
+      "path": "engine/crates/holon-sandbox/src/tier.rs",
+      "quote": "Sand, in a box. Throw something at it and the grains move because",
+      "note": "the tier's own plain line in the code's table"
+    }
+  ],
+  "views": [],
+  "certificate": {
+    "kind": "none"
+  },
+  "not_claimed": [
+    "The code calls this a tier of its zoom ladder. No closure or carriage is certified in this format, so its standing here is `rung`.",
+    "Nothing relates this tier to the one below it beyond the ladder's order: `below` is context."
+  ]
+}

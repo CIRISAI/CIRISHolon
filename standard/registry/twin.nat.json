@@ -1,0 +1,42 @@
+{
+  "spec": "ciris/holon-decl/0",
+  "id": "twin.nat",
+  "name": "the twin's layer nat",
+  "plain": "Globe layer (drawn in a dock panel, not on the globe): devices of a generated street frame by access class and NAT behaviour, each pair's outcome (IPv6, listener, punched, relayed without a punch, punch failed then relayed, same LAN), and the 3 x 7 access-by-behaviour joint.",
+  "status": "simulated",
+  "standing": "rung",
+  "carrier": {
+    "state": "reach ReachModel behaviour shares, calibrated to micro.rs PARAM_SPECS router-class marginals (MODEL)"
+  },
+  "step": {
+    "kind": "computed",
+    "engine_external": "CIRISAI/CEWP at 04e3b4b: docs/layers/layers.js: CEWP_LAYERS nat; kernel-wasm views.rs view_nat; crates/cewp-sim/src/reach/hooks.rs nat_view_nodes, nat_view_node_pos, nat_view_pairs, nat_view_joint; FSD/twin/nat.md"
+  },
+  "below": [],
+  "source": [
+    {
+      "external": "CIRISAI/CEWP docs/evidence/claims.js, claim layer-nat (class MODEL, schema cewp-page-claims/v1)",
+      "edition": "commit 04e3b4b"
+    }
+  ],
+  "views": [
+    {
+      "id": "picture",
+      "reads": "what the layer draws on the twin's page",
+      "consumers": [
+        {
+          "id": "twin_page",
+          "kind": "renderer"
+        }
+      ]
+    }
+  ],
+  "certificate": {
+    "kind": "none"
+  },
+  "not_claimed": [
+    "The twin's ledger classes this claim MODEL. Here that is `simulated`: the output of the twin's simulation over its own stated inputs, which are themselves MODEL.",
+    "Nothing in this repository computes or checks it. Its engine is the twin's, not held here, so this declaration waits. Its standing is `rung` for want of a better word: a layer is not a scale.",
+    "The twin's page draws this layer with its own program, not with holon-draw."
+  ]
+}

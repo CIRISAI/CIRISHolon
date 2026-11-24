@@ -1,0 +1,34 @@
+{
+  "spec": "ciris/holon-decl/0",
+  "id": "qvm.mps",
+  "name": "the certified matrix-product state",
+  "plain": "A weakly entangled circuit carried as a chain of small tensors, with a bound on what was thrown away.",
+  "status": "measured",
+  "standing": "recorded",
+  "carrier": {
+    "state": "closed on low-entanglement circuits (TIERS.md)"
+  },
+  "step": {
+    "kind": "measured"
+  },
+  "below": [],
+  "source": [
+    {
+      "path": "conformance/qasm/QVM_ACUITY2_RESULTS.md",
+      "quote": "It is never below the error, and its worst ratio is `1.83` (`≤ 4` staked)."
+    }
+  ],
+  "views": [],
+  "certificate": {
+    "kind": "none"
+  },
+  "row": {
+    "path": "TIERS.md",
+    "quote": "| certified MPS | low-entanglement circuits | the discarded weight `Σ√w`, a true 2-norm bound | BUILT for ACUITY-2 |"
+  },
+  "remainder": "the discarded weight `Σ√w`, a true 2-norm bound",
+  "not_claimed": [
+    "BUILT is the row's word; `measured` here rests on ACUITY-2's read of the certificate against the true error.",
+    "TIERS.md §2: these 'are not tiers of matter'; they are the dictionary of views the dispatch searches."
+  ]
+}

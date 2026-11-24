@@ -1,0 +1,58 @@
+{
+ "expect": [
+  "below_unresolved",
+  "certificate_unbound",
+  "evidence_missing",
+  "illustration_certified",
+  "illustration_undrawn",
+  "regime_missing",
+  "relation_unbacked"
+ ],
+ "declarations": [
+  {
+   "spec": "ciris/holon-decl/0",
+   "id": "v.base",
+   "name": "a vector",
+   "plain": "A declaration made to be checked.",
+   "status": "illustration",
+   "standing": "rung",
+   "carrier": {
+    "state": "one number"
+   },
+   "step": {
+    "kind": "static"
+   },
+   "below": [
+    {
+     "id": "v.nobody",
+     "relation": "function"
+    }
+   ],
+   "source": [
+    {
+     "path": "standard/vectors/fixture/record.txt"
+    }
+   ],
+   "views": [
+    {
+     "id": "reading",
+     "reads": "the number",
+     "consumers": [
+      {
+       "id": "screen",
+       "kind": "renderer",
+       "budget": {
+        "quantity": "position",
+        "bound": 1.0,
+        "unit": "px"
+       }
+      }
+     ]
+    }
+   ],
+   "certificate": {
+    "kind": "bound"
+   }
+  }
+ ]
+}

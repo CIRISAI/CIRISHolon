@@ -1,0 +1,42 @@
+{
+  "spec": "ciris/holon-decl/0",
+  "id": "twin.holon",
+  "name": "the twin's layer holon",
+  "plain": "Globe layer: the coarse-tier cells of the R5 demonstration (host kind x access network, laid out as a patch near Zurich; not places), each certified, refused or not evaluated with its binding bound and margin, and the per-tier certificate table.",
+  "status": "simulated",
+  "standing": "rung",
+  "carrier": {
+    "state": "MODEL: simulation output over MODEL inputs reads MODEL (the project's ruling, 2026-11-11); inputs: the micro world under the tier; seed 43"
+  },
+  "step": {
+    "kind": "computed",
+    "engine_external": "CIRISAI/CEWP at 04e3b4b: docs/layers/layers.js: CEWP_LAYERS holon; kernel-wasm views.rs view_holon; crates/cewp-sim/src/holon_view.rs cells_of, certificates_of, holon_view_bounds over holon_demo::demonstration_seeded(VIEW_HORIZON_S, 43); FSD/twin/holon.md"
+  },
+  "below": [],
+  "source": [
+    {
+      "external": "CIRISAI/CEWP docs/evidence/claims.js, claim layer-holon (class MODEL, schema cewp-page-claims/v1)",
+      "edition": "commit 04e3b4b"
+    }
+  ],
+  "views": [
+    {
+      "id": "picture",
+      "reads": "what the layer draws on the twin's page",
+      "consumers": [
+        {
+          "id": "twin_page",
+          "kind": "renderer"
+        }
+      ]
+    }
+  ],
+  "certificate": {
+    "kind": "none"
+  },
+  "not_claimed": [
+    "The twin's ledger classes this claim MODEL. Here that is `simulated`: the output of the twin's simulation over its own stated inputs, which are themselves MODEL.",
+    "Nothing in this repository computes or checks it. Its engine is the twin's, not held here, so this declaration waits. Its standing is `rung` for want of a better word: a layer is not a scale.",
+    "The twin's page draws this layer with its own program, not with holon-draw."
+  ]
+}

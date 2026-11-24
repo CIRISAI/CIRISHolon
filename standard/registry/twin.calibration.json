@@ -1,0 +1,43 @@
+{
+  "spec": "ciris/holon-decl/0",
+  "id": "twin.calibration",
+  "name": "the twin's layer calibration",
+  "plain": "Globe layer: one v45.0.0 seat's utilisation band against fleet size (500 to 100,000 devices), the knee as a lower-to-upper bracket with no central mark, and each seat-1 counter's predicted over observed, in-sample and held-out marked apart.",
+  "status": "simulated",
+  "standing": "rung",
+  "carrier": {
+    "state": "cost model fit to seat-1 counters (MEASURED, 2026-11-10 windows, aggregates); input intervals per seat_calibration::input_intervals (MODEL); key_publish_set growth g FRONTIER (publish-set-growth)"
+  },
+  "step": {
+    "kind": "computed",
+    "engine_external": "CIRISAI/CEWP at 04e3b4b: docs/layers/layers.js: CEWP_LAYERS calibration; kernel-wasm views.rs view_calibration_curve(g), view_calibration_knee(g), view_calibration_residuals(); crates/cewp-sim/src/seat_hooks.rs calibration_view_curve, calibration_view_knee, calibration_view_residuals; FSD/twin/calibration.md"
+  },
+  "below": [],
+  "source": [
+    {
+      "external": "CIRISAI/CEWP docs/evidence/claims.js, claim layer-calibration (class MODEL, schema cewp-page-claims/v1)",
+      "edition": "commit 04e3b4b"
+    }
+  ],
+  "views": [
+    {
+      "id": "picture",
+      "reads": "what the layer draws on the twin's page",
+      "consumers": [
+        {
+          "id": "twin_page",
+          "kind": "renderer"
+        }
+      ]
+    }
+  ],
+  "certificate": {
+    "kind": "none"
+  },
+  "not_claimed": [
+    "The twin's ledger classes this claim MODEL. Here that is `simulated`: the output of the twin's simulation over its own stated inputs, which are themselves MODEL.",
+    "Nothing in this repository computes or checks it. Its engine is the twin's, not held here, so this declaration waits. Its standing is `rung` for want of a better word: a layer is not a scale.",
+    "The twin's page draws this layer with its own program, not with holon-draw.",
+    "The ledger carries an interval for it: {\"lo\": 4882, \"hi\": 75879, \"what\": \"devices at the knee, outer bounds over the input intervals for g in [0, 1]; bounds, not a probability\"}"
+  ]
+}

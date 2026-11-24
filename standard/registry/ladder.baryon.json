@@ -1,0 +1,65 @@
+{
+  "spec": "ciris/holon-decl/0",
+  "id": "ladder.baryon",
+  "name": "below the nucleus: a baryon on a chain",
+  "plain": "Computed in this page by this repository's engine (holon-render's sub-atom band): the EXACT colour-singlet ground state of one-flavour QCD in ONE space dimension, 4 sites, x = 4, 64 determinants. Columns: each site's quark density summed over colours; grey ghost, the sea's 1.5; warm cap, the baryon's excess, three quarks in all. Tubes: the computed colour-electric energy on each link (the Casimir of the colour charge to its left; 0.40, 0.91, 0.40 at rest), the one-dimensional flux tube. IT MOVES because one site is pulled (gold well, depth 1) and the state runs under exp(-iHt) exactly: the outer links swing most (0.24 to 0.49), at the pulled chain's first energy gap, 3.48, every 3 s here; the middle one at the gaps near 7.3 and 9.2. NOT the proton and NOT the 3+1D vacuum of lattice QCD: no transverse gluons, Gauss's law fixes the field, the tube's width is drawn and not computed, the chain's length is SET to the proton's diameter (the ring) by choice, and it is four sites because six take a second to solve.",
+  "status": "simulated",
+  "standing": "rung",
+  "carrier": {
+    "state": "the colour-singlet B = 1 ground state of the same 4-site chain",
+    "unit_log10_m": -16
+  },
+  "step": {
+    "kind": "computed",
+    "engine": "engine/crates/holon-render/src/hadron.rs"
+  },
+  "below": [
+    {
+      "id": "ladder.sea",
+      "relation": "shared_edge",
+      "basis": {
+        "path": "engine/crates/holon-draw-ladder/src/scenes/micro/mod.rs",
+        "note": "'Every rung is centred on ONE point going in': each finer rung is drawn about the point the coarser one shows at its centre"
+      }
+    }
+  ],
+  "views": [
+    {
+      "id": "picture",
+      "reads": "the rung's marks at the zoom's metres per pixel",
+      "consumers": [
+        {
+          "id": "holon_draw",
+          "kind": "renderer",
+          "budget": {
+            "quantity": "what drawing a tile coarse may move against drawing it fine: the draw allocator's tolerance (Acuity, eps_px). It is not a bound on the picture's faithfulness to the holon.",
+            "bound": 1.0,
+            "unit": "px"
+          }
+        }
+      ]
+    }
+  ],
+  "certificate": {
+    "kind": "none"
+  },
+  "draw": {
+    "rung": "below the nucleus: a baryon on a chain",
+    "marks": [
+      "box",
+      "disc",
+      "line",
+      "rod"
+    ],
+    "span_z": [
+      -17.6,
+      -17.1
+    ],
+    "join_below": "fade",
+    "join_above": "fade",
+    "label": "simulated live"
+  },
+  "not_claimed": [
+    "This is a chain in one space dimension with one flavour. It is not the proton."
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "spec": "ciris/holon-decl/0",
+  "id": "sandbox.cosmic",
+  "name": "the sandbox's cosmic tier",
+  "plain": "Everything we can see, counted in galaxies.",
+  "status": "simulated",
+  "standing": "rung",
+  "carrier": {
+    "state": "a quadtree of holons over a square domain; the terminal holon is one galaxy. Evaluator: GeodesicChart, screened against COSMIC_EPS_MAX",
+    "unit_log10_m": 21
+  },
+  "step": {
+    "kind": "computed",
+    "engine": "engine/crates/holon-sandbox/src/tier.rs"
+  },
+  "below": [
+    {
+      "id": "sandbox.galactic",
+      "relation": "context"
+    }
+  ],
+  "source": [
+    {
+      "path": "engine/crates/holon-sandbox/src/tier.rs",
+      "quote": "tier_eps_max: ciris_sim_core::bridge::COSMIC_EPS_MAX,"
+    }
+  ],
+  "views": [],
+  "certificate": {
+    "kind": "none"
+  },
+  "not_claimed": [
+    "The code calls this a tier of its zoom ladder. No closure or carriage is certified in this format, so its standing here is `rung`.",
+    "Nothing relates this tier to the one below it beyond the ladder's order: `below` is context.",
+    "Its count of 2,000,000,000,000 galaxies is `Census::Observed`: a declared figure, not computed.",
+    "`simulated` is per scene: the code's own test says 'a gravity tier can still refuse, and one of its declared scenes does'. The engine path cited is the tier table, not the evaluator's code in ciris_sim_core."
+  ]
+}

@@ -1,0 +1,64 @@
+{
+  "spec": "ciris/holon-decl/0",
+  "id": "ladder.earth_moon",
+  "name": "the Earth and the Moon",
+  "plain": "The Earth at its mean radius (6371 km) with day and night from the Sun's place now (the Astronomical Almanac's low-precision formula, good to 0.01 degrees); the Moon at its mean radius (1737 km) and mean distance (384,400 km) on an orbit tilted 5.1 degrees, placed to about 0.3 degrees and never drawn under 3 pixels, its night side at three tenths of full light so that it can be found; a ring marks the Earth once it is a speck. No land, cloud or ice is drawn.",
+  "status": "catalogue",
+  "standing": "input",
+  "carrier": {
+    "state": "the Earth and the Moon at their mean radii and distance, placed for the host's clock",
+    "unit_log10_m": 6
+  },
+  "step": {
+    "kind": "computed",
+    "engine": "engine/crates/holon-draw-ladder/src/scenes/cosmos.rs"
+  },
+  "below": [
+    {
+      "id": "ladder.ground",
+      "relation": "context"
+    }
+  ],
+  "source": [
+    {
+      "external": "The Astronomical Almanac, low-precision formula for the Sun's position (good to 0.01 degrees)"
+    },
+    {
+      "external": "Mean radii of the Earth (6371 km) and the Moon (1737 km), the Moon's mean distance (384,400 km) and orbital tilt (5.1 degrees): rounded textbook values; no catalogue is named in the code"
+    }
+  ],
+  "views": [
+    {
+      "id": "picture",
+      "reads": "the rung's marks at the zoom's metres per pixel",
+      "consumers": [
+        {
+          "id": "holon_draw",
+          "kind": "renderer",
+          "budget": {
+            "quantity": "what drawing a tile coarse may move against drawing it fine: the draw allocator's tolerance (Acuity, eps_px). It is not a bound on the picture's faithfulness to the holon.",
+            "bound": 1.0,
+            "unit": "px"
+          }
+        }
+      ]
+    }
+  ],
+  "certificate": {
+    "kind": "none"
+  },
+  "draw": {
+    "rung": "the Earth and the Moon",
+    "marks": [
+      "line"
+    ],
+    "span_z": [
+      1.5,
+      6.5
+    ],
+    "join_below": "fade",
+    "join_above": "fade",
+    "label": "catalogue values",
+    "fade_owed": "The ground rung is of no particular place and the Earth rung is the Earth. They meet only when no host draws the band between them; with a host (the CEWP twin) the host's globe stands there, and its sun replaces the almanac's. Only the unhosted ladder is declared and checked."
+  }
+}

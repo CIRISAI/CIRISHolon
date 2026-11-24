@@ -30,6 +30,25 @@ legs died as one portion asked to be the whole; the wager stands as a split, rig
 shape, unpaid at the share the shape wants, with the perturbation channel open and being
 priced. Owed by the reading: a size of the organised portion forced before it is read.
 
+## 0b. PARKED 2026-11-23, at the lead's word: everything but the maps work on the engine
+
+"Lets wrap up everything but the maps work on the engine for now." Live: the drawing engine
+and its consumers, toward the vacuum-to-universe scene as a map at every tier. Parked, each
+with what it needs to resume, so nothing is lost:
+
+| parked | state | resumes with |
+|---|---|---|
+| `holon-baryo` and the T5 reproduction (branch `baryo-vendor-2026-11-23`, NOT pushed: the crate has never compiled) | vendored record, reproduction draft, unbuilt crate | a free box: `cargo test -p holon-baryo`, then the draft's review |
+| READER-PLANT-0 (a gate, not a prediction) | draft, frozen port prediction, unbuilt harness | a free box; then the corrected fluid stake (kick response = the derivative of the equilibrium correlation), which needs the walks |
+| ANOMALY-1 and the matter sweep | rung I sent back; arm B approved by the lead | a redesign with both arms; the reserve rewritten |
+| TIER-TREND-0 | sent back: the share is not a unit | the lead's word on unread scrubbed chains and on the trace directories |
+| the cosmological rung | five notes, three reviews; the bound/free note unreviewed | the lead's choice of which size is claimed; then one consistency stake before DESI DR3 |
+| QVM screen and BENCH-2 | screen done, corrections owed and not made, draft unreviewed | the lead's read of the screen |
+| SEAM-NS-0 | sent back | superseded by the corrected fluid stake above |
+| PR #8 (the declaration standard) | green; a draft | the lead's read |
+| the lead's open questions | the two-bit labels' reading (`conformance/crystal/PARITY_LABELS_NOTE.md`); the table's `0.63` set on a corrected baseline | the lead's word |
+| the sibling's (CIRISOntology) owed items | the stance's amendment; the void sentence's sign; the `a³` label; the entropy typo in `flow_pricing.py` | that repository's owner |
+
 ## 1. What moved outside, and what it does to each front
 
 *Unscreened. Status words are the reports' own. A screen like

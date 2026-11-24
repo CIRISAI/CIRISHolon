@@ -1,5 +1,7 @@
 # COSMOS, TWO PORTIONS — the amended cosmological wager run against the programme's own tools
 
+**REVIEWED 2026-11-23 (`COSMOS_TWO_PORTION_REVIEW.md`): the verdict STANDS for the star-written, Landauer-priced Record. Four things below are wrong or incomplete and are corrected by the review, not here: the horizon pairing reaches order one and is refused on principle, not absent; the Landauer table is not a ceiling (the writer's budget is); the inherited stock table carries a transcription error of 0.43 dex; the two caps are conditional. The DR3 stake is not freezable as written.**
+
 *2026-11-23. A pricing note, not a campaign: no stake was frozen, no data was fetched, and
 DESI DR3 does not exist to be read. The lead's amendment of the same day (`TIERS.md` §4:
 dark energy is a STATIC portion and an ORGANISED portion, "we assumed one or the other not

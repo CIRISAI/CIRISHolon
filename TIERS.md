@@ -192,6 +192,42 @@ amendment is CONSISTENT AND SILENT at the size the mechanism can pay for, and re
 DESI hints at only with a portion some four to twelve orders larger that nothing on the
 record supplies. The decision owed before DR3 is which size is claimed.
 
+**ADOPTED 2026-11-23, on the lead's word ("We have to admit reality"), after an adversarial
+review of the arithmetic (`conformance/omega/COSMOS_TWO_PORTION_REVIEW.md`).** This
+paragraph is the standing one; the reading and the CORRECTION above it stay as written and
+are superseded where they differ. Two sentences of that CORRECTION were themselves wrong:
+the Landauer figure is not a "ceiling" (it is a minimum cost per bit times a maximum count
+and bounds nothing; the ceiling is what the writer can pay), and the two caps are
+conditional, not independent.
+
+1. **The two-portion amendment is right about the SHAPE and wrong about the SIZE.** A static
+   portion takes the rent ledger from `3.8 / 2.7 / 1.5` standard errors to `0.4 / 0.4 / 0.3`
+   against the DR2 combinations with supernovae. That is why the shape was off. It does
+   nothing for the magnitude: a share of `0.4` would need 57 % of all matter written each
+   Hubble time, and the star-written, Landauer-priced Record supplies four to twelve orders
+   less.
+2. **The one pricing that reaches the right size loses the shape and is circular.** The
+   horizon's own entropy at the horizon's own temperature gives the dark-energy density to
+   order one, in any universe, because both are computed from the density. Priced there the
+   organised portion is a constant with a relabelled matter density. The stance's letter
+   admits that pairing; its substance, and the sibling record in advance, refuse it.
+3. **So nothing on either record gives both.** At the size the mechanism can pay for, the
+   wager is consistent and silent, and DESI cannot read it. "What survives is the shape
+   (DESI DR2 `Δχ² = −2.13`)" is withdrawn AS EVIDENCE: the shape is not ours at any size we
+   can pay for. It stays as a fact about a curve.
+4. **The standing kill changes.** DESI DR3 can no longer kill or support the wager at the
+   Landauer size. The sharpest earlier kill (the ledger has no constant limit) is gone with
+   the amendment. A stake for DR3 was drafted and is not freezable as written.
+5. **Status:** the cosmological rung remains a WAGER with no instrument, now also with no
+   live observational test. What would reopen it: a writer that can pay for a share of
+   order a tenth, with its own kill; or an instrument that reads a share of `10⁻⁴`.
+
+Owed elsewhere, not made here: the stance (CIRISOntology `Stance.lean`); `OBJECT.md` Move 5
+and its calibrated table, where "what survives is the shape" still stands and row E ("the
+dead cosmology legs are the tell") is the row this bears on; and the sibling's
+`flow_pricing.py`, which carries a transcription error in the microwave background's
+entropy (`2.03e89` for `5.40e89`), 0.43 dex against the wager.
+
 ## 5. What the ladder licenses, and what it does not
 
 - **Licensed:** six physical tiers, each with its carried shape measured, the fluid element's

@@ -1,5 +1,7 @@
 # COSMOS-BASE — the organised share fixed as a ratio of a dynamics to its base: enumerated, fitted, counted. Nothing is forced; two readings are worth a stake
 
+**REVIEWED 2026-11-23 (`COSMOS_BASE_CMB_REVIEW.md`): "nothing is forced" STANDS. Corrections: the rate reading listed below as not done IS reading B, and its crossing is amplitude-free (`z ≈ 0.82`), high against DR2 by one to three widths; the inherited star-written law weights the rate by `a³` and is mislabelled; the strict reading makes a signed prediction (late matter density above the early one) that is already excluded at this share.**
+
 *2026-11-23. A paper campaign, not a preregistered one: no data fetched, nothing frozen. The
 script is `cosmos_base.py` (numpy, single thread, about 11 s); it imports the grid, the
 star-formation history, the solver, the 14 DESI DR2 numbers, the four published `(w₀, wₐ)`

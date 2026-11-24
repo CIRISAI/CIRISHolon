@@ -1,5 +1,7 @@
 # COSMOS, THE PERTURBATION CHANNEL — can the organised portion be read where it clumps? Priced as a misfit campaign, 2026-11-23
 
+**REVIEWED 2026-11-23 (`COSMOS_BASE_CMB_REVIEW.md`): arithmetic and sign CORRECT. With a published all-sky amplitude of `0.96 ± 0.30` the bound is `−0.070 < P < +0.080`; the exclusion of a matter-following portion at the shape-fit share holds on every value tried. Caveat added by the review: the quasi-static clustering form is an ansatz.**
+
 *Written on the lead's objection to `TIERS.md` §4's sentence of the same day that the
 cosmological rung has "no live observational test": "I am confused, we now have a way to go
 back at CMB anomalies." The lead is right that `COSMOS_TWO_PORTION.md` priced only the

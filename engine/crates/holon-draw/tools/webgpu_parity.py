@@ -126,7 +126,8 @@ GLOBE_TOL = 3   # the globe's varyings are interpolated over 3-degree triangles;
 PLANTS = ("tri", "globe", "mul")
 RESIDENT_BASE = {"resident": "default", "residentmap": "map", "residentimages": "images"}
 MESH_FUNCS = ["sphereMesh", "tubeMesh", "capsuleMesh", "arcCapsuleMesh", "arcRibbonMesh", "triMesh",
-              "ribbonMesh", "boxMesh", "quadMesh", "discMesh"]
+              "ribbonMesh", "boxMesh", "quadMesh", "discMesh", "polyMesh", "prismGableXMesh",
+              "prismGableYMesh", "prismHippedMesh", "prismShedMesh", "prismPyramidMesh", "prismCourtyardMesh"]
 
 COMPARE_JS = """
 async ([a, b]) => {

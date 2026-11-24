@@ -24,8 +24,13 @@
 //   4 disc            flat 24-gon in the plane z = pos.z, radius size[0]
 //   10 glyph          its SHAPE is the low four bits of `variant` (see GLYPHS): shape 0, DISC, is the
 //                     disc above; shapes 1..15 are a camera-facing square of half size size[0]
-//   5 box, 6 prism    base centre pos, size = (x, y, z extents), turned by angle about z (prism: flat top)
-//                     With bit 3 of `variant` set (0x08, VARIANT_ORIENT) the box is ORIENTED: aux is
+//   5 box, 6 prism    base centre pos, size = (x, y, z extents), turned by angle about z.
+//                     On a PRISM, the low three bits of `variant` (0x07, VARIANT_PRISM_TOP) choose its
+//                     roof/top mesh from the closed list PRISM_* (`0` FLAT, `1` GABLE_X, `2` GABLE_Y,
+//                     `3` HIPPED, `4` SHED, `5` PYRAMID, `6` COURTYARD; `7` falls back to FLAT), all
+//                     normalized to x, y in [-0.5, 0.5], z in [0, 1]. A KIND.PRISM batch splits cleanly by
+//                     `variant & 0x07` while preserving colour, material, orient, shadows and resident().
+//                     With bit 3 of `variant` set (0x08, VARIANT_ORIENT) the box or prism is ORIENTED: aux is
 //                     its local z axis (any length; zero means world z), size.z runs along it from
 //                     pos, and angle turns its local x about that axis, starting from world x
 //                     projected onto the plane across the axis (world y when the axis is along x).
@@ -502,6 +507,24 @@ export const GLYPH = Object.freeze({
 });
 /** Bit 3 of `variant` on a box or prism: oriented, aux is its local z axis (see KINDS). */
 export const VARIANT_ORIENT = 0x08;
+/** The low three bits of a prism's `variant`: its roof/top form (0..6, see KINDS). */
+export const VARIANT_PRISM_TOP = 0x07;
+export const PRISM_FLAT = 0;
+export const PRISM_GABLE_X = 1;
+export const PRISM_GABLE_Y = 2;
+export const PRISM_HIPPED = 3;
+export const PRISM_SHED = 4;
+export const PRISM_PYRAMID = 5;
+export const PRISM_COURTYARD = 6;
+export const PRISM = Object.freeze({
+  FLAT: PRISM_FLAT,
+  GABLE_X: PRISM_GABLE_X,
+  GABLE_Y: PRISM_GABLE_Y,
+  HIPPED: PRISM_HIPPED,
+  SHED: PRISM_SHED,
+  PYRAMID: PRISM_PYRAMID,
+  COURTYARD: PRISM_COURTYARD,
+});
 /** Bits 4..5 of `variant` on a lit mark: its material (see MATERIAL at the top). */
 export const VARIANT_MATERIAL = 0x30;
 export const MATERIAL = Object.freeze({ KIND: 0x00, MATTE: 0x10, METAL: 0x20, GLOW: 0x30 });
@@ -803,6 +826,14 @@ void main() {
     float c = cos(i_angle);
     float sn = sin(i_angle);
     vec3 q = a_p * s;
+    vec3 ln = a_n;
+    if (kc > 4.5 && kc < 5.5) {
+      float sm = max(max(abs(s.x), abs(s.y)), max(abs(s.z), 1e-20));
+      vec3 us = s / sm;
+      vec3 tn = a_n * vec3(us.y * us.z, us.z * us.x, us.x * us.y);
+      float tnl = length(tn);
+      if (tnl > 1e-20) ln = tn / tnl;
+    }
     if (orient) {
       // The box's own frame: z along aux; x from world x (world y if aux is along x) laid
       // across it, then turned by angle about z.
@@ -814,10 +845,10 @@ void main() {
       vec3 ex = c * x0 + sn * y0;
       vec3 ey = cross(ez, ex);
       p = o + ex * q.x + ey * q.y + ez * q.z;
-      n = ex * a_n.x + ey * a_n.y + ez * a_n.z;
+      n = ex * ln.x + ey * ln.y + ez * ln.z;
     } else {
       p = o + vec3(c * q.x - sn * q.y, sn * q.x + c * q.y, q.z);
-      n = vec3(c * a_n.x - sn * a_n.y, sn * a_n.x + c * a_n.y, a_n.z);
+      n = vec3(c * ln.x - sn * ln.y, sn * ln.x + c * ln.y, ln.z);
     }
   }
   v_n = n;
@@ -1398,6 +1429,110 @@ function boxMesh() {
   return { v, ix };
 }
 
+function polyMesh(faces) {
+  const v = [], ix = [];
+  for (const f of faces) {
+    let nx = 0, ny = 0, nz = 0;
+    for (let i = 0; i < f.length; i++) {
+      const a = f[i], b = f[(i + 1) % f.length];
+      nx += (a[1] - b[1]) * (a[2] + b[2]);
+      ny += (a[2] - b[2]) * (a[0] + b[0]);
+      nz += (a[0] - b[0]) * (a[1] + b[1]);
+    }
+    const l = Math.hypot(nx, ny, nz) || 1;
+    nx /= l; ny /= l; nz /= l;
+    const k = v.length / 6;
+    for (const p of f) v.push(p[0], p[1], p[2], nx, ny, nz);
+    for (let i = 1; i + 1 < f.length; i++) ix.push(k, k + i, k + i + 1);
+  }
+  return { v, ix };
+}
+
+function prismGableXMesh() {
+  const a = [-0.5, -0.5, 0], b = [0.5, -0.5, 0], c = [0.5, 0.5, 0], d = [-0.5, 0.5, 0];
+  const r0 = [-0.5, 0, 1], r1 = [0.5, 0, 1];
+  return polyMesh([
+    [a, d, c, b],
+    [a, b, r1, r0],
+    [c, d, r0, r1],
+    [d, a, r0],
+    [b, c, r1],
+  ]);
+}
+
+function prismGableYMesh() {
+  const a = [-0.5, -0.5, 0], b = [0.5, -0.5, 0], c = [0.5, 0.5, 0], d = [-0.5, 0.5, 0];
+  const r0 = [0, -0.5, 1], r1 = [0, 0.5, 1];
+  return polyMesh([
+    [a, d, c, b],
+    [b, c, r1, r0],
+    [d, a, r0, r1],
+    [a, b, r0],
+    [c, d, r1],
+  ]);
+}
+
+function prismHippedMesh() {
+  const a = [-0.5, -0.5, 0], b = [0.5, -0.5, 0], c = [0.5, 0.5, 0], d = [-0.5, 0.5, 0];
+  const r0 = [-0.28, 0, 1], r1 = [0.28, 0, 1];
+  return polyMesh([
+    [a, d, c, b],
+    [a, b, r1, r0],
+    [c, d, r0, r1],
+    [b, c, r1],
+    [d, a, r0],
+  ]);
+}
+
+function prismShedMesh() {
+  const a = [-0.5, -0.5, 0], b = [0.5, -0.5, 0], c = [0.5, 0.5, 0], d = [-0.5, 0.5, 0];
+  const e = [-0.5, -0.5, 0.15], f = [0.5, -0.5, 0.15], g = [0.5, 0.5, 1], h = [-0.5, 0.5, 1];
+  return polyMesh([
+    [a, d, c, b],
+    [e, f, g, h],
+    [a, b, f, e],
+    [c, d, h, g],
+    [b, c, g, f],
+    [d, a, e, h],
+  ]);
+}
+
+function prismPyramidMesh() {
+  const a = [-0.5, -0.5, 0], b = [0.5, -0.5, 0], c = [0.5, 0.5, 0], d = [-0.5, 0.5, 0];
+  const p = [0, 0, 1];
+  return polyMesh([
+    [a, d, c, b],
+    [a, b, p],
+    [b, c, p],
+    [c, d, p],
+    [d, a, p],
+  ]);
+}
+
+function prismCourtyardMesh() {
+  const r = 0.32, h = 0.3;
+  const a0 = [-0.5, -0.5, 0], b0 = [0.5, -0.5, 0], c0 = [0.5, 0.5, 0], d0 = [-0.5, 0.5, 0];
+  const a1 = [-0.5, -0.5, 1], b1 = [0.5, -0.5, 1], c1 = [0.5, 0.5, 1], d1 = [-0.5, 0.5, 1];
+  const i0 = [-r, -r, h], j0 = [r, -r, h], k0 = [r, r, h], l0 = [-r, r, h];
+  const i1 = [-r, -r, 1], j1 = [r, -r, 1], k1 = [r, r, 1], l1 = [-r, r, 1];
+  return polyMesh([
+    [a0, d0, c0, b0],
+    [a0, b0, b1, a1],
+    [b0, c0, c1, b1],
+    [c0, d0, d1, c1],
+    [d0, a0, a1, d1],
+    [a1, b1, j1, i1],
+    [b1, c1, k1, j1],
+    [c1, d1, l1, k1],
+    [d1, a1, i1, l1],
+    [i1, j1, j0, i0],
+    [j1, k1, k0, j0],
+    [k1, l1, l0, k0],
+    [l1, i1, i0, l0],
+    [i0, j0, k0, l0],
+  ]);
+}
+
 function quadMesh() {
   return {
     v: [-0.5, -0.5, 0, 0, 0, 1, 0.5, -0.5, 0, 0, 0, 1, 0.5, 0.5, 0, 0, 0, 1, -0.5, 0.5, 0, 0, 0, 1],
@@ -1423,10 +1558,10 @@ function discMesh(sides) {
 // ---- slots: how a kind is drawn. Index = kind; 11 and 12 are the coarse sphere and rod. ----
 // mode: [vertex mode (0 sphere, 1 tube, 2 scaled-and-turned, 3 bent tube), radius scale or uniform-scale switch]; shade: [lit, specular, rim]; cull.
 // The vertex stage's kind code: 1 quad, 2 patch, 3 line or arc, 4 disc, 5 box or prism, 6 glyph, 0 the rest.
-// Slot 15 is the TRIANGLE (kind 13; vertex mode 4).
-const KIND_CODE = [0, 1, 3, 3, 4, 5, 5, 0, 0, 2, 6, 0, 0, 3, 3, 0];
-const SLOT_COARSE_SPHERE = 11, SLOT_COARSE_ROD = 12, SLOT_FLAT_LINE = 13, SLOT_FLAT_ARC = 14, SLOT_TRIANGLE = 15, N_SLOT = 16;
-const SCREEN_ID = 16;   // the id of every screen slot, for a resident batch's vertex arrays (after the world slots' 0..15)
+// Slot 15 is the TRIANGLE (kind 13; vertex mode 4). Slots 16..21 are PRISM top variants 1..6 (top 0 is KIND.PRISM).
+const KIND_CODE = [0, 1, 3, 3, 4, 5, 5, 0, 0, 2, 6, 0, 0, 3, 3, 0, 5, 5, 5, 5, 5, 5];
+const SLOT_COARSE_SPHERE = 11, SLOT_COARSE_ROD = 12, SLOT_FLAT_LINE = 13, SLOT_FLAT_ARC = 14, SLOT_TRIANGLE = 15, SLOT_PRISM_BASE = 16, N_SLOT = 22;
+const SCREEN_ID = 22;   // the id of every screen slot, for a resident batch's vertex arrays (after the world slots' 0..21)
 const N_KIND = 14;      // instance buffers by kind, 1..13
 
 function compile(gl, type, src) {
@@ -1598,6 +1733,15 @@ export function createDrawer(gl, options) {
   const mArc = mesh(arcCapsuleMesh(8, 3, 16));
   const mArcRibbon = mesh(arcRibbonMesh(10, 16));
   const mBox = mesh(boxMesh());
+  const mPrisms = [
+    mBox,
+    mesh(prismGableXMesh()),
+    mesh(prismGableYMesh()),
+    mesh(prismHippedMesh()),
+    mesh(prismShedMesh()),
+    mesh(prismPyramidMesh()),
+    mesh(prismCourtyardMesh()),
+  ];
   const mQuad = mesh(quadMesh());
   const mDisc = mesh(discMesh(24));
   const mTri = mesh(triMesh());
@@ -1622,6 +1766,16 @@ export function createDrawer(gl, options) {
   slot(SLOT_FLAT_LINE, KIND.LINE, mRibbon, 1, 0.5, 0, 0, 0, false);
   slot(SLOT_FLAT_ARC, KIND.ARC, mArcRibbon, 3, 0.5, 0, 0, 0, false);
   slot(SLOT_TRIANGLE, KIND.TRIANGLE, mTri, 4, 0, 0, 0, 0, false);
+  for (let t = 1; t <= 6; t++) slot(SLOT_PRISM_BASE + t - 1, KIND.PRISM, mPrisms[t], 2, 0, 1, 0.05, 0, true);
+  const PRISM_SLOTS = [
+    slots[KIND.PRISM],
+    slots[SLOT_PRISM_BASE],
+    slots[SLOT_PRISM_BASE + 1],
+    slots[SLOT_PRISM_BASE + 2],
+    slots[SLOT_PRISM_BASE + 3],
+    slots[SLOT_PRISM_BASE + 4],
+    slots[SLOT_PRISM_BASE + 5],
+  ];
 
   // Screen slots, by kind: vertex mode (0 rectangle, 1 circle, 2 line, 3 run).
   const sslots = new Array(13).fill(null);
@@ -1683,7 +1837,35 @@ export function createDrawer(gl, options) {
   // Scratch, allocated once.
   const light = new Float32Array(3);
   const lvp = new Float32Array(16);
-  let wAt = new Int32Array(64);   // per batch: where its records were uploaded this draw(), or -1
+  let wAt = new Int32Array(64);   // per batch: where its records were uploaded this draw(), -2 resident, -3 split resident, -1 not drawn
+  let wSlot = new Array(64).fill(null);
+  let wSlices = new Array(64).fill(null);
+  let wBuf = new Array(64).fill(null);
+  let prismScratch = new Uint8Array(0);
+  const prismTop = (v) => { const t = v & 7; return t < 7 ? t : 0; };
+  const bytesOf = (b) => b instanceof Uint8Array ? b : new Uint8Array(b.buffer, b.byteOffset, b.byteLength);
+  const ensurePrismScratch = (len) => {
+    if (prismScratch.byteLength < len) prismScratch = new Uint8Array(len);
+    return prismScratch;
+  };
+  const packPrismBuckets = (src, firstByte, count, out, outOff, slices) => {
+    const counts = [0, 0, 0, 0, 0, 0, 0];
+    for (let j = 0; j < count; j++) counts[prismTop(src[firstByte + j * INSTANCE_BYTES + 51])]++;
+    const offs = new Int32Array(7);
+    let curOff = outOff;
+    for (let t = 0; t < 7; t++) {
+      if (counts[t] === 0) continue;
+      offs[t] = curOff;
+      slices.push({ slot: PRISM_SLOTS[t], top: t, off: curOff, count: counts[t] });
+      curOff += counts[t] * INSTANCE_BYTES;
+    }
+    for (let j = 0; j < count; j++) {
+      const o = firstByte + j * INSTANCE_BYTES;
+      const t = prismTop(src[o + 51]);
+      out.set(src.subarray(o, o + INSTANCE_BYTES), offs[t]);
+      offs[t] += INSTANCE_BYTES;
+    }
+  };
   const inv = new Float64Array(16);
   const st = { drawCalls: 0, instances: 0, bytesUploaded: 0, paramUploads: 0, missingImages: 0, residentBuffers: 0, residentBytes: 0 };
   let dead = false;
@@ -1831,17 +2013,19 @@ export function createDrawer(gl, options) {
     if (l) set3(P.uGl, P.cGl, l[0], l[1], 1); else set3(P.uGl, P.cGl, 0, 0, 0);
   }
 
-  // Upload one `bytes` batch at its kind's cursor; its offset in that kind's buffer.
-  function upload(b, k, len) {
+  // Upload bytes at `k`'s cursor; its offset in that kind's buffer.
+  function uploadBytes(bytes, k, len) {
     const at = cursor[k];
     cursor[k] = at + len;
     gl.bindBuffer(gl.ARRAY_BUFFER, instBuf[k]);
-    const bytes = b.bytes;
     if (bytes.byteLength === len) gl.bufferSubData(gl.ARRAY_BUFFER, at, bytes);
     else if (isGL2) gl.bufferSubData(gl.ARRAY_BUFFER, at, bytes, 0, len);
     else gl.bufferSubData(gl.ARRAY_BUFFER, at, bytes.subarray(0, len)); // the one view made; pass exact-length bytes to avoid it
     st.bytesUploaded += len;
     return at;
+  }
+  function upload(b, k, len) {
+    return uploadBytes(b.bytes, k, len);
   }
   // Point the instanced attributes at records `at` bytes into `buf`.
   function pointers(buf, at) {
@@ -1855,10 +2039,11 @@ export function createDrawer(gl, options) {
   }
 
   // ---- resident buffers (RESIDENT BUFFERS at the top) ----
-  // handles[h]: { buf, cap (bytes allocated), size (bytes of records now), vaos: Map(first * 32 + slot id -> vertex array) }
+  // handles[h]: { buf, cap (bytes allocated), size (bytes of records now), vaos: Map(first * 32 + slot id -> vertex array), prismTop, prismTops, prismRaw, prismCache }
   const handles = [null];
   const freeHandles = [];
   const VAO_CAP = 256;
+  const PRISM_CACHE_CAP = 256;
   function handleOf(h, what) {
     const r = typeof h === 'number' ? handles[h] : undefined;
     if (!r) throw new Error('holon-draw: ' + what + ': no resident buffer with handle ' + h);
@@ -1869,15 +2054,78 @@ export function createDrawer(gl, options) {
       throw new Error('holon-draw: ' + what + ' takes whole 52-byte records (an ArrayBufferView whose byteLength is a multiple of 52)');
     }
   }
+  function scanPrism(r, bytes) {
+    const ub = bytesOf(bytes);
+    const n = ub.byteLength / INSTANCE_BYTES;
+    let firstTop = -1, mixed = false;
+    for (let j = 0; j < n; j++) {
+      const o = j * INSTANCE_BYTES;
+      const k = ub[o + 48];
+      if (k === KIND.PRISM || k === 0) {
+        const t = prismTop(ub[o + 51]);
+        if (firstTop < 0) firstTop = t;
+        else if (t !== firstTop) { mixed = true; break; }
+      }
+    }
+    if (!mixed) {
+      r.prismTop = firstTop > 0 ? firstTop : 0;
+      r.prismTops = null;
+      r.prismRaw = null;
+    } else {
+      const tops = new Uint8Array(n);
+      for (let j = 0; j < n; j++) tops[j] = prismTop(ub[j * INSTANCE_BYTES + 51]);
+      r.prismTop = -1;
+      r.prismTops = tops;
+      r.prismRaw = ub.slice();
+    }
+  }
+  function clearPrismCache(r) {
+    if (!r.prismCache) return;
+    for (const e of r.prismCache.values()) {
+      if (e.vaos) for (const v of e.vaos) if (v) deleteVAO(v);
+      if (e.buf) gl.deleteBuffer(e.buf);
+    }
+    r.prismCache.clear();
+  }
+  function residentPrismPlan(r, first, c, transientPrism) {
+    if (!r.prismCache) r.prismCache = new Map();
+    const key = first + ':' + c;
+    let e = r.prismCache.get(key);
+    if (e) return e;
+    const t0 = r.prismTops[first];
+    let mixed = false;
+    for (let j = 1; j < c; j++) {
+      if (r.prismTops[first + j] !== t0) { mixed = true; break; }
+    }
+    if (!mixed) {
+      e = { slot: PRISM_SLOTS[t0] };
+    } else {
+      const packed = new Uint8Array(c * INSTANCE_BYTES);
+      const slices = [];
+      packPrismBuckets(r.prismRaw, first * INSTANCE_BYTES, c, packed, 0, slices);
+      const buf = gl.createBuffer();
+      const prev = gl.getParameter(gl.ARRAY_BUFFER_BINDING);
+      gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+      gl.bufferData(gl.ARRAY_BUFFER, packed, gl.STATIC_DRAW);
+      gl.bindBuffer(gl.ARRAY_BUFFER, prev);
+      e = { buf, slices, vaos: hasVAO ? new Array(7).fill(null) : null };
+      if (r.prismCache.size < PRISM_CACHE_CAP) r.prismCache.set(key, e);
+      else transientPrism.push(e);
+      return e;
+    }
+    if (r.prismCache.size < PRISM_CACHE_CAP) r.prismCache.set(key, e);
+    return e;
+  }
   /** Upload records once; returns their handle (see RESIDENT BUFFERS at the top). */
   function resident(bytes) {
     if (dead) throw new Error('holon-draw: resident() after destroy()');
     recordBytes(bytes, 'resident()');
     const prev = gl.getParameter(gl.ARRAY_BUFFER_BINDING);
-    const r = { buf: gl.createBuffer(), cap: bytes.byteLength, size: bytes.byteLength, vaos: hasVAO ? new Map() : null };
+    const r = { buf: gl.createBuffer(), cap: bytes.byteLength, size: bytes.byteLength, vaos: hasVAO ? new Map() : null, prismTop: 0, prismTops: null, prismRaw: null, prismCache: null };
     gl.bindBuffer(gl.ARRAY_BUFFER, r.buf);
     gl.bufferData(gl.ARRAY_BUFFER, bytes, gl.STATIC_DRAW);
     gl.bindBuffer(gl.ARRAY_BUFFER, prev);
+    scanPrism(r, bytes);
     const h = freeHandles.length ? freeHandles.pop() : handles.length;
     handles[h] = r;
     st.residentBuffers++;
@@ -1889,6 +2137,7 @@ export function createDrawer(gl, options) {
     if (dead) throw new Error('holon-draw: update() after destroy()');
     const r = handleOf(h, 'update()');
     recordBytes(bytes, 'update()');
+    clearPrismCache(r);
     const prev = gl.getParameter(gl.ARRAY_BUFFER_BINDING);
     gl.bindBuffer(gl.ARRAY_BUFFER, r.buf);
     if (bytes.byteLength <= r.cap) {
@@ -1901,10 +2150,12 @@ export function createDrawer(gl, options) {
     }
     r.size = bytes.byteLength;
     gl.bindBuffer(gl.ARRAY_BUFFER, prev);
+    scanPrism(r, bytes);
   }
   /** Free a handle's buffer (and its vertex arrays); the number may be handed out again. */
   function release(h) {
     const r = handleOf(h, 'release()');
+    clearPrismCache(r);
     if (r.vaos) { for (const v of r.vaos.values()) deleteVAO(v); r.vaos.clear(); }
     gl.deleteBuffer(r.buf);
     handles[h] = null;
@@ -1945,6 +2196,22 @@ export function createDrawer(gl, options) {
       bound = vao;
     }
     pointers(r.buf, first * INSTANCE_BYTES);
+  }
+  function attachPrismSlice(entry, sl) {
+    st.drawCalls++;
+    st.instances += sl.count;
+    if (!hasVAO) { pointers(entry.buf, sl.off); return; }
+    let v = entry.vaos[sl.top];
+    if (v !== null) {
+      if (bound !== v) { bindVAO(v); bound = v; }
+      return;
+    }
+    v = createVAO();
+    entry.vaos[sl.top] = v;
+    bindVAO(v);
+    bound = v;
+    meshAttribs(sl.slot.mesh);
+    pointers(entry.buf, sl.off);
   }
 
   // The per-batch fields of BATCH MATRIX and BLEND (at the top): what draw() refuses.
@@ -2085,13 +2352,69 @@ export function createDrawer(gl, options) {
     let culling = true;
 
     // Pass 2: the world batches, in the order given (uploaded once, read by the shadow pass
-    // too). wAt[i]: where batch i was uploaded; -2 resident (nothing to upload); -1 not drawn.
+    // too). wAt[i]: where batch i was uploaded; -2 resident; -3 split resident; -1 not drawn.
+    const transientPrism = [];
     if (nWorld > 0) {
-      if (wAt.length < nb) wAt = new Int32Array(Math.max(nb, 2 * wAt.length));
+      if (wAt.length < nb) {
+        const cap = Math.max(nb, 2 * wAt.length);
+        wAt = new Int32Array(cap);
+        wSlot = new Array(cap).fill(null);
+        wSlices = new Array(cap).fill(null);
+        wBuf = new Array(cap).fill(null);
+      }
       for (let i = 0; i < nb; i++) {
         const b = batches[i], c = b.count | 0;
         const s = c > 0 && b.screen !== true ? slotOf(b) : null;
-        wAt[i] = !s ? -1 : b.handle !== undefined ? -2 : upload(b, s.kind, c * INSTANCE_BYTES);
+        if (!s) { wAt[i] = -1; continue; }
+        if (s.kind !== KIND.PRISM) {
+          wSlot[i] = s;
+          wSlices[i] = null;
+          wBuf[i] = null;
+          wAt[i] = b.handle !== undefined ? -2 : upload(b, s.kind, c * INSTANCE_BYTES);
+        } else if (b.handle !== undefined) {
+          const r = handles[b.handle], first = b.first | 0;
+          if (r.prismTop >= 0) {
+            wSlot[i] = PRISM_SLOTS[r.prismTop];
+            wSlices[i] = null;
+            wBuf[i] = null;
+            wAt[i] = -2;
+          } else {
+            const plan = residentPrismPlan(r, first, c, transientPrism);
+            if (plan.slot) {
+              wSlot[i] = plan.slot;
+              wSlices[i] = null;
+              wBuf[i] = null;
+              wAt[i] = -2;
+            } else {
+              wSlot[i] = plan.slices[0].slot;
+              wSlices[i] = plan.slices;
+              wBuf[i] = plan;
+              wAt[i] = -3;
+            }
+          }
+        } else {
+          const ub = bytesOf(b.bytes);
+          const t0 = prismTop(ub[51]);
+          let mixed = false;
+          for (let j = 1; j < c; j++) {
+            if (prismTop(ub[j * INSTANCE_BYTES + 51]) !== t0) { mixed = true; break; }
+          }
+          if (!mixed) {
+            wSlot[i] = PRISM_SLOTS[t0];
+            wSlices[i] = null;
+            wBuf[i] = null;
+            wAt[i] = upload(b, KIND.PRISM, c * INSTANCE_BYTES);
+          } else {
+            const slices = [];
+            const len = c * INSTANCE_BYTES;
+            const sc = ensurePrismScratch(len);
+            packPrismBuckets(ub, 0, c, sc, 0, slices);
+            wAt[i] = uploadBytes(sc, KIND.PRISM, len);
+            wSlot[i] = slices[0].slot;
+            wSlices[i] = slices;
+            wBuf[i] = null;
+          }
+        }
       }
       let lx = 0.35, ly = -0.5, lz = 0.8;
       const L = opts && opts.light;
@@ -2135,24 +2458,33 @@ export function createDrawer(gl, options) {
         let zcur = null;
         for (let i = 0; i < nb; i++) {
           if (wAt[i] === -1) continue;
-          const b = batches[i];
+          const b = batches[i], c = b.count | 0;
           if (b.castShadow === false || b.blend === 'add' || b.blend === 'multiply') continue;
-          const s = slotOf(b);
-          if (!(s.lit || ((s.kind === KIND.LINE || s.kind === KIND.ARC) && !flat))) continue;
-          if (s !== zcur) {
-            zcur = s;
-            if (!hasVAO) meshAttribs(s.mesh);
-            set2(Z.uMode, Z.cMode, s.mx, s.my);
-            if (s.cull !== culling) {
-              culling = s.cull;
-              if (culling) gl.enable(gl.CULL_FACE); else gl.disable(gl.CULL_FACE);
-            }
-          }
-          set3(Z.uPix, Z.cPix, 0.5 * size, b.pixelsPerUnit > 0 ? +b.pixelsPerUnit : ppu, s.kc);
-          attach(b, s, wAt[i], s.vao, b.count | 0);
+          const s0 = wSlot[i];
+          if (!(s0.lit || ((s0.kind === KIND.LINE || s0.kind === KIND.ARC) && !flat))) continue;
           settings(Z.uParams, Z.last, b.params, Z);
           setOffset(Z.uOffset, Z.cOff, b.offset);
-          drawInstanced(s.mesh.n, b.count | 0);
+          const bppu = b.pixelsPerUnit > 0 ? +b.pixelsPerUnit : ppu;
+          const slices = wSlices[i], resEntry = wBuf[i];
+          const nSub = slices ? slices.length : 1;
+          for (let k = 0; k < nSub; k++) {
+            const sl = slices ? slices[k] : null;
+            const s = sl ? sl.slot : s0;
+            const cnt = sl ? sl.count : c;
+            if (s !== zcur) {
+              zcur = s;
+              if (!hasVAO) meshAttribs(s.mesh);
+              set2(Z.uMode, Z.cMode, s.mx, s.my);
+              if (s.cull !== culling) {
+                culling = s.cull;
+                if (culling) gl.enable(gl.CULL_FACE); else gl.disable(gl.CULL_FACE);
+              }
+            }
+            set3(Z.uPix, Z.cPix, 0.5 * size, bppu, s.kc);
+            if (resEntry) attachPrismSlice(resEntry, sl);
+            else attach(b, s, sl ? wAt[i] + sl.off : wAt[i], s.vao, cnt);
+            drawInstanced(s.mesh.n, cnt);
+          }
         }
         gl.cullFace(gl.BACK);
         gl.enable(gl.BLEND);
@@ -2186,29 +2518,38 @@ export function createDrawer(gl, options) {
       for (let i = 0; i < nb; i++) {
         if (wAt[i] === -1) continue;
         const b = batches[i], c = b.count | 0;
-        const s = slotOf(b);
+        const s0 = wSlot[i];
         const sh = b.shade;
         const m = b.vp || vp;
         if (m !== curM) { curM = m; setVP(W, m); }
-        set4(W.uShade, W.cShade, s.lit || flatLit ? 1 : 0, ambient, sh ? +sh[0] : s.spec, sh ? +sh[1] : s.rim);
-        set3(W.uPix, W.cPix, halfH, b.pixelsPerUnit > 0 ? +b.pixelsPerUnit : ppu, s.kc);
-        if (s !== cur) {
-          cur = s;
-          if (!hasVAO) meshAttribs(s.mesh);
-          set2(W.uMode, W.cMode, s.mx, s.my);
-          if (s.cull !== culling) {
-            culling = s.cull;
-            if (culling) gl.enable(gl.CULL_FACE); else gl.disable(gl.CULL_FACE);
-          }
-        }
         const bm = blendOf(b);
         blendFor(bm);
         setMul(W.uBlendM, W.cBlendM, bm === 2);
         if (!shadowsOn) setGlobe(W, b.globe);
-        attach(b, s, wAt[i], s.vao, c);
         settings(W.uParams, W.last, b.params, W);
         setOffset(W.uOffset, W.cOff, b.offset);
-        drawInstanced(s.mesh.n, c);
+        const bppu = b.pixelsPerUnit > 0 ? +b.pixelsPerUnit : ppu;
+        const slices = wSlices[i], resEntry = wBuf[i];
+        const nSub = slices ? slices.length : 1;
+        for (let k = 0; k < nSub; k++) {
+          const sl = slices ? slices[k] : null;
+          const s = sl ? sl.slot : s0;
+          const cnt = sl ? sl.count : c;
+          set4(W.uShade, W.cShade, s.lit || flatLit ? 1 : 0, ambient, sh ? +sh[0] : s.spec, sh ? +sh[1] : s.rim);
+          set3(W.uPix, W.cPix, halfH, bppu, s.kc);
+          if (s !== cur) {
+            cur = s;
+            if (!hasVAO) meshAttribs(s.mesh);
+            set2(W.uMode, W.cMode, s.mx, s.my);
+            if (s.cull !== culling) {
+              culling = s.cull;
+              if (culling) gl.enable(gl.CULL_FACE); else gl.disable(gl.CULL_FACE);
+            }
+          }
+          if (resEntry) attachPrismSlice(resEntry, sl);
+          else attach(b, s, sl ? wAt[i] + sl.off : wAt[i], s.vao, cnt);
+          drawInstanced(s.mesh.n, cnt);
+        }
       }
     }
 
@@ -2284,6 +2625,10 @@ export function createDrawer(gl, options) {
     }
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
     if (!culling) gl.enable(gl.CULL_FACE);
+    for (const e of transientPrism) {
+      if (e.vaos) for (const v of e.vaos) if (v) deleteVAO(v);
+      if (e.buf) gl.deleteBuffer(e.buf);
+    }
   }
 
   /**

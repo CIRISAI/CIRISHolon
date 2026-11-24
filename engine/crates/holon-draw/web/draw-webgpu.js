@@ -124,6 +124,7 @@
 import { KIND, INSTANCE_BYTES, PARAMS_NEUTRAL, GLYPH_GLSL, checkGlobe } from './draw.js';
 export {
   KIND, INSTANCE_BYTES, PARAM, PARAMS_NEUTRAL, COLOUR, VARIANT_CASING, VARIANT_ROUND, VARIANT_ORIENT,
+  VARIANT_PRISM_TOP, PRISM, PRISM_FLAT, PRISM_GABLE_X, PRISM_GABLE_Y, PRISM_HIPPED, PRISM_SHED, PRISM_PYRAMID, PRISM_COURTYARD,
   VARIANT_MATERIAL, MATERIAL, DISC_CASING, DISC_CANOPY_FIELD, VARIANT_FLOW, VARIANT_GLYPH_SHAPE, GLYPH,
 } from './draw.js';
 
@@ -320,6 +321,14 @@ fn ppuAt(w: f32) -> f32 {
     let c = cos(a.i_angle);
     let sn = sin(a.i_angle);
     let q = a.a_p * s;
+    var ln = a.a_n;
+    if (kc > 4.5 && kc < 5.5) {
+      let sm = max(max(abs(s.x), abs(s.y)), max(abs(s.z), 1e-20));
+      let us = s / sm;
+      let tn = a.a_n * vec3f(us.y * us.z, us.z * us.x, us.x * us.y);
+      let tnl = length(tn);
+      if (tnl > 1e-20) { ln = tn / tnl; }
+    }
     if (orient) {
       let al = length(a.i_aux);
       var ez = vec3f(0.0, 0.0, 1.0);
@@ -331,10 +340,10 @@ fn ppuAt(w: f32) -> f32 {
       let ex = c * x0 + sn * y0;
       let ey = cross(ez, ex);
       p = org + ex * q.x + ey * q.y + ez * q.z;
-      n = ex * a.a_n.x + ey * a.a_n.y + ez * a.a_n.z;
+      n = ex * ln.x + ey * ln.y + ez * ln.z;
     } else {
       p = org + vec3f(c * q.x - sn * q.y, sn * q.x + c * q.y, q.z);
-      n = vec3f(c * a.a_n.x - sn * a.a_n.y, sn * a.a_n.x + c * a.a_n.y, a.a_n.z);
+      n = vec3f(c * ln.x - sn * ln.y, sn * ln.x + c * ln.y, ln.z);
     }
   }
   o.n = n;
@@ -824,6 +833,110 @@ function boxMesh() {
   return { v, ix };
 }
 
+function polyMesh(faces) {
+  const v = [], ix = [];
+  for (const f of faces) {
+    let nx = 0, ny = 0, nz = 0;
+    for (let i = 0; i < f.length; i++) {
+      const a = f[i], b = f[(i + 1) % f.length];
+      nx += (a[1] - b[1]) * (a[2] + b[2]);
+      ny += (a[2] - b[2]) * (a[0] + b[0]);
+      nz += (a[0] - b[0]) * (a[1] + b[1]);
+    }
+    const l = Math.hypot(nx, ny, nz) || 1;
+    nx /= l; ny /= l; nz /= l;
+    const k = v.length / 6;
+    for (const p of f) v.push(p[0], p[1], p[2], nx, ny, nz);
+    for (let i = 1; i + 1 < f.length; i++) ix.push(k, k + i, k + i + 1);
+  }
+  return { v, ix };
+}
+
+function prismGableXMesh() {
+  const a = [-0.5, -0.5, 0], b = [0.5, -0.5, 0], c = [0.5, 0.5, 0], d = [-0.5, 0.5, 0];
+  const r0 = [-0.5, 0, 1], r1 = [0.5, 0, 1];
+  return polyMesh([
+    [a, d, c, b],
+    [a, b, r1, r0],
+    [c, d, r0, r1],
+    [d, a, r0],
+    [b, c, r1],
+  ]);
+}
+
+function prismGableYMesh() {
+  const a = [-0.5, -0.5, 0], b = [0.5, -0.5, 0], c = [0.5, 0.5, 0], d = [-0.5, 0.5, 0];
+  const r0 = [0, -0.5, 1], r1 = [0, 0.5, 1];
+  return polyMesh([
+    [a, d, c, b],
+    [b, c, r1, r0],
+    [d, a, r0, r1],
+    [a, b, r0],
+    [c, d, r1],
+  ]);
+}
+
+function prismHippedMesh() {
+  const a = [-0.5, -0.5, 0], b = [0.5, -0.5, 0], c = [0.5, 0.5, 0], d = [-0.5, 0.5, 0];
+  const r0 = [-0.28, 0, 1], r1 = [0.28, 0, 1];
+  return polyMesh([
+    [a, d, c, b],
+    [a, b, r1, r0],
+    [c, d, r0, r1],
+    [b, c, r1],
+    [d, a, r0],
+  ]);
+}
+
+function prismShedMesh() {
+  const a = [-0.5, -0.5, 0], b = [0.5, -0.5, 0], c = [0.5, 0.5, 0], d = [-0.5, 0.5, 0];
+  const e = [-0.5, -0.5, 0.15], f = [0.5, -0.5, 0.15], g = [0.5, 0.5, 1], h = [-0.5, 0.5, 1];
+  return polyMesh([
+    [a, d, c, b],
+    [e, f, g, h],
+    [a, b, f, e],
+    [c, d, h, g],
+    [b, c, g, f],
+    [d, a, e, h],
+  ]);
+}
+
+function prismPyramidMesh() {
+  const a = [-0.5, -0.5, 0], b = [0.5, -0.5, 0], c = [0.5, 0.5, 0], d = [-0.5, 0.5, 0];
+  const p = [0, 0, 1];
+  return polyMesh([
+    [a, d, c, b],
+    [a, b, p],
+    [b, c, p],
+    [c, d, p],
+    [d, a, p],
+  ]);
+}
+
+function prismCourtyardMesh() {
+  const r = 0.32, h = 0.3;
+  const a0 = [-0.5, -0.5, 0], b0 = [0.5, -0.5, 0], c0 = [0.5, 0.5, 0], d0 = [-0.5, 0.5, 0];
+  const a1 = [-0.5, -0.5, 1], b1 = [0.5, -0.5, 1], c1 = [0.5, 0.5, 1], d1 = [-0.5, 0.5, 1];
+  const i0 = [-r, -r, h], j0 = [r, -r, h], k0 = [r, r, h], l0 = [-r, r, h];
+  const i1 = [-r, -r, 1], j1 = [r, -r, 1], k1 = [r, r, 1], l1 = [-r, r, 1];
+  return polyMesh([
+    [a0, d0, c0, b0],
+    [a0, b0, b1, a1],
+    [b0, c0, c1, b1],
+    [c0, d0, d1, c1],
+    [d0, a0, a1, d1],
+    [a1, b1, j1, i1],
+    [b1, c1, k1, j1],
+    [c1, d1, l1, k1],
+    [d1, a1, i1, l1],
+    [i1, j1, j0, i0],
+    [j1, k1, k0, j0],
+    [k1, l1, l0, k0],
+    [l1, i1, i0, l0],
+    [i0, j0, k0, l0],
+  ]);
+}
+
 function quadMesh() {
   return {
     v: [-0.5, -0.5, 0, 0, 0, 1, 0.5, -0.5, 0, 0, 0, 1, 0.5, 0.5, 0, 0, 0, 1, -0.5, 0.5, 0, 0, 0, 1],
@@ -846,9 +959,9 @@ function discMesh(sides) {
   return { v, ix };
 }
 
-// Slots as in draw.js: index = kind; 11 and 12 the coarse sphere and rod, 13 and 14 the flat line and arc.
-const KIND_CODE = [0, 1, 3, 3, 4, 5, 5, 0, 0, 2, 6, 0, 0, 3, 3, 0];
-const SLOT_COARSE_SPHERE = 11, SLOT_COARSE_ROD = 12, SLOT_FLAT_LINE = 13, SLOT_FLAT_ARC = 14, SLOT_TRIANGLE = 15, N_SLOT = 16;
+// Slots as in draw.js: index = kind; 11 and 12 the coarse sphere and rod, 13 and 14 the flat line and arc, 16..21 prism tops 1..6.
+const KIND_CODE = [0, 1, 3, 3, 4, 5, 5, 0, 0, 2, 6, 0, 0, 3, 3, 0, 5, 5, 5, 5, 5, 5];
+const SLOT_COARSE_SPHERE = 11, SLOT_COARSE_ROD = 12, SLOT_FLAT_LINE = 13, SLOT_FLAT_ARC = 14, SLOT_TRIANGLE = 15, SLOT_PRISM_BASE = 16, N_SLOT = 22;
 const N_KIND = 14;      // instance buffers by kind, 1..13
 
 const MESH_LAYOUT = {
@@ -1024,6 +1137,15 @@ export async function createDrawerWebGPU(device, options) {
   const mArc = mesh(arcCapsuleMesh(8, 3, 16));
   const mArcRibbon = mesh(arcRibbonMesh(10, 16));
   const mBox = mesh(boxMesh());
+  const mPrisms = [
+    mBox,
+    mesh(prismGableXMesh()),
+    mesh(prismGableYMesh()),
+    mesh(prismHippedMesh()),
+    mesh(prismShedMesh()),
+    mesh(prismPyramidMesh()),
+    mesh(prismCourtyardMesh()),
+  ];
   const mQuad = mesh(quadMesh());
   const mDisc = mesh(discMesh(24));
   const mTri = mesh(triMesh());
@@ -1047,6 +1169,16 @@ export async function createDrawerWebGPU(device, options) {
   slot(SLOT_FLAT_LINE, KIND.LINE, mRibbon, 1, 0.5, 0, 0, 0, false);
   slot(SLOT_FLAT_ARC, KIND.ARC, mArcRibbon, 3, 0.5, 0, 0, 0, false);
   slot(SLOT_TRIANGLE, KIND.TRIANGLE, mTri, 4, 0, 0, 0, 0, false);
+  for (let t = 1; t <= 6; t++) slot(SLOT_PRISM_BASE + t - 1, KIND.PRISM, mPrisms[t], 2, 0, 1, 0.05, 0, true);
+  const PRISM_SLOTS = [
+    slots[KIND.PRISM],
+    slots[SLOT_PRISM_BASE],
+    slots[SLOT_PRISM_BASE + 1],
+    slots[SLOT_PRISM_BASE + 2],
+    slots[SLOT_PRISM_BASE + 3],
+    slots[SLOT_PRISM_BASE + 4],
+    slots[SLOT_PRISM_BASE + 5],
+  ];
 
   const sslots = new Array(12).fill(null);
   sslots[KIND.QUAD] = { kind: KIND.QUAD, smode: 0 };
@@ -1151,6 +1283,39 @@ export async function createDrawerWebGPU(device, options) {
   const light = new Float32Array(3);
   const lvp = new Float32Array(16);
   let wAt = new Int32Array(64);
+  let wSlot = new Array(64).fill(null);
+  let wSlices = new Array(64).fill(null);
+  let wBuf = new Array(64).fill(null);
+  let prismScratch = new Uint8Array(0);
+  const prismTop = (v) => { const t = v & 7; return t < 7 ? t : 0; };
+  const bytesOf = (b) => b instanceof Uint8Array ? b : new Uint8Array(b.buffer, b.byteOffset, b.byteLength);
+  const ensurePrismScratch = (len) => {
+    if (prismScratch.byteLength < len) prismScratch = new Uint8Array(len);
+    return prismScratch;
+  };
+  const popcount7 = (m) => {
+    let c = 0;
+    for (let t = 0; t < 7; t++) if (m & (1 << t)) c++;
+    return c;
+  };
+  const packPrismBuckets = (src, firstByte, count, out, outOff, slices) => {
+    const counts = [0, 0, 0, 0, 0, 0, 0];
+    for (let j = 0; j < count; j++) counts[prismTop(src[firstByte + j * INSTANCE_BYTES + 51])]++;
+    const offs = new Int32Array(7);
+    let curOff = outOff;
+    for (let t = 0; t < 7; t++) {
+      if (counts[t] === 0) continue;
+      offs[t] = curOff;
+      slices.push({ slot: PRISM_SLOTS[t], top: t, off: curOff, count: counts[t] });
+      curOff += counts[t] * INSTANCE_BYTES;
+    }
+    for (let j = 0; j < count; j++) {
+      const o = firstByte + j * INSTANCE_BYTES;
+      const t = prismTop(src[o + 51]);
+      out.set(src.subarray(o, o + INSTANCE_BYTES), offs[t]);
+      offs[t] += INSTANCE_BYTES;
+    }
+  };
   const inv = new Float64Array(16);
   const st = { drawCalls: 0, instances: 0, bytesUploaded: 0, paramUploads: 0, uniformBytes: 0, missingImages: 0, residentBuffers: 0, residentBytes: 0 };
   let dead = false;
@@ -1218,20 +1383,23 @@ export async function createDrawerWebGPU(device, options) {
     lvp[15] = 1;
   }
 
-  // Upload one batch at its kind's cursor, as it is; its offset in that kind's buffer.
-  function upload(b, k, len) {
+  // Upload bytes at `k`'s cursor, as they are; its offset in that kind's buffer.
+  function uploadBytes(bytes, k, len) {
     const at = cursor[k];
     cursor[k] = at + len;
-    const bytes = b.bytes;
     device.queue.writeBuffer(instBuf[k], at, bytes.buffer, bytes.byteOffset, len);
     st.bytesUploaded += len;
     return at;
   }
+  function upload(b, k, len) {
+    return uploadBytes(b.bytes, k, len);
+  }
 
   // ---- resident buffers (draw.js's RESIDENT BUFFERS) ----
-  // handles[h]: { buf (GPUBuffer), cap (bytes allocated), size (bytes of records now) }
+  // handles[h]: { buf (GPUBuffer), cap (bytes allocated), size (bytes of records now), prismTop, prismTops, prismRaw, prismCache }
   const handles = [null];
   const freeHandles = [];
+  const PRISM_CACHE_CAP = 256;
   function handleOf(h, what) {
     const r = typeof h === 'number' ? handles[h] : undefined;
     if (!r) throw new Error('holon-draw: ' + what + ': no resident buffer with handle ' + h);
@@ -1249,11 +1417,68 @@ export async function createDrawerWebGPU(device, options) {
   function write(buf, bytes) {
     if (bytes.byteLength > 0) device.queue.writeBuffer(buf, 0, bytes.buffer, bytes.byteOffset, bytes.byteLength);
   }
+  function scanPrism(r, bytes) {
+    const ub = bytesOf(bytes);
+    const n = ub.byteLength / INSTANCE_BYTES;
+    let firstTop = -1, mixed = false;
+    for (let j = 0; j < n; j++) {
+      const o = j * INSTANCE_BYTES;
+      const k = ub[o + 48];
+      if (k === KIND.PRISM || k === 0) {
+        const t = prismTop(ub[o + 51]);
+        if (firstTop < 0) firstTop = t;
+        else if (t !== firstTop) { mixed = true; break; }
+      }
+    }
+    if (!mixed) {
+      r.prismTop = firstTop > 0 ? firstTop : 0;
+      r.prismTops = null;
+      r.prismRaw = null;
+    } else {
+      const tops = new Uint8Array(n);
+      for (let j = 0; j < n; j++) tops[j] = prismTop(ub[j * INSTANCE_BYTES + 51]);
+      r.prismTop = -1;
+      r.prismTops = tops;
+      r.prismRaw = ub.slice();
+    }
+  }
+  function clearPrismCache(r) {
+    if (!r.prismCache) return;
+    for (const e of r.prismCache.values()) if (e.buf) e.buf.destroy();
+    r.prismCache.clear();
+  }
+  function residentPrismPlan(r, first, c, transientPrism) {
+    if (!r.prismCache) r.prismCache = new Map();
+    const key = first + ':' + c;
+    let e = r.prismCache.get(key);
+    if (e) return e;
+    const t0 = r.prismTops[first];
+    let mixed = false;
+    for (let j = 1; j < c; j++) {
+      if (r.prismTops[first + j] !== t0) { mixed = true; break; }
+    }
+    if (!mixed) {
+      e = { slot: PRISM_SLOTS[t0] };
+    } else {
+      const packed = new Uint8Array(c * INSTANCE_BYTES);
+      const slices = [];
+      packPrismBuckets(r.prismRaw, first * INSTANCE_BYTES, c, packed, 0, slices);
+      const buf = residentBuffer(packed.byteLength);
+      write(buf, packed);
+      e = { buf, slices };
+      if (r.prismCache.size < PRISM_CACHE_CAP) r.prismCache.set(key, e);
+      else transientPrism.push(e);
+      return e;
+    }
+    if (r.prismCache.size < PRISM_CACHE_CAP) r.prismCache.set(key, e);
+    return e;
+  }
   function resident(bytes) {
     if (dead) throw new Error('holon-draw: resident() after destroy()');
     recordBytes(bytes, 'resident()');
-    const r = { buf: residentBuffer(bytes.byteLength), cap: bytes.byteLength, size: bytes.byteLength };
+    const r = { buf: residentBuffer(bytes.byteLength), cap: bytes.byteLength, size: bytes.byteLength, prismTop: 0, prismTops: null, prismRaw: null, prismCache: null };
     write(r.buf, bytes);
+    scanPrism(r, bytes);
     const h = freeHandles.length ? freeHandles.pop() : handles.length;
     handles[h] = r;
     st.residentBuffers++;
@@ -1264,6 +1489,7 @@ export async function createDrawerWebGPU(device, options) {
     if (dead) throw new Error('holon-draw: update() after destroy()');
     const r = handleOf(h, 'update()');
     recordBytes(bytes, 'update()');
+    clearPrismCache(r);
     if (bytes.byteLength > r.cap) {
       r.buf.destroy();
       r.buf = residentBuffer(bytes.byteLength);
@@ -1272,9 +1498,11 @@ export async function createDrawerWebGPU(device, options) {
     }
     write(r.buf, bytes);
     r.size = bytes.byteLength;
+    scanPrism(r, bytes);
   }
   function release(h) {
     const r = handleOf(h, 'release()');
+    clearPrismCache(r);
     r.buf.destroy();
     handles[h] = null;
     freeHandles.push(h);
@@ -1357,15 +1585,16 @@ export async function createDrawerWebGPU(device, options) {
     const wantShadow = !!(opts.shadow && opts.shadow.center && opts.shadow.radius > 0);
     const nb = batches.length;
 
-    // Pass 1: bytes needed per kind; how many world and screen batches there are.
+    // Pass 1: bytes needed per kind; how many world and screen batches (and world sub-draws) there are.
     need.fill(0);
-    let nWorld = 0, nScreen = 0;
+    let nWorld = 0, nWorldDraws = 0, nScreen = 0;
     for (let i = 0; i < nb; i++) {
       const b = batches[i], c = b.count | 0;
       if (c <= 0) continue;
       const s = slotOf(b);
       if (!s) continue;
       checkBatch(b, i, vp, wantShadow);
+      let draws = 1;
       if (b.handle !== undefined) {
         const r = handleOf(b.handle, 'batch ' + i), first = b.first === undefined ? 0 : b.first;
         if (first !== (first | 0) || first < 0 || (first + c) * INSTANCE_BYTES > r.size) {
@@ -1374,13 +1603,24 @@ export async function createDrawerWebGPU(device, options) {
         if (s.image && !(b.slot === (b.slot | 0) && b.slot >= 0 && b.slot <= 255)) {
           throw new Error('holon-draw: batch ' + i + ' is a resident image batch: it needs `slot` (0..255), since its first record is not in hand');
         }
+        if (b.screen !== true && s.kind === KIND.PRISM && r.prismTop < 0) {
+          let mask = 0;
+          for (let j = 0; j < c; j++) mask |= 1 << r.prismTops[first + j];
+          draws = popcount7(mask);
+        }
       } else {
         if (b.bytes.byteLength < c * INSTANCE_BYTES) {
           throw new Error('holon-draw: batch ' + i + ' (kind ' + b.kind + ') has ' + b.bytes.byteLength + ' bytes for ' + c + ' records of ' + INSTANCE_BYTES);
         }
         need[s.kind] += c * INSTANCE_BYTES;
+        if (b.screen !== true && s.kind === KIND.PRISM) {
+          const ub = bytesOf(b.bytes);
+          let mask = 0;
+          for (let j = 0; j < c; j++) mask |= 1 << prismTop(ub[j * INSTANCE_BYTES + 51]);
+          draws = popcount7(mask);
+        }
       }
-      if (b.screen === true) nScreen++; else nWorld++;
+      if (b.screen === true) nScreen++; else { nWorld++; nWorldDraws += draws; }
     }
     const clear = opts.clear;
     if (nWorld + nScreen === 0 && !clear) return;
@@ -1405,9 +1645,9 @@ export async function createDrawerWebGPU(device, options) {
       instBuf[k] = device.createBuffer({ label: 'holon-draw instances ' + k, size: cap, usage: U.VERTEX | U.COPY_DST });
       instCap[k] = cap;
     }
-    // two frames, a draw slot per batch and pass, and at most one frame slot per world batch
-    // in each pass (its own matrix or pixelsPerUnit)
-    ensureUniforms(2 + 4 * nWorld + nScreen);
+    // two frames, a draw slot per world sub-draw and pass + screen batches, and at most one
+    // frame slot per world batch in each pass (its own matrix or pixelsPerUnit)
+    ensureUniforms(2 + 2 * nWorld + 2 * nWorldDraws + nScreen);
     uNext = 2;
     lastP.fill(NaN);
 
@@ -1421,12 +1661,68 @@ export async function createDrawerWebGPU(device, options) {
     const depthOn = opts.depthTest !== false;
 
     // Pass 2a: upload the world batches (read by the shadow pass too); the light; the eye.
+    const transientPrism = [];
     if (nWorld > 0) {
-      if (wAt.length < nb) wAt = new Int32Array(Math.max(nb, 2 * wAt.length));
+      if (wAt.length < nb) {
+        const cap = Math.max(nb, 2 * wAt.length);
+        wAt = new Int32Array(cap);
+        wSlot = new Array(cap).fill(null);
+        wSlices = new Array(cap).fill(null);
+        wBuf = new Array(cap).fill(null);
+      }
       for (let i = 0; i < nb; i++) {
         const b = batches[i], c = b.count | 0;
         const s = c > 0 && b.screen !== true ? slotOf(b) : null;
-        wAt[i] = !s ? -1 : b.handle !== undefined ? -2 : upload(b, s.kind, c * INSTANCE_BYTES);   // -2: resident
+        if (!s) { wAt[i] = -1; continue; }
+        if (s.kind !== KIND.PRISM) {
+          wSlot[i] = s;
+          wSlices[i] = null;
+          wBuf[i] = null;
+          wAt[i] = b.handle !== undefined ? -2 : upload(b, s.kind, c * INSTANCE_BYTES);   // -2: resident
+        } else if (b.handle !== undefined) {
+          const r = handles[b.handle], first = b.first | 0;
+          if (r.prismTop >= 0) {
+            wSlot[i] = PRISM_SLOTS[r.prismTop];
+            wSlices[i] = null;
+            wBuf[i] = null;
+            wAt[i] = -2;
+          } else {
+            const plan = residentPrismPlan(r, first, c, transientPrism);
+            if (plan.slot) {
+              wSlot[i] = plan.slot;
+              wSlices[i] = null;
+              wBuf[i] = null;
+              wAt[i] = -2;
+            } else {
+              wSlot[i] = plan.slices[0].slot;
+              wSlices[i] = plan.slices;
+              wBuf[i] = plan;
+              wAt[i] = -3;
+            }
+          }
+        } else {
+          const ub = bytesOf(b.bytes);
+          const t0 = prismTop(ub[51]);
+          let mixed = false;
+          for (let j = 1; j < c; j++) {
+            if (prismTop(ub[j * INSTANCE_BYTES + 51]) !== t0) { mixed = true; break; }
+          }
+          if (!mixed) {
+            wSlot[i] = PRISM_SLOTS[t0];
+            wSlices[i] = null;
+            wBuf[i] = null;
+            wAt[i] = upload(b, KIND.PRISM, c * INSTANCE_BYTES);
+          } else {
+            const slices = [];
+            const len = c * INSTANCE_BYTES;
+            const sc = ensurePrismScratch(len);
+            packPrismBuckets(ub, 0, c, sc, 0, slices);
+            wAt[i] = uploadBytes(sc, KIND.PRISM, len);
+            wSlot[i] = slices[0].slot;
+            wSlices[i] = slices;
+            wBuf[i] = null;
+          }
+        }
       }
       let lx = 0.35, ly = -0.5, lz = 0.8;
       const L = opts.light;
@@ -1457,8 +1753,8 @@ export async function createDrawerWebGPU(device, options) {
         if (wAt[i] === -1) continue;
         const b = batches[i];
         if (b.castShadow === false || b.blend === 'add' || b.blend === 'multiply') continue;
-        const s = slotOf(b);
-        if (!(s.lit || ((s.kind === KIND.LINE || s.kind === KIND.ARC) && !flat))) continue;
+        const s0 = wSlot[i];
+        if (!(s0.lit || ((s0.kind === KIND.LINE || s0.kind === KIND.ARC) && !flat))) continue;
         const c = b.count | 0;
         const bppu = b.pixelsPerUnit > 0 ? +b.pixelsPerUnit : ppu;
         if (bppu !== zppu) {
@@ -1468,19 +1764,27 @@ export async function createDrawerWebGPU(device, options) {
           uNext++;
           frameSlot(dynOff[0], lvp, vp || lvp, light, eyeL, vw, vh, 0.5 * size, bppu, 0, 0, 0, 0, 0, 0);
         }
-        if (s !== zcur) {
-          zcur = s;
-          const p = zPipes[s.cull ? 1 : 0];
-          if (p !== zpipe) { zpipe = p; zp.setPipeline(p); }
-          zp.setVertexBuffer(0, s.mesh.vbo);
-          zp.setIndexBuffer(s.mesh.ibo, 'uint16');
+        const slices = wSlices[i], resEntry = wBuf[i];
+        const nSub = slices ? slices.length : 1;
+        for (let k = 0; k < nSub; k++) {
+          const sl = slices ? slices[k] : null;
+          const s = sl ? sl.slot : s0;
+          const cnt = sl ? sl.count : c;
+          if (s !== zcur) {
+            zcur = s;
+            const p = zPipes[s.cull ? 1 : 0];
+            if (p !== zpipe) { zpipe = p; zp.setPipeline(p); }
+            zp.setVertexBuffer(0, s.mesh.vbo);
+            zp.setIndexBuffer(s.mesh.ibo, 'uint16');
+          }
+          if (resEntry) zp.setVertexBuffer(1, resEntry.buf, sl.off);
+          else if (wAt[i] === -2) zp.setVertexBuffer(1, handles[b.handle].buf, (b.first | 0) * INSTANCE_BYTES);
+          else zp.setVertexBuffer(1, instBuf[s.kind], sl ? wAt[i] + sl.off : wAt[i]);
+          dynOff[1] = drawSlot(b.params, b.offset, s.mx, s.my, s.kc, 0, 0, 0, 0, 0);
+          zp.setBindGroup(0, uniBG, dynOff);
+          zp.drawIndexed(s.mesh.n, cnt);
+          st.drawCalls++; st.instances += cnt;
         }
-        if (wAt[i] === -2) zp.setVertexBuffer(1, handles[b.handle].buf, (b.first | 0) * INSTANCE_BYTES);
-        else zp.setVertexBuffer(1, instBuf[s.kind], wAt[i]);
-        dynOff[1] = drawSlot(b.params, b.offset, s.mx, s.my, s.kc, 0, 0, 0, 0, 0);
-        zp.setBindGroup(0, uniBG, dynOff);
-        zp.drawIndexed(s.mesh.n, c);
-        st.drawCalls++; st.instances += c;
       }
       zp.end();
     }
@@ -1513,9 +1817,8 @@ export async function createDrawerWebGPU(device, options) {
       for (let i = 0; i < nb; i++) {
         if (wAt[i] === -1) continue;
         const b = batches[i], c = b.count | 0;
-        const s = slotOf(b);
+        const s0 = wSlot[i];
         const sh = b.shade;
-        const spec = sh ? +sh[0] : s.spec, rim = sh ? +sh[1] : s.rim;
         const add = b.blend === 'add' ? 1 : b.blend === 'multiply' ? 2 : 0;
         const m = b.vp || vp, bppu = b.pixelsPerUnit > 0 ? +b.pixelsPerUnit : ppu;
         if (m !== curM || bppu !== curPpu) {
@@ -1531,22 +1834,31 @@ export async function createDrawerWebGPU(device, options) {
             frameSlot(dynOff[0], m, lvp, light, inv, vw, vh, 0.5 * vh, bppu, shp0, shp1, shp2, shp3, orgX, orgY);
           }
         }
-        if (s !== cur || add !== curAdd) {
-          const p = worldPipe(shadowsOn, s.cull, depthOn, add);
-          if (p !== curPipe) { curPipe = p; pass.setPipeline(p); }
-          curAdd = add;
+        const slices = wSlices[i], resEntry = wBuf[i];
+        const nSub = slices ? slices.length : 1;
+        for (let k = 0; k < nSub; k++) {
+          const sl = slices ? slices[k] : null;
+          const s = sl ? sl.slot : s0;
+          const cnt = sl ? sl.count : c;
+          const spec = sh ? +sh[0] : s.spec, rim = sh ? +sh[1] : s.rim;
+          if (s !== cur || add !== curAdd) {
+            const p = worldPipe(shadowsOn, s.cull, depthOn, add);
+            if (p !== curPipe) { curPipe = p; pass.setPipeline(p); }
+            curAdd = add;
+          }
+          if (s !== cur) {
+            cur = s;
+            pass.setVertexBuffer(0, s.mesh.vbo);
+            pass.setIndexBuffer(s.mesh.ibo, 'uint16');
+          }
+          if (resEntry) pass.setVertexBuffer(1, resEntry.buf, sl.off);
+          else if (wAt[i] === -2) pass.setVertexBuffer(1, handles[b.handle].buf, (b.first | 0) * INSTANCE_BYTES);
+          else pass.setVertexBuffer(1, instBuf[s.kind], sl ? wAt[i] + sl.off : wAt[i]);
+          dynOff[1] = drawSlot(b.params, b.offset, s.mx, s.my, s.kc, 0, s.lit || flatLit ? 1 : 0, ambient, spec, rim, shadowsOn ? null : b.globe);
+          pass.setBindGroup(0, uniBG, dynOff);
+          pass.drawIndexed(s.mesh.n, cnt);
+          st.drawCalls++; st.instances += cnt;
         }
-        if (s !== cur) {
-          cur = s;
-          pass.setVertexBuffer(0, s.mesh.vbo);
-          pass.setIndexBuffer(s.mesh.ibo, 'uint16');
-        }
-        if (wAt[i] === -2) pass.setVertexBuffer(1, handles[b.handle].buf, (b.first | 0) * INSTANCE_BYTES);
-        else pass.setVertexBuffer(1, instBuf[s.kind], wAt[i]);
-        dynOff[1] = drawSlot(b.params, b.offset, s.mx, s.my, s.kc, 0, s.lit || flatLit ? 1 : 0, ambient, spec, rim, shadowsOn ? null : b.globe);
-        pass.setBindGroup(0, uniBG, dynOff);
-        pass.drawIndexed(s.mesh.n, c);
-        st.drawCalls++; st.instances += c;
       }
     }
 
@@ -1598,6 +1910,7 @@ export async function createDrawerWebGPU(device, options) {
     st.uniformBytes = uNext * align;
     device.queue.writeBuffer(ubuf, 0, ustage, 0, uNext * alignF);
     device.queue.submit([enc.finish()]);
+    for (const e of transientPrism) if (e.buf) e.buf.destroy();
   }
 
   /** The counts of the last draw(), and residentBuffers/residentBytes now (as draw.js). The SAME object every call. */

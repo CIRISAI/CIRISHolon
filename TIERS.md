@@ -112,6 +112,37 @@ at hydrodynamics.** The final remainder at the cosmological rung would be the Re
 what no closed view carries — and no instrument on this record measures it. The full text is
 `TIERS_ARCHIVE_2026-09-26.md` §"The top rung".
 
+**AMENDMENT TO THE WAGER, 2026-11-23 — the lead's, recorded in their words, committed alone,
+and before DESI DR3 exists to be read.** "The answer on the cosmological tier is that dark
+energy needs to accommodate both a portion of static dynamics AND a portion of higher
+organization - we assumed one or the other not both."
+
+What this changes, stated so that it stays a wager and does not become a way out:
+
+- **The claim.** Dark energy is two portions and not one: a STATIC portion (the part that
+  does not change as the universe expands) and an ORGANISED portion (the Record of Move 5:
+  what accumulates as structure is written). Every leg tested so far asked ONE of them to
+  carry all of it.
+- **The dead legs stay dead.** The Landauer normalisation and the flow/maintenance rescue
+  were each killed as a full account. Whether either miss is the SIZE of the organised
+  portion rather than a failure is a question this amendment raises; neither leg is
+  restated or credited until it is written again with its own kill.
+- **What is not earned by saying it.** Two portions fit more than one. A constant plus
+  something that evolves is the generic shape of every dynamical-dark-energy fit, and DESI
+  DR2 (`Δχ² = −2.13`) was read before this amendment, so DR2 cannot count for it. Only DR3
+  is prospective.
+- **Owed before DR3 is read, or the amendment is not a wager:** (i) the split, as a number
+  or a bound with its reason, derived and not fitted; (ii) how the organised portion grows
+  (with what: structure formed, entropy produced, records written) as a function of
+  redshift, so that it predicts a shape in `w(z)`; (iii) the kill: the DR3 reading that
+  would refute the two-portion claim while leaving a pure constant standing, and the one
+  that would refute the constant. A reading that either portion alone could absorb decides
+  nothing.
+- **Where it lives.** The staked claims are in the sibling seed's stance (CIRISOntology,
+  `Stance.lean`: `dark-balance-intensive`, `dark-balance-extensive`). The amendment has to
+  be made there by its owner; this paragraph imports it at wager strength and inherits its
+  death. `OBJECT.md` Move 5 and the calibrated table are not touched here.
+
 ## 5. What the ladder licenses, and what it does not
 
 - **Licensed:** six physical tiers, each with its carried shape measured, the fluid element's

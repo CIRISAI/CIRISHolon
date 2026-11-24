@@ -143,6 +143,29 @@ What this changes, stated so that it stays a wager and does not become a way out
   be made there by its owner; this paragraph imports it at wager strength and inherits its
   death. `OBJECT.md` Move 5 and the calibrated table are not touched here.
 
+*What the amendment implies if the split is taken from the dead leg's own number (the lead's
+agent's reading, 2026-11-23, after the lead's "with that correction I think it works out";
+not adopted, and for the stance's owner to accept or refuse).* The stock leg priced dark
+energy as the Landauer cost of the bits held (`rho_DE = N·kB·T·ln 2`) and fell SHORT by 3 to
+5 dex, about one dex more once its volume error is corrected (CIRISOntology,
+`scratchpad/FLOW_PRICING_RESULTS.md` §2.3). Read as a portion and not as the whole, that
+shortfall is no longer a contradiction: the organised portion is then `10⁻³` to `10⁻⁶` of
+the total and the static portion carries the rest. The flow/maintenance rescue, which broke
+the FIRAS limit by 8.8 dex, was only ever needed to close that gap, so it is not needed and
+stays dead. Three consequences follow, and they are the price of "it works out":
+
+1. **The kill inverts.** An organised portion that small moves `w` from `−1` by about its
+   own size. DESI cannot see that. The record until today counted the SHAPE of DR2
+   (evolving, `Δχ² = −2.13`) as what survives; under this split that shape is NOT ours. If
+   DR3 confirms dark energy evolving at the level DR2 hinted, the organised portion at the
+   Landauer size cannot be what DESI sees, and the wager is either silent or wrong about
+   its size. A DR3 consistent with a constant is what this split predicts.
+2. **The static portion is unexplained.** The wager then accounts for a thousandth to a
+   millionth of dark energy and takes the rest as given, as the nucleus is taken as given.
+3. **The split is derived, which is what item (i) above asked for,** but its error bar is
+   three dex wide and no instrument on this record or planned can read a portion that
+   small. Naming one is the owed item.
+
 ## 5. What the ladder licenses, and what it does not
 
 - **Licensed:** six physical tiers, each with its carried shape measured, the fluid element's

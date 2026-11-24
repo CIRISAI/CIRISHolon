@@ -1924,3 +1924,31 @@ one pricing note. Records cited.*
 - **Owed, each with what closes it:** a draft preregistration for rungs 0 and I, reviewed
   before any freeze; the QVM's corrections after the lead's read; BENCH-2's review; the
   plant on the relaxation reader; the lead's call on the dead seeds.
+
+### 2026-11-23, later — two portions: the cosmological rung priced, and the table's rivals merged
+
+- **The lead's amendment** (`TIERS.md` §4): dark energy as a static portion AND an organised
+  portion, "we assumed one or the other not both". Committed alone, DESI DR3 unreleased.
+- **Priced and reviewed** (`conformance/omega/COSMOS_TWO_PORTION.md`, its script, and
+  `COSMOS_TWO_PORTION_REVIEW.md`): `1 + w = share × (1 + w_organised)`, so a static portion
+  scales a shape and never changes its sign or crossing; right about the shape; the share
+  the shape wants unpaid by four orders or more; the horizon pricing exact in any universe.
+  The sibling's stock table carries a transcription error of 0.43 dex against the wager.
+- **Three wrong turns by the lead's agent, each corrected in place the same day:** a size
+  quoted from the uncorrected figure; "ceiling" for what is a minimum; and "lost its live
+  test", which looked at the background alone when the stance already stakes voids.
+- **The reading locked on the lead's word** (`OBJECT.md`, CORRECTION 2026-11-23): two
+  portions at every tier; the tie between A′ and C was a false choice; corrected table
+  A″ `0.63`, C `0.20`, R `0.05`, D `0.06`, E `0.06`. The agent had lowered the thesis on the
+  amendment and had quoted the superseded 2026-09-21 table to the lead while doing it.
+- **Banked into the machinery** (`conformance/gravity/MISFITS.md`, `Audit/`): seven misfits
+  registered, three extended, the audit armed with no earlier freeze changing status, and a
+  pre-review check that refuses today's two reviewed drafts for their reviewers' reasons.
+- **Vendored, unbuilt** (branch `baryo-vendor-2026-11-23`): the sibling's T5 record with its
+  hashes, a reproduction draft, and `holon-baryo`. Nothing compiled; the box is loaded.
+- **Surveyed** (`PREDICT.md`, under review): where a forced, blind, reachable prediction is
+  available. One now (the relaxation reader's plant), three after one named step.
+- **Owed:** the perturbation channel's arithmetic and its review; a forced size for the
+  organised portion; the first build of `holon-baryo`; ANOMALY-1 redesigned with arm B
+  (approved); the QVM's corrections after the lead's read.
+

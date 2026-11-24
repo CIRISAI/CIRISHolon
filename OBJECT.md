@@ -166,6 +166,79 @@ every marginal and differ for a consumer that reads two observables together
 (`marginals_match_joint_differs`). This is REPLACE-1's "redundancy is cheap under one-at-a-time
 removal" seen from the consumer's side, and one entry in the DRY register.
 
+## CORRECTION 2026-11-23 — two portions, not one or the other: the tie between A′ and C was a false choice (the lead's; locked text above and below kept legible)
+
+*The lead, 2026-11-23, on the cosmological rung: "dark energy needs to accommodate both a
+portion of static dynamics AND a portion of higher organization - we assumed one or the other
+not both." Then, when the lead's agent lowered the thesis on it: "our entire record just
+clarified". The agent's reading of that, put to the lead and confirmed ("Yes, lock it in and
+update the relevant docs"), is recorded here. Nothing above or below is rewritten.*
+
+1. **The claim.** At every tier a thing has TWO portions: a STATIC one, the conserved core
+   the level above carries, and an ORGANISED one, the structure that is closed, priced, and
+   small. The CORRECTION of 2026-09-25 left one question open as "the known unknown": whether
+   "the level above carries it" is a fact about conservation alone (C) or about paid
+   maintenance (A′), and it said "the tie stands". The tie stood because the question was
+   wrong. It is both, in portions, and the record had been measuring the split all along
+   without reading it as one:
+
+   | tier | the static portion (carried) | the organised portion (closed, priced) | record |
+   |---|---|---|---|
+   | fluid element | the conserved densities, fluxes on the faces | the structural and count blocks at `≤ 0.003`; the order parameter at `≤ 0` | `TIERS.md` §1; `REPLACE1_RESULTS.md`; `OBJECTIVE1_RESULTS.md` |
+   | molecule | the rigid unit, six degrees of freedom | the three vibrations, more closed than the object, `+0.325 ± 0.099 kT` a water | `MOLSEARCH1_RESULTS.md`; `replace0/README.md` |
+   | the hydrogen-bond network | — | closed on S2, and its increment to the momentum law is exactly `0` | `TSCAN_HBOND_SEARCH_RESULTS.md` |
+   | the cosmos (WAGER) | a constant | the Record: what is written as structure forms, small | `TIERS.md` §4; `conformance/omega/COSMOS_TWO_PORTION.md` and its review |
+
+2. **What it does to Move 5's dead legs.** They killed the one-portion framing and not the
+   thesis. The stock leg asked the Record to be ALL of dark energy and fell short by four to
+   twelve orders; read as a portion, that shortfall is the organised portion's size. The
+   flow rescue, which broke the FIRAS limit, existed only to close that gap and is not
+   needed. A static portion takes the rent ledger from `3.8 / 2.7 / 1.5` standard errors to
+   `0.4 / 0.4 / 0.3` against the DESI DR2 combinations with supernovae. Move 5's sentence
+   "two legs are dead and kept" stands as history; "what survives is the shape" is replaced
+   by: what survives is the split.
+
+3. **Why a kill turning into a pass counts here, and how much.** A rescue that could absorb
+   any outcome earns nothing. This one could not: (i) a portion cannot exceed the whole, so
+   a stock that came out too LARGE could not have been saved, and every self-consistent
+   pairing came out short; (ii) one move resolves the magnitude kill, the rescue's kill and
+   the shape misfit together; (iii) it was not invented for the cosmos, the split was
+   measured at the lower tiers first and is applied upward.
+
+4. **What it has NOT earned, kept beside it.** (i) The two-portion reading forbids less than
+   either rival, and part of its weight is that. It owes a FORCED size: the organised
+   portion at some tier, predicted before it is read. Today the sizes run from about three
+   parts in a thousand at the fluid to one in ten thousand or less at the cosmos, with no
+   law joining them. (ii) At the cosmos the static portion priced on the horizon's own
+   entropy and temperature gives the right size exactly, in any universe: it cannot be told
+   from general relativity with a constant. (iii) The share the shape fit wants (`0.4`) is
+   not the share the writer can pay for (`≤ 10⁻⁴`). (iv) The amendment was written after
+   DESI DR2 (M-RETRODICTION-AS-PREDICTION, registered the same day); DR2 does not count for
+   it. (v) Where it becomes a prediction is the perturbation channel (voids, the
+   galaxy cross-correlation, lensing, the largest angles), being priced as
+   `conformance/omega/COSMOS_CMB_CHANNEL.md`; nothing is claimed from it yet.
+
+5. **Corrected table** (the 2026-09-25 table kept above it; weights proposed by the lead's
+   agent and locked on the lead's word):
+
+   | reading | p | what moved it |
+   |---|---|---|
+   | **A″.** Two portions at every tier: a conserved static core the level above carries, and a priced organised portion; the selection principle still its named open item | **0.63** (A′ 0.55, with the part of C that accepted measured prices) | every measured tier shows the split; the cosmological kills re-read as the split's own sign; three discrepancies resolved by one move |
+   | **C.** Conservation ALONE: organisation carries no price of its own; rent is thermodynamics repackaged | 0.20 (0.32) | the hydrogen-bond network's increment of exactly `0` and the order parameter at `≤ 0` are its evidence: organised sectors that cost the level above nothing |
+   | **R.** Rent ALONE is thinghood (the 2026-09-21 table's A, read strictly) | 0.05 | the carried object at every measured tier is a conserved sector |
+   | **D.** Closure is observer-indexed with no observer-free fact | 0.06 (0.08) | untouched today |
+   | **E.** The world-level organised portion is zero: the books are metaphor | 0.06 (0.05) | the payable share is unreadable by any instrument yet named; the dead legs no longer count for E |
+
+   A″ and C now differ on a MEASURABLE: whether an organised portion ever has a price above
+   zero to the level above when no conservation law selects it. The fluid's structural block
+   (`≤ 0.003`, above zero or not?) and the reasoning carrier's conscience sector are where
+   that is read.
+
+6. **What moves the table next.** A forced size (item 4 (i)); the perturbation channel
+   (item 4 (v)); the sibling seed's reader rule on this engine (`conformance/baryo/`, vendored
+   2026-11-23, unbuilt), whose leak law is a price for an organised portion with forward
+   calls that passed and kills that fired; SELECT-1, still unwritten.
+
 ## The scene certificate — two objects, not one (2026-11-15; `SceneCert.lean`, issue #3)
 
 A GENERATED scene (streets under a population cell, a backmapped atomistic box, a mock
@@ -540,7 +613,7 @@ keeps a price from becoming a wall.
   three to four times more sluggish than water at the same temperature, with a
   Stokes–Einstein ratio `~0.13` of water's at `k = 0.27 Å⁻¹`.
 
-## Where the weight sits — the lead's calibrated read (2026-09-21; SUPERSEDED by the corrected table in the CORRECTION of 2026-09-25 above, kept legible here)
+## Where the weight sits — the lead's calibrated read (2026-09-21; SUPERSEDED by the corrected table in the CORRECTION of 2026-09-25 above, itself superseded by the table in the CORRECTION of 2026-11-23; kept legible here)
 
 *Mutually exclusive readings of what a holon most likely IS; probabilities sum to one.*
 

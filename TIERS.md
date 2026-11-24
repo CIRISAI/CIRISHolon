@@ -25,6 +25,14 @@ carried set does not change (`OBJECTIVE1_RESULTS.md`). The window's edges are th
 its most expensive dropped sector and its cheapest carried one. A wide window is a fact about
 the substrate; a narrow or empty one puts the observer's budget into what the tier is.
 
+**A tier has two portions (2026-11-23, the lead's; `OBJECT.md`, CORRECTION 2026-11-23).** The
+STATIC portion is the conserved core the tier above carries. The ORGANISED portion is what is
+closed, priced and small: the "closed sectors the tier above does not carry" of §1 are not a
+footnote to the tiers, they are the second portion of each. The record assumed one or the
+other (carried by conservation, or by paid maintenance) and held the two as rivals; it is
+both, in portions, and the split is the measured thing. What the reading still owes is a
+size it forces before it is read.
+
 **What is shared across tiers is the procedure, not the law.** Each tier's law is forced by
 its closed view (`closure_determines_dynamics`) and is therefore different on every tier; what
 repeats is search, select by the tier above, price the drop, compose — and the remainder owed
@@ -222,9 +230,22 @@ conditional, not independent.
    live observational test. What would reopen it: a writer that can pay for a share of
    order a tenth, with its own kill; or an instrument that reads a share of `10⁻⁴`.
 
+**CORRECTION 2026-11-23, later the same day, to items 3 to 5 of the ADOPTED paragraph, on
+the lead's word.** They counted only what the amendment lost. (i) "Consistent and silent ...
+no live observational test" looked at the expansion history alone. The sibling stance
+already stakes the PERTURBATION channel (`void-excess`: a portion that clumps with galaxies
+wants the supervoid signal in the microwave background; the smooth branch predicts none),
+and under two portions the split is in principle readable there. That channel is being
+priced (`conformance/omega/COSMOS_CMB_CHANNEL.md`); until it is, the sentence is "no live
+test on the background; the perturbation channel open and unpriced". (ii) The amendment is
+not a patch on this rung. It is the split every measured tier already shows, applied
+upward, and the dead legs killed the one-portion framing: see `OBJECT.md`, CORRECTION
+2026-11-23, which also carries the corrected table. Items 1 and 2 stand as written: right
+about the shape, the size at the shape-fit share unpaid, the horizon pricing exact and not
+separable from a constant.
+
 Owed elsewhere, not made here: the stance (CIRISOntology `Stance.lean`); `OBJECT.md` Move 5
-and its calibrated table, where "what survives is the shape" still stands and row E ("the
-dead cosmology legs are the tell") is the row this bears on; and the sibling's
+and its calibrated table (done the same day: `OBJECT.md`, CORRECTION 2026-11-23); and the sibling's
 `flow_pricing.py`, which carries a transcription error in the microwave background's
 entropy (`2.03e89` for `5.40e89`), 0.43 dex against the wager.
 

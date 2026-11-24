@@ -534,6 +534,14 @@ discovered none. That is a validated instrument and not yet a discovering one; t
 freeze that could change the sentence is the selection principle stated as arithmetic and
 tested blind.
 
+*Appended 2026-11-23.* The object has two portions and the record held them as rivals: a
+static core the level above carries by conservation, and an organised portion that is closed,
+priced and small. Every measured tier shows the split, and the cosmological legs that were
+killed were killed as one portion asked to be the whole (`OBJECT.md`, CORRECTION 2026-11-23).
+The instrument is unchanged and has still discovered nothing; what changed is what it is
+understood to be measuring. The sentence that would change next is a size of the organised
+portion predicted before it is read.
+
 *Appended 2026-11-15 (issues #3 and #4; the lessons of the generated-world work).* In this
 file's vocabulary (proved, measured, wager, open):
 

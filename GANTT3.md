@@ -20,6 +20,16 @@ on this record. What the programme has that the outside results do not is the ga
 stakes frozen before a run, closed against carried, a price. After five carriers and one
 head-to-head it re-finds and has not discovered (`TIERS.md` §5).
 
+## 0a. The reading that changed on 2026-11-23
+
+Two portions, not one or the other (`OBJECT.md`, CORRECTION 2026-11-23, the lead's): every
+tier has a static core carried by conservation and an organised portion that is closed,
+priced and small. The table's two rivals are merged (A″ `0.63`, conservation alone `0.20`,
+rent alone `0.05`, observer-indexed `0.06`, books as metaphor `0.06`). The cosmological
+legs died as one portion asked to be the whole; the wager stands as a split, right about the
+shape, unpaid at the share the shape wants, with the perturbation channel open and being
+priced. Owed by the reading: a size of the organised portion forced before it is read.
+
 ## 1. What moved outside, and what it does to each front
 
 *Unscreened. Status words are the reports' own. A screen like
@@ -50,7 +60,7 @@ closed, at what price, with plants that fire, is not what any of these results i
 | **QVM-BENCH-2** (`conformance/qasm/QVM_BENCH2_PREREG_DRAFT.md`, DRAFT, not frozen) | five arms on circuits someone else picked: the ABSTRACTS suite (MIT); the tableau against Stim and QuaSARQ (GPL, run as an external process only); the sum and the GPU fold against Clifft and Tsim; the dispatch with its search time counted; two exact acts on the rank board. Three arms are entered as expected losses | an adversarial review; the lead's numbers in the named blanks; nothing runs until the shared box is free | its own freeze |
 | **QVM — the Clifford tier's table** (`conformance/bigqvm/MESH_CLIFFORD_RESULTS.md`) | the cut killed as staked; the transpose re-aim `0.41 ×` on a table the load gate refused | the citable table and the P-class sweep, owed since September | G3 on a table that held its window; superseded in part by BENCH-2's arm B if that freezes |
 | **Gravity** (`conformance/gravity/`) | discrete 2+1 only. The first "Einstein derived" claim was WITHDRAWN as vacuous (M-FIXED-POINT-TRAJECTORY); the corrected one: the dynamics descends exactly to the quotient and preserves the constraint, with the dynamics as input | a carrier with local degrees of freedom, before any claim about 3+1 | none written |
-| **The cosmological rung** | a wager; two legs dead and kept | nothing until DESI DR3 | DR3, 2027 as reported |
+| **The cosmological rung** (`TIERS.md` §4; `conformance/omega/COSMOS_TWO_PORTION.md` and its review) | a wager, amended 2026-11-23 to two portions and adopted after review: right about the shape (`3.8 / 2.7 / 1.5` to `0.4 / 0.4 / 0.3` standard errors), the share the shape wants (`0.4`) unpaid by four orders or more, the horizon pricing exact and not separable from a constant | the perturbation channel priced (`COSMOS_CMB_CHANNEL.md`, in work) and reviewed; the stance amended by its owner; the sibling's `flow_pricing.py` entropy typo | a stake on the perturbation channel frozen before the next void or lensing release; DESI DR3 for the background |
 | **The generated world** (`conformance/scene/`, `GANTT2.md` from line 1487) | nineteen result records on 2026-11-11 and 12: generators shipped for the twin (HOUSEGEN-1, DEVICEGEN-1, PRESENCEGEN-2), PRESENCEGEN-1 failed its gate, BUILDGEN-1 KILLED with the reason as the finding | a scene certificate end to end; none exists (`TIERS.md` §6) | `OBJECT.md` "The scene certificate" |
 | **The drawing engine** (`engine/crates/holon-draw`) | on main: thirteen record kinds on both browser backends, the eye CORRECTION, a parity gate. Three consumers: the twin's street tier by default, CEWPOS, and three of this repository's own pages | ribbon lines (in work, unpushed); the twin's remaining layers (CEWP#24); `docs/workbench` and the retirement of the Bevy page; a native backend (issue #9) | the three consumers fully on it, then one engine that draws only holons |
 | **The declaration standard** (`standard/`, PR #8, draft) | v0, not frozen: sixty declarations, 46 hold, 14 pending, 0 fail. Governed: `holon:claim` is a provisional family in the Constitution; the kernel's own declaration is merged there | the lead's read of the PR; a review of everything changed since the third review; then the freeze | the lead's merge |

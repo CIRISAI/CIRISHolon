@@ -25,14 +25,6 @@ carried set does not change (`OBJECTIVE1_RESULTS.md`). The window's edges are th
 its most expensive dropped sector and its cheapest carried one. A wide window is a fact about
 the substrate; a narrow or empty one puts the observer's budget into what the tier is.
 
-**A tier has two portions (2026-11-23, the lead's; `OBJECT.md`, CORRECTION 2026-11-23).** The
-STATIC portion is the conserved core the tier above carries. The ORGANISED portion is what is
-closed, priced and small: the "closed sectors the tier above does not carry" of §1 are not a
-footnote to the tiers, they are the second portion of each. The record assumed one or the
-other (carried by conservation, or by paid maintenance) and held the two as rivals; it is
-both, in portions, and the split is the measured thing. What the reading still owes is a
-size it forces before it is read.
-
 **What is shared across tiers is the procedure, not the law.** Each tier's law is forced by
 its closed view (`closure_determines_dynamics`) and is therefore different on every tier; what
 repeats is search, select by the tier above, price the drop, compose — and the remainder owed
@@ -81,6 +73,17 @@ H-bond network → molecule → atom → nucleus → the fold. It is six tiers, 
 rung 1 was never an under-evidenced tier, it was a closed sector drawn as a level. Its
 "measured, not certified" status in `GANTT.md` is closed as NOT A TIER, and every number
 measured on the network stands as a reading of a sector.
+
+**A tier has two portions (2026-11-23, the lead's; `OBJECT.md`, CORRECTION 2026-11-23).** The
+STATIC portion is the conserved core the tier above carries. The ORGANISED portion is what is
+closed, priced and small: the "closed sectors the tier above does not carry" of §1 are not a
+footnote to the tiers, they are the second portion of each. The record assumed one or the
+other (carried by conservation, or by paid maintenance) and held the two as rivals; it is
+both, in portions, and the split is the measured thing. What the reading still owes is a
+size it forces before it is read.
+
+*(Placed here and not in §0, so that no line above it moves: the workbench page cites
+this file's fold row by line.)*
 
 ## 2. The computational ladder (the QVM) — views, not levels
 

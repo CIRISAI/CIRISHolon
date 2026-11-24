@@ -1876,3 +1876,51 @@ Records cited; nothing below changes a tier's status.*
 - **A key, not a cause.** It fixes the ladder for a state-keyed generator, not started.
 
 *(Placed at the end, as above.)*
+
+## 2026-11-23 — a reset, three screens against a field that moved, and the matter sweep priced
+
+*Nothing below is a result of a run: no campaign was frozen and nothing was computed on a
+carrier. What is banked is a standing view, two screens, one review, three corrections and
+one pricing note. Records cited.*
+
+- **`GANTT3.md` reset** after two months unkept. The fine-model seeds are DEAD, not late:
+  both arms stopped 2026-09-27 at two and a half of twelve cycles, with no entry saying why
+  (`replace0/response1_fine_L_seed0/scout.err`, `_T_seed0/scout.err`). The lead's call:
+  relaunch, a declared partial read, or closed as unpaid.
+- **The outside moved** (`GANTT3.md` §1; news and preprint summaries, unscreened):
+  four-dimensional gauge theory existence, Navier–Stokes blow-up, an exact bootstrap ceiling
+  in three-dimensional gravity (its value deliberately not read here), the Riemann
+  hypothesis in Lean; DESI DR3 not released. The lead's sentence of the day: "The purpose
+  of holon is to identify out of all this mess what is real."
+- **The QVM screened against its field** (`conformance/prior_art/QVM_FIELD_2026-11.md`):
+  the dispatch has direct prior art (García, arXiv 2607.27075, eight weeks before ACUITY-2
+  froze; its §3.3 read at source by two readers); "parity with stim on one core" is
+  single-shot where the field samples; the rank cell is open on a board that moved, and
+  RANK-1's results are still unsent. CORRECTIONs owed and NOT yet made, pending the lead's
+  read. A benchmark draft, not frozen: `conformance/qasm/QVM_BENCH2_PREREG_DRAFT.md`.
+- **SEAM-NS-0 drafted blind and reviewed the same day: REDESIGN**
+  (`conformance/water_observatory/SEAM_NS0_PREREG_DRAFT.md`, `SEAM_NS0_REVIEW.md`). Its
+  graded quantity does not separate the readings it is for; its sound-crossover variant is
+  a re-finding, not forced and not blind. The lead's agent had called that variant viable
+  an hour earlier and was wrong.
+- **CORRECTION made** (`RESPONSE1_RESULTS.md`, 2026-11-23): "the model's sound speed is
+  about twice water's" compared a reading at `k = 0.27 Å⁻¹` with water's long-wavelength
+  value; at that wavevector water itself reads roughly 2,500 to 3,200 m/s. The sentence on
+  line 898 of this file is corrected by that paragraph and left as written.
+- **Reported, NOT adopted:** "overdamped at 50 m/s" may be the fit's window at a
+  signal-to-noise of 6 to 9. Owed: PR-2's underdamped plant fired at that signal-to-noise.
+- **`TIERS.md` rows corrected** on PR #8 (the chemistry cell's in-sample error read as a
+  distance from MB-pol; the hydrogen-bond cell citing the stake the record did not meet).
+- **The matter sweep, PRICED** (`conformance/crystal/MATTER_SWEEP.md`; a note, no claim, no
+  compute): Sakharov's three conditions as a ladder in 1+1 dimensions on the Schwinger
+  model — a reader for the current; the anomaly; a C-odd background; a ramp out of
+  equilibrium; the composition read as a sourced count with its ledger. Two errors of the
+  brief caught in the writing: half a unit of background is the C-SYMMETRIC point, so
+  KINK-0 cannot serve as the bias; and a vector-like carrier makes only a handed asymmetry.
+  No rung predicts the observed asymmetry; none is both forced and blind. The one stake
+  that could come out otherwise: rung IV's late field against the equilibrium value, with a
+  mass, at a point nobody has computed. Rungs 0 to IV need no engine build. Closest prior
+  art: Carena, Li, Ou and Singh (arXiv 2412.10365), read at its abstract only.
+- **Owed, each with what closes it:** a draft preregistration for rungs 0 and I, reviewed
+  before any freeze; the QVM's corrections after the lead's read; BENCH-2's review; the
+  plant on the relaxation reader; the lead's call on the dead seeds.

@@ -42,19 +42,19 @@
   },
   "row": {
     "path": "TIERS.md",
-    "quote": "MEASURED on three all-atom walks (`MOLSEARCH1_RESULTS.md`); CERTIFIED-STRICT on the 12-atom scene (893.8 fs against 834, 0/111 controls)"
+    "quote": "MEASURED on three all-atom walks (`MOLSEARCH1_RESULTS.md`); CERTIFIED-STRICT on the 12-atom scene (893.8 fs against 834, 0/111 controls; `CENSUS_RESULTS.md`)"
   },
   "budget_window": "not_measured",
   "drops": [
     {
       "what": "the three vibrations",
-      "price": "`+0.325 kT`/water at the handoff (TIERS.md)",
+      "price": "`+0.325 ± 0.099 kT`/water at the handoff (TIERS.md)",
       "closed": "MORE closed than the object (purity `1.00`, cross-block `0.009`) (TIERS.md)"
     }
   ],
   "remainder": "none the fluid needs at these cadences",
   "not_claimed": [
     "The strict certificate TIERS.md names (a horizon of 893.8 fs against 834) is a bound that must be AT LEAST its requirement. This format's certificates are at-most bounds, so it is quoted and not checked.",
-    "`893.8` and `+0.325` are not in MOLSEARCH1_RESULTS.md, the one record the row names. They are in CENSUS_RESULTS.md and replace0/README.md, quoted in `source`; TIERS.md drops the `± 0.099` (citation notes of 2026-11-23 in TIERS.md)."
+    "`893.8` and `+0.325` are not in MOLSEARCH1_RESULTS.md, the one record the row names. They are in CENSUS_RESULTS.md and replace0/README.md, quoted in `source`. Until 2026-11-23 the row named neither and dropped the `± 0.099`; it was amended that day (CORRECTION 2026-11-23 in TIERS.md)."
   ]
 }

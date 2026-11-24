@@ -36,14 +36,14 @@
 | `sandbox.landscape` | the sandbox's landscape tier | simulated | rung | computed | sandbox.sandbox (context) | none | none | holds | `6681644f8914e5ac…` |
 | `sandbox.planet` | the sandbox's planet tier | simulated | rung | computed | sandbox.landscape (context) | none | none | holds | `ec4b72cd9b79ec5b…` |
 | `sandbox.sandbox` | the sandbox's sandbox tier | simulated | rung | computed | sandbox.grain (context) | none | none | holds | `a71c2f570c5b5fbe…` |
-| `sectors.hbond_network` | the hydrogen-bond network | measured | sector | measured | tiers.molecule (function) | bond_counts: momentum_law_50fs (0.02 relative), own_block (0.2 relative) | closure, realised, 0.007 relative for own_block; price 0 relative for momentum_law_50fs, dropped | holds | `d1ad9c5ca3c3c7ab…` |
+| `sectors.hbond_network` | the hydrogen-bond network | measured | sector | measured | tiers.molecule (function) | bond_counts: momentum_law_50fs (0.02 relative), own_block (0.2 relative) | closure, realised, 0.007 relative for own_block; price 0 relative for momentum_law_50fs, dropped | holds | `a17e5a0f440f58ae…` |
 | `sectors.order_parameter` | the collective order parameter | measured | recorded | measured | tiers.molecule (function) | order_field: density_and_current (0.02 relative) | none; price -0.0007 relative for density_and_current, dropped | holds | `5662989195569910…` |
 | `sectors.slow_shell_coordinate` | the VAMPnet's slow shell-geometry coordinate | measured | recorded | measured | tiers.molecule (function) | learned_coordinate: beyond_velocity_and_q (0.02 relative) | none; price 0.0128 relative for beyond_velocity_and_q, dropped | holds | `769aa2d0cd67ff55…` |
-| `tiers.chemistry` | atom to chemistry | measured | recorded | measured | tiers.nucleus (context) | none | none | holds | `1a8284a034efab76…` |
+| `tiers.chemistry` | atom to chemistry | measured | recorded | measured | tiers.nucleus (context) | none | none | holds | `1bf3457e137d8d4e…` |
 | `tiers.continuum` | the continuum, or the cube | measured | recorded | measured | tiers.fluid_element (context) | none | none | holds | `7a9cac0a4917acd2…` |
 | `tiers.fluid_element` | the fluid element | measured | tier | measured | tiers.molecule (function) | staggered_chart: continuity (0.2 relative); hydrodynamic_block: own_next_state (0.02 relative) | closure, realised, 0.18 relative for continuity; price 0.039 ± 0.0073 relative for own_next_state, carried | holds | `64db8f000cb1d198…` |
 | `tiers.fold` | the fold below the atom | measured | recorded | measured | nothing | none | none | holds | `d8d25abb628558c5…` |
-| `tiers.molecule` | the molecule | measured | recorded | measured | tiers.chemistry (function) | none | none | holds | `42ace5377aacc1fe…` |
+| `tiers.molecule` | the molecule | measured | recorded | measured | tiers.chemistry (function) | none | none | holds | `2ff52ea6178376a0…` |
 | `tiers.nucleus` | the nucleus | declared | input | declared | tiers.fold (context) | none | none | holds | `221fab1dcf0700c0…` |
 | `twin.alm` | the twin's layer alm | simulated | rung | computed | nothing | picture: twin_page | none | pending | `500bd5055ba60a8e…` |
 | `twin.arcs` | the twin's layer arcs | simulated | rung | computed | nothing | picture: twin_page | none | pending | `abfcb43f61433e92…` |

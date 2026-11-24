@@ -49,8 +49,8 @@ number in this file.
 |---|---|---|---|---|---|
 | **the fold below the atom** (gauge vacuum, hadron) | colour-singlet closure on Gauss's law; the vacuum's conserved charges | — | the magic density `c(x)·N`, extensive at every coupling; a ten-site box's price `2^{M₂} ≤ 16` (`GF1_RESULTS.md`; a re-finding of PRB 111 L081102) | not measured | MEASURED on 1+1D only; SCHWINGER-3 `M_V/g = 0.553116`, `2.0 %` from the continuum; GF0 SCHWINGER-4: the residual between screened static pairs decays at the banked meson mass to 0.6% — Fold II's first measurement below the atom, 1+1D only; GF2 GATED |
 | **nucleus** | `Z`, mass, spin, charge radius | — | none measured; the fold's interior is the owed item | — | DECLARED input |
-| **atom → chemistry** | exact full-CI cores; the derived force law (charges, walls, contacts, charge transfer as a table) | the higher many-body terms, priced at the seam | the seam: three-body dispersion harvested to `10⁻¹²` (`EMBED2_RESULTS.md`); charge transfer, the sixth channel (CT-1…3); dE5 does NOT terminate (24/24 over bound) | not measured | MEASURED; derived, not fitted; `2.10` mHa RMS against MB-pol (COMPARE-0) — behind the fitted state of the art, by design |
-| **molecule** | the rigid unit: six degrees of freedom — mass, momentum, orientation | the three vibrations: MORE closed than the object (purity `1.00`, cross-block `0.009`) and dropped, `+0.325 kT`/water at the handoff | none the fluid needs at these cadences | not measured | MEASURED on three all-atom walks (`MOLSEARCH1_RESULTS.md`); CERTIFIED-STRICT on the 12-atom scene (893.8 fs against 834, 0/111 controls) |
+| **atom → chemistry** | exact full-CI cores; the derived force law (charges, walls, contacts, charge transfer as a table) | the higher many-body terms, priced at the seam | the seam: three-body dispersion harvested to `10⁻¹²` (`EMBED2_RESULTS.md`); charge transfer, the sixth channel (CT-1…3); dE5 does NOT terminate (24/24 over bound) | not measured | MEASURED; derived, not fitted; `2.10` mHa RMS against the exact answer of its own minimal-basis Hamiltonian, in sample on the sixty-five geometries it was built from, "not an accuracy claim"; MB-pol stands `7.06` mHa from that same answer (`COMPARE0_RESULTS.md`) — behind the fitted state of the art, by design |
+| **molecule** | the rigid unit: six degrees of freedom — mass, momentum, orientation | the three vibrations: MORE closed than the object (purity `1.00`, cross-block `0.009`) and dropped, `+0.325 ± 0.099 kT`/water at the handoff (`replace0/README.md`) | none the fluid needs at these cadences | not measured | MEASURED on three all-atom walks (`MOLSEARCH1_RESULTS.md`); CERTIFIED-STRICT on the 12-atom scene (893.8 fs against 834, 0/111 controls; `CENSUS_RESULTS.md`) |
 | **fluid element** | the conserved densities with fluxes on the FACES: density in cells, momentum on the faces within `0.25 Å` (the staggered chart) | the structural block `(q, s2)` and the count block, at `≤ 0.003`; the collective order parameter at `≤ 0` (ORDER-1); the hydrogen-bond count at exactly `0` | the leak the cell chart cannot carry at one molecular diameter — carried by the faces: `D = 0.180 ± 0.058` on the graded 36-cycle average against the cell chart's `0.31` | **`(0.0033, 0.039)`** — one decade | IN THE ENGINE (REPLACE-1: `holon-lens::staggered`, the gate reproducing every banked number); driven shear rent `η = 4.4 × 10⁻⁴` Pa s equal to the equilibrium read |
 | **continuum / the cube** | the hydrodynamic fields | — | textbook; the viscosity as the driven mode's rent | — | MEASURED once (RESPONSE-1 R3); the cube's dynamics FENCED |
 
@@ -58,7 +58,7 @@ number in this file.
 
 | sector | closed? | carried? | where it lives | record |
 |---|---|---|---|---|
-| the hydrogen-bond network | yes: the count's own `σ = 0.46` at 100 fs, memory `~350` fs; 3.375 bonds/molecule, spanning cluster `1.0` | **no**: increment to the momentum law exactly `0` on three walks | an uncarried sector of the molecular tier, for the dynamics the fluid needs at 293 K | `TSCAN_HBOND_SEARCH_RESULTS.md`, `LIQUID2_RESULTS.md` |
+| the hydrogen-bond network | yes, on S2: the bond and velocity cross-block at most `0.007` against `< 0.2`; the count's own `σ` of `0.30`–`0.46` at 100 fs is UNDER S1's bar of `0.5` ("between" on all three walks); memory `~350` fs; 3.375 bonds/molecule, spanning cluster `1.0` | **no**: increment to the momentum law exactly `0` on three walks | an uncarried sector of the molecular tier, for the dynamics the fluid needs at 293 K | `TSCAN_HBOND_SEARCH_RESULTS.md`, `LIQUID2_RESULTS.md` |
 | the collective order parameter (tetrahedral order at the box's longest wavelength) | yes: `σ₁ = 0.29–0.36` at 1 ps, outside the hydrodynamic span | **no**: increments `≤ 0` into density and current | an uncarried sector; its per-molecule form carries `+0.03` of single-molecule mobility, never reaching the fields | `ORDER1_RESULTS.md` §6, `SLOW1_RESULTS.md` |
 | the VAMPnet's slow shell-geometry coordinate | yes, slower than q (`0.50` vs `0.33`) | a sliver, `+0.013` beyond q, under the bar | an uncarried sector | `SLOW2_RESULTS.md` |
 
@@ -78,6 +78,11 @@ measured on the network stands as a reading of a sector.
 are cited to the wrong place.** Found while each row was declared against its record
 (`standard/`, `standard/REVIEW-2026-11-23.md`, the third pass). The rows above are left as
 written. No number changes.
+
+*Applied 2026-11-23, on the lead's word ("Make the accuracy fixes"): the two cells and the three
+citations below are now amended in the rows themselves. The wording each cell carried before
+is the quoted text in items 1 and 2, and in the list of citations; this paragraph stays as
+the record of the change.*
 
 1. **The chemistry row's "`2.10` mHa RMS against MB-pol (COMPARE-0)" is wrong as worded.**
    `2.096e-3` hartree is the served law's error against the EXACT answer of its own
@@ -118,7 +123,7 @@ closed view of the circuit it can carry exactly, with a price for the rest.
 | view | closed on | the +1 (what it cannot carry) and its price | status |
 |---|---|---|---|
 | classical bit-planes | permutation / diagonal circuits | everything else, refused by name | BANKED |
-| stabilizer tableau | Clifford motions (`tableau_closed_under_hadamard`) | the T-gates in the light cone, `expected_branches(t_eff)` — exact, printed before the run | BANKED; parity with stim on one core at `d = 221`; the column-sharded cut correct and not paying (branch (b)); the transpose re-aim `0.41 ×` on a load-refused table |
+| stabilizer tableau | Clifford motions (`tableau_closed_under_hadamard`) | the T-gates in the light cone, `expected_branches(t_eff)` — exact, printed before the run | BANKED; parity with stim on one core at `d = 221` (`31.08` s on one shard against `35.78` s, `conformance/bigqvm/MESH_CLIFFORD_RESULTS.md`); the column-sharded cut correct and not paying (branch (b)); the transpose re-aim `0.41 ×` on a load-refused table |
 | stabilizer-rank sum | Clifford+T via Magic5FromCat (credited) | a certified remainder `R_k ≤ ε`; 450 of 450 runs | IN THE ENGINE (ACUITY-1 (a)); on the GPU bit-identical at `0.022–0.025 ×` the CPU mesh (GPUFOLD-1 (a)) |
 | certified MPS | low-entanglement circuits | the discarded weight `Σ√w`, a true 2-norm bound | BUILT for ACUITY-2 |
 | dense | `n ≤ 24` | none | referee |

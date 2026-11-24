@@ -96,10 +96,10 @@
   ],
   "row": {
     "path": "TIERS.md",
-    "quote": "| the hydrogen-bond network | yes: the count's own `σ = 0.46` at 100 fs, memory `~350` fs; 3.375 bonds/molecule, spanning cluster `1.0` | **no**: increment to the momentum law exactly `0` on three walks |"
+    "quote": "| the hydrogen-bond network | yes, on S2: the bond and velocity cross-block at most `0.007` against `< 0.2`; the count's own `σ` of `0.30`–`0.46` at 100 fs is UNDER S1's bar of `0.5` (\"between\" on all three walks); memory `~350` fs; 3.375 bonds/molecule, spanning cluster `1.0` | **no**: increment to the momentum law exactly `0` on three walks |"
   },
   "not_claimed": [
-    "'Closed' here is the record's S2 alone: the bond and velocity cross-block, `0.007`, `0.007` and `0.002` against `< 0.2`; the certificate carries the largest. Its S1 stake, the count's own `σ ≥ 0.5` at 100 fs, read `0.44`, `0.30` and `0.46`: 'between', not met. TIERS.md's 'closed? yes' quotes the `0.46` (CORRECTION 2026-11-23 in TIERS.md).",
+    "'Closed' here is the record's S2 alone: the bond and velocity cross-block, `0.007`, `0.007` and `0.002` against `< 0.2`; the certificate carries the largest. Its S1 stake, the count's own `σ ≥ 0.5` at 100 fs, read `0.44`, `0.30` and `0.46`: 'between', not met. Until 2026-11-23 TIERS.md's 'closed? yes' quoted the `0.46`; the cell was amended that day to rest on S2 (CORRECTION 2026-11-23 in TIERS.md).",
     "The three increments through the gate are `−0.0001`, `−0.0008` and `+0.0000`; the price carries the largest, with that walk's two nulls. No standard error is in the record's table.",
     "'Not carried' is relative to the one target tested, the momentum law at 50 fs. TIERS.md: the network 'may be the carried sector for targets nobody has pointed the gate at', the dielectric response and freezing above all.",
     "A price, not a realised cost. Plant PH-2 read `5 × 10⁻²` against a `10⁻²` bar, recorded in the record as an artefact."

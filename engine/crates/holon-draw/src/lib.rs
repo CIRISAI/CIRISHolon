@@ -289,6 +289,34 @@ pub const VARIANT_ROUND: u8 = 0x02;
 /// of upright slices. In RAMP mode an oriented box reads `t = 0` (its `aux` is taken). The
 /// pick's bounding sphere is about `pos` and turning about `pos` keeps it, so `bound` holds.
 pub const VARIANT_ORIENT: u8 = 0x08;
+/// The low three bits of a [`Kind::Prism`]'s `variant`: its top/roof form, one of the closed
+/// list `PRISM_*` (`0..=6`, matching `web/draw.js`). Bits `3` (`VARIANT_ORIENT`), `4..5`
+/// (`VARIANT_MATERIAL`) and `6..7` (`COLOUR_*`) keep their meanings on a prism.
+pub const VARIANT_PRISM_TOP: u8 = 0x07;
+/// Flat roof / shallow parapet (default `variant & 0x07 == 0`, box mesh).
+pub const PRISM_FLAT: u8 = 0;
+/// Pitched gable roof with ridge along local X (`y = 0, z = 1`) and triangular gable ends.
+pub const PRISM_GABLE_X: u8 = 1;
+/// Pitched gable roof with ridge along local Y (`x = 0, z = 1`) and triangular gable ends.
+pub const PRISM_GABLE_Y: u8 = 2;
+/// Four-slope hipped roof (ridge along local X `x in [-0.28, 0.28], y = 0, z = 1`).
+pub const PRISM_HIPPED: u8 = 3;
+/// Mono-pitch / lean-to roof rising from `z = 0.15` at `-y` to `z = 1.0` at `+y`.
+pub const PRISM_SHED: u8 = 4;
+/// Four-sided pyramidal roof meeting at apex `(0, 0, 1)`.
+pub const PRISM_PYRAMID: u8 = 5;
+/// Perimeter parapet rim / stepped crown around a recessed central courtyard roof.
+pub const PRISM_COURTYARD: u8 = 6;
+/// The seven prism top forms, in order (the value of each is its index).
+pub const PRISMS: [u8; 7] = [
+    PRISM_FLAT,
+    PRISM_GABLE_X,
+    PRISM_GABLE_Y,
+    PRISM_HIPPED,
+    PRISM_SHED,
+    PRISM_PYRAMID,
+    PRISM_COURTYARD,
+];
 /// Bit 2 of a line's or arc's `variant` (world or screen): FLOW. Dashes move from `pos` toward
 /// `aux` along the mark (an arc's dashes evenly spaced along the curve as drawn): in a dash
 /// the mark's colour at its own alpha, a little brightened, brightest at the dash's leading
@@ -1568,5 +1596,26 @@ mod tests {
         let f = draw(vec![image(0, 3, Bind::None), image(0, 1, Bind::None), image(0, 3, Bind::None)]).unwrap();
         let imgs: Vec<(u8, u32)> = f.batches.iter().filter(|b| b.kind == Kind::Image).map(|b| (b.bytes[51], b.count)).collect();
         assert_eq!(imgs, [(3, 2), (1, 1)]);
+    }
+
+    #[test]
+    fn prism_top_variants_stay_disjoint_from_orient_material_and_colour_bits() {
+        for (idx, &top) in PRISMS.iter().enumerate() {
+            assert_eq!(top as usize, idx);
+            assert_eq!(top & !VARIANT_PRISM_TOP, 0);
+            assert_eq!(top & VARIANT_ORIENT, 0);
+            assert_eq!(top & VARIANT_MATERIAL, 0);
+            assert_eq!(top & (COLOUR_RAMP | COLOUR_TINT), 0);
+            let variant = top | VARIANT_ORIENT | MATERIAL_METAL | COLOUR_TINT;
+            let mut m = Instance::new(Kind::Prism, [1.0, 2.0, 0.0], [8.0, 4.0, 2.0]);
+            m.aux = [0.1, 0.2, 1.0];
+            m.variant = variant;
+            let mut packed = Vec::with_capacity(INSTANCE_BYTES);
+            m.pack(&mut packed);
+            assert_eq!(packed.len(), INSTANCE_BYTES);
+            assert_eq!(packed[48], Kind::Prism as u8);
+            assert_eq!(packed[51], variant);
+            assert_eq!(packed[51] & VARIANT_PRISM_TOP, top);
+        }
     }
 }

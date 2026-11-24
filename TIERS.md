@@ -74,6 +74,17 @@ rung 1 was never an under-evidenced tier, it was a closed sector drawn as a leve
 "measured, not certified" status in `GANTT.md` is closed as NOT A TIER, and every number
 measured on the network stands as a reading of a sector.
 
+**A tier has two portions (2026-11-23, the lead's; `OBJECT.md`, CORRECTION 2026-11-23).** The
+STATIC portion is the conserved core the tier above carries. The ORGANISED portion is what is
+closed, priced and small: the "closed sectors the tier above does not carry" of §1 are not a
+footnote to the tiers, they are the second portion of each. The record assumed one or the
+other (carried by conservation, or by paid maintenance) and held the two as rivals; it is
+both, in portions, and the split is the measured thing. What the reading still owes is a
+size it forces before it is read.
+
+*(Placed here and not in §0, so that no line above it moves: the workbench page cites
+this file's fold row by line.)*
+
 ## 2. The computational ladder (the QVM) — views, not levels
 
 These are not tiers of matter; they are the DICTIONARY of views the dispatch searches, each a
@@ -112,6 +123,135 @@ at hydrodynamics.** The final remainder at the cosmological rung would be the Re
 what no closed view carries — and no instrument on this record measures it. The full text is
 `TIERS_ARCHIVE_2026-09-26.md` §"The top rung".
 
+**AMENDMENT TO THE WAGER, 2026-11-23 — the lead's, recorded in their words, committed alone,
+and before DESI DR3 exists to be read.** "The answer on the cosmological tier is that dark
+energy needs to accommodate both a portion of static dynamics AND a portion of higher
+organization - we assumed one or the other not both."
+
+What this changes, stated so that it stays a wager and does not become a way out:
+
+- **The claim.** Dark energy is two portions and not one: a STATIC portion (the part that
+  does not change as the universe expands) and an ORGANISED portion (the Record of Move 5:
+  what accumulates as structure is written). Every leg tested so far asked ONE of them to
+  carry all of it.
+- **The dead legs stay dead.** The Landauer normalisation and the flow/maintenance rescue
+  were each killed as a full account. Whether either miss is the SIZE of the organised
+  portion rather than a failure is a question this amendment raises; neither leg is
+  restated or credited until it is written again with its own kill.
+- **What is not earned by saying it.** Two portions fit more than one. A constant plus
+  something that evolves is the generic shape of every dynamical-dark-energy fit, and DESI
+  DR2 (`Δχ² = −2.13`) was read before this amendment, so DR2 cannot count for it. Only DR3
+  is prospective.
+- **Owed before DR3 is read, or the amendment is not a wager:** (i) the split, as a number
+  or a bound with its reason, derived and not fitted; (ii) how the organised portion grows
+  (with what: structure formed, entropy produced, records written) as a function of
+  redshift, so that it predicts a shape in `w(z)`; (iii) the kill: the DR3 reading that
+  would refute the two-portion claim while leaving a pure constant standing, and the one
+  that would refute the constant. A reading that either portion alone could absorb decides
+  nothing.
+- **Where it lives.** The staked claims are in the sibling seed's stance (CIRISOntology,
+  `Stance.lean`: `dark-balance-intensive`, `dark-balance-extensive`). The amendment has to
+  be made there by its owner; this paragraph imports it at wager strength and inherits its
+  death. `OBJECT.md` Move 5 and the calibrated table are not touched here.
+
+*What the amendment implies if the split is taken from the dead leg's own number (the lead's
+agent's reading, 2026-11-23, after the lead's "with that correction I think it works out";
+not adopted, and for the stance's owner to accept or refuse).* The stock leg priced dark
+energy as the Landauer cost of the bits held (`rho_DE = N·kB·T·ln 2`) and fell SHORT by 3 to
+5 dex, about one dex more once its volume error is corrected (CIRISOntology,
+`scratchpad/FLOW_PRICING_RESULTS.md` §2.3). Read as a portion and not as the whole, that
+shortfall is no longer a contradiction: the organised portion is then `10⁻³` to `10⁻⁶` of
+the total and the static portion carries the rest. The flow/maintenance rescue, which broke
+the FIRAS limit by 8.8 dex, was only ever needed to close that gap, so it is not needed and
+stays dead. Three consequences follow, and they are the price of "it works out":
+
+1. **The kill inverts.** An organised portion that small moves `w` from `−1` by about its
+   own size. DESI cannot see that. The record until today counted the SHAPE of DR2
+   (evolving, `Δχ² = −2.13`) as what survives; under this split that shape is NOT ours. If
+   DR3 confirms dark energy evolving at the level DR2 hinted, the organised portion at the
+   Landauer size cannot be what DESI sees, and the wager is either silent or wrong about
+   its size. A DR3 consistent with a constant is what this split predicts.
+2. **The static portion is unexplained.** The wager then accounts for a thousandth to a
+   millionth of dark energy and takes the rest as given, as the nucleus is taken as given.
+3. **The split is derived, which is what item (i) above asked for,** but its error bar is
+   three dex wide and no instrument on this record or planned can read a portion that
+   small. Naming one is the owed item.
+
+**CORRECTION 2026-11-23, the same day, to the reading just above — after the arithmetic was
+done (`conformance/omega/COSMOS_TWO_PORTION.md`, its script re-run by the lead's agent).**
+Three of its sentences were wrong, and its conclusion was too kind.
+
+- "`10⁻³` to `10⁻⁶` of the total" used the uncorrected shortfall in totals. In densities,
+  paired self-consistently, the Landauer stock is `10⁻⁴·⁰` to `10⁻¹¹·⁸` of dark energy.
+- "The split is derived" overstated it. What is derived is a CEILING on the organised
+  portion; its floor is zero.
+- "The kill inverts" understated it. The record's sharpest kill (K1: the ledger has no
+  constant limit) DISAPPEARS, because with a static portion the organised share going to
+  zero is a constant.
+- **And "it works out" is not what the arithmetic says.** For any growth law,
+  `1 + w = share × (1 + w_organised)`: a static portion scales the departure from a
+  constant and never changes its sign or the redshift where it crosses. So the split cannot
+  repair a shape; it can only shrink one. The only law on the record with the shape DESI DR2
+  hinted at is the rent ledger, and its size is the Landauer stock's: short of the share the
+  DR2 points ask (`0.40` to `1.00`) by 3.6 to 11.8 dex, of which the split buys at most 0.40.
+  Two independent caps agree on the small size: what star formation can pay for
+  (`≤ 2.7 × 10⁻⁵` at fusion efficiency) and, if the decayed record's heat reaches the
+  microwave background, FIRAS (`≤ 2.9 × 10⁻⁹`).
+
+The verdict of that note, imported here at its own strength and not yet reviewed: the
+amendment is CONSISTENT AND SILENT at the size the mechanism can pay for, and reaches what
+DESI hints at only with a portion some four to twelve orders larger that nothing on the
+record supplies. The decision owed before DR3 is which size is claimed.
+
+**ADOPTED 2026-11-23, on the lead's word ("We have to admit reality"), after an adversarial
+review of the arithmetic (`conformance/omega/COSMOS_TWO_PORTION_REVIEW.md`).** This
+paragraph is the standing one; the reading and the CORRECTION above it stay as written and
+are superseded where they differ. Two sentences of that CORRECTION were themselves wrong:
+the Landauer figure is not a "ceiling" (it is a minimum cost per bit times a maximum count
+and bounds nothing; the ceiling is what the writer can pay), and the two caps are
+conditional, not independent.
+
+1. **The two-portion amendment is right about the SHAPE and wrong about the SIZE.** A static
+   portion takes the rent ledger from `3.8 / 2.7 / 1.5` standard errors to `0.4 / 0.4 / 0.3`
+   against the DR2 combinations with supernovae. That is why the shape was off. It does
+   nothing for the magnitude: a share of `0.4` would need 57 % of all matter written each
+   Hubble time, and the star-written, Landauer-priced Record supplies four to twelve orders
+   less.
+2. **The one pricing that reaches the right size loses the shape and is circular.** The
+   horizon's own entropy at the horizon's own temperature gives the dark-energy density to
+   order one, in any universe, because both are computed from the density. Priced there the
+   organised portion is a constant with a relabelled matter density. The stance's letter
+   admits that pairing; its substance, and the sibling record in advance, refuse it.
+3. **So nothing on either record gives both.** At the size the mechanism can pay for, the
+   wager is consistent and silent, and DESI cannot read it. "What survives is the shape
+   (DESI DR2 `Δχ² = −2.13`)" is withdrawn AS EVIDENCE: the shape is not ours at any size we
+   can pay for. It stays as a fact about a curve.
+4. **The standing kill changes.** DESI DR3 can no longer kill or support the wager at the
+   Landauer size. The sharpest earlier kill (the ledger has no constant limit) is gone with
+   the amendment. A stake for DR3 was drafted and is not freezable as written.
+5. **Status:** the cosmological rung remains a WAGER with no instrument, now also with no
+   live observational test. What would reopen it: a writer that can pay for a share of
+   order a tenth, with its own kill; or an instrument that reads a share of `10⁻⁴`.
+
+**CORRECTION 2026-11-23, later the same day, to items 3 to 5 of the ADOPTED paragraph, on
+the lead's word.** They counted only what the amendment lost. (i) "Consistent and silent ...
+no live observational test" looked at the expansion history alone. The sibling stance
+already stakes the PERTURBATION channel (`void-excess`: a portion that clumps with galaxies
+wants the supervoid signal in the microwave background; the smooth branch predicts none),
+and under two portions the split is in principle readable there. That channel is being
+priced (`conformance/omega/COSMOS_CMB_CHANNEL.md`); until it is, the sentence is "no live
+test on the background; the perturbation channel open and unpriced". (ii) The amendment is
+not a patch on this rung. It is the split every measured tier already shows, applied
+upward, and the dead legs killed the one-portion framing: see `OBJECT.md`, CORRECTION
+2026-11-23, which also carries the corrected table. Items 1 and 2 stand as written: right
+about the shape, the size at the shape-fit share unpaid, the horizon pricing exact and not
+separable from a constant.
+
+Owed elsewhere, not made here: the stance (CIRISOntology `Stance.lean`); `OBJECT.md` Move 5
+and its calibrated table (done the same day: `OBJECT.md`, CORRECTION 2026-11-23); and the sibling's
+`flow_pricing.py`, which carries a transcription error in the microwave background's
+entropy (`2.03e89` for `5.40e89`), 0.43 dex against the wager.
+
 ## 5. What the ladder licenses, and what it does not
 
 - **Licensed:** six physical tiers, each with its carried shape measured, the fluid element's
@@ -136,6 +276,7 @@ what no closed view carries — and no instrument on this record measures it. Th
 | molecule | orientation on a walk, for the dipole sector (ORDER-1's refused arm) | the gate on the dielectric target |
 | fluid element | whose numbers these are: the fine-model seeds (Amendment 6), dated ~2026-10-07 when written; that date has passed and this row was not re-read on 2026-11-15 | a fine number inside the rigid three-seed range |
 | the network | a target on which it might be carried: freezing | the gate on a nucleation target |
+| continuum / the cube | where the hydrodynamic view opens: the wavelength at which sound crosses from its long-wavelength speed to its short-wavelength one, PREDICTED from the closure gate on the small box at rest and read on larger rigid boxes afterwards (added 2026-11-23, the lead's word; `conformance/water_observatory/SEAM_NS0_PREREG_DRAFT.md` is the draft it came out of, under review). REVIEWED 2026-11-23 (`SEAM_NS0_REVIEW.md`): as posed it is a re-finding, not forced and not blind, and the box sits within the crossover, so it stays owed only as a measurement and not as a route to the bar. The sound-speed sentence is corrected (`RESPONSE1_RESULTS.md`, CORRECTION 2026-11-23) | a frozen stake; the crossover outside its bar, or no better than the viscoelastic estimate from viscosity alone, kills it |
 | reasoning | text with parent links, for the eleven as a dictionary | the gate with kinds as columns |
 | the eleven | the coding convention (the rule adopted vs the content failed) stated in the definition | a re-coded agreement above κ = 0.7 |
 | the window | measured on a second tier | the sweep of OBJECTIVE-1 on the molecule |

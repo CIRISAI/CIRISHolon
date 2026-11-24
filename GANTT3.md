@@ -1,60 +1,104 @@
-# GANTT3 — where the programme stands, 2026-09-23
+# GANTT3 — where the programme stands, 2026-11-23
 
-*`GANTT.md` is the build graph (its nodes and dependencies, still the spec of record for what
-depends on what). `GANTT2.md` is the running log, appended campaign by campaign. This file is
-the third view: the LIVE FRONTS as of today, what each has read, what it still owes, the gate
-that closes it, and the calendar where one exists. It is rewritten, not appended; the log is
-`GANTT2.md`. Every claim below cites the record it comes from.*
+*`GANTT.md` is the build graph. `GANTT2.md` is the running log, appended campaign by campaign.
+This file is the third view: the LIVE FRONTS as of today, what each has read, what it still
+owes, and the gate that closes it. It is rewritten, not appended. This is a RESET: the last
+rewrite was 2026-09-23 (rows added to 2026-09-27), and for two months nothing here was kept.
+The previous text is in git at `101f2a7`. Every claim about this programme cites its record.
+Every claim about the outside world in §1 is from news and preprint summaries read on
+2026-11-23 and NOT from the primary sources; none of it has been screened here.*
 
 ## 0. In one paragraph
 
-The chemistry spine and the field ladder are done (`GANTT.md` nodes A–D, H, EMBED-1 → FIELD-9,
-CT-1 → CT-3, LIQUID-1, COMPARE-0). The coarse tiers (node G) are MEASURED and NOT CERTIFIED,
-and the measurement now says why: the network is a closed sector the fluid does not carry,
-the molecule is two decoupled sectors with the rigid unit as the object, the search finds the
-long-wavelength modes on its own, and the cell chart is OPEN under drive by a third of the
-signal with the face chart as its measured successor — three times closer, not within budget.
-The QVM has become its own front with three banked results and one clean window between it
-and a fourth. The general-QVM claim has its decisive test frozen today. The fold below the
-atom waits on GF2, gated. Two fine-model seeds are running for fourteen days to say whose
-numbers the fluid's are.
+The physics lanes have been still since 2026-09-27, apart from one day (2026-11-11) on the
+fold below the atom. Since then the work has been the generated world, the twin, the drawing
+engine and the declaration standard. Three things are owed from September and were never
+read: the fine-model seeds, the mesh re-aim's citable table, and the Fold III sentence. In
+those same two months the outside moved more than this programme did (§1), and the bar set
+on 2026-11-13, a forced derivation of a nontrivial piece of known physics, is met by nothing
+on this record. What the programme has that the outside results do not is the gate: plants,
+stakes frozen before a run, closed against carried, a price. After five carriers and one
+head-to-head it re-finds and has not discovered (`TIERS.md` §5).
 
-## 1. Live fronts
+## 0a. The reading that changed on 2026-11-23
 
-| front | state today | owed | gate that closes it | calendar |
-|---|---|---|---|---|
-| **RESPONSE-1** (the fluid element as a driven response; `conformance/water_observatory/RESPONSE1_RESULTS.md`) | all ten rigid arms read: R3 branch (a) `η = 4.4 × 10⁻⁴` Pa s; R1 branch (b) OPEN under drive on the 36-cycle average (`0.622` vs floor `0.492`); R1′ HOLDS on the graded statistic; R1″ MET on the 36-cycle aligned average (`0.180 ± 0.058`, by a third of an SE) with its flat-threshold null firing inside its own noise; 200 m/s outside linear response | (i) the fine-model L seed — whose numbers are these (Amendment 6); (ii) the fine T seed for η; (iii) a significance clause and an SE term for R1″ and its null in the next freeze (Amendment 5 has neither) | a fine number inside the rigid three-seed range ⇒ the model's; outside by > its SE ⇒ the operator's | fine L and T seeds running on P-cores 0–15, `0.80` wall-s/frame, **~2026-10-07**; a 4-cycle first look **~2026-09-28** |
-| **The search-then-select procedure** (`OBJECT.md` "The procedure, as arithmetic") | four carriers: the molecule (`MOLSEARCH1_RESULTS.md`), the liquid's chart (`VIEW_SEARCH_RESULTS.md`), the liquid's flux (the staggered chart, `RESPONSE1_AMENDMENT_5.md`), Clifford+T (`QVM_ACUITY1_RESULTS.md`) | the fifth carrier where the answer differs by family: QVM-ACUITY-2 | S1 of ACUITY-2 (the right view, unlabelled, ≥ 18/20 per family) | agent running; **this week** |
-| **QVM — the Clifford tier** (`conformance/bigqvm/MESH_CLIFFORD_RESULTS.md`) | the cut as frozen KILLED as staked on the E-class window (branch (b): `0.82 ×` S = 1, `0.71 ×` stim); the transpose re-aim reads `0.41 ×` / `0.37 ×` with disjoint spreads on a table the load gate refused | the re-aim's citable table (waiter retrying); the P-class sweep | G3 on a table that held its window | E retry **tonight**; P-class after the fine seeds release 0–15 |
-| **QVM — the general claim** (`conformance/qasm/QVM_ACUITY2_RESULTS.md`, read 2026-09-23) | the search picks a view within `2 ×` of the hand-picked method on 77 of 80 unlabelled instances and the certificate held on 80 of 80; S1 on the Clifford+T family and S4 on the brickwork family are VOID by the prereg's own errors (the lead's label named the sum where the dense vector is cheaper at `n ≤ 20`; a depth-6 CX brickwork has nothing to truncate) — the search was right on both; the one finding that stands: the search's own cost, left out of the stakes, is `112 ×` stim on the Clifford family (0.7–8 ms to pick a 40 µs run) | the claim is not refuted and not met as staked: the dispatch is right, and pays only when the run is expensive enough to pay for the search; a freeze at `n > 20` with the search amortised over many observables is the next test, and the referee is gone there | — | **decided** |
-| **QVM — the GPU fold** (`conformance/qasm/QVM_GPUFOLD1_RESULTS.md`, read 2026-09-23) | **branch (a)**: the budgeted prefix folded on the RTX 4090 bit-identical to the S = 8 mesh on 17,296 prefixes; device class declared and refused when not held; `0.022–0.025 ×` the CPU mesh at N = 8,748, kernel 97 % of the wall | the per-circuit descriptor decode (65–105 ms at N = 8,748) is now the host's cost — the GPU wins from the second amplitude on; mixed-parity sources not covered | — | node F reopened through it |
-| **SLOW-1** (`conformance/water_observatory/SLOW1_RESULTS.md`, read 2026-09-25) | **RE-FINDING**: the slow structural sector at 293 K is tetrahedral order (loading `0.82–0.88`, three seeds), carrying `+0.028` R² of 5 ps mobility beyond velocity and every other candidate at 293 K and nothing at 400 K; S1 and S2 between their stakes and kills; plants fire | — | — | **closed: the physics lane ends as method** |
-| **SLOW-2** (`conformance/water_observatory/SLOW2_RESULTS.md`, read 2026-09-25) | the first head-to-head: TICA and VAMP ARE our search on this problem (same direction to 1e-4); no learned arm carries +0.02 beyond q; the carried-VAMPnet integration fails its planted-variable plant (killed), SPIB too; a plain VAMPnet finds a slower, mostly non-q shell-geometry coordinate carrying +0.013 beyond q | — | — | **closed: branch (c)** |
-| **SLOW-3** (`conformance/water_observatory/SLOW3_RESULTS.md`, read 2026-09-27 on fresh seeds) | **branch (c), as predicted before the read**: the fixed integration passes every plant (SLOW-2's failed) and carries +0.0125 beyond q — tied with the plain VAMPnet, under the +0.02 bar and under a linear regression on the raw shell (+0.018); the physics lane's learned arm closes | — | — | **closed** |
-| **ORDER-1** (`conformance/water_observatory/ORDER1_RESULTS.md`, re-read under Amendment 1, 2026-09-26) | **branch (d), closed and not carried**: the tetrahedral-order field at the box's longest wavelength closes outside the hydrodynamic span (σ₁ 0.29–0.36 at 1 ps) and adds nothing to the next density and current state; one relaxation time; the network's shape at the collective level; the first read's (e) was a plant calibrated off the carrier — M-PLANT-OBS's fifth occurrence, and a new id M-JOINT-PASS-REGION | orientation and energies on a walk, if ever re-frozen | — | **closed** |
-| **QVM-RANK-1** (`conformance/rank/QVM_RANK1_RESULTS.md`, read 2026-09-25) | **branch (b)**: no six-term witness for seven copies in 30.4 h (stopped by the harness's memory reaper short of 40); exact partial exclusions — no 3+3 or 2+4 split, both six-copy classes lift to seven in zero ways; a SECOND class of rank-6 decompositions of six copies found and verified by stabrank's referee; the direct annealer flat at residual 0.198; stabrank's m = 7 bound is 6 ≤ χ ≤ 9 and stays so | submit the two exclusions and the new six-copy class to stabrank | — | **closed** |
-| **REPLACE-1** (`conformance/replace1/REPLACE1_RESULTS.md`, banked 2026-09-26) | **(a)**: the removability gate and the staggered chart are engine code reproducing every banked number to the digit; the gate's own defect (redundancy is cheap under marginal removal) caught by G3 and repaired by Amendment 1's ORDERED admission, exhibited by PR-6; the hydrodynamic block survives alone, the structural block drops at `≤ 0.003`, the conscience block survives on the chains; two bars set from the read (`M-BAR-FROM-THE-READ`, registered) | bars from prior stakes or plants in the next freeze that uses the gate | — | **closed** |
-| **OBJECTIVE-1** (`conformance/replace1/OBJECTIVE1_RESULTS.md`, read 2026-09-26) | is the carried set budget- and cadence-invariant? On every defined cell (4 budgets × 4 lags × 3 seeds) the fluid element carries the hydrodynamic block OR NOTHING — the budget decides whether, never what; invariant for every budget in `(0.0033, 0.039)`, the window between the dropped sectors' prices and the carried one's; the chains level-relative as staked; (e) by the letter on a plant priced inside its own error bar | the WINDOW WIDTH as the measure of a level's objectivity — named in the object as the next freeze's quantity | — | **read** |
-| **RECORD-1** (`conformance/record/RECORD1_RESULTS.md`, read 2026-09-26, two blind coders) | the 11 + 1 on its native carrier, 269 of this programme's own corrections: every entry takes one kind for both coders (plants 22/22 each) but the partition is shared only at κ = 0.52 (0.88 with runner-ups) — the eleven are a convention with moderate agreement; the Record axis is sharp (κ = 0.72, one-way, zero reversals, one 84-minute unwarranted regression by a bare `git add` reported); the succession rules of the transition map are ABSENT (diagonal at its within-campaign null); Premises the root of 121 of 264 — branch (b) | state the coding convention (rule adopted vs content failed) in the definition before the eleven are used again | — | **read** |
-| **GF1 / Fold III** (`conformance/crystal/GF1_RESULTS.md`) | read: the price clause measured, the area-law clause falsified by an extensive density — which arXiv 2409.01789 (PRB 2025) had already reported for U(1) lattice gauge theory: a RE-FINDING, recorded 2026-09-24 | the Fold III sentence in `OBJECT.md` rewritten to what was measured — the lead's, not an agent's | a dated CORRECTION in `OBJECT.md` | **owed to the lead** |
-| **GF2 / NUC** (the hadron box, the nuclear tier) | GATED on GF0 (a), GF1, and the QVM split; the 1+1D rehearsal met its referee and was closed as prior art | a freeze | — | after the QVM front's ACUITY-2 |
-| **Node E** (nuclear quantum effects), **LG**'s certificate, **F** (GPU production dispatch) | launched, lanes silent | F reopens through the GPU fold above; E and LG unchanged | — | not scheduled |
-| **W, the .io ladder** (`docs/workbench/`) | caught up 2026-09-23: the fluid and H-bond bands carry the observatory's readings pinned to the record; 578 checks | the live fluid cell stays FENCED at 16 waters by design | — | — |
+Two portions, not one or the other (`OBJECT.md`, CORRECTION 2026-11-23, the lead's): every
+tier has a static core carried by conservation and an organised portion that is closed,
+priced and small. The table's two rivals are merged (A″ `0.63`, conservation alone `0.20`,
+rent alone `0.05`, observer-indexed `0.06`, books as metaphor `0.06`). The cosmological
+legs died as one portion asked to be the whole; the wager stands as a split, right about the
+shape, unpaid at the share the shape wants, with the perturbation channel open and being
+priced. Owed by the reading: a size of the organised portion forced before it is read.
 
-## 2. Owed, in order, with owners
+## 0b. PARKED 2026-11-23, at the lead's word: everything but the maps work on the engine
 
-1. The fine-model seeds' first look at 4 cycles (lead, ~09-28) and the graded read at 12 (lead, ~10-07).
-3. The mesh re-aim's citable table (waiter → lead banks; Amendment 2's reading).
-6. `OBJECT.md` Fold III correction (lead).
-7. The P-class mesh sweep (after 10-07, or sooner by the lead's decision).
-8. The relative acuity ladder and the marginal's own budget in a future ACUITY freeze (lead).
+"Lets wrap up everything but the maps work on the engine for now." Live: the drawing engine
+and its consumers, toward the vacuum-to-universe scene as a map at every tier. Parked, each
+with what it needs to resume, so nothing is lost:
 
-## 3. Standing corrections this month, so they are not repeated
+| parked | state | resumes with |
+|---|---|---|
+| `holon-baryo` and the T5 reproduction (branch `baryo-vendor-2026-11-23`, NOT pushed: the crate has never compiled) | vendored record, reproduction draft, unbuilt crate | a free box: `cargo test -p holon-baryo`, then the draft's review |
+| READER-PLANT-0 (a gate, not a prediction) | draft, frozen port prediction, unbuilt harness | a free box; then the corrected fluid stake (kick response = the derivative of the equilibrium correlation), which needs the walks |
+| ANOMALY-1 and the matter sweep | rung I sent back; arm B approved by the lead | a redesign with both arms; the reserve rewritten |
+| TIER-TREND-0 | sent back: the share is not a unit | the lead's word on unread scrubbed chains and on the trace directories |
+| the cosmological rung | five notes, three reviews; the bound/free note unreviewed | the lead's choice of which size is claimed; then one consistency stake before DESI DR3 |
+| QVM screen and BENCH-2 | screen done, corrections owed and not made, draft unreviewed | the lead's read of the screen |
+| SEAM-NS-0 | sent back | superseded by the corrected fluid stake above |
+| PR #8 (the declaration standard) | green; a draft | the lead's read |
+| the lead's open questions | the two-bit labels' reading (`conformance/crystal/PARITY_LABELS_NOTE.md`); the table's `0.63` set on a corrected baseline | the lead's word |
+| the sibling's (CIRISOntology) owed items | the stance's amendment; the void sentence's sign; the `a³` label; the entropy typo in `flow_pricing.py` | that repository's owner |
 
-Twenty-one instances of "a constant is a price in a regime" on the record; the newest: the
-S = 8 stake written for a seven-core range, the absolute acuity ladder where the observable
-scales as `2^{−n/2}`, the P-core placement on four physical cores, the fine-model price
-carried from 128 to 432 waters unscaled, and a deferral of a frozen gate on the lead's
-expectation (withdrawn in `MESH_CLIFFORD_PREREG.md` Amendment 2). Rule from the CI week: a
-push is banked when the `verify` run is green; the prereg audit runs before a freeze is
-committed; a merge with a conflict is resolved before it is committed.
+## 1. What moved outside, and what it does to each front
+
+*Unscreened. Status words are the reports' own. A screen like
+`conformance/prior_art/OPENAI_MATH_2026-10.md` is owed for each before it is relied on.*
+
+| outside result, as reported | status as reported | the front it touches | what it changes here |
+|---|---|---|---|
+| Existence of interacting four-dimensional gauge theories with fermions, QCD included, by Balaban's method (OpenAI, 2026-10-26); existence only, no mass gap | company claim; a committee is vetting it; materials not released in full | the fold below the atom; GF2 | the dynamics is an INPUT of this programme, so existence changes no stake. It may give GF2 a continuum referee it lacked. The mass gap stays open, and GF2's hadron box is about exactly that regime |
+| Finite-time blow-up for three-dimensional Navier–Stokes: with a smooth force (OpenAI, 2026-09-08), and with none (Buckmaster and Alpöge, 2026-11-20) | the first: a preprint argues its Lean text does not match its prose proof; the second: unpolished, certificate not released | the continuum tier; the fluid element | if it stands, the continuum's hydrodynamic fields are NOT a closed view for all smooth data. The tier's row says "textbook" for its remainder; a blow-up is a remainder owed DOWNWARD, to the molecules. This programme measures that seam from below (RESPONSE-1). A candidate for a staked prediction: where the fluid element's closure fails first |
+| An exact, optimal ceiling on the lightest black hole in three-dimensional gravity from the modular bootstrap (Anthropic, 2026-11-17), checked in Lean | company post with a preprint | the gravity rung | none directly. The rung here is a discrete 2+1 toy with the dynamics as input (`conformance/gravity/EINSTEIN_ADM1_RESULTS.md`). The value was deliberately NOT read here on 2026-11-23, in case a blind stake is ever written against it; no instrument on this record bears on it today |
+| A proof of the Riemann hypothesis released as Lean (Alpöge with Claude, 2026-11-20) | kernel-checked as reported; not yet understood or accepted | none | none, except the lesson in the next row |
+| 722 manuscripts (OpenAI, 2026-10-06); ten results with Lean certificates, sphere packing first | disputed on novelty and attribution | the QVM's rank front | screened 2026-10-09: nothing on the stabilizer rank; two families bear on the object (`conformance/prior_art/OPENAI_MATH_2026-10.md`) |
+| "Lean verification of an autoformalisation does not guarantee the prose proof" (arXiv 2610.08144) | preprint | the Lean object contract; the declaration standard | this is the standard's own distinction between `proved` and what a view's `specification` states. A proof here is cited with the statement it proves, never by its name |
+| DESI DR3 | NOT released; first full-survey dark-energy results expected 2027 | the cosmological rung | the standing kill has not fired and cannot before then (`TIERS.md` §4) |
+
+The plain reading: theorem-proving at this scale is no longer where a small programme can
+lead. Proofs are becoming abundant; a measured statement of WHICH view of a system is
+closed, at what price, with plants that fire, is not what any of these results is.
+
+## 2. Live fronts
+
+| front | state today | owed | gate that closes it |
+|---|---|---|---|
+| **RESPONSE-1, the fine-model seeds** (`conformance/water_observatory/RESPONSE1_RESULTS.md`) | NEVER READ, and DEAD (looked 2026-11-23, logs only). Both arms launched 2026-09-23 and stopped writing 2026-09-27 at 19:22 and 19:24, with no DONE file and no entry in the log saying why. The L arm reached readout 794 and the T arm 763 of 3,768 (twelve cycles of 314): two and a half cycles, short of the four the first look needed. Their own last lines priced the rest at about `38,000` wall-s/ps against the `30,700` the launch planned (`replace0/response1_fine_L_seed0/scout.err`, `_T_seed0/scout.err`). No process is running | the lead's call: relaunch (a long run, barred on the shared box today), read the two and a half cycles as a declared partial under an amendment written first, or close the question as unpaid | a fine number within the rigid three-seed range ⇒ the model's; outside by more than its SE ⇒ the operator's |
+| **The fluid element** (`TIERS.md` §1; `conformance/replace1/`) | the one tier with a closure number and a window: `0.180 ± 0.058` against `0.2`; carried in every budget in `(0.0033, 0.039)` | R1″ has no significance clause; the window measured on a second tier (the molecule) | the sweep of OBJECTIVE-1 on the molecule |
+| **The fold below the atom** (`conformance/crystal/`) | FERMION-0 read 2026-11-11, branch (a): on the toric code a fermion is a closed view, one bit per bound pair on the relationship; a re-finding. KINK-0 read 2026-11-11, branch (a), a CONFIRMATION and not a blind read; a re-finding of Coleman (1976). ANOMALY-0 sent back as a redesign. GF1's area-law clause falsified, a re-finding | the Fold III sentence in `OBJECT.md` (the lead's, owed since September); GF2's freeze; and the matter sweep, priced 2026-11-23 (`conformance/crystal/MATTER_SWEEP.md`, a pricing note, no claim): Sakharov's three conditions as a ladder in 1+1 dimensions — a reader for the current, the anomaly (ANOMALY-0's redesign), a C-odd background, a ramp out of equilibrium, and the composition read as a sourced count. Rungs 0 to IV need no engine build. No rung predicts the observed asymmetry, and none is both forced and blind; the one stake that could come out otherwise is rung IV's late field against the equilibrium value at a point nobody has computed | a dated CORRECTION in `OBJECT.md`; GF2's own freeze |
+| **QVM — screened against the 2026 field** (`conformance/prior_art/QVM_FIELD_2026-11.md`, 2026-11-23) | three findings, each against this record. (1) The dispatch has DIRECT PRIOR ART: García, arXiv 2607.27075 (2026-07-29, eight weeks before ACUITY-2 froze) picks per leaf among four representations (stabilizer frame, dense, tableau with MPS, stabilizer rank) the cheapest whose predicted error fits a budget, by a structural scan; its §3.3 was read at source twice. What is left to this record is narrow: selection by a closure probe with a certificate, graded against the hand-picked best with plants, and that probe is where the `112 ×` overhead comes from. (2) "Parity with stim on one core at `d = 221`" is single-shot tableau simulation; the field's task is many-shot sampling, where this record holds no number, and GPU tableau simulators claim large factors on our card class (their own numbers, their machines). (3) The rank board moved more than seventy commits; `6 ≤ χ ≤ 9` at seven copies of H is unchanged, and RANK-1's two exclusions and second six-copy class were never sent | CORRECTIONs owed, listed in the screen and NOT yet made: `QVM_ACUITY2_PREREG.md`'s "what today's state of the art does by hand" (false when frozen); `TIERS.md` §2's dispatch and tableau rows; `PRIOR_ART.md`'s dispatch, exponent and parallel-branch rows; `BENCHMARKS.md` line 44; `STABRANK_STATE.md` re-read at the board's new head | the lead's read of the screen; each CORRECTION dated, in a commit of its own |
+| **QVM-BENCH-2** (`conformance/qasm/QVM_BENCH2_PREREG_DRAFT.md`, DRAFT, not frozen) | five arms on circuits someone else picked: the ABSTRACTS suite (MIT); the tableau against Stim and QuaSARQ (GPL, run as an external process only); the sum and the GPU fold against Clifft and Tsim; the dispatch with its search time counted; two exact acts on the rank board. Three arms are entered as expected losses | an adversarial review; the lead's numbers in the named blanks; nothing runs until the shared box is free | its own freeze |
+| **QVM — the Clifford tier's table** (`conformance/bigqvm/MESH_CLIFFORD_RESULTS.md`) | the cut killed as staked; the transpose re-aim `0.41 ×` on a table the load gate refused | the citable table and the P-class sweep, owed since September | G3 on a table that held its window; superseded in part by BENCH-2's arm B if that freezes |
+| **Gravity** (`conformance/gravity/`) | discrete 2+1 only. The first "Einstein derived" claim was WITHDRAWN as vacuous (M-FIXED-POINT-TRAJECTORY); the corrected one: the dynamics descends exactly to the quotient and preserves the constraint, with the dynamics as input | a carrier with local degrees of freedom, before any claim about 3+1 | none written |
+| **The cosmological rung** (`TIERS.md` §4; `conformance/omega/COSMOS_*.md`, five notes and three reviews, 2026-11-23) | a wager in two portions. STANDS: right about the shape; a record written at the star-formation rate and then lost gives DESI's sign pattern with a crossing that does not depend on its amplitude. DOES NOT STAND: any forced size (ratios land at chance rate; with their own amplitudes the shares are `10⁻³` or less); the crossing as a prediction (`z ≈ 0.82` at matter-like dilution against DR2's `0.35–0.50`; the dilution law is a free choice); a matter-following portion at the shape-fit share (4 to 6 standard errors out on the all-sky signal); anything ordinary as the carrier (every written thing dilutes faster than a constant). Closest prior art: cosmologically coupled black holes | the bound/free note's review; a decision on which size is claimed; the stance's owner on the void sentence's sign and the mislabelled star-written law | one consistency stake frozen before DR3: background, one void-lensing amplitude and one growth rate, share fixed |
+| **The generated world** (`conformance/scene/`, `GANTT2.md` from line 1487) | nineteen result records on 2026-11-11 and 12: generators shipped for the twin (HOUSEGEN-1, DEVICEGEN-1, PRESENCEGEN-2), PRESENCEGEN-1 failed its gate, BUILDGEN-1 KILLED with the reason as the finding | a scene certificate end to end; none exists (`TIERS.md` §6) | `OBJECT.md` "The scene certificate" |
+| **The drawing engine** (`engine/crates/holon-draw`) | on main: thirteen record kinds on both browser backends, the eye CORRECTION, a parity gate. Three consumers: the twin's street tier by default, CEWPOS, and three of this repository's own pages | ribbon lines (in work, unpushed); the twin's remaining layers (CEWP#24); `docs/workbench` and the retirement of the Bevy page; a native backend (issue #9) | the three consumers fully on it, then one engine that draws only holons |
+| **The declaration standard** (`standard/`, PR #8, draft) | v0, not frozen: sixty declarations, 46 hold, 14 pending, 0 fail. Governed: `holon:claim` is a provisional family in the Constitution; the kernel's own declaration is merged there | the lead's read of the PR; a review of everything changed since the third review; then the freeze | the lead's merge |
+| **`ciris-holon` on PyPI** (`wheel/`) | 0.1.0 published 2026-11-23, four desktop wheels, hashes equal to the build's | the client's side; macOS and Windows never run | the client's five-platform run |
+
+## 3. Owed, in order, with owners
+
+1. The fine-model seeds: dead since 2026-09-27 at a fifth of their length (§2). The lead decides: relaunch, a declared partial read, or closed as unpaid.
+2. `OBJECT.md`, the Fold III correction (lead; owed since 2026-09-23).
+3. A screen of each row of §1 against its primary source, as was done for the October collection (agent, read by the lead).
+4. A staked prediction that meets the 2026-11-13 bar. The one candidate this reset can name: the Navier–Stokes seam of §1, written BEFORE either blow-up construction is read. It is a candidate and not a plan; it needs the lead's word and an adversarial review.
+5. The sound crossover on the model (`TIERS.md` §6, the continuum row): REVIEWED the same day as a re-finding, not a route to the bar (`conformance/water_observatory/SEAM_NS0_REVIEW.md`); the sound-speed sentence is corrected. Newly owed from that review: PR-2's underdamped plant fired at the 50 m/s signal-to-noise, since "overdamped at 50 m/s" may be the fit's window and not the liquid. Parked behind the fold's sweep at the lead's word.
+5. The mesh re-aim's citable table (waiter → lead).
+6. The QVM's owed CORRECTIONs from the 2026-11-23 screen (lead reads the screen first), then BENCH-2's review.
+6. PR #8: the lead's read, then the freeze.
+7. `TIERS.md` §6's fluid-element row still says its date "has passed and this row was not re-read"; it is re-read by item 1.
+
+## 4. Standing corrections, so they are not repeated
+
+- "A constant is a price in a regime": twenty-one instances by September, and the newest of 2026-11-23 is of the same family: `TIERS.md`'s chemistry cell read an in-sample error against the law's own Hamiltonian as a distance from MB-pol, and its hydrogen-bond cell cited the stake the record did not meet (CORRECTION 2026-11-23, on PR #8).
+- A view of where the programme stands that is not rewritten goes stale silently. This file sat for two months with dates that had passed. It is rewritten when a front closes or a date passes, or it says at its head that it has not been.
+- A push is banked when the `verify` run is green; the prereg audit runs before a freeze is committed.

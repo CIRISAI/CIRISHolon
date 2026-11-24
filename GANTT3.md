@@ -61,6 +61,7 @@ closed, at what price, with plants that fire, is not what any of these results i
 2. `OBJECT.md`, the Fold III correction (lead; owed since 2026-09-23).
 3. A screen of each row of §1 against its primary source, as was done for the October collection (agent, read by the lead).
 4. A staked prediction that meets the 2026-11-13 bar. The one candidate this reset can name: the Navier–Stokes seam of §1, written BEFORE either blow-up construction is read. It is a candidate and not a plan; it needs the lead's word and an adversarial review.
+5. The sound crossover on the model (`TIERS.md` §6, the continuum row): the zero-compute re-read of the record's sound-speed sentence first, then a stake. Parked behind the fold's sweep at the lead's word, 2026-11-23.
 5. The mesh re-aim's citable table (waiter → lead).
 6. PR #8: the lead's read, then the freeze.
 7. `TIERS.md` §6's fluid-element row still says its date "has passed and this row was not re-read"; it is re-read by item 1.

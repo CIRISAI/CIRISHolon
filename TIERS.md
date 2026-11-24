@@ -136,6 +136,7 @@ what no closed view carries — and no instrument on this record measures it. Th
 | molecule | orientation on a walk, for the dipole sector (ORDER-1's refused arm) | the gate on the dielectric target |
 | fluid element | whose numbers these are: the fine-model seeds (Amendment 6), dated ~2026-10-07 when written; that date has passed and this row was not re-read on 2026-11-15 | a fine number inside the rigid three-seed range |
 | the network | a target on which it might be carried: freezing | the gate on a nucleation target |
+| continuum / the cube | where the hydrodynamic view opens: the wavelength at which sound crosses from its long-wavelength speed to its short-wavelength one, PREDICTED from the closure gate on the small box at rest and read on larger rigid boxes afterwards (added 2026-11-23, the lead's word; `conformance/water_observatory/SEAM_NS0_PREREG_DRAFT.md` is the draft it came out of, under review). First, at no compute: at what wavelength the record's "the model's sound speed is about twice water's" was read | a frozen stake; the crossover outside its bar, or no better than the viscoelastic estimate from viscosity alone, kills it |
 | reasoning | text with parent links, for the eleven as a dictionary | the gate with kinds as columns |
 | the eleven | the coding convention (the rule adopted vs the content failed) stated in the definition | a re-coded agreement above κ = 0.7 |
 | the window | measured on a second tier | the sweep of OBJECTIVE-1 on the molecule |

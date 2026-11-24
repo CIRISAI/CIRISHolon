@@ -239,6 +239,14 @@ update the relevant docs"), is recorded here. Nothing above or below is rewritte
    2026-11-23, unbuilt), whose leak law is a price for an organised portion with forward
    calls that passed and kills that fired; SELECT-1, still unwritten.
 
+   *Corrected the same day, after the review of `PREDICT.md` (`PREDICT_REVIEW.md` §1, §2):*
+   the reader rule's leak is, in this record's words, RENT (the decay of a held quantity)
+   and not a price; it shares one exact lemma with Move 1 and no map beyond it; its one
+   seven-digit pass is an identity, and its staked band could not tell its closure from a
+   rival. What it has that counts is a slope in `K` of the right sign and size where the
+   published criterion has the wrong sign. It still moves the table if it reproduces here,
+   by less than the sentence above says.
+
 ## The scene certificate — two objects, not one (2026-11-15; `SceneCert.lean`, issue #3)
 
 A GENERATED scene (streets under a population cell, a backmapped atomistic box, a mock

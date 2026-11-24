@@ -1,5 +1,7 @@
 # PREDICT — where a forced, blind, reachable prediction is available, 2026-11-23
 
+**REVIEWED 2026-11-23: usable after named changes; see `PREDICT_REVIEW.md`. Read with these corrections: A1 is an identity and not a passed prediction; T5's band could not test its closure; the three-flavour stake reduces to T5 on a neighbouring family; "the same object as the closed view and its price" is a resemblance with one shared lemma; candidate 2's law is the time derivative of the autocorrelation; candidate 3 is a gate, not a prediction; the `R⁻⁹` constant is a missed candidate. The conclusion stands.**
+
 *Written on the lead's word ("see where we can begin predicting"), the evening three drafted
 stakes were each sent back by review: one whose graded quantity did not separate its
 readings (`conformance/water_observatory/SEAM_NS0_REVIEW.md`), one whose forced number was

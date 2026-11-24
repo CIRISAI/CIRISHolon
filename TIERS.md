@@ -166,6 +166,32 @@ stays dead. Three consequences follow, and they are the price of "it works out":
    three dex wide and no instrument on this record or planned can read a portion that
    small. Naming one is the owed item.
 
+**CORRECTION 2026-11-23, the same day, to the reading just above — after the arithmetic was
+done (`conformance/omega/COSMOS_TWO_PORTION.md`, its script re-run by the lead's agent).**
+Three of its sentences were wrong, and its conclusion was too kind.
+
+- "`10⁻³` to `10⁻⁶` of the total" used the uncorrected shortfall in totals. In densities,
+  paired self-consistently, the Landauer stock is `10⁻⁴·⁰` to `10⁻¹¹·⁸` of dark energy.
+- "The split is derived" overstated it. What is derived is a CEILING on the organised
+  portion; its floor is zero.
+- "The kill inverts" understated it. The record's sharpest kill (K1: the ledger has no
+  constant limit) DISAPPEARS, because with a static portion the organised share going to
+  zero is a constant.
+- **And "it works out" is not what the arithmetic says.** For any growth law,
+  `1 + w = share × (1 + w_organised)`: a static portion scales the departure from a
+  constant and never changes its sign or the redshift where it crosses. So the split cannot
+  repair a shape; it can only shrink one. The only law on the record with the shape DESI DR2
+  hinted at is the rent ledger, and its size is the Landauer stock's: short of the share the
+  DR2 points ask (`0.40` to `1.00`) by 3.6 to 11.8 dex, of which the split buys at most 0.40.
+  Two independent caps agree on the small size: what star formation can pay for
+  (`≤ 2.7 × 10⁻⁵` at fusion efficiency) and, if the decayed record's heat reaches the
+  microwave background, FIRAS (`≤ 2.9 × 10⁻⁹`).
+
+The verdict of that note, imported here at its own strength and not yet reviewed: the
+amendment is CONSISTENT AND SILENT at the size the mechanism can pay for, and reaches what
+DESI hints at only with a portion some four to twelve orders larger that nothing on the
+record supplies. The decision owed before DR3 is which size is claimed.
+
 ## 5. What the ladder licenses, and what it does not
 
 - **Licensed:** six physical tiers, each with its carried shape measured, the fluid element's

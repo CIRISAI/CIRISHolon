@@ -148,6 +148,29 @@ def main() -> int:
     if missing:
         failures.append(f"registered but NOT grep-armed: {missing}")
 
+    # ---- 4b. The six ids armed on 2026-11-23, named for the same reason: three drafts
+    #          were sent back by review that day, and an arm that silently drops out of
+    #          the table would put the next one back in front of a reviewer.
+    owed_1123 = {
+        "M-NAMED-POINT-SHIFTED",
+        "M-RESERVE-BREACHED",
+        "M-REFEREE-FIT-FORM",
+        "M-RETRODICTION-AS-PREDICTION",
+        "M-KILL-DISSOLVED",
+        "M-SCREEN-SCOPE-UNSTATED",
+    }
+    missing = sorted(owed_1123 - set(A.CONTACT.values()))
+    if missing:
+        failures.append(f"registered 2026-11-23 but NOT grep-armed: {missing}")
+    # A row's FIRST date is its registration date. M-PLANT-OBS carries none and must keep
+    # none: annotating it with a date would exempt every earlier freeze from citing it.
+    if A.REG_DATES.get("M-PLANT-OBS") is not None:
+        failures.append("M-PLANT-OBS's row gained a date; every freeze before it is now exempt")
+    for mid in sorted(owed_1123):
+        if A.REG_DATES.get(mid) != "2026-11-23":
+            failures.append(f"{mid} reads registration date {A.REG_DATES.get(mid)}, not 2026-11-23 "
+                            f"(an earlier date in its row would refuse backward)")
+
     # ---- 5. Every registry id should eventually be reachable. Reported, not enforced:
     #         some misfits are about process rather than about a word a freeze would use,
     #         and forcing a keyword for those would manufacture false refusals.

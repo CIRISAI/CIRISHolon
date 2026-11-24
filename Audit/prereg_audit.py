@@ -127,6 +127,33 @@ CONTACT = {
     "remainder transferred": "M-EXTRAPOLATED-HOLE",
     "first violation": "M-FIRST-VIOLATION-ONLY", "returns none": "M-FIRST-VIOLATION-ONLY",
     "boundedness gate": "M-FIRST-VIOLATION-ONLY", "every class": "M-FIRST-VIOLATION-ONLY",
+    # --- 2026-11-23: three drafts were sent back by adversarial review in one day
+    # (SEAM-NS-0, ANOMALY-1, and the two-portion wager priced as a misfit campaign), and
+    # six of the seven ids registered from those reviews are about words a freeze uses.
+    # Armed on the phrases those drafts actually wrote. The seventh, M-STALE-STANDING-VIEW,
+    # is process and stays unarmed on purpose (see the note at the bottom of this file).
+    # Keywords stay NARROW: "massless" alone, "reserved" alone, "extrapolat" and "post hoc"
+    # were each tried against the tree and each would have flipped an undated draft or
+    # amendment that predates the registration (ANOMALY0 and KINK0-V2 drafts; CONNECT0B),
+    # which is refusing backward by another door. Verified against all 199 preregistrations,
+    # amendments and drafts in the tree at the time of the edit: the only documents whose
+    # status changed are the drafts of 2026-11-23 themselves, which is the point.
+    # What these keywords CANNOT see is structure -- a bar beside a cell of its own table,
+    # a plant that lands on the wrong side on paper, a reserve containing the campaign's
+    # own points. That is Audit/prereview_check.py's job, not a keyword's.
+    "massless chain": "M-NAMED-POINT-SHIFTED", "massless lattice": "M-NAMED-POINT-SHIFTED",
+    "zero lattice mass": "M-NAMED-POINT-SHIFTED",
+    "stay unread": "M-RESERVE-BREACHED", "reserved region": "M-RESERVE-BREACHED",
+    "unread region": "M-RESERVE-BREACHED",
+    "M_∞": "M-REFEREE-FIT-FORM", "fit form": "M-REFEREE-FIT-FORM",
+    "infinite-size value": "M-REFEREE-FIT-FORM",
+    "retrodict": "M-RETRODICTION-AS-PREDICTION",
+    "after the release": "M-RETRODICTION-AS-PREDICTION",
+    "standing kill": "M-KILL-DISSOLVED", "second portion": "M-KILL-DISSOLVED",
+    "additional component": "M-KILL-DISSOLVED",
+    "nobody has computed": "M-SCREEN-SCOPE-UNSTATED",
+    "not on the record": "M-SCREEN-SCOPE-UNSTATED",
+    "no prior art": "M-SCREEN-SCOPE-UNSTATED",
 }
 
 def contact_table_is_sound():

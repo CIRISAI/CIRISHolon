@@ -166,8 +166,8 @@ OVERDAMPED", `0.05` is "over 20"; `0.15` and `0.03` are the same idea at about 7
 **Carrier and sector of each plant (M-PLANT-SECTOR).** Every plant is on the campaign's own
 carrier (the twelve-cycle synthetic arm of §2, path B, except P-PR2 which is path A as PR-2
 was fired) and acts on the sector the stake grades: the LABEL of the aligned current mode.
-P-OVER and P-HIGH each assert a nonzero count in the label they must read before it is
-graded (an arm where every trial is REFUSED is void, not passed); P-NOISE acts on the
+The sector the plant acts on is asserted before grading: P-OVER and P-HIGH each require a
+count that is nonzero in the label they must read (an arm where every trial is REFUSED is void, not passed); P-NOISE acts on the
 refusal rule, the one sector S1 does not grade, and is there to show the kick is what is read.
 
 P-OVER and P-HIGH together are what make S1 a statement about the label and not about

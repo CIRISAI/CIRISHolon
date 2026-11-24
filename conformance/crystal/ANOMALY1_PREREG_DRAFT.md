@@ -1,5 +1,7 @@
 # ANOMALY-1 — rungs 0 and I of the matter sweep: the current's source is the field MINUS ITS SCREENED VALUE, times a number the statics fix. PREREGISTRATION (DRAFT)
 
+**REVIEWED 2026-11-23: REDESIGN of rung I; rung 0 may freeze as a gate after named fixes. See `ANOMALY1_REVIEW.md`. The forced number is the published staggered mass shift read through a sum rule, not an anomaly reading; the referee is biased by its fit form; this campaign's own points breach rung IV's reserve. Kept as drafted, for the record of what was reviewed.**
+
 *DRAFT of 2026-11-23. NOT FROZEN, and not to be frozen before a second reader has attacked
 it under the brief of §13. Nothing in it has been run: no Hamiltonian of the campaign has
 been built, no instrument executed. What WAS computed for it is in §6 and is of two kinds

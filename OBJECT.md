@@ -189,6 +189,17 @@ update the relevant docs"), is recorded here. Nothing above or below is rewritte
    | the hydrogen-bond network | — | closed on S2, and its increment to the momentum law is exactly `0` | `TSCAN_HBOND_SEARCH_RESULTS.md` |
    | the cosmos (WAGER) | a constant | the Record: what is written as structure forms, small | `TIERS.md` §4; `conformance/omega/COSMOS_TWO_PORTION.md` and its review |
 
+   *Corrected the same day, after the review of TIER-TREND-0
+   (`conformance/replace1/TIER_TREND0_REVIEW.md`):* the fluid row misfiles the COUNT block.
+   The record calls it "a second chart of the density mode", so it belongs to the static
+   portion; the fluid's organised portion is the structural block and the order parameter,
+   jointly priced at `−0.0025, −0.0048, +0.0003` on three seeds, which is zero. And the
+   table is a reading of sectors, not a measurement of shares: there is no unit in which an
+   organised share can be compared across tiers yet, and the only organised sector priced
+   above zero to anything above it is the reasoning chains' conscience block, at 2.2
+   standard errors. Whether the organised share rises with tier (the lead's "higher tiers
+   ... WAY more") is therefore UNMEASURED, neither supported nor refuted.
+
 2. **What it does to Move 5's dead legs.** They killed the one-portion framing and not the
    thesis. The stock leg asked the Record to be ALL of dark energy and fell short by four to
    twelve orders; read as a portion, that shortfall is the organised portion's size. The

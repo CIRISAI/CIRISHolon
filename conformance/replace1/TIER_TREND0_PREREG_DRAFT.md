@@ -1,5 +1,7 @@
 # TIER-TREND-0 — does the organised share rise with tier? The removability gate read in one unit on tiers it has never been read on. PREREGISTRATION (DRAFT)
 
+**REVIEWED 2026-11-23: REDESIGN. See `TIER_TREND0_REVIEW.md`. The share `O` is not a unit (it moves with the target, its scale, the order and redundant charts); the reasoning stake cannot tell carried from persistent; the molecule stake is fixed by banked arithmetic; the calibration table misfiles the fluid's count block. Kept as drafted.**
+
 *DRAFT of 2026-11-23, on the lead's word ("Yes, that makes sense" to drafting it). NOT FROZEN,
 and not to be frozen before an adversarial review. Nothing here has been computed beyond
 arithmetic on numbers already in git (§3), and no walk or trace was opened. The lead's

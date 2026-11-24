@@ -1,5 +1,7 @@
 # SEAM-NS-0 — where the continuum stops being the closed view of this liquid, and whether that comes before a blow-up could matter. DRAFT, NOT FROZEN
 
+**REVIEWED 2026-11-23: REDESIGN. See `SEAM_NS0_REVIEW.md`. S1's quantity does not separate the readings it is for and its open plant fails on paper; S3 and §10's variant are not forced. This text is kept as drafted, for the record of what was reviewed; it is not a candidate for a freeze.**
+
 *Written 2026-11-23 on the lead's word ("Yes" to drafting this; "The purpose of holon is to
 identify out of all this mess what is real"). A DRAFT: nothing here is frozen, no instrument
 exists, nothing has been run or read for it. It may not be frozen before an adversarial

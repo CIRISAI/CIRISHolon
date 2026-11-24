@@ -62,7 +62,7 @@ closed, at what price, with plants that fire, is not what any of these results i
 2. `OBJECT.md`, the Fold III correction (lead; owed since 2026-09-23).
 3. A screen of each row of §1 against its primary source, as was done for the October collection (agent, read by the lead).
 4. A staked prediction that meets the 2026-11-13 bar. The one candidate this reset can name: the Navier–Stokes seam of §1, written BEFORE either blow-up construction is read. It is a candidate and not a plan; it needs the lead's word and an adversarial review.
-5. The sound crossover on the model (`TIERS.md` §6, the continuum row): the zero-compute re-read of the record's sound-speed sentence first, then a stake. Parked behind the fold's sweep at the lead's word, 2026-11-23.
+5. The sound crossover on the model (`TIERS.md` §6, the continuum row): REVIEWED the same day as a re-finding, not a route to the bar (`conformance/water_observatory/SEAM_NS0_REVIEW.md`); the sound-speed sentence is corrected. Newly owed from that review: PR-2's underdamped plant fired at the 50 m/s signal-to-noise, since "overdamped at 50 m/s" may be the fit's window and not the liquid. Parked behind the fold's sweep at the lead's word.
 5. The mesh re-aim's citable table (waiter → lead).
 6. The QVM's owed CORRECTIONs from the 2026-11-23 screen (lead reads the screen first), then BENCH-2's review.
 6. PR #8: the lead's read, then the freeze.

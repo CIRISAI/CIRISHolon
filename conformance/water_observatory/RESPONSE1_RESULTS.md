@@ -217,3 +217,30 @@ per-seed `D` keeps. The same arithmetic makes the transverse `|Δ|` `0.137`, not
 (`0.180 ± 0.058`, `α = 1.03`); and R1″'s null row changes from "holds on the average (`0.035`)"
 to **FIRES as written** on the pooled aligned average (`0.137` vs `0.1`, inside its own SE
 `0.28`). The lead edits the table.
+
+## CORRECTION 2026-11-23 — "the model's sound speed is about twice water's" compared the wrong two numbers
+
+Item 2 above sets the model's `2,800` and `3,200–3,300` m/s, both read at the box's longest
+wavelength (`k = 0.27 Å⁻¹`, 23.5 Å), against R2's band, "which was set on water": water's
+LONG-wavelength speed, about 1,500 m/s. Real water's sound speed is not one number across
+wavelengths. Inelastic X-ray scattering finds it rising from the hydrodynamic value to about
+3,200 m/s between `Q = 1` and `4 nm⁻¹` (Sette et al., PRL 77, 83, 1996; first seen by
+neutrons, Teixeira et al., PRL 54, 2681, 1985), and this box's wavevector is `2.7 nm⁻¹`,
+in the middle of that range, where water itself reads roughly 2,500 to 3,200 m/s.
+
+So the sentence is withdrawn as worded. What stands: the model's speed at `k = 0.27 Å⁻¹` is
+`2,800–3,300` m/s, and that is about what water does at that wavevector. What is NOT shown
+either way: the model's long-wavelength speed, which no box on this record reaches. "A stiff
+minimal-basis liquid ... with twice its sound speed" is not supported. The prereg made the
+same carry in advance (`RESPONSE1_PREREG.md`, its estimate of `Γ/ω` from water's
+hydrodynamic values at this wavevector), and R2's band was set in the wrong regime: one more
+instance of a constant read as if it were not a price in a regime. The same sentence in
+`STANCE.md` and `GANTT2.md` is corrected by this paragraph and left as written there.
+
+Found by the adversarial review of `SEAM_NS0_PREREG_DRAFT.md` (`SEAM_NS0_REVIEW.md` §4, §5).
+That review also reports, and this CORRECTION does NOT adopt, that the "overdamped at
+50 m/s" reading may be an artefact of the fit's window at a signal-to-noise of 6 to 9
+(its §1, finding 2). That is owed a test on the record's own reader: PR-2's underdamped
+plant fired at the 50 m/s signal-to-noise. Until then the verdicts above stand as recorded.
+The literature values are from the review's reading of the sources named; the lead should
+read this wording before it is relied on.

@@ -87,3 +87,54 @@ nothing makes a fermion "organised and not static".
    proton.
 3. Whether `10` = the atom is wanted in `OBJECT.md` or on the ladder's captions. Nothing has
    been written anywhere but here.
+
+## CORRECTION 2026-11-23, the same day — the lead meant the WAVEFORM, not the parities
+
+Asked, the lead answered: "I meant the waveform of fermions and barions, one is a wave that
+propagates the other is two high points that do not." So the reading above is the lead's
+agent's and not the lead's. It stays as written, as a second structure that happens to share
+an algebra with the first (below). No claim, no compute, in this section either.
+
+**The waveform reading, made precise in one dimension.** Read the two bits as the state of
+the medium at two neighbouring places, low `0` and high `1`.
+
+| code | the waveform | what it is | does it travel? |
+|---|---|---|---|
+| `00` | flat | the medium with nothing on it | — |
+| `01` | one step, low to high | a WALL between two states of the medium | yes: where both sides cost the same, moving the wall costs nothing |
+| `11` | two highs | a stretch of the other state, held between two walls | no: where the two states differ in cost, the stretch costs in proportion to its length, so the walls cannot part |
+| `10` | one step, high to low | the wall the other way round: the antiparticle | yes |
+
+This is textbook in one space dimension and is credited, not claimed: the wall between two
+vacua IS the fermion (Coleman 1975; Mandelstam 1975), and walls that cannot part are
+confinement (Coleman 1976). **And it is what KINK-0 read on this engine.** Its headline:
+"At half a unit of background a unit charge moves freely in the bulk at finite positive
+cost; at none it stays at the end" (`KINK0_RESULTS.md`). Half a unit of background is the
+point where the two states of the field cost the same, so the single wall (`01`) travels;
+with no background they differ, so charges come as held pairs (`11`).
+
+**What the two readings share.** In both, combining is XOR and the question is whether
+anything reaches the edge:
+
+- waveform: the charge seen from far away is `left XOR right`. `00` and `11` read zero from
+  outside; `01` and `10` read one.
+- parities: `00` is what closes (`vacuum_can_pair`, `no_lone_charge`,
+  `odd_parent_has_odd_child` in `lean/CIRISHolon/SceneCharge.lean`).
+
+So under the waveform reading "a holon is 00" gains a companion: `11` is ALSO zero from
+outside, and differs from `00` only inside. `00` is closed with nothing in it; `11` is
+closed with structure in it, a pair that holds itself together. In the words of
+`OBJECT.md`'s CORRECTION of the same day that is the static portion and the organised
+portion of one closed thing, and `01` is the thing that is NOT a closed view on its own: its
+charge is read at the boundary, which is why it propagates. This is the lead's agent's
+reading of the lead's picture and is put to the lead, not adopted.
+
+**Where it stops.** (i) It is one space dimension. In three, an electron is not a wall
+between vacua; the object that IS a lump of a field there is the baryon (Skyrme 1961;
+Witten 1983: baryon number as a winding number), so the roles do not carry over unchanged.
+(ii) "Two high points" for a baryon fits a two-colour world, where a baryon is two walls; in
+ours it is three. (iii) FERMION-0's fermion on the toric code is a bound charge and flux,
+which is a pair and yet travels; that is a third structure. (iv) Nothing here is computed,
+and the real-time version (a wall travelling, a pair breathing and not parting) lies in the
+region `ANOMALY1_REVIEW.md` reserves for a later blind stake, so it is not to be run as a
+check on this note.
